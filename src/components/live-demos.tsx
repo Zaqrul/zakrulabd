@@ -110,26 +110,26 @@ export function HeroDemo() {
         />
       </div>
 
-      <div className="absolute -bottom-4 right-1 w-44 rounded-2xl border border-border bg-white/95 p-3.5 shadow-2xl backdrop-blur-sm sm:-bottom-6 sm:-right-6 sm:w-48 sm:p-4">
-        <div className="mb-2.5 flex items-center gap-2">
-          <span className="relative flex h-2.5 w-2.5">
+      <div className="absolute -bottom-11 right-2 w-28 rounded-lg border border-border bg-white/95 p-2 shadow-lg backdrop-blur-sm sm:-bottom-6 sm:-right-6 sm:w-48 sm:rounded-2xl sm:p-4 sm:shadow-2xl">
+        <div className="mb-1 flex items-center gap-1 sm:mb-2.5 sm:gap-2">
+          <span className="relative flex h-1.5 w-1.5 sm:h-2.5 sm:w-2.5">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-75" />
-            <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-teal-600" />
+            <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-teal-600 sm:h-2.5 sm:w-2.5" />
           </span>
-          <span className="text-[11px] font-bold tracking-tight text-ink">Live traffic</span>
+          <span className="text-[9px] font-bold tracking-tight text-ink sm:text-[11px]">Live traffic</span>
         </div>
-        <div className="mb-2.5 flex h-10 items-end justify-between gap-1.5 px-0.5">
+        <div className="mb-1 flex h-5 items-end justify-between gap-0.5 px-0.5 sm:mb-2.5 sm:h-10 sm:gap-1.5">
           {heroBarHeights.map((h, i) => (
             <div
               key={i}
-              className="w-2 origin-bottom animate-[grow-bar_1.8s_ease-in-out_infinite_alternate] rounded-full bg-gradient-to-t from-teal-600 to-teal-400"
+              className="w-1 origin-bottom animate-[grow-bar_1.8s_ease-in-out_infinite_alternate] rounded-full bg-gradient-to-t from-teal-600 to-teal-400 sm:w-2"
               style={{ height: `${h}%`, animationDelay: `${i * 0.15}s` }}
             />
           ))}
         </div>
-        <div className="flex items-baseline gap-1.5 pt-0.5">
-          <span className="text-base font-extrabold tracking-tight text-navy sm:text-lg">+18%</span>
-          <span className="text-[11px] font-semibold text-muted">traffic</span>
+        <div className="flex items-baseline gap-1 pt-0.5 sm:gap-1.5">
+          <span className="text-xs font-extrabold tracking-tight text-navy sm:text-lg">+18%</span>
+          <span className="text-[8.5px] font-semibold text-muted sm:text-[11px]">traffic</span>
         </div>
       </div>
     </div>

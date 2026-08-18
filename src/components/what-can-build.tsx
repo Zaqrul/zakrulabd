@@ -22,7 +22,7 @@ export function WhatCanBuild() {
   const CurrentDemo = demos[active] ?? demos[0];
 
   return (
-    <section className="border-y border-border bg-white px-6 py-24">
+    <section id="projects" className="border-y border-border bg-white px-6 py-24">
       <div className="mx-auto max-w-6xl">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start lg:gap-12">
           <h2 className="font-display text-4xl font-bold leading-tight text-navy md:text-5xl">

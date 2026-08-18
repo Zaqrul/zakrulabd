@@ -9,13 +9,14 @@ import {
   CheckIcon,
   ExternalLinkIcon,
   MailIcon,
+  MapPinIcon,
   PhoneIcon,
   SearchIcon,
   StarIcon,
 } from "@/components/icons";
 import { HeroDemo, LiveChartDemo, LiveChatDemo, LiveCodeDemo, LiveStatusDemo } from "@/components/live-demos";
 import { WhatCanBuild } from "@/components/what-can-build";
-import { useI18n } from "@/components/language-provider";
+import { LanguageToggle, useI18n } from "@/components/language-provider";
 import {
   SiAstro,
   SiGithub,
@@ -455,49 +456,98 @@ export default function Home() {
   }, []);
 
   return (
-    <div className="w-full overflow-x-hidden">
+    <div className="w-full">
       {/* NAV */}
-      <nav className="sticky top-0 z-50 border-b border-border bg-bg/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-4 px-6 py-4">
-          <div className="flex items-center gap-2.5">
+      <nav className="sticky top-0 z-50 border-b border-border bg-bg/95 backdrop-blur-md">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3.5 sm:px-6 sm:py-4">
+          <a href="#" className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center">
               <Image
                 src="/logo-ghost-outline.webp"
-                alt=""
+                alt="zakrulabd logo"
                 width={512}
                 height={512}
                 className="h-8 w-8 object-contain"
               />
             </div>
             <span className="font-display text-lg font-bold text-navy">zakrulabd</span>
-          </div>
+          </a>
+
+          {/* Desktop Nav Links */}
           <div className="hidden items-center gap-8 lg:flex">
-            <a href="#services" className="text-sm font-medium text-ink hover:text-primary-600">
+            <a
+              href="#services"
+              className="group relative py-1 text-sm font-semibold text-ink transition-colors hover:text-navy"
+            >
               {t.nav.services}
+              <span className="absolute bottom-0 left-0 h-[2.5px] w-0 rounded-full bg-amber-400 transition-all duration-200 ease-out group-hover:w-full" />
             </a>
-            <a href="#process" className="text-sm font-medium text-ink hover:text-primary-600">
-              {t.nav.process}
+            <a
+              href="#projects"
+              className="group relative py-1 text-sm font-semibold text-ink transition-colors hover:text-navy"
+            >
+              {t.nav.projects}
+              <span className="absolute bottom-0 left-0 h-[2.5px] w-0 rounded-full bg-amber-400 transition-all duration-200 ease-out group-hover:w-full" />
             </a>
-            <a href="#pricing" className="text-sm font-medium text-ink hover:text-primary-600">
+            <a
+              href="#pricing"
+              className="group relative py-1 text-sm font-semibold text-ink transition-colors hover:text-navy"
+            >
               {t.nav.pricing}
+              <span className="absolute bottom-0 left-0 h-[2.5px] w-0 rounded-full bg-amber-400 transition-all duration-200 ease-out group-hover:w-full" />
             </a>
-            <a href="#results" className="text-sm font-medium text-ink hover:text-primary-600">
-              {t.nav.results}
-            </a>
-            <a href="#contact" className="text-sm font-medium text-ink hover:text-primary-600">
+            <a
+              href="#contact"
+              className="group relative py-1 text-sm font-semibold text-ink transition-colors hover:text-navy"
+            >
               {t.nav.contact}
+              <span className="absolute bottom-0 left-0 h-[2.5px] w-0 rounded-full bg-amber-400 transition-all duration-200 ease-out group-hover:w-full" />
             </a>
           </div>
-          <div className="flex items-center gap-2.5">
+
+          <div className="flex items-center gap-2 sm:gap-2.5">
+            <LanguageToggle />
             <a
               href={wa(waMessages.quote)}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-primary whitespace-nowrap rounded-lg bg-amber-500 px-5 py-2.5 text-sm font-semibold text-navy hover:bg-amber-600"
+              className="btn-primary whitespace-nowrap rounded-lg bg-amber-500 px-3.5 py-2 text-xs font-bold text-navy hover:bg-amber-600 sm:px-5 sm:py-2.5 sm:text-sm sm:font-semibold"
             >
               {t.nav.cta}
             </a>
           </div>
+        </div>
+
+        {/* Mobile Sticky Subnav Strip */}
+        <div className="flex items-center justify-around border-t border-border/70 bg-white/85 px-2 py-2 text-xs font-semibold text-ink backdrop-blur-sm lg:hidden">
+          <a
+            href="#services"
+            className="group relative px-2.5 py-1 text-center text-ink transition hover:text-navy"
+          >
+            {t.nav.services}
+            <span className="absolute bottom-0 left-0 h-[2px] w-0 rounded-full bg-amber-400 transition-all duration-200 group-hover:w-full" />
+          </a>
+          <a
+            href="#projects"
+            className="group relative px-2.5 py-1 text-center text-ink transition hover:text-navy"
+          >
+            {t.nav.projects}
+            <span className="absolute bottom-0 left-0 h-[2px] w-0 rounded-full bg-amber-400 transition-all duration-200 group-hover:w-full" />
+          </a>
+          <a
+            href="#pricing"
+            className="group relative px-2.5 py-1 text-center text-ink transition hover:text-navy"
+          >
+            {t.nav.pricing}
+            <span className="absolute bottom-0 left-0 h-[2px] w-0 rounded-full bg-amber-400 transition-all duration-200 group-hover:w-full" />
+          </a>
+          <a
+            href="#contact"
+            className="group relative px-2.5 py-1 text-center text-ink transition hover:text-navy"
+          >
+            {t.nav.contact}
+            <span className="absolute bottom-0 left-0 h-[2px] w-0 rounded-full bg-amber-400 transition-all duration-200 group-hover:w-full" />
+          </a>
         </div>
       </nav>
 
@@ -518,7 +568,7 @@ export default function Home() {
               {t.hero.titleB}
               <span className="hl">{t.hero.titleHl2}</span>
             </h1>
-            <div className="w-full max-w-lg pb-4 pt-2 lg:hidden">
+            <div className="w-full max-w-lg pb-12 pt-2 lg:hidden">
               <HeroDemo />
             </div>
             <p className="max-w-xl text-base leading-relaxed text-body md:text-lg">{t.hero.body}</p>
@@ -1008,6 +1058,10 @@ export default function Home() {
                 <PhoneIcon className="h-[15px] w-[15px]" />
                 <span>010-255 1527</span>
               </a>
+              <div className="flex items-center gap-2 text-[13px]">
+                <MapPinIcon className="h-[15px] w-[15px]" />
+                <span>{t.footer.location}</span>
+              </div>
             </div>
             <div className="flex flex-col gap-3">
               <span className="text-[12.5px] font-bold tracking-wide text-slate-200">{t.footer.services}</span>
@@ -1040,8 +1094,19 @@ export default function Home() {
               </a>
             </div>
           </div>
-          <div className="border-t border-white/10 pt-5 text-center">
-            <span className="text-[12.5px] text-slate-500">© 2026 zakrulabd. {t.footer.rights}</span>
+          <div className="flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-5 sm:flex-row text-center sm:text-left">
+            <div className="flex flex-wrap items-center justify-center gap-3 text-[12.5px] text-slate-500 sm:justify-start">
+              <span>© 2026 zakrulabd. {t.footer.rights}</span>
+              <span>•</span>
+              <a href="/privacy" className="hover:text-white transition">
+                {t.footer.privacy}
+              </a>
+              <span>•</span>
+              <a href="/terms" className="hover:text-white transition">
+                {t.footer.terms}
+              </a>
+            </div>
+            <span className="text-[12.5px] text-slate-500">{t.footer.location}</span>
           </div>
         </div>
       </footer>

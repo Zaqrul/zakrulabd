@@ -23,14 +23,15 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://zakrulabd.com"),
   title: {
-    default: "zakrulabd — Web Development & Digital Marketing Malaysia",
+    default: "zakrulabd — Solo Freelance Web Developer & Digital Marketer Malaysia",
     template: "%s | zakrulabd",
   },
   description:
-    "Full-cycle web development in React, Laravel, and WordPress, paired with technical SEO, GA4 analytics, and automation built for SMEs and healthcare providers in Malaysia.",
+    "Solo freelance web developer in Malaysia offering full-cycle web development in React, Laravel, and WordPress, paired with technical SEO, GA4 analytics, and automation.",
   keywords: [
-    "Web Developer Malaysia",
+    "Solo Freelancer Malaysia",
     "Freelance Web Developer Malaysia",
+    "Web Developer Malaysia",
     "React Developer Malaysia",
     "Laravel Developer Malaysia",
     "WordPress Developer Malaysia",
