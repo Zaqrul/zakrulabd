@@ -216,7 +216,7 @@ export const dictionaries = {
       ],
     },
     results: {
-      headingA: "Results Built on Real ",
+      headingA: "Results on Real ",
       headingHl: "Healthcare Marketing",
       headingB: " Experience",
       sub: "Specialised in SEO, GA4 tracking, and livechat automation for hospital and cancer-care marketing in Malaysia — the same playbook applied to every client.",
@@ -619,7 +619,7 @@ export const dictionaries = {
       ],
     },
     results: {
-      headingA: "Hasil Dibina Atas Pengalaman ",
+      headingA: "Hasil Pengalaman ",
       headingHl: "Pemasaran Kesihatan",
       headingB: " Sebenar",
       sub: "Pakar dalam SEO, penjejakan GA4 dan automasi livechat untuk pemasaran hospital dan rawatan kanser di Malaysia — pendekatan sama digunakan untuk setiap klien.",
