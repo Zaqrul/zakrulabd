@@ -16,6 +16,7 @@ import {
 } from "@/components/icons";
 import { HeroDemo, LiveChartDemo, LiveChatDemo, LiveCodeDemo, LiveStatusDemo } from "@/components/live-demos";
 import { WhatCanBuild } from "@/components/what-can-build";
+import { ClientLogos } from "@/components/client-logos";
 import { content as t } from "@/lib/content";
 import { tech, techMarquee } from "@/lib/tech";
 import {
@@ -602,6 +603,8 @@ export default function Home() {
       </section>
 
       <WhatCanBuild />
+
+      <ClientLogos />
 
       {/* PROCESS */}
       <section id="process" className="px-6 py-24 overflow-hidden">
