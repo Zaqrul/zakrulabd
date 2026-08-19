@@ -20,7 +20,6 @@ import { ClientLogos } from "@/components/client-logos";
 import { content as t } from "@/lib/content";
 import { WHATSAPP_NUMBER, wa, waMessages } from "@/lib/contact";
 import { tech, techMarquee } from "@/lib/tech";
-import { useInView } from "@/lib/use-in-view";
 import {
   SvgGrowthAnalytics,
   SvgLaunching,
@@ -436,7 +435,6 @@ export default function Home() {
   const [activeReview, setActiveReview] = useState(0);
   const navRef = useRef<HTMLElement>(null);
   const activeSection = useActiveSection(navRef);
-  const { ref: techRef, inView: techInView } = useInView<HTMLDivElement>();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -700,7 +698,7 @@ export default function Home() {
         <div className="mx-auto flex max-w-3xl flex-col items-center px-6">
           <span className="text-base font-bold tracking-[0.08em] text-muted">{t.tech.heading}</span>
         </div>
-        <div ref={techRef} className="marquee-fade mt-6 overflow-hidden">
+        <div className="marquee-fade mt-6 overflow-hidden">
           <div className="marquee-track flex w-max items-center gap-6">
             {[0, 1].map((copy) => (
               <div key={copy} aria-hidden={copy === 1} className="flex items-center gap-6">
@@ -713,9 +711,7 @@ export default function Home() {
                       className="group flex w-40 flex-shrink-0 flex-col items-center gap-4 rounded-2xl border border-border bg-white px-5 py-8 transition duration-200 hover:-translate-y-1 hover:shadow-md"
                     >
                       <Icon
-                        className={`h-16 w-16 transition duration-500 group-hover:grayscale-0 ${
-                          techInView ? "grayscale-0" : "grayscale"
-                        }`}
+                        className="h-16 w-16 transition duration-300 lg:grayscale lg:group-hover:grayscale-0"
                         style={{ color }}
                         aria-hidden="true"
                       />

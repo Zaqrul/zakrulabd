@@ -1,6 +1,23 @@
+import type { Metadata } from "next";
+
+/* Metadata merges down the tree and unset fields are inherited, so without this
+   block the root layout's title, description and — worst of all — its canonical
+   would apply here, telling Google this page is a duplicate of the homepage. */
+export const metadata: Metadata = {
+  title: "Terms & Conditions",
+  description: "Scope of work, payment milestones, code ownership, and warranty terms for freelance web development by Zakrul Abdul.",
+  alternates: { canonical: "/terms" },
+  openGraph: {
+    title: "Terms & Conditions | zakrulabd",
+    description: "Scope of work, payment milestones, code ownership, and warranty terms for freelance web development by Zakrul Abdul.",
+    url: "https://zakrulabd.com/terms",
+  },
+};
+
 import Link from "next/link";
 import Image from "next/image";
 import { content as t } from "@/lib/content";
+import { breadcrumb } from "@/lib/structured-data";
 import { WHATSAPP_NUMBER } from "@/lib/contact";
 import { ArrowRightIcon, MapPinIcon, PhoneIcon } from "@/components/icons";
 
@@ -9,6 +26,10 @@ export default function TermsPage() {
 
   return (
     <div className="min-h-screen bg-bg text-ink selection:bg-amber-400 selection:text-navy flex flex-col justify-between">
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb("Terms & Conditions", "/terms")) }}
+      />
       {/* HEADER */}
       <header className="sticky top-0 z-50 border-b border-border bg-bg/90 backdrop-blur">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-4">

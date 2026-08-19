@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import { TawkWidget } from "@/components/tawk-widget";
+import { structuredData } from "@/lib/structured-data";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -49,7 +50,7 @@ export const metadata: Metadata = {
     telephone: false,
   },
   alternates: {
-    canonical: "https://zakrulabd.com",
+    canonical: "/",
     languages: {
       "en-MY": "https://zakrulabd.com",
     },
@@ -62,12 +63,21 @@ export const metadata: Metadata = {
     title: "zakrulabd — Web Development & Digital Marketing in Malaysia",
     description:
       "Websites and custom web systems built with React, Laravel, and WordPress — alongside technical SEO, GA4 analytics, and automation.",
+    images: [
+      {
+        url: "/og-image.png",
+        width: 1200,
+        height: 630,
+        alt: "zakrulabd — Web Development & SEO for Businesses in Malaysia",
+      },
+    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "zakrulabd — Web Development & Digital Marketing in Malaysia",
     description:
       "Websites and custom web systems built with React, Laravel, and WordPress — alongside technical SEO, GA4 analytics, and automation.",
+    images: ["/og-image.png"],
   },
   robots: {
     index: true,
@@ -82,31 +92,6 @@ export const metadata: Metadata = {
   },
 };
 
-const jsonLd = {
-  "@context": "https://schema.org",
-  "@type": "ProfessionalService",
-  name: "zakrulabd — Web Development & Digital Marketing",
-  url: "https://zakrulabd.com",
-  description:
-    "Websites and custom web systems built with React, Laravel, and WordPress, alongside technical SEO, GA4 analytics, and workflow automation in Malaysia.",
-  telephone: "+60102551527",
-  email: "zakrulabd@gmail.com",
-  areaServed: {
-    "@type": "Country",
-    name: "Malaysia",
-  },
-  knowsAbout: [
-    "Web Development",
-    "React",
-    "Next.js",
-    "Laravel",
-    "WordPress",
-    "Technical SEO",
-    "Google Analytics 4",
-    "Workflow Automation",
-  ],
-};
-
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html
@@ -116,7 +101,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }}
         />
       </head>
       <body className="min-h-full flex flex-col">
