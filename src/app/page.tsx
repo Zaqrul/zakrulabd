@@ -58,15 +58,15 @@ const promptPillPositions = [
   { place: "right-[20%] bottom-6 -rotate-6", delay: "1.8s" },
 ];
 
-/* Six of the prompts on phones, kept inside the section's vertical padding
-   (py-32 = 128px top and bottom) so none of them land on the heading or CTA. */
-const mobilePromptPillPositions = [
-  { place: "left-2 top-4 -rotate-6", delay: "0s" },
-  { place: "right-2 top-16 rotate-6", delay: "0.9s" },
-  { place: "left-5 top-28 -rotate-2", delay: "1.8s" },
-  { place: "right-4 bottom-28 rotate-3", delay: "2.7s" },
-  { place: "left-3 bottom-16 -rotate-5", delay: "1.4s" },
-  { place: "right-2 bottom-4 rotate-6", delay: "3.4s" },
+/* Four of the prompts on phones, two above the CTA and two below. `prompt`
+   indexes into content.finalCta.prompts: the short ones are picked on purpose,
+   so nothing overflows a 320px screen. Positions stay inside the section's
+   vertical padding (py-32 = 128px) so none of them land on the heading or CTA. */
+const mobilePromptPills = [
+  { prompt: 1, place: "left-2 top-6 -rotate-6", delay: "0s" },
+  { prompt: 6, place: "right-2 top-20 rotate-6", delay: "1.1s" },
+  { prompt: 3, place: "left-3 bottom-20 -rotate-5", delay: "2.2s" },
+  { prompt: 10, place: "right-2 bottom-6 rotate-6", delay: "3.1s" },
 ];
 
 const statMeta = [
@@ -887,16 +887,16 @@ export default function Home() {
           ))}
         </div>
 
-        {/* Same idea for phones, but only six, smaller and dimmer: here they are
+        {/* Same idea for phones, but only four, smaller and dimmer: here they are
             background texture around the CTA, not something to read. */}
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 select-none lg:hidden">
-          {t.finalCta.prompts.slice(0, 6).map((prompt, i) => (
+          {mobilePromptPills.map(({ prompt, place, delay }) => (
             <div
               key={prompt}
-              className={`absolute whitespace-nowrap rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10.5px] font-medium text-slate-400 backdrop-blur-sm animate-[gentle-float_4s_ease-in-out_infinite] ${mobilePromptPillPositions[i].place}`}
-              style={{ animationDelay: mobilePromptPillPositions[i].delay }}
+              className={`absolute whitespace-nowrap rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10.5px] font-medium text-slate-400 backdrop-blur-sm animate-[gentle-float_4s_ease-in-out_infinite] ${place}`}
+              style={{ animationDelay: delay }}
             >
-              {prompt}
+              {t.finalCta.prompts[prompt]}
             </div>
           ))}
         </div>

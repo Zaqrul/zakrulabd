@@ -279,19 +279,23 @@ export const content = {
     cta: "Start Your Project",
     whatsapp: "WhatsApp",
     or: "or email",
+    /* These pills echo how clients actually phrase a request, so they stay in
+       the Malay-English mix people use here — technical nouns in English, the
+       rest in Malay. Same reasoning as the pre-filled WhatsApp messages. The
+       rest of the site is English. */
     prompts: [
-      "Build a booking and slot system",
-      "Improve my Google rankings",
-      "Custom web app in React & Laravel",
-      "Set up Google Analytics 4",
-      "Reconnect a MySQL database",
-      "Build a quote request form",
+      "Bina sistem tempahan online",
+      "Naikkan ranking Google",
+      "Bina web app React & Laravel",
+      "Setup Google Analytics 4",
+      "Sambung semula database MySQL",
+      "Bina borang sebut harga",
       "Integrate Shopify & FPX",
-      "Install live chat for customers",
-      "A fast WordPress website",
-      "Automate WhatsApp lead alerts",
-      "Move hosting to Vercel",
-      "Redesign our company website",
+      "Pasang live chat untuk customer",
+      "Website WordPress yang laju",
+      "Automasi lead WhatsApp",
+      "Pindah hosting ke Vercel",
+      "Redesign website syarikat",
     ],
   },
   footer: {
