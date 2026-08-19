@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { CheckIcon, ChevronDownIcon } from "@/components/icons";
-import { useI18n } from "@/components/language-provider";
+import { tech, type TechKey } from "@/lib/tech";
+import { content as t } from "@/lib/content";
 import {
   BookingDemo,
   InventoryDemo,
@@ -14,48 +15,92 @@ import {
 
 const demos = [StoreDemo, InventoryDemo, BookingDemo, TawkChatDemo, ShopifySyncDemo, PaymentDemo];
 
+/* The stack each build actually runs on, in the same order as content.build.items.
+   Each row is a combination that ships as a unit: a backend, its database, and the
+   service the feature depends on. Laravel already implies PHP, so PHP is only
+   listed where the build is not a Laravel one. */
+const stacks: TechKey[][] = [
+  // Storefront: Laravel handles catalogue and orders, Stripe handles checkout.
+  ["laravel", "mysql", "tailwind", "stripe"],
+  // Stock dashboard: React front end against a Laravel API.
+  ["react", "laravel", "mysql", "tailwind"],
+  // Booking: Supabase realtime drives live slot availability.
+  ["next", "supabase", "tailwind"],
+  // Live chat: Tawk.to for the widget, n8n for routing the leads it captures.
+  ["tawkto", "wordpress", "n8n"],
+  // Shopify sync: a Laravel service against the Shopify Admin API.
+  ["shopify", "laravel", "mysql"],
+  // Payments: Laravel server-side, Stripe for card, FPX, and e-wallet.
+  ["laravel", "stripe", "mysql"],
+];
+
 export function WhatCanBuild() {
-  const { t } = useI18n();
   const [active, setActive] = useState(0);
   const capabilities = t.build.items;
   const current = capabilities[active] ?? capabilities[0];
   const CurrentDemo = demos[active] ?? demos[0];
+  const currentStack = stacks[active] ?? stacks[0];
 
   return (
     <section id="projects" className="border-y border-border bg-white px-6 py-24">
       <div className="mx-auto max-w-6xl">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start lg:gap-12">
-          <h2 className="font-display text-4xl font-bold leading-tight text-navy md:text-5xl">
+          <h2 className="font-display text-[30px] font-bold leading-tight text-navy md:text-5xl">
             {current.headingBefore}
             <span className="hl">{current.headingHighlight}</span>
             {current.headingAfter}
           </h2>
-          <p className="text-base leading-relaxed text-body md:text-lg lg:pt-2">{current.description}</p>
-        </div>
-
-        {/* Mobile Dropdown (mobile only) */}
-        <div className="relative mt-8 sm:hidden">
-          <label htmlFor="capability-select" className="sr-only">
-            Select feature
-          </label>
-          <select
-            id="capability-select"
-            value={active}
-            onChange={(e) => setActive(Number(e.target.value))}
-            className="w-full appearance-none rounded-xl border border-border bg-bg py-3 pl-4 pr-10 text-sm font-semibold text-navy shadow-xs focus:border-navy focus:bg-white focus:outline-none"
-          >
-            {capabilities.map((c, i) => (
-              <option key={c.pill} value={i}>
-                {c.pill}
-              </option>
-            ))}
-          </select>
-          <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-navy">
-            <ChevronDownIcon className="h-4 w-4" />
+          <div className="flex flex-col gap-4 lg:pt-2">
+            <p className="text-base leading-relaxed text-body md:text-lg">{current.description}</p>
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted">{t.build.builtWith}</span>
+              {currentStack.map((key) => {
+                const { name, Icon, color } = tech[key];
+                return (
+                  <span
+                    key={key}
+                    className="inline-flex items-center gap-1.5 rounded-full border border-border bg-white py-1 pl-1.5 pr-3 text-[12.5px] font-semibold text-ink shadow-xs"
+                  >
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-bg">
+                      <Icon className="h-3.5 w-3.5" style={{ color }} aria-hidden="true" />
+                    </span>
+                    {name}
+                  </span>
+                );
+              })}
+            </div>
           </div>
         </div>
 
-        {/* Desktop / Tablet Pill Bar (sm and up) */}
+        {/* Mobile: dropdown instead of the pill bar. The label is visible here
+            because the bare select on its own reads as a heading, not a control. */}
+        <div className="mt-8 sm:hidden">
+          <label
+            htmlFor="capability-select"
+            className="mb-2 block text-[11px] font-bold uppercase tracking-wider text-muted"
+          >
+            {t.build.selectLabel}
+          </label>
+          <div className="relative">
+            <select
+              id="capability-select"
+              value={active}
+              onChange={(e) => setActive(Number(e.target.value))}
+              className="w-full appearance-none rounded-xl border border-border bg-bg py-3 pl-4 pr-10 text-sm font-semibold text-navy shadow-xs focus:border-navy focus:bg-white focus:outline-none"
+            >
+              {capabilities.map((c, i) => (
+                <option key={c.pill} value={i}>
+                  {c.pill}
+                </option>
+              ))}
+            </select>
+            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center pr-3.5 text-navy">
+              <ChevronDownIcon className="h-4 w-4" />
+            </div>
+          </div>
+        </div>
+
+        {/* Tablet and up: pill bar */}
         <div className="mt-10 hidden sm:flex flex-wrap gap-2 rounded-full bg-bg p-2">
           {capabilities.map((c, i) => (
             <button

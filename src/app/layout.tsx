@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { LanguageProvider } from "@/components/language-provider";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -23,13 +22,12 @@ const jetbrainsMono = JetBrains_Mono({
 export const metadata: Metadata = {
   metadataBase: new URL("https://zakrulabd.com"),
   title: {
-    default: "zakrulabd — Solo Freelance Web Developer & Digital Marketer Malaysia",
+    default: "zakrulabd — Freelance Web Developer & Digital Marketer in Malaysia",
     template: "%s | zakrulabd",
   },
   description:
-    "Solo freelance web developer in Malaysia offering full-cycle web development in React, Laravel, and WordPress, paired with technical SEO, GA4 analytics, and automation.",
+    "Freelance web developer in Malaysia building websites and custom web systems with React, Laravel, and WordPress — alongside technical SEO, GA4 analytics, and workflow automation.",
   keywords: [
-    "Solo Freelancer Malaysia",
     "Freelance Web Developer Malaysia",
     "Web Developer Malaysia",
     "React Developer Malaysia",
@@ -38,7 +36,7 @@ export const metadata: Metadata = {
     "SEO Specialist Malaysia",
     "GA4 Setup Malaysia",
     "Healthcare Digital Marketing",
-    "PKS Web Development",
+    "SME Web Development Malaysia",
     "Full Stack Developer",
   ],
   authors: [{ name: "Zakrul Abdul", url: "https://zakrulabd.com" }],
@@ -53,24 +51,22 @@ export const metadata: Metadata = {
     canonical: "https://zakrulabd.com",
     languages: {
       "en-MY": "https://zakrulabd.com",
-      "ms-MY": "https://zakrulabd.com",
     },
   },
   openGraph: {
     type: "website",
     locale: "en_MY",
-    alternateLocale: ["ms_MY"],
     url: "https://zakrulabd.com",
     siteName: "zakrulabd",
-    title: "zakrulabd — Web Development & Digital Marketing Malaysia",
+    title: "zakrulabd — Web Development & Digital Marketing in Malaysia",
     description:
-      "Full-cycle web development in React, Laravel, and WordPress, paired with technical SEO, GA4 analytics, and automation.",
+      "Websites and custom web systems built with React, Laravel, and WordPress — alongside technical SEO, GA4 analytics, and automation.",
   },
   twitter: {
     card: "summary_large_image",
-    title: "zakrulabd — Web Development & Digital Marketing Malaysia",
+    title: "zakrulabd — Web Development & Digital Marketing in Malaysia",
     description:
-      "Full-cycle web development in React, Laravel, and WordPress, paired with technical SEO, GA4 analytics, and automation.",
+      "Websites and custom web systems built with React, Laravel, and WordPress — alongside technical SEO, GA4 analytics, and automation.",
   },
   robots: {
     index: true,
@@ -91,14 +87,13 @@ const jsonLd = {
   name: "zakrulabd — Web Development & Digital Marketing",
   url: "https://zakrulabd.com",
   description:
-    "Full-cycle web development in React, Laravel, and WordPress, paired with technical SEO, GA4 analytics, and workflow automation in Malaysia.",
+    "Websites and custom web systems built with React, Laravel, and WordPress, alongside technical SEO, GA4 analytics, and workflow automation in Malaysia.",
   telephone: "+60102551527",
   email: "zakrulabd@gmail.com",
   areaServed: {
     "@type": "Country",
     name: "Malaysia",
   },
-  priceRange: "RM750 - RM3500+",
   knowsAbout: [
     "Web Development",
     "React",
@@ -124,7 +119,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         />
       </head>
       <body className="min-h-full flex flex-col">
-        <LanguageProvider>{children}</LanguageProvider>
+        {children}
       </body>
     </html>
   );

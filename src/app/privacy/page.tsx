@@ -1,14 +1,9 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
-import { useI18n, LanguageToggle } from "@/components/language-provider";
-import { ArrowRightIcon, MailIcon, MapPinIcon, PhoneIcon } from "@/components/icons";
-
-const WHATSAPP_NUMBER = "60102551527";
+import { content as t } from "@/lib/content";
+import { ArrowRightIcon, MailIcon, MapPinIcon } from "@/components/icons";
 
 export default function PrivacyPage() {
-  const { t } = useI18n();
   const policy = t.privacyPage;
 
   return (
@@ -30,7 +25,6 @@ export default function PrivacyPage() {
           </Link>
 
           <div className="flex items-center gap-3">
-            <LanguageToggle />
             <Link
               href="/"
               className="inline-flex items-center gap-1.5 rounded-lg border border-navy/20 bg-white px-3.5 py-2 text-xs font-bold text-navy transition hover:border-navy hover:bg-navy hover:text-white"
@@ -50,7 +44,7 @@ export default function PrivacyPage() {
             <span>{policy.badge}</span>
           </div>
 
-          <h1 className="mt-4 font-display text-4xl font-extrabold tracking-tight text-navy md:text-5xl">
+          <h1 className="mt-4 font-display text-[30px] font-extrabold tracking-tight text-navy md:text-5xl">
             {policy.titleA}
             <span className="hl">{policy.titleHl}</span>
           </h1>
@@ -89,11 +83,10 @@ export default function PrivacyPage() {
         {/* Quick Contact Callout */}
         <div className="mt-12 rounded-2xl border border-border bg-amber-300/15 p-6 md:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
           <div>
-            <h3 className="font-display text-lg font-bold text-navy">
-              {t.footer.getStarted}
-            </h3>
+            <h3 className="font-display text-lg font-bold text-navy">Questions about your data?</h3>
             <p className="text-sm text-body mt-1">
-              Have questions regarding this privacy policy or data handling?
+              Get in touch if anything in this policy is unclear, or if you’d like to see, correct, or delete the data
+              I hold about you.
             </p>
           </div>
           <a

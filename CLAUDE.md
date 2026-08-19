@@ -5,12 +5,14 @@
 - **Email:** `zakrulabd@gmail.com`
 - **Location:** Selangor, Malaysia
 - **Role:** Dedicated Solo Freelance Web Developer & Technical Marketer (No agency / No team wording).
-- **Communication Tone:** First-person direct ("Talk with me", "Bincang dengan saya", "How I Work").
+- **Communication Tone:** First-person direct and plain ("Talk With Me", "How I Work"). Avoid marketing filler and stacked em dashes in site copy.
+- **WhatsApp:** Pre-filled `wa.me` messages stay in Malay and address the owner as "Zakrul".
+- **Pricing:** Tier cards list scope only. No prices are shown on the site; every project is quoted individually.
 
 ## Architecture & Code Standards
 - **Framework:** Next.js (App Router, Turbopack, standalone static generation)
 - **Proxy Convention:** Use `src/proxy.ts` (named export `export function proxy(request: NextRequest)`) instead of deprecated middleware.
-- **Language Support:** Bilingual (`en` and `ms`) powered by `LanguageProvider` and `src/lib/dictionaries.ts`.
+- **Language:** English only. All site copy lives in `src/lib/content.ts` (exported as `content`); there is no language switcher and no `ms` dictionary.
 
 ## UI & Design System
 - **Palette:** High-contrast neutral base (navy `#171717`, background `#f5f5f5`, white `#ffffff`) with amber/yellow accent (`#fbcf33` / `#f7c325`).

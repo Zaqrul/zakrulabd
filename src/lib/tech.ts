@@ -1,0 +1,100 @@
+import type { ComponentType, CSSProperties } from "react";
+import { DiMsqlServer } from "react-icons/di";
+import { TbBrandReactNative } from "react-icons/tb";
+import {
+  SiAstro,
+  SiCodeigniter,
+  SiCplusplus,
+  SiDart,
+  SiExpo,
+  SiFigma,
+  SiFirebase,
+  SiGithub,
+  SiJavascript,
+  SiLaravel,
+  SiMysql,
+  SiN8N,
+  SiNextdotjs,
+  SiPhp,
+  SiPython,
+  SiRailway,
+  SiReact,
+  SiShopify,
+  SiStorybook,
+  SiStripe,
+  SiSupabase,
+  SiTailwindcss,
+  SiTypescript,
+  SiVercel,
+  SiWordpress,
+} from "react-icons/si";
+import { TawkToIcon } from "@/components/tech-icons";
+
+/* Loose enough for both react-icons components and this project's own SVG icons. */
+type TechIcon = ComponentType<{ className?: string; style?: CSSProperties; "aria-hidden"?: "true" }>;
+
+/* One entry per tool, shared by the "Built with" marquee and the per-project
+   chips, so a tool's name, icon, and brand colour are only defined once. */
+export const tech = {
+  react: { name: "React", Icon: SiReact, color: "#61DAFB" },
+  reactNative: { name: "React Native", Icon: TbBrandReactNative, color: "#61DAFB" },
+  expo: { name: "Expo", Icon: SiExpo, color: "#000020" },
+  next: { name: "Next.js", Icon: SiNextdotjs, color: "#000000" },
+  astro: { name: "Astro", Icon: SiAstro, color: "#FF5D01" },
+  typescript: { name: "TypeScript", Icon: SiTypescript, color: "#3178C6" },
+  javascript: { name: "JavaScript", Icon: SiJavascript, color: "#F7DF1E" },
+  dart: { name: "Dart", Icon: SiDart, color: "#0175C2" },
+  python: { name: "Python", Icon: SiPython, color: "#3776AB" },
+  cpp: { name: "C++", Icon: SiCplusplus, color: "#00599C" },
+  php: { name: "PHP", Icon: SiPhp, color: "#777BB4" },
+  laravel: { name: "Laravel", Icon: SiLaravel, color: "#FF2D20" },
+  codeigniter: { name: "CodeIgniter", Icon: SiCodeigniter, color: "#EF4223" },
+  tailwind: { name: "Tailwind CSS", Icon: SiTailwindcss, color: "#06B6D4" },
+  figma: { name: "Figma", Icon: SiFigma, color: "#F24E1E" },
+  storybook: { name: "Storybook", Icon: SiStorybook, color: "#FF4785" },
+  mysql: { name: "MySQL", Icon: SiMysql, color: "#4479A1" },
+  sqlServer: { name: "SQL Server", Icon: DiMsqlServer, color: "#CC2927" },
+  supabase: { name: "Supabase", Icon: SiSupabase, color: "#3FCF8E" },
+  firebase: { name: "Firebase", Icon: SiFirebase, color: "#FFCA28" },
+  tawkto: { name: "Tawk.to", Icon: TawkToIcon, color: "#03A84E" },
+  n8n: { name: "n8n", Icon: SiN8N, color: "#EA4B71" },
+  vercel: { name: "Vercel", Icon: SiVercel, color: "#000000" },
+  railway: { name: "Railway", Icon: SiRailway, color: "#0B0D0E" },
+  wordpress: { name: "WordPress", Icon: SiWordpress, color: "#21759B" },
+  shopify: { name: "Shopify", Icon: SiShopify, color: "#7AB55C" },
+  stripe: { name: "Stripe", Icon: SiStripe, color: "#635BFF" },
+  github: { name: "GitHub", Icon: SiGithub, color: "#181717" },
+} satisfies Record<string, { name: string; Icon: TechIcon; color: string }>;
+
+export type TechKey = keyof typeof tech;
+
+/* Display order for the "Built with" marquee: languages, then frameworks and
+   styling, then data, then hosting and the rest. */
+export const techMarquee: TechKey[] = [
+  "javascript",
+  "typescript",
+  "php",
+  "python",
+  "dart",
+  "cpp",
+  "react",
+  "next",
+  "astro",
+  "reactNative",
+  "expo",
+  "laravel",
+  "codeigniter",
+  "wordpress",
+  "tailwind",
+  "figma",
+  "storybook",
+  "mysql",
+  "sqlServer",
+  "supabase",
+  "firebase",
+  "tawkto",
+  "n8n",
+  "vercel",
+  "railway",
+  "github",
+];

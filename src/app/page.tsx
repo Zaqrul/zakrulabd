@@ -16,21 +16,8 @@ import {
 } from "@/components/icons";
 import { HeroDemo, LiveChartDemo, LiveChatDemo, LiveCodeDemo, LiveStatusDemo } from "@/components/live-demos";
 import { WhatCanBuild } from "@/components/what-can-build";
-import { LanguageToggle, useI18n } from "@/components/language-provider";
-import {
-  SiAstro,
-  SiGithub,
-  SiLaravel,
-  SiMysql,
-  SiNextdotjs,
-  SiRailway,
-  SiReact,
-  SiSupabase,
-  SiTailwindcss,
-  SiTypescript,
-  SiVercel,
-  SiWordpress,
-} from "react-icons/si";
+import { content as t } from "@/lib/content";
+import { tech, techMarquee } from "@/lib/tech";
 import {
   SvgGrowthAnalytics,
   SvgLaunching,
@@ -42,35 +29,36 @@ import {
   SvgWebDevelopment,
 } from "iblis-react-undraw";
 
-/* Language-independent data: visuals, prices, links, names. */
+/* Presentation-only data: visuals, layout, links, and contact details. */
 const serviceDemos = [LiveCodeDemo, LiveChartDemo, LiveChatDemo, LiveStatusDemo];
 const processArt = [SvgResearching, SvgPrototypingProcess, SvgWebDevelopment, SvgLaunching];
 
 const tierMeta = [
-  { price: "RM 750", startingAt: true, hasNote: true, ctaStyle: "outline" as const, highlighted: false },
-  { price: "RM 3,500", startingAt: true, hasNote: true, ctaStyle: "primary" as const, highlighted: true },
-  { price: null, startingAt: false, hasNote: false, ctaStyle: "outline" as const, highlighted: false },
+  { ctaStyle: "outline" as const, highlighted: false },
+  { ctaStyle: "primary" as const, highlighted: true },
+  { ctaStyle: "outline" as const, highlighted: false },
+];
+
+/* Placement for the floating prompt pills around the final CTA, in content order. */
+const promptPillPositions = [
+  { place: "left-[20%] top-6 -rotate-6", delay: "0s" },
+  { place: "left-[7%] top-24 -rotate-3", delay: "0.8s" },
+  { place: "left-[1.5%] top-48 -rotate-1", delay: "1.6s" },
+  { place: "left-[1.5%] bottom-48 rotate-1", delay: "2.4s" },
+  { place: "left-[7%] bottom-24 rotate-3", delay: "3.2s" },
+  { place: "left-[20%] bottom-6 rotate-6", delay: "1.2s" },
+  { place: "right-[20%] top-6 rotate-6", delay: "0.4s" },
+  { place: "right-[7%] top-24 rotate-3", delay: "1.2s" },
+  { place: "right-[1.5%] top-48 rotate-1", delay: "2s" },
+  { place: "right-[1.5%] bottom-48 -rotate-1", delay: "2.8s" },
+  { place: "right-[7%] bottom-24 -rotate-3", delay: "3.6s" },
+  { place: "right-[20%] bottom-6 -rotate-6", delay: "1.8s" },
 ];
 
 const statMeta = [
   { Illustration: SvgGrowthAnalytics, icon: ChartIcon, iconColor: "text-teal-600", value: "+18%" },
   { Illustration: SvgMessaging, icon: ChatIcon, iconColor: "text-amber-500", value: "+15%" },
   { Illustration: SvgSearchEngines, icon: SearchIcon, iconColor: "text-white", value: "50+" },
-];
-
-const techStack = [
-  { name: "React", Icon: SiReact, color: "#61DAFB" },
-  { name: "Next.js", Icon: SiNextdotjs, color: "#000000" },
-  { name: "Astro", Icon: SiAstro, color: "#FF5D01" },
-  { name: "TypeScript", Icon: SiTypescript, color: "#3178C6" },
-  { name: "Laravel", Icon: SiLaravel, color: "#FF2D20" },
-  { name: "Tailwind CSS", Icon: SiTailwindcss, color: "#06B6D4" },
-  { name: "MySQL", Icon: SiMysql, color: "#4479A1" },
-  { name: "Supabase", Icon: SiSupabase, color: "#3FCF8E" },
-  { name: "Vercel", Icon: SiVercel, color: "#000000" },
-  { name: "Railway", Icon: SiRailway, color: "#0B0D0E" },
-  { name: "WordPress", Icon: SiWordpress, color: "#21759B" },
-  { name: "GitHub", Icon: SiGithub, color: "#181717" },
 ];
 
 const testimonials = [
@@ -100,17 +88,25 @@ const testimonials = [
   },
 ];
 
+/* The sections the sticky nav links to, in the order they appear on the page. */
+const navItems = [
+  { id: "services", label: t.nav.services },
+  { id: "projects", label: t.nav.projects },
+  { id: "pricing", label: t.nav.pricing },
+  { id: "contact", label: t.nav.contact },
+];
+
 const WHATSAPP_NUMBER = "60102551527";
 
 /* WhatsApp pre-filled messages stay in Malay — most enquiries come in Malay. */
 const waMessages = {
-  quote: "Hi Zakru! Saya nak dapatkan free quote untuk website. Boleh kita bincang?",
-  hero: "Hi Zakru! Saya jumpa website anda dan berminat nak buat website untuk business saya.",
-  starter: "Hi Zakru! Saya berminat dengan pakej Starter Website (RM750). Boleh terangkan lanjut?",
-  business: "Hi Zakru! Saya berminat dengan pakej Professional Website (RM3,500). Boleh kita bincang?",
-  custom: "Hi Zakru! Saya perlukan sistem/website custom untuk business saya. Boleh kita bincang scope dan quote?",
-  intro: "Hi Zakru! Nama saya ___, business saya ___. Saya nak buat: ___",
-  start: "Hi Zakru! Saya nak start project. Ini yang saya perlukan:",
+  quote: "Hi Zakrul! Saya nak dapatkan sebut harga percuma untuk website. Boleh kita bincang?",
+  hero: "Hi Zakrul! Saya jumpa website anda dan berminat nak buat website untuk bisnes saya.",
+  starter: "Hi Zakrul! Saya berminat dengan pakej Starter Website. Boleh terangkan lanjut?",
+  business: "Hi Zakrul! Saya berminat dengan pakej Professional Website. Boleh kita bincang?",
+  custom: "Hi Zakrul! Saya perlukan sistem web custom untuk bisnes saya. Boleh kita bincang skop dan sebut harga?",
+  intro: "Hi Zakrul! Nama saya ___, bisnes saya ___. Saya nak buat: ___",
+  start: "Hi Zakrul! Saya nak mulakan projek. Ini yang saya perlukan: ___",
 };
 
 const tierWaMessages = [waMessages.starter, waMessages.business, waMessages.custom];
@@ -278,9 +274,6 @@ function PricingCardItem({
   tier,
   index,
   badge,
-  startingAt,
-  perProject,
-  customQuote,
 }: {
   tier: {
     name: string;
@@ -291,9 +284,6 @@ function PricingCardItem({
   };
   index: number;
   badge: string;
-  startingAt: string;
-  perProject: string;
-  customQuote: string;
 }) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [isVisible, setIsVisible] = useState(false);
@@ -360,27 +350,6 @@ function PricingCardItem({
           {tier.description}
         </p>
       </div>
-      <div>
-        {meta.startingAt && (
-          <span
-            className={`block text-[11px] font-semibold uppercase tracking-wide ${
-              meta.highlighted ? "text-slate-400" : "text-muted"
-            }`}
-          >
-            {startingAt}
-          </span>
-        )}
-        <div className="flex items-baseline gap-1.5">
-          <span className={`text-3xl font-extrabold ${meta.highlighted ? "text-white" : "text-navy"}`}>
-            {meta.price ?? customQuote}
-          </span>
-          {meta.hasNote && (
-            <span className={`text-sm ${meta.highlighted ? "text-slate-400" : "text-muted"}`}>
-              {perProject}
-            </span>
-          )}
-        </div>
-      </div>
       <PrimaryButton
         href={wa(tierWaMessages[index])}
         variant={meta.ctaStyle}
@@ -411,9 +380,6 @@ function PricingCardItem({
 function PricingCards({
   tiers,
   badge,
-  startingAt,
-  perProject,
-  customQuote,
 }: {
   tiers: readonly {
     name: string;
@@ -423,30 +389,56 @@ function PricingCards({
     features: readonly string[];
   }[];
   badge: string;
-  startingAt: string;
-  perProject: string;
-  customQuote: string;
 }) {
   return (
     <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
       {tiers.map((tier, i) => (
-        <PricingCardItem
-          key={tier.name}
-          tier={tier}
-          index={i}
-          badge={badge}
-          startingAt={startingAt}
-          perProject={perProject}
-          customQuote={customQuote}
-        />
+        <PricingCardItem key={tier.name} tier={tier} index={i} badge={badge} />
       ))}
     </div>
   );
 }
 
+/* Reports which nav section the reader is currently in. A section takes over once
+   its top scrolls under the sticky nav, so the marker changes at the moment the
+   heading reaches the bar rather than when the section merely comes into view. */
+function useActiveSection(navRef: React.RefObject<HTMLElement | null>) {
+  const [activeId, setActiveId] = useState<string | null>(null);
+
+  useEffect(() => {
+    function update() {
+      const offset = (navRef.current?.offsetHeight ?? 0) + 8;
+
+      let current: string | null = null;
+      for (const { id } of navItems) {
+        const el = document.getElementById(id);
+        if (el && el.getBoundingClientRect().top <= offset) current = id;
+      }
+
+      // The last section sits above the footer, so on short viewports the page can
+      // bottom out before its top ever clears the nav. Award it the marker there.
+      const atBottom = window.innerHeight + window.scrollY >= document.documentElement.scrollHeight - 2;
+      if (atBottom) current = navItems[navItems.length - 1].id;
+
+      setActiveId(current);
+    }
+
+    update();
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", update);
+      window.removeEventListener("resize", update);
+    };
+  }, [navRef]);
+
+  return activeId;
+}
+
 export default function Home() {
-  const { t } = useI18n();
   const [activeReview, setActiveReview] = useState(0);
+  const navRef = useRef<HTMLElement>(null);
+  const activeSection = useActiveSection(navRef);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -458,7 +450,7 @@ export default function Home() {
   return (
     <div className="w-full">
       {/* NAV */}
-      <nav className="sticky top-0 z-50 border-b border-border bg-bg/95 backdrop-blur-md">
+      <nav ref={navRef} className="sticky top-0 z-50 border-b border-border bg-bg/95 backdrop-blur-md">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3.5 sm:px-6 sm:py-4">
           <a href="#" className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center">
@@ -475,38 +467,19 @@ export default function Home() {
 
           {/* Desktop Nav Links */}
           <div className="hidden items-center gap-8 lg:flex">
-            <a
-              href="#services"
-              className="group relative py-1 text-sm font-semibold text-ink transition-colors hover:text-navy"
-            >
-              {t.nav.services}
-              <span className="absolute bottom-0 left-0 h-[2.5px] w-0 rounded-full bg-amber-400 transition-all duration-200 ease-out group-hover:w-full" />
-            </a>
-            <a
-              href="#projects"
-              className="group relative py-1 text-sm font-semibold text-ink transition-colors hover:text-navy"
-            >
-              {t.nav.projects}
-              <span className="absolute bottom-0 left-0 h-[2.5px] w-0 rounded-full bg-amber-400 transition-all duration-200 ease-out group-hover:w-full" />
-            </a>
-            <a
-              href="#pricing"
-              className="group relative py-1 text-sm font-semibold text-ink transition-colors hover:text-navy"
-            >
-              {t.nav.pricing}
-              <span className="absolute bottom-0 left-0 h-[2.5px] w-0 rounded-full bg-amber-400 transition-all duration-200 ease-out group-hover:w-full" />
-            </a>
-            <a
-              href="#contact"
-              className="group relative py-1 text-sm font-semibold text-ink transition-colors hover:text-navy"
-            >
-              {t.nav.contact}
-              <span className="absolute bottom-0 left-0 h-[2.5px] w-0 rounded-full bg-amber-400 transition-all duration-200 ease-out group-hover:w-full" />
-            </a>
+            {navItems.map((item) => (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                className="group relative py-1 text-sm font-semibold text-ink transition-colors hover:text-navy"
+              >
+                {item.label}
+                <span className="absolute bottom-0 left-0 h-[2.5px] w-0 rounded-full bg-amber-400 transition-all duration-200 ease-out group-hover:w-full" />
+              </a>
+            ))}
           </div>
 
           <div className="flex items-center gap-2 sm:gap-2.5">
-            <LanguageToggle />
             <a
               href={wa(waMessages.quote)}
               target="_blank"
@@ -518,36 +491,28 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Mobile Sticky Subnav Strip */}
+        {/* Mobile subnav strip: marks the section the reader has scrolled into. */}
         <div className="flex items-center justify-around border-t border-border/70 bg-white/85 px-2 py-2 text-xs font-semibold text-ink backdrop-blur-sm lg:hidden">
-          <a
-            href="#services"
-            className="group relative px-2.5 py-1 text-center text-ink transition hover:text-navy"
-          >
-            {t.nav.services}
-            <span className="absolute bottom-0 left-0 h-[2px] w-0 rounded-full bg-amber-400 transition-all duration-200 group-hover:w-full" />
-          </a>
-          <a
-            href="#projects"
-            className="group relative px-2.5 py-1 text-center text-ink transition hover:text-navy"
-          >
-            {t.nav.projects}
-            <span className="absolute bottom-0 left-0 h-[2px] w-0 rounded-full bg-amber-400 transition-all duration-200 group-hover:w-full" />
-          </a>
-          <a
-            href="#pricing"
-            className="group relative px-2.5 py-1 text-center text-ink transition hover:text-navy"
-          >
-            {t.nav.pricing}
-            <span className="absolute bottom-0 left-0 h-[2px] w-0 rounded-full bg-amber-400 transition-all duration-200 group-hover:w-full" />
-          </a>
-          <a
-            href="#contact"
-            className="group relative px-2.5 py-1 text-center text-ink transition hover:text-navy"
-          >
-            {t.nav.contact}
-            <span className="absolute bottom-0 left-0 h-[2px] w-0 rounded-full bg-amber-400 transition-all duration-200 group-hover:w-full" />
-          </a>
+          {navItems.map((item) => {
+            const isActive = item.id === activeSection;
+            return (
+              <a
+                key={item.id}
+                href={`#${item.id}`}
+                aria-current={isActive ? "true" : undefined}
+                className={`group relative px-2.5 py-1 text-center transition ${
+                  isActive ? "text-navy" : "text-ink hover:text-navy"
+                }`}
+              >
+                {item.label}
+                <span
+                  className={`absolute bottom-0 left-0 h-[2px] rounded-full bg-amber-400 transition-all duration-300 ease-out ${
+                    isActive ? "w-full" : "w-0 group-hover:w-full"
+                  }`}
+                />
+              </a>
+            );
+          })}
         </div>
       </nav>
 
@@ -559,10 +524,9 @@ export default function Home() {
           <div className="absolute bottom-0 left-1/3 h-56 w-56 rounded-full bg-amber-300/20 blur-3xl" />
         </div>
 
-        <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-16 px-6 pb-16 pt-8 md:pb-24 md:pt-12 lg:grid-cols-2 lg:gap-12">
+        <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-16 px-6 pb-16 pt-5 md:pb-24 md:pt-8 lg:grid-cols-2 lg:gap-12">
           <div className="flex flex-col items-center gap-6 text-center lg:items-start lg:text-left">
-            <span className="-mb-3 text-[13px] font-semibold tracking-wide text-muted">{t.hero.eyebrow}</span>
-            <h1 className="font-display text-5xl font-bold leading-[1.15] tracking-tight text-navy md:text-7xl">
+            <h1 className="font-display text-[38px] font-bold leading-[1.2] tracking-tight text-navy md:text-[62px]">
               {t.hero.titleA}{" "}
               <span className="hl">{t.hero.titleHl1}</span>
               {t.hero.titleB}
@@ -603,7 +567,7 @@ export default function Home() {
       <section id="services" className="border-y border-border bg-white px-6 py-24 overflow-hidden">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto mb-12 flex max-w-xl flex-col items-center gap-3 text-center">
-            <h2 className="font-display text-4xl font-bold text-navy md:text-5xl">{t.services.heading}</h2>
+            <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl">{t.services.heading}</h2>
             <p className="text-base text-body">{t.services.sub}</p>
           </div>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -643,7 +607,7 @@ export default function Home() {
       <section id="process" className="px-6 py-24 overflow-hidden">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto mb-12 flex max-w-xl flex-col items-center gap-3 text-center">
-            <h2 className="font-display text-4xl font-bold text-navy md:text-5xl">{t.process.heading}</h2>
+            <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl">{t.process.heading}</h2>
             <p className="text-base text-body">{t.process.sub}</p>
           </div>
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -670,20 +634,14 @@ export default function Home() {
       <section id="pricing" className="border-y border-border bg-white px-6 py-24 overflow-hidden">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto mb-12 flex max-w-xl flex-col items-center gap-3 text-center">
-            <h2 className="font-display text-4xl font-bold text-navy md:text-5xl">
+            <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl">
               {t.pricing.headingA}
               <span className="hl">{t.pricing.headingHl}</span>
               {t.pricing.headingB}
             </h2>
             <p className="text-base text-body">{t.pricing.sub}</p>
           </div>
-          <PricingCards
-            tiers={t.pricing.tiers}
-            badge={t.pricing.badge}
-            startingAt={t.pricing.startingAt}
-            perProject={t.pricing.perProject}
-            customQuote={t.pricing.customQuote}
-          />
+          <PricingCards tiers={t.pricing.tiers} badge={t.pricing.badge} />
         </div>
       </section>
 
@@ -691,7 +649,7 @@ export default function Home() {
       <section id="results" className="bg-navy px-6 py-24 overflow-hidden">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto mb-11 flex max-w-2xl flex-col items-center gap-3 text-center">
-            <h2 className="font-display text-4xl font-bold text-white md:text-5xl">
+            <h2 className="font-display text-[30px] font-bold text-white md:text-5xl">
               {t.results.headingA}
               <span className="hl">{t.results.headingHl}</span>
               {t.results.headingB}
@@ -746,20 +704,23 @@ export default function Home() {
           <div className="marquee-track flex w-max items-center gap-6">
             {[0, 1].map((copy) => (
               <div key={copy} aria-hidden={copy === 1} className="flex items-center gap-6">
-                {techStack.map((tech) => (
-                  <div
-                    key={tech.name}
-                    title={tech.name}
-                    className="group flex w-40 flex-shrink-0 flex-col items-center gap-4 rounded-2xl border border-border bg-white px-5 py-8 transition duration-200 hover:-translate-y-1 hover:shadow-md"
-                  >
-                    <tech.Icon
-                      className="h-16 w-16 grayscale transition duration-200 group-hover:grayscale-0"
-                      style={{ color: tech.color }}
-                      aria-hidden="true"
-                    />
-                    <span className="text-center font-mono text-sm leading-tight text-muted">{tech.name}</span>
-                  </div>
-                ))}
+                {techMarquee.map((key) => {
+                  const { name, Icon, color } = tech[key];
+                  return (
+                    <div
+                      key={key}
+                      title={name}
+                      className="group flex w-40 flex-shrink-0 flex-col items-center gap-4 rounded-2xl border border-border bg-white px-5 py-8 transition duration-200 hover:-translate-y-1 hover:shadow-md"
+                    >
+                      <Icon
+                        className="h-16 w-16 grayscale transition duration-200 group-hover:grayscale-0"
+                        style={{ color }}
+                        aria-hidden="true"
+                      />
+                      <span className="text-center font-mono text-sm leading-tight text-muted">{name}</span>
+                    </div>
+                  );
+                })}
               </div>
             ))}
           </div>
@@ -770,7 +731,7 @@ export default function Home() {
       <section className="px-6 py-24">
         <div className="mx-auto max-w-6xl">
           <div className="mx-auto mb-11 flex max-w-xl flex-col items-center gap-3 text-center">
-            <h2 className="font-display text-4xl font-bold text-navy md:text-5xl">{t.testimonials.heading}</h2>
+            <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl">{t.testimonials.heading}</h2>
             <p className="text-base text-body">{t.testimonials.sub}</p>
           </div>
           {/* Mobile Auto-Slide (< md) */}
@@ -867,7 +828,7 @@ export default function Home() {
         <div className="mx-auto max-w-6xl">
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
             <div>
-              <h2 className="font-display text-4xl font-bold leading-tight text-navy md:text-5xl">
+              <h2 className="font-display text-[30px] font-bold leading-tight text-navy md:text-5xl">
                 {t.started.headingA}
                 <span className="hl">{t.started.headingHl}</span>
               </h2>
@@ -911,87 +872,21 @@ export default function Home() {
 
       {/* FINAL CTA */}
       <section id="contact" className="relative overflow-hidden bg-navy px-6 py-32 lg:py-36">
-        {/* Floating Prompting Pills (Desktop only: Circular Radial Arc - 6 Left, 6 Right) */}
+        {/* Floating prompt pills (desktop only: radial arc, 6 left / 6 right) */}
         <div className="absolute inset-0 mx-auto hidden max-w-6xl select-none lg:block">
-          {/* 6 Kiri (Left Circular Arc) */}
-          <div
-            className="absolute left-[20%] top-6 -rotate-6 rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-[12.5px] font-medium text-slate-200 shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-amber-400/50 hover:bg-white/15 hover:text-white animate-[gentle-float_4s_ease-in-out_infinite]"
-            style={{ animationDelay: "0s" }}
-          >
-            Bina sistem tempahan & slot
-          </div>
-          <div
-            className="absolute left-[7%] top-24 -rotate-3 rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-[12.5px] font-medium text-slate-200 shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-amber-400/50 hover:bg-white/15 hover:text-white animate-[gentle-float_4s_ease-in-out_infinite]"
-            style={{ animationDelay: "0.8s" }}
-          >
-            Optimumkan SEO Google
-          </div>
-          <div
-            className="absolute left-[1.5%] top-48 -rotate-1 rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-[12.5px] font-medium text-slate-200 shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-amber-400/50 hover:bg-white/15 hover:text-white animate-[gentle-float_4s_ease-in-out_infinite]"
-            style={{ animationDelay: "1.6s" }}
-          >
-            Web tersuai React & Laravel
-          </div>
-          <div
-            className="absolute left-[1.5%] bottom-48 rotate-1 rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-[12.5px] font-medium text-slate-200 shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-amber-400/50 hover:bg-white/15 hover:text-white animate-[gentle-float_4s_ease-in-out_infinite]"
-            style={{ animationDelay: "2.4s" }}
-          >
-            Setup Google Analytics 4
-          </div>
-          <div
-            className="absolute left-[7%] bottom-24 rotate-3 rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-[12.5px] font-medium text-slate-200 shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-amber-400/50 hover:bg-white/15 hover:text-white animate-[gentle-float_4s_ease-in-out_infinite]"
-            style={{ animationDelay: "3.2s" }}
-          >
-            Sambung database MySQL
-          </div>
-          <div
-            className="absolute left-[20%] bottom-6 rotate-6 rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-[12.5px] font-medium text-slate-200 shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-amber-400/50 hover:bg-white/15 hover:text-white animate-[gentle-float_4s_ease-in-out_infinite]"
-            style={{ animationDelay: "1.2s" }}
-          >
-            Bina borang sebut harga
-          </div>
-
-          {/* 6 Kanan (Right Circular Arc) */}
-          <div
-            className="absolute right-[20%] top-6 rotate-6 rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-[12.5px] font-medium text-slate-200 shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-amber-400/50 hover:bg-white/15 hover:text-white animate-[gentle-float_4s_ease-in-out_infinite]"
-            style={{ animationDelay: "0.4s" }}
-          >
-            Integrasi Shopify & FPX
-          </div>
-          <div
-            className="absolute right-[7%] top-24 rotate-3 rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-[12.5px] font-medium text-slate-200 shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-amber-400/50 hover:bg-white/15 hover:text-white animate-[gentle-float_4s_ease-in-out_infinite]"
-            style={{ animationDelay: "1.2s" }}
-          >
-            Pasang livechat pelanggan
-          </div>
-          <div
-            className="absolute right-[1.5%] top-48 rotate-1 rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-[12.5px] font-medium text-slate-200 shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-amber-400/50 hover:bg-white/15 hover:text-white animate-[gentle-float_4s_ease-in-out_infinite]"
-            style={{ animationDelay: "2.0s" }}
-          >
-            Laman pantas Breakdance
-          </div>
-          <div
-            className="absolute right-[1.5%] bottom-48 -rotate-1 rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-[12.5px] font-medium text-slate-200 shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-amber-400/50 hover:bg-white/15 hover:text-white animate-[gentle-float_4s_ease-in-out_infinite]"
-            style={{ animationDelay: "2.8s" }}
-          >
-            Automasi WhatsApp lead
-          </div>
-          <div
-            className="absolute right-[7%] bottom-24 -rotate-3 rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-[12.5px] font-medium text-slate-200 shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-amber-400/50 hover:bg-white/15 hover:text-white animate-[gentle-float_4s_ease-in-out_infinite]"
-            style={{ animationDelay: "3.6s" }}
-          >
-            Pindahkan hosting ke Vercel
-          </div>
-          <div
-            className="absolute right-[20%] bottom-6 -rotate-6 rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-[12.5px] font-medium text-slate-200 shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-amber-400/50 hover:bg-white/15 hover:text-white animate-[gentle-float_4s_ease-in-out_infinite]"
-            style={{ animationDelay: "1.8s" }}
-          >
-            Redesign laman web syarikat
-          </div>
+          {t.finalCta.prompts.map((prompt, i) => (
+            <div
+              key={prompt}
+              className={`absolute rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-[12.5px] font-medium text-slate-200 shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-amber-400/50 hover:bg-white/15 hover:text-white animate-[gentle-float_4s_ease-in-out_infinite] ${promptPillPositions[i].place}`}
+              style={{ animationDelay: promptPillPositions[i].delay }}
+            >
+              {prompt}
+            </div>
+          ))}
         </div>
 
         <div className="relative z-10 mx-auto flex max-w-xl flex-col items-center gap-5 text-center">
-          <h2 className="font-display text-4xl font-bold text-white md:text-5xl">
+          <h2 className="font-display text-[30px] font-bold text-white md:text-5xl">
             {t.finalCta.headingA}
             <span className="hl">{t.finalCta.headingHl}</span>
             {t.finalCta.headingB}
@@ -1095,18 +990,16 @@ export default function Home() {
             </div>
           </div>
           <div className="flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-5 sm:flex-row text-center sm:text-left">
-            <div className="flex flex-wrap items-center justify-center gap-3 text-[12.5px] text-slate-500 sm:justify-start">
-              <span>© 2026 zakrulabd. {t.footer.rights}</span>
-              <span>•</span>
-              <a href="/privacy" className="hover:text-white transition">
+            <span className="text-[12.5px] text-slate-500">© 2026 zakrulabd. {t.footer.rights}</span>
+            <div className="flex flex-wrap items-center justify-center gap-3 text-[12.5px] text-slate-500 sm:justify-end">
+              <a href="/privacy" className="transition hover:text-white">
                 {t.footer.privacy}
               </a>
               <span>•</span>
-              <a href="/terms" className="hover:text-white transition">
+              <a href="/terms" className="transition hover:text-white">
                 {t.footer.terms}
               </a>
             </div>
-            <span className="text-[12.5px] text-slate-500">{t.footer.location}</span>
           </div>
         </div>
       </footer>

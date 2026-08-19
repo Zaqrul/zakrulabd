@@ -74,6 +74,21 @@ p:has(.hl) {
   line-height: 1.45;
 }
 
+/* On narrow screens the pill's own padding is what pushes a heading past the
+   viewport edge, so tighten it there and let long headings break mid-word
+   rather than overflow. */
+@media (max-width: 640px) {
+  .hl {
+    padding: 0.06em 0.24em;
+  }
+
+  h1:has(.hl),
+  h2:has(.hl),
+  h3:has(.hl) {
+    overflow-wrap: anywhere;
+  }
+}
+
 /* Adds the reference button's tactile shadow/gloss/press mechanics on top of
    each button's own existing color, text and radius (those stay untouched here). */
 .btn-primary {

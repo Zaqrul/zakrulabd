@@ -1,14 +1,11 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
-import { useI18n, LanguageToggle } from "@/components/language-provider";
-import { ArrowRightIcon, MailIcon, MapPinIcon, PhoneIcon } from "@/components/icons";
+import { content as t } from "@/lib/content";
+import { ArrowRightIcon, MapPinIcon, PhoneIcon } from "@/components/icons";
 
 const WHATSAPP_NUMBER = "60102551527";
 
 export default function TermsPage() {
-  const { t } = useI18n();
   const terms = t.termsPage;
 
   return (
@@ -30,7 +27,6 @@ export default function TermsPage() {
           </Link>
 
           <div className="flex items-center gap-3">
-            <LanguageToggle />
             <Link
               href="/"
               className="inline-flex items-center gap-1.5 rounded-lg border border-navy/20 bg-white px-3.5 py-2 text-xs font-bold text-navy transition hover:border-navy hover:bg-navy hover:text-white"
@@ -50,7 +46,7 @@ export default function TermsPage() {
             <span>{terms.badge}</span>
           </div>
 
-          <h1 className="mt-4 font-display text-4xl font-extrabold tracking-tight text-navy md:text-5xl">
+          <h1 className="mt-4 font-display text-[30px] font-extrabold tracking-tight text-navy md:text-5xl">
             {terms.titleA}
             <span className="hl">{terms.titleHl}</span>
           </h1>
@@ -93,7 +89,7 @@ export default function TermsPage() {
               Ready to start your project?
             </h3>
             <p className="text-sm text-body mt-1">
-              Reach out to discuss your specific requirements, project milestones, or get a clear fixed quote.
+              Message me to talk through your requirements, agree on milestones, and get a fixed quote.
             </p>
           </div>
           <a
@@ -103,7 +99,7 @@ export default function TermsPage() {
             className="btn-primary inline-flex items-center gap-2 rounded-lg bg-amber-500 px-5 py-2.5 text-xs font-bold text-navy transition hover:bg-amber-600 whitespace-nowrap"
           >
             <PhoneIcon className="h-4 w-4" />
-            <span>WhatsApp Zakru</span>
+            <span>WhatsApp Zakrul</span>
           </a>
         </div>
       </main>
