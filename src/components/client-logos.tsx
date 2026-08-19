@@ -1,19 +1,17 @@
 import Image from "next/image";
 import { content as t } from "@/lib/content";
 
-/* Each logo is the client's own mark, taken from their live site and set on a
-   transparent background so every tile reads the same. Width and height are the
-   file's real pixels so Next can build the srcset. */
-const clients = [
+/* Logos and links, in the same order as content.clients.items. Each mark is the
+   client's own, taken from their live site and set on a transparent background so
+   every tile reads as one set. Width and height are the file's real pixels. */
+const clientAssets = [
   {
-    name: "Salaam Cola MY",
     url: "https://www.salaamcolamy.com/en",
     logo: "/clients/salaam-cola.png",
     width: 800,
     height: 520,
   },
   {
-    name: "KNZ Engineering",
     url: "https://knzengineering.com.my/",
     logo: "/clients/knz-engineering.png",
     width: 643,
@@ -23,30 +21,41 @@ const clients = [
 
 export function ClientLogos() {
   return (
-    <section className="border-b border-border bg-bg px-6 py-16">
-      <div className="mx-auto max-w-5xl">
-        <div className="flex justify-center">
-          <span className="text-base font-bold tracking-[0.08em] text-muted">{t.clients.heading}</span>
+    <section id="clients" className="border-b border-border bg-bg px-6 py-24">
+      <div className="mx-auto max-w-3xl">
+        <div className="mx-auto mb-12 flex max-w-xl flex-col items-center gap-3 text-center">
+          <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl">
+            {t.clients.headingA}
+            <span className="hl">{t.clients.headingHl}</span>
+            {t.clients.headingB}
+          </h2>
+          <p className="text-base text-body">{t.clients.sub}</p>
         </div>
-        <div className="mt-8 grid grid-cols-2 gap-5 sm:grid-cols-3">
-          {clients.map((client) => (
-            <a
-              key={client.name}
-              href={client.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              title={client.name}
-              className="group flex h-28 items-center justify-center rounded-2xl border border-border bg-white px-6 py-5 transition duration-200 hover:-translate-y-1 hover:shadow-md"
-            >
-              <Image
-                src={client.logo}
-                alt={client.name}
-                width={client.width}
-                height={client.height}
-                className="max-h-full w-auto object-contain grayscale transition duration-200 group-hover:grayscale-0"
-              />
-            </a>
-          ))}
+
+        {/* Four across on large screens. aspect-square keeps the tile square when
+            max-w-full has to shrink it below 150px on a narrow phone. */}
+        <div className="grid grid-cols-1 justify-items-center gap-5 sm:grid-cols-2 lg:grid-cols-4">
+          {t.clients.items.map((client, i) => {
+            const asset = clientAssets[i];
+            return (
+              <a
+                key={client.name}
+                href={asset.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={client.name}
+                className="group flex aspect-square w-[150px] max-w-full items-center justify-center rounded-2xl border border-border bg-white p-5 transition duration-200 hover:-translate-y-1 hover:border-amber-400/50 hover:shadow-md"
+              >
+                <Image
+                  src={asset.logo}
+                  alt={client.name}
+                  width={asset.width}
+                  height={asset.height}
+                  className="max-h-full w-auto object-contain grayscale transition duration-200 group-hover:grayscale-0"
+                />
+              </a>
+            );
+          })}
         </div>
       </div>
     </section>

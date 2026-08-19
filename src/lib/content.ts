@@ -134,7 +134,11 @@ export const content = {
     ],
   },
   clients: {
-    heading: "CLIENTS I’VE BUILT FOR",
+    headingA: "Previous ",
+    headingHl: "Clients",
+    headingB: " I’ve Worked With",
+    sub: "Businesses across Malaysia I’ve built, fixed, and launched for. Every project was scoped and delivered by me directly.",
+    items: [{ name: "Salaam Cola MY" }, { name: "KNZ Engineering" }],
   },
   process: {
     heading: "How I Work",
