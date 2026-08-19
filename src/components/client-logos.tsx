@@ -17,6 +17,12 @@ const clientAssets = [
     width: 643,
     height: 283,
   },
+  {
+    url: "https://sritanduk.com/",
+    logo: "/clients/sri-tanduk.png",
+    width: 512,
+    height: 438,
+  },
 ];
 
 export function ClientLogos() {
