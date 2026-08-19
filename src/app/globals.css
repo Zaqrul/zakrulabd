@@ -43,6 +43,12 @@ html {
   html {
     scroll-behavior: auto;
   }
+
+  /* Accordions open and close instantly for anyone who asked for less motion. */
+  .accordion-panel,
+  .accordion-panel * {
+    transition: none !important;
+  }
 }
 
 body {

@@ -140,3 +140,21 @@ export function breadcrumb(name: string, path: string) {
     ],
   };
 }
+
+/* Every question on the comparison page, in one FAQPage node. Whether Google
+   chooses to show FAQ rich results or not, this is what tells a crawler these
+   headings are questions and the paragraph under each one is its answer. */
+export function faqPage(path: string) {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "@id": `${SITE}${path}#faq`,
+    mainEntity: content.faq.categories.flatMap((category) =>
+      category.items.map((item) => ({
+        "@type": "Question",
+        name: item.q,
+        acceptedAnswer: { "@type": "Answer", text: item.a },
+      }))
+    ),
+  };
+}

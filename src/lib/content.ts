@@ -41,8 +41,8 @@ export const content = {
       {
         title: "Hosting & Support",
         description:
-          "Hosting on Vercel and Railway, plus ongoing maintenance to keep your site fast, secure, and online.",
-        bullets: ["Vercel & Railway hosting", "Performance monitoring", "Ongoing maintenance"],
+          "Hosting on Vercel or Railway, a global host like Hostinger, or a local Malaysian server like ServerFreak, plus ongoing maintenance to keep your site fast, secure, and online.",
+        bullets: ["Cloud, global & local hosting", "Performance monitoring", "Ongoing maintenance"],
       },
     ],
   },
@@ -183,10 +183,10 @@ export const content = {
         features: [
           "One-page or simple multi-section site",
           "Mobile and tablet responsive",
-          "Clear content structure",
           "WhatsApp or contact button",
-          "Essential SEO setup",
-          "Fast-loading modern design",
+          "Essential on-page SEO",
+          "Domain and hosting setup",
+          "Launch and basic edit guide",
         ],
       },
       {
@@ -196,13 +196,13 @@ export const content = {
           "Suited to SMEs, service businesses, and consultants who need a site customers can trust, understand, and enquire through.",
         cta: "Ask About Professional",
         features: [
-          "Home, About, Services, and Contact pages",
-          "Custom section planning",
-          "SEO-friendly headings and metadata",
-          "Clear calls to action throughout",
-          "Page speed optimisation",
-          "Analytics and tracking setup",
-          "Full handover walkthrough",
+          "Everything in Starter, plus:",
+          "Multi-page site with content planning",
+          "Enquiry forms with email notifications",
+          "Metadata, sitemap, and Google Business setup",
+          "Google Analytics 4 and conversion tracking",
+          "Page speed and Core Web Vitals tuning",
+          "Handover walkthrough and training video",
         ],
       },
       {
@@ -212,16 +212,169 @@ export const content = {
           "For businesses that need a custom web application, third-party integrations, automated lead handling, and advanced technical SEO.",
         cta: "Let’s Discuss",
         features: [
-          "Custom web system & database design",
-          "Third-party integrations (payments, CRM, ERP, WhatsApp)",
-          "Live chat setup & automated lead routing",
-          "Business workflow automation & webhooks",
-          "Advanced technical SEO & structured data",
-          "Core Web Vitals tuning & security hardening",
-          "Scalable architecture, full handover & training",
+          "Everything in Professional, plus:",
+          "Custom web system and database design",
+          "Integrations (payments, CRM, ERP, WhatsApp)",
+          "Live chat and automated lead routing",
+          "Workflow automation and webhooks",
+          "Advanced technical SEO and structured data",
+          "Security hardening and ongoing support",
         ],
       },
     ],
+    compare: {
+      footnote: "Not sure which one fits?",
+      link: "Compare what each package builds",
+      titleA: "What Each Package ",
+      titleHl: "Builds",
+      sub: "Each package includes everything in the one before it. Scope only — every project is still quoted individually.",
+      badge: "SCOPE COMPARISON",
+      back: "Back to Pricing",
+      closeTitle: "Compared everything and ready to start?",
+      closeBody: "Message me with what you have in mind, or go back and pick the package closest to it. Ask me anything specific about your project and you get a straight answer, not a sales pitch.",
+      columns: ["Starter", "Professional", "Advanced"],
+      legend: [
+        { mark: "full", label: "Included" },
+        { mark: "part", label: "Basic version; the deeper work sits one package up" },
+        { mark: "none", label: "Not in this package" },
+      ],
+      rowHeading: "What you want built",
+      searchPlaceholder: "Search what you need",
+      searchEmpty: "Nothing matches that. Try a shorter word, or just message me.",
+      ctaLabel: "Ask",
+      groups: [
+        {
+          label: "Sites people read",
+          rows: [
+            {
+              what: "Personal brand or portfolio",
+              note: "Freelancer, consultant, creative, CV site",
+              marks: ["full", "full", "full"],
+            },
+            {
+              what: "One-page campaign or launch page",
+              note: "Single offer, single call to action",
+              marks: ["full", "full", "full"],
+            },
+            {
+              what: "Small business profile",
+              note: "Who you are, what you sell, how to reach you",
+              marks: ["part", "full", "full"],
+            },
+            {
+              what: "Full company website",
+              note: "Home, About, Services, Projects, Contact",
+              marks: ["none", "full", "full"],
+            },
+            {
+              what: "Catalogue without checkout",
+              note: "Browse and enquire, price on request",
+              marks: ["none", "full", "full"],
+            },
+            {
+              what: "Blog or news section you update yourself",
+              note: "Editable posts, categories, author pages",
+              marks: ["none", "full", "full"],
+            },
+            {
+              what: "Landing pages for a paid campaign",
+              note: "Tracked, tested, wired to your ad account",
+              marks: ["none", "full", "full"],
+            },
+          ],
+        },
+        {
+          label: "Systems people operate",
+          rows: [
+            {
+              what: "Online store with cart and checkout",
+              note: "Products, orders, FPX, cards, e-wallets",
+              marks: ["none", "none", "full"],
+            },
+            {
+              what: "Booking or appointment system",
+              note: "Live availability, confirmations, reminders",
+              marks: ["none", "none", "full"],
+            },
+            {
+              what: "Inventory or stock dashboard",
+              note: "Real-time stock, low-stock alerts, multi-location",
+              marks: ["none", "none", "full"],
+            },
+            {
+              what: "Customer or member login portal",
+              note: "Accounts, roles, private documents and records",
+              marks: ["none", "none", "full"],
+            },
+            {
+              what: "Shopify, CRM, or ERP integration",
+              note: "Two-way sync, no duplicate data entry",
+              marks: ["none", "none", "full"],
+            },
+            {
+              what: "Quotation or approval workflow",
+              note: "Forms that route, notify, and get signed off",
+              marks: ["none", "none", "full"],
+            },
+          ],
+        },
+        {
+          label: "Everything around the site",
+          rows: [
+            {
+              what: "Domain, hosting, and going live",
+              note: "Vercel, Railway, Hostinger, or a local host",
+              marks: ["full", "full", "full"],
+            },
+            {
+              what: "Analytics and conversion tracking",
+              note: "GA4, events, and goals you can actually read",
+              marks: ["none", "full", "full"],
+            },
+            {
+              what: "Live chat on the site",
+              note: "Widget install, then routing and automation",
+              marks: ["none", "part", "full"],
+            },
+            {
+              what: "Technical SEO and structured data",
+              note: "On-page basics, then schema and indexing work",
+              marks: ["part", "part", "full"],
+            },
+            {
+              what: "Rescue of an existing site",
+              note: "Broken, slow, hacked, or stuck with an old developer",
+              marks: ["none", "full", "full"],
+            },
+          ],
+        },
+      ],
+      dividesTitle: "The two lines that separate them",
+      divides: [
+        {
+          step: "Starter → Professional",
+          claim: "One page that introduces you, versus a site that sells and is measured",
+          points: [
+            "Several pages with planned content, not one long scroll",
+            "Enquiry forms that reach your inbox, not only a WhatsApp button",
+            "GA4 and conversion tracking, so you can see what works",
+            "Metadata, sitemap, and Google Business, so you get found",
+            "A handover walkthrough, so you can edit it yourself",
+          ],
+        },
+        {
+          step: "Professional → Advanced",
+          claim: "A site people read, versus a system people log into and transact on",
+          points: [
+            "A database behind the site: orders, stock, bookings, accounts",
+            "Payments and other systems connected properly",
+            "Lead routing and workflow automation instead of manual follow-up",
+            "Structured data and Core Web Vitals work page by page",
+            "Security hardening and support once it is live",
+          ],
+        },
+      ],
+    },
   },
   results: {
     headingA: "Real Experience in the ",
@@ -296,6 +449,110 @@ export const content = {
       "Automasi lead WhatsApp",
       "Pindah hosting ke Vercel",
       "Redesign website syarikat",
+    ],
+  },
+  faq: {
+    badge: "FAQ",
+    titleA: "Questions People ",
+    titleHl: "Ask Me",
+    sub: "The things that come up in almost every first conversation. If yours is not here, message me and ask directly.",
+    categories: [
+      {
+        label: "Scope and packages",
+        items: [
+          {
+            q: "I am not sure which package I need. What now?",
+            a: "Message me with what your business does and what you want people to do on the site. I will tell you which package covers it, and I will say so plainly if a smaller one is enough.",
+          },
+          {
+            q: "Can I start with Starter and upgrade later?",
+            a: "Yes. I build every site on the same modern stack, so a Starter site can grow into a Professional one, or gain a booking or store system later, without starting from zero.",
+          },
+          {
+            q: "My project does not fit any of the three. Is that a problem?",
+            a: "No. The packages are a starting point for the conversation, not a menu I refuse to leave. Custom scopes are quoted the same way as anything else.",
+          },
+          {
+            q: "Do you build on WordPress or custom code?",
+            a: "Whichever fits the job. WordPress when your team needs to edit content daily, custom Next.js when speed, integrations, or a real system matter more. I will explain the trade-off before we decide.",
+          },
+          {
+            q: "Can you fix or redesign the website I already have?",
+            a: "Yes, and it is a common request. Broken, slow, hacked, or abandoned by the previous developer, I take it over, and you keep whatever is still worth keeping.",
+          },
+        ],
+      },
+      {
+        label: "Pricing and payment",
+        items: [
+          {
+            q: "Why are there no prices on the site?",
+            a: "Because a five-page company profile and a five-page site with a booking system are not the same job. I quote a fixed price per project once I know the scope, so you never get a surprise invoice.",
+          },
+          {
+            q: "How do I get a quote?",
+            a: "Message me on WhatsApp with a short description of what you need. Most quotes go out within a day or two, after one call or a few messages to pin down the scope.",
+          },
+          {
+            q: "How is payment usually split?",
+            a: "A deposit to start and the balance on completion, before handover. Larger systems are split into milestones so you pay as parts get delivered, not all upfront.",
+          },
+          {
+            q: "Are hosting and domain included in the quote?",
+            a: "The setup work is. The domain and hosting subscriptions are billed by the provider, and I keep them in your name so you own them, not me.",
+          },
+        ],
+      },
+      {
+        label: "Timeline and process",
+        items: [
+          {
+            q: "How long does a website take?",
+            a: "A Starter site is usually days rather than weeks. A Professional site typically takes a few weeks, and a custom system depends on how much it has to do. You get a real date with the quote.",
+          },
+          {
+            q: "What do you need from me before you start?",
+            a: "Your logo if you have one, whatever content and photos exist, and access to your domain. If you have none of that, tell me early and we plan around it.",
+          },
+          {
+            q: "I do not have content or photos yet. Can we still start?",
+            a: "Yes. I structure the pages first and mark what is missing, so you know exactly what to write or shoot. I will not leave you guessing at a blank page.",
+          },
+          {
+            q: "How many rounds of changes do I get?",
+            a: "Enough to get it right. Revisions during the build are part of the job. What sits outside is new scope added after we agreed the plan, and I will always say so before doing it.",
+          },
+          {
+            q: "Am I dealing with you or with a team?",
+            a: "With me, from the first message to handover. No account manager in between, and nothing passed to someone you have never spoken to.",
+          },
+        ],
+      },
+      {
+        label: "After launch",
+        items: [
+          {
+            q: "Do I own the website when it is done?",
+            a: "Yes. The domain, the hosting account, the code, and the content are yours. Nothing is held hostage, and you can move to another developer whenever you want.",
+          },
+          {
+            q: "Can I update the site myself afterwards?",
+            a: "Yes. Every project ends with a handover walkthrough covering the parts you will edit. If you would rather not touch it, I can handle updates instead.",
+          },
+          {
+            q: "What happens if something breaks after launch?",
+            a: "Anything broken that I built gets fixed, no charge. Message me and I will look at it, not send you a ticket number.",
+          },
+          {
+            q: "Will my site rank on Google?",
+            a: "I build the technical side properly so it can rank: clean structure, fast pages, correct metadata, and tracking that shows what works. Ranking itself also depends on your market and content, and I will be honest about that rather than promise page one.",
+          },
+          {
+            q: "Do you offer ongoing maintenance?",
+            a: "Yes, as an ongoing arrangement covering updates, monitoring, backups, and small changes. It is optional, and plenty of clients handle their own site after handover.",
+          },
+        ],
+      },
     ],
   },
   footer: {

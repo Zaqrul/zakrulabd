@@ -167,3 +167,44 @@ export function MapPinIcon(props: IconProps) {
   );
 }
 
+
+export function CompareIcon(props: IconProps) {
+  return (
+    <svg {...stroke(props)}>
+      <rect x="3" y="4" width="18" height="16" rx="2" />
+      <line x1="3" y1="9.5" x2="21" y2="9.5" />
+      <line x1="10" y1="9.5" x2="10" y2="20" />
+      <line x1="15.5" y1="9.5" x2="15.5" y2="20" />
+    </svg>
+  );
+}
+
+export function HelpIcon(props: IconProps) {
+  return (
+    <svg {...stroke(props)}>
+      <circle cx="12" cy="12" r="9" />
+      <path d="M9.4 9.2a2.7 2.7 0 0 1 5.2.9c0 1.8-2.6 2.4-2.6 3.9" />
+      <line x1="12" y1="17.4" x2="12" y2="17.4" />
+    </svg>
+  );
+}
+
+/* Accordion marker: two bars, one of which rotates away, so + eases into –
+   instead of the glyph swapping abruptly. */
+export function PlusMinus({ isOpen, className = "" }: { isOpen: boolean; className?: string }) {
+  return (
+    <span
+      aria-hidden
+      className={`relative mt-0.5 flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full border border-border transition-colors duration-300 ${
+        isOpen ? "bg-amber-400" : "bg-white"
+      } ${className}`}
+    >
+      <span className="absolute h-[1.5px] w-3 rounded-full bg-navy" />
+      <span
+        className={`absolute h-[1.5px] w-3 rounded-full bg-navy transition-transform duration-300 ease-out ${
+          isOpen ? "rotate-0" : "rotate-90"
+        }`}
+      />
+    </span>
+  );
+}

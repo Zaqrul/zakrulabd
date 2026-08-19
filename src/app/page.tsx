@@ -2,21 +2,20 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import {
   ArrowRightIcon,
   ChartIcon,
   ChatIcon,
   CheckIcon,
   ExternalLinkIcon,
-  MailIcon,
-  MapPinIcon,
-  PhoneIcon,
   SearchIcon,
   StarIcon,
 } from "@/components/icons";
 import { HeroDemo, LiveChartDemo, LiveChatDemo, LiveCodeDemo, LiveStatusDemo } from "@/components/live-demos";
 import { WhatCanBuild } from "@/components/what-can-build";
 import { ClientLogos } from "@/components/client-logos";
+import { SiteFooter } from "@/components/site-footer";
 import { content as t } from "@/lib/content";
 import { WHATSAPP_NUMBER, wa, waMessages } from "@/lib/contact";
 import { tech, techMarquee } from "@/lib/tech";
@@ -354,7 +353,17 @@ function PricingCardItem({
         {tier.cta}
       </PrimaryButton>
       <div className="mt-1 flex flex-col gap-3">
-        {tier.features.map((f) => (
+        {tier.features.map((f) =>
+          /* An "Everything in X, plus:" line heads the list rather than being a
+             feature of its own, so it carries no tick. */
+          f.endsWith("plus:") ? (
+            <p
+              key={f}
+              className={`text-[13px] font-semibold ${meta.highlighted ? "text-amber-300" : "text-primary-600"}`}
+            >
+              {f}
+            </p>
+          ) : (
           <div key={f} className="flex items-start gap-2.5">
             <CheckIcon
               className={`mt-0.5 h-[18px] w-[18px] flex-shrink-0 ${
@@ -367,7 +376,8 @@ function PricingCardItem({
               {f}
             </span>
           </div>
-        ))}
+          )
+        )}
       </div>
     </div>
   );
@@ -640,6 +650,15 @@ export default function Home() {
             <p className="text-base text-body">{t.pricing.sub}</p>
           </div>
           <PricingCards tiers={t.pricing.tiers} badge={t.pricing.badge} />
+          <p className="mt-8 text-center text-[13.5px] text-muted">
+            {t.pricing.compare.footnote}{" "}
+            <Link
+              href="/compare"
+              className="font-semibold text-navy underline decoration-amber-500 decoration-2 underline-offset-4 hover:decoration-navy"
+            >
+              {t.pricing.compare.link}
+            </Link>
+          </p>
         </div>
       </section>
 
@@ -935,86 +954,7 @@ export default function Home() {
       </section>
 
       {/* FOOTER */}
-      <footer className="bg-navy px-6 py-14 text-slate-400">
-        <div className="mx-auto max-w-6xl">
-          <div className="mb-10 grid grid-cols-2 gap-8 md:grid-cols-[2fr_1fr_1fr_1fr]">
-            <div className="col-span-2 flex max-w-xs flex-col gap-3.5 md:col-span-1">
-              <div className="flex items-center gap-2.5">
-                <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center">
-                  <Image
-                    src="/logo-ghost-outline.webp"
-                    alt=""
-                    width={512}
-                    height={512}
-                    className="h-7 w-7 object-contain"
-                  />
-                </div>
-                <span className="font-display text-base font-bold text-white">zakrulabd</span>
-              </div>
-              <p className="text-[13.5px] leading-relaxed">{t.footer.blurb}</p>
-              <a href="mailto:zakrulabd@gmail.com" className="flex items-center gap-2 text-[13px] hover:text-white">
-                <MailIcon className="h-[15px] w-[15px]" />
-                <span>zakrulabd@gmail.com</span>
-              </a>
-              <a
-                href={`https://wa.me/${WHATSAPP_NUMBER}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-center gap-2 text-[13px] hover:text-white"
-              >
-                <PhoneIcon className="h-[15px] w-[15px]" />
-                <span>010-255 1527</span>
-              </a>
-              <div className="flex items-center gap-2 text-[13px]">
-                <MapPinIcon className="h-[15px] w-[15px]" />
-                <span>{t.footer.location}</span>
-              </div>
-            </div>
-            <div className="flex flex-col gap-3">
-              <span className="text-[12.5px] font-bold tracking-wide text-slate-200">{t.footer.services}</span>
-              {t.footer.servicesLinks.map((l) => (
-                <a key={l} href="#services" className="text-[13.5px] hover:text-white">
-                  {l}
-                </a>
-              ))}
-            </div>
-            <div className="flex flex-col gap-3">
-              <span className="text-[12.5px] font-bold tracking-wide text-slate-200">{t.footer.howIWork}</span>
-              {t.footer.howIWorkLinks.map((l, i) => (
-                <a key={l} href={["#process", "#pricing", "#results"][i]} className="text-[13.5px] hover:text-white">
-                  {l}
-                </a>
-              ))}
-            </div>
-            <div className="flex flex-col gap-3">
-              <span className="text-[12.5px] font-bold tracking-wide text-slate-200">{t.footer.getStarted}</span>
-              <a
-                href={wa(waMessages.quote)}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-[13.5px] hover:text-white"
-              >
-                {t.footer.getStartedLinks[0]}
-              </a>
-              <a href="#pricing" className="text-[13.5px] hover:text-white">
-                {t.footer.getStartedLinks[1]}
-              </a>
-            </div>
-          </div>
-          <div className="flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-5 sm:flex-row text-center sm:text-left">
-            <span className="text-[12.5px] text-slate-500">© 2026 zakrulabd. {t.footer.rights}</span>
-            <div className="flex flex-wrap items-center justify-center gap-3 text-[12.5px] text-slate-500 sm:justify-end">
-              <a href="/privacy" className="transition hover:text-white">
-                {t.footer.privacy}
-              </a>
-              <span>•</span>
-              <a href="/terms" className="transition hover:text-white">
-                {t.footer.terms}
-              </a>
-            </div>
-          </div>
-        </div>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }
