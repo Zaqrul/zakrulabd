@@ -64,6 +64,20 @@ export function ClientLogos() {
               </a>
             );
           })}
+
+          {/* Fills the fourth slot in the row: an open invitation rather than a
+              client, so it is dashed and scrolls to the contact section. */}
+          <a
+            href="#contact"
+            className="group flex aspect-square w-[150px] max-w-full flex-col items-center justify-center gap-2 rounded-2xl border-2 border-dashed border-white/25 bg-white/5 p-5 text-center transition duration-200 hover:-translate-y-1 hover:border-amber-400/60 hover:bg-white/10"
+          >
+            <span className="flex h-7 w-7 items-center justify-center rounded-full border border-white/25 text-lg font-bold leading-none text-slate-300 transition-colors group-hover:border-amber-400/60 group-hover:text-amber-300">
+              +
+            </span>
+            <span className="text-[13px] font-semibold leading-snug text-slate-300 transition-colors group-hover:text-white">
+              {t.clients.next}
+            </span>
+          </a>
         </div>
       </div>
     </section>
