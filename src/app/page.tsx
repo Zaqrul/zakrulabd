@@ -58,6 +58,17 @@ const promptPillPositions = [
   { place: "right-[20%] bottom-6 -rotate-6", delay: "1.8s" },
 ];
 
+/* Six of the prompts on phones, kept inside the section's vertical padding
+   (py-32 = 128px top and bottom) so none of them land on the heading or CTA. */
+const mobilePromptPillPositions = [
+  { place: "left-2 top-4 -rotate-6", delay: "0s" },
+  { place: "right-2 top-16 rotate-6", delay: "0.9s" },
+  { place: "left-5 top-28 -rotate-2", delay: "1.8s" },
+  { place: "right-4 bottom-28 rotate-3", delay: "2.7s" },
+  { place: "left-3 bottom-16 -rotate-5", delay: "1.4s" },
+  { place: "right-2 bottom-4 rotate-6", delay: "3.4s" },
+];
+
 const statMeta = [
   { Illustration: SvgGrowthAnalytics, icon: ChartIcon, iconColor: "text-teal-600", value: "+18%" },
   { Illustration: SvgMessaging, icon: ChatIcon, iconColor: "text-amber-500", value: "+15%" },
@@ -870,6 +881,20 @@ export default function Home() {
               key={prompt}
               className={`absolute rounded-full border border-white/15 bg-white/[0.06] px-4 py-2 text-[12.5px] font-medium text-slate-200 shadow-xl backdrop-blur-md transition-all duration-300 hover:scale-105 hover:border-amber-400/50 hover:bg-white/15 hover:text-white animate-[gentle-float_4s_ease-in-out_infinite] ${promptPillPositions[i].place}`}
               style={{ animationDelay: promptPillPositions[i].delay }}
+            >
+              {prompt}
+            </div>
+          ))}
+        </div>
+
+        {/* Same idea for phones, but only six, smaller and dimmer: here they are
+            background texture around the CTA, not something to read. */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 select-none lg:hidden">
+          {t.finalCta.prompts.slice(0, 6).map((prompt, i) => (
+            <div
+              key={prompt}
+              className={`absolute whitespace-nowrap rounded-full border border-white/10 bg-white/[0.04] px-3 py-1.5 text-[10.5px] font-medium text-slate-400 backdrop-blur-sm animate-[gentle-float_4s_ease-in-out_infinite] ${mobilePromptPillPositions[i].place}`}
+              style={{ animationDelay: mobilePromptPillPositions[i].delay }}
             >
               {prompt}
             </div>
