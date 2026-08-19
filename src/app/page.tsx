@@ -983,8 +983,8 @@ export default function Home() {
               ))}
             </div>
             <div className="flex flex-col gap-3">
-              <span className="text-[12.5px] font-bold tracking-wide text-slate-200">{t.footer.company}</span>
-              {t.footer.companyLinks.map((l, i) => (
+              <span className="text-[12.5px] font-bold tracking-wide text-slate-200">{t.footer.about}</span>
+              {t.footer.aboutLinks.map((l, i) => (
                 <a key={l} href={["#process", "#pricing", "#results"][i]} className="text-[13.5px] hover:text-white">
                   {l}
                 </a>
