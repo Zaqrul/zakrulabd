@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useMemo, useState } from "react";
-import { CheckIcon, PlusMinus, SearchIcon } from "@/components/icons";
+import { CheckIcon, SearchIcon } from "@/components/icons";
 import { content as t } from "@/lib/content";
 import { wa, waMessages } from "@/lib/contact";
 
@@ -63,7 +63,6 @@ function TierCta({ index, className = "" }: { index: number; className?: string 
 
 export function ScopeCompareTable() {
   const [query, setQuery] = useState("");
-  const [collapsed, setCollapsed] = useState<string[]>([]);
 
   // A group disappears once the search empties it, so the reader never scrolls
   // past a heading with nothing under it.
@@ -77,12 +76,6 @@ export function ScopeCompareTable() {
       }))
       .filter((g) => g.rows.length > 0);
   }, [query]);
-
-  // Searching means the reader is hunting for one row, so collapsed groups
-  // reopen rather than hiding the hit they just typed towards.
-  const isCollapsed = (label: string) => query.trim() === "" && collapsed.includes(label);
-  const toggleGroup = (label: string) =>
-    setCollapsed((prev) => (prev.includes(label) ? prev.filter((l) => l !== label) : [...prev, label]));
 
   return (
     <div className="rounded-[18px] border border-border bg-white">
@@ -113,37 +106,22 @@ export function ScopeCompareTable() {
 
         {groups.map((group) => (
           <div key={group.label}>
-            <button
-              type="button"
-              onClick={() => toggleGroup(group.label)}
-              aria-expanded={!isCollapsed(group.label)}
-              className="flex w-full items-center justify-between gap-4 border-b border-border px-5 py-4 text-left"
-            >
-              <span className="font-display text-[16px] font-bold text-navy">{group.label}</span>
-              <PlusMinus isOpen={!isCollapsed(group.label)} />
-            </button>
-            {/* Rows stay mounted so the group can ease shut instead of vanishing. */}
-            <div
-              className={`accordion-panel grid transition-all duration-300 ease-out ${
-                isCollapsed(group.label) ? "grid-rows-[0fr] opacity-0" : "grid-rows-[1fr] opacity-100"
-              }`}
-            >
-              <div className="overflow-hidden">
-                {group.rows.map((row) => (
-                  <div key={row.what} className="border-b border-border px-5 py-4">
-                    <span className="block text-[14px] font-medium text-ink">{row.what}</span>
-                    <span className="block text-[12.5px] leading-snug text-muted">{row.note}</span>
-                    <div className="mt-3 grid grid-cols-3">
-                      {row.marks.map((mark, i) => (
-                        <div key={c.columns[i]} className="flex justify-center">
-                          <Mark mark={mark} />
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                ))}
-              </div>
+            <div className="border-b border-border px-5 pb-3 pt-7">
+              <h2 className="font-display text-[16px] font-bold text-navy">{group.label}</h2>
             </div>
+            {group.rows.map((row) => (
+              <div key={row.what} className="border-b border-border px-5 py-4">
+                <span className="block text-[14px] font-medium text-ink">{row.what}</span>
+                <span className="block text-[12.5px] leading-snug text-muted">{row.note}</span>
+                <div className="mt-3 grid grid-cols-3">
+                  {row.marks.map((mark, i) => (
+                    <div key={c.columns[i]} className="flex justify-center">
+                      <Mark mark={mark} />
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
           </div>
         ))}
 

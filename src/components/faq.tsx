@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { PlusMinus } from "@/components/icons";
+import { ChevronDownIcon, PlusMinus } from "@/components/icons";
 import { content as t } from "@/lib/content";
 
 const faq = t.faq;
@@ -12,21 +12,44 @@ export function Faq() {
 
   const category = faq.categories[activeCategory];
 
+  function selectCategory(index: number) {
+    setActiveCategory(index);
+    setOpenQuestion(faq.categories[index].items[0].q);
+  }
+
   return (
     <div className="flex flex-col gap-8">
-      {/* Category switch: a segmented control on desktop, a scrollable strip on
-          phones, so four labels never wrap into a stack of half-empty rows. */}
-      <div className="-mx-5 overflow-x-auto px-5 md:mx-0 md:px-0">
+      {/* Category switch: a dropdown on phones, where four pills would either wrap
+          or hide off-screen, and a segmented control from tablet up. */}
+      <label className="flex flex-col gap-2 md:hidden">
+        <span className="text-[11px] font-bold uppercase tracking-wide text-muted">{faq.selectLabel}</span>
+        <div className="relative">
+          <select
+            value={activeCategory}
+            onChange={(e) => selectCategory(Number(e.target.value))}
+            className="w-full appearance-none rounded-lg border border-border bg-white px-4 py-3 pr-10 font-display text-[14px] font-bold text-navy outline-none focus:border-navy"
+          >
+            {faq.categories.map((c, i) => (
+              <option key={c.label} value={i}>
+                {c.label}
+              </option>
+            ))}
+          </select>
+          <ChevronDownIcon
+            aria-hidden
+            className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+          />
+        </div>
+      </label>
+
+      <div className="hidden md:block">
         <div className="mx-auto flex w-max gap-1 rounded-full border border-border bg-white p-1">
           {faq.categories.map((c, i) => (
             <button
               key={c.label}
               type="button"
               aria-pressed={i === activeCategory}
-              onClick={() => {
-                setActiveCategory(i);
-                setOpenQuestion(faq.categories[i].items[0].q);
-              }}
+              onClick={() => selectCategory(i)}
               className={`whitespace-nowrap rounded-full px-4 py-2 text-[13px] font-bold transition-colors ${
                 i === activeCategory ? "bg-navy text-white" : "text-muted hover:text-navy"
               }`}

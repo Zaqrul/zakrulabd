@@ -456,6 +456,7 @@ export const content = {
     titleA: "Questions People ",
     titleHl: "Ask Me",
     sub: "The things that come up in almost every first conversation. If yours is not here, message me and ask directly.",
+    selectLabel: "Select related topic",
     categories: [
       {
         label: "Scope and packages",
