@@ -5,7 +5,7 @@
 - **Email:** `zakrulabd@gmail.com`
 - **Location:** Selangor, Malaysia
 - **Role:** Dedicated Solo Freelance Web Developer & Technical Marketer (No agency / No team wording).
-- **Communication Tone:** First-person direct and plain ("Talk With Me", "How I Work"). Avoid marketing filler and stacked em dashes in site copy.
+- **Communication Tone:** First-person direct and plain ("Let’s Discuss", "How I Work"). Avoid marketing filler and stacked em dashes in site copy.
 - **WhatsApp:** Pre-filled `wa.me` messages stay in Malay and address the owner as "Zakrul".
 - **Pricing:** Tier cards list scope only. No prices are shown on the site; every project is quoted individually.
 

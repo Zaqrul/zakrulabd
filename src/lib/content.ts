@@ -210,7 +210,7 @@ export const content = {
         tagline: "For custom systems and integrations",
         description:
           "For businesses that need a custom web application, third-party integrations, automated lead handling, and advanced technical SEO.",
-        cta: "Talk With Me",
+        cta: "Let’s Discuss",
         features: [
           "Custom web system & database design",
           "Third-party integrations (payments, CRM, ERP, WhatsApp)",
@@ -258,7 +258,7 @@ export const content = {
     ],
     intro:
       "No agency middlemen and no long enquiry forms. Send a short message and we will take it from there.",
-    ctaPrimary: "Talk With Me",
+    ctaPrimary: "Let’s Discuss",
     ctaSecondary: "See Pricing",
     expectTitle: "What to expect",
     expect: [
@@ -304,8 +304,8 @@ export const content = {
     location: "Selangor, Malaysia",
     services: "SERVICES",
     servicesLinks: ["Web Development", "SEO & Marketing", "Live Chat & Automation", "Hosting & Support"],
-    about: "ABOUT ME",
-    aboutLinks: ["Process", "Pricing", "Results"],
+    howIWork: "HOW I WORK",
+    howIWorkLinks: ["Process", "Pricing", "Results"],
     getStarted: "GET STARTED",
     getStartedLinks: ["Get a Free Quote", "See Pricing"],
     privacy: "Privacy Policy",
