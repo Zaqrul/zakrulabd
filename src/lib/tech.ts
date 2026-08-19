@@ -9,6 +9,7 @@ import {
   SiExpo,
   SiFigma,
   SiFirebase,
+  SiGit,
   SiGithub,
   SiJavascript,
   SiLaravel,
@@ -63,6 +64,7 @@ export const tech = {
   wordpress: { name: "WordPress", Icon: SiWordpress, color: "#21759B" },
   shopify: { name: "Shopify", Icon: SiShopify, color: "#7AB55C" },
   stripe: { name: "Stripe", Icon: SiStripe, color: "#635BFF" },
+  git: { name: "Git", Icon: SiGit, color: "#F05032" },
   github: { name: "GitHub", Icon: SiGithub, color: "#181717" },
 } satisfies Record<string, { name: string; Icon: TechIcon; color: string }>;
 
@@ -96,5 +98,6 @@ export const techMarquee: TechKey[] = [
   "n8n",
   "vercel",
   "railway",
+  "git",
   "github",
 ];

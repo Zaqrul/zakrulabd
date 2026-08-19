@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Image from "next/image";
 import { CheckIcon, ChevronDownIcon } from "@/components/icons";
 import { tech, type TechKey } from "@/lib/tech";
 import { content as t } from "@/lib/content";
@@ -14,6 +15,13 @@ import {
 } from "@/components/capability-demos";
 
 const demos = [StoreDemo, InventoryDemo, BookingDemo, TawkChatDemo, ShopifySyncDemo, PaymentDemo];
+
+/* Logos are each client's own mark, taken from their live site. Width and height
+   are the file's real pixels so Next can size the srcset. */
+const clients = [
+  { name: "Salaam Cola MY", url: "https://www.salaamcolamy.com/en", logo: "/clients/salaam-cola.png", width: 512, height: 512 },
+  { name: "KNZ Engineering", url: "https://knzengineering.com.my/", logo: "/clients/knz-engineering.png", width: 647, height: 283 },
+];
 
 /* The stack each build actually runs on, in the same order as content.build.items.
    Each row is a combination that ships as a unit: a backend, its database, and the
@@ -138,6 +146,34 @@ export function WhatCanBuild() {
 
           <div className="h-80 overflow-hidden rounded-2xl border border-border bg-white shadow-xl md:h-96">
             <CurrentDemo />
+          </div>
+        </div>
+
+        {/* Client logos: a static grid rather than the marquee used for the tech
+            stack, since the list is short and every logo should stay readable. */}
+        <div className="mt-16 border-t border-border pt-10">
+          <div className="flex justify-center">
+            <span className="text-base font-bold tracking-[0.08em] text-muted">{t.clients.heading}</span>
+          </div>
+          <div className="mx-auto mt-6 grid max-w-3xl grid-cols-2 gap-5 sm:grid-cols-3">
+            {clients.map((client) => (
+              <a
+                key={client.name}
+                href={client.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                title={client.name}
+                className="group flex h-28 items-center justify-center rounded-2xl border border-border bg-white p-6 transition duration-200 hover:-translate-y-1 hover:shadow-md"
+              >
+                <Image
+                  src={client.logo}
+                  alt={client.name}
+                  width={client.width}
+                  height={client.height}
+                  className="max-h-full w-auto object-contain grayscale transition duration-200 group-hover:grayscale-0"
+                />
+              </a>
+            ))}
           </div>
         </div>
       </div>

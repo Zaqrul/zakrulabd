@@ -133,6 +133,9 @@ export const content = {
       },
     ],
   },
+  clients: {
+    heading: "CLIENTS I’VE BUILT FOR",
+  },
   process: {
     heading: "How I Work",
     sub: "Four stages, working with me directly, from the first conversation to launch and the work that follows.",
