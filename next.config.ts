@@ -1,25 +1,12 @@
 import type { NextConfig } from "next";
+import { WHATSAPP_NUMBER, waMessages } from "./src/lib/contact";
 
-const WHATSAPP_NUMBER = "60102551527";
-
-/** Branded short links -> WhatsApp with a pre-filled message. */
+/** Branded short links -> WhatsApp, using the same messages as the site itself. */
 const waShortLinks: { path: string; message: string }[] = [
-  {
-    path: "/wa",
-    message: "Hi Zakru! Saya nak dapatkan free quote untuk website. Boleh kita bincang?",
-  },
-  {
-    path: "/wa/starter",
-    message: "Hi Zakru! Saya berminat dengan pakej Starter Website (RM750). Boleh terangkan lanjut?",
-  },
-  {
-    path: "/wa/business",
-    message: "Hi Zakru! Saya berminat dengan pakej Professional Website (RM3,500). Boleh kita bincang?",
-  },
-  {
-    path: "/wa/custom",
-    message: "Hi Zakru! Saya perlukan sistem/website custom untuk business saya. Boleh kita bincang scope dan quote?",
-  },
+  { path: "/wa", message: waMessages.quote },
+  { path: "/wa/starter", message: waMessages.starter },
+  { path: "/wa/business", message: waMessages.business },
+  { path: "/wa/custom", message: waMessages.custom },
 ];
 
 const securityHeaders = [

@@ -18,7 +18,9 @@ import { HeroDemo, LiveChartDemo, LiveChatDemo, LiveCodeDemo, LiveStatusDemo } f
 import { WhatCanBuild } from "@/components/what-can-build";
 import { ClientLogos } from "@/components/client-logos";
 import { content as t } from "@/lib/content";
+import { WHATSAPP_NUMBER, wa, waMessages } from "@/lib/contact";
 import { tech, techMarquee } from "@/lib/tech";
+import { useInView } from "@/lib/use-in-view";
 import {
   SvgGrowthAnalytics,
   SvgLaunching,
@@ -97,24 +99,7 @@ const navItems = [
   { id: "contact", label: t.nav.contact },
 ];
 
-const WHATSAPP_NUMBER = "60102551527";
-
-/* WhatsApp pre-filled messages stay in Malay — most enquiries come in Malay. */
-const waMessages = {
-  quote: "Hi Zakrul! Saya nak dapatkan sebut harga percuma untuk website. Boleh kita bincang?",
-  hero: "Hi Zakrul! Saya jumpa website anda dan berminat nak buat website untuk bisnes saya.",
-  starter: "Hi Zakrul! Saya berminat dengan pakej Starter Website. Boleh terangkan lanjut?",
-  business: "Hi Zakrul! Saya berminat dengan pakej Professional Website. Boleh kita bincang?",
-  custom: "Hi Zakrul! Saya perlukan sistem web custom untuk bisnes saya. Boleh kita bincang skop dan sebut harga?",
-  intro: "Hi Zakrul! Nama saya ___, bisnes saya ___. Saya nak buat: ___",
-  start: "Hi Zakrul! Saya nak mulakan projek. Ini yang saya perlukan: ___",
-};
-
 const tierWaMessages = [waMessages.starter, waMessages.business, waMessages.custom];
-
-function wa(message: string) {
-  return `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
-}
 
 function PrimaryButton({
   href,
@@ -440,6 +425,7 @@ export default function Home() {
   const [activeReview, setActiveReview] = useState(0);
   const navRef = useRef<HTMLElement>(null);
   const activeSection = useActiveSection(navRef);
+  const { ref: techRef, inView: techInView } = useInView<HTMLDivElement>();
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -703,7 +689,7 @@ export default function Home() {
         <div className="mx-auto flex max-w-3xl flex-col items-center px-6">
           <span className="text-base font-bold tracking-[0.08em] text-muted">{t.tech.heading}</span>
         </div>
-        <div className="marquee-fade mt-6 overflow-hidden">
+        <div ref={techRef} className="marquee-fade mt-6 overflow-hidden">
           <div className="marquee-track flex w-max items-center gap-6">
             {[0, 1].map((copy) => (
               <div key={copy} aria-hidden={copy === 1} className="flex items-center gap-6">
@@ -716,7 +702,9 @@ export default function Home() {
                       className="group flex w-40 flex-shrink-0 flex-col items-center gap-4 rounded-2xl border border-border bg-white px-5 py-8 transition duration-200 hover:-translate-y-1 hover:shadow-md"
                     >
                       <Icon
-                        className="h-16 w-16 grayscale transition duration-200 group-hover:grayscale-0"
+                        className={`h-16 w-16 transition duration-500 group-hover:grayscale-0 ${
+                          techInView ? "grayscale-0" : "grayscale"
+                        }`}
                         style={{ color }}
                         aria-hidden="true"
                       />

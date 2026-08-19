@@ -1,6 +1,9 @@
+"use client";
+
 import Image from "next/image";
 import { content as t } from "@/lib/content";
 import { PlusIcon } from "@/components/icons";
+import { useInView } from "@/lib/use-in-view";
 
 /* Keyed by client name rather than by position: display order is set once in
    content.clients.items, and reordering it can never pair a logo with another
@@ -28,6 +31,8 @@ const clientAssets: Record<string, { url: string; logo: string; width: number; h
 };
 
 export function ClientLogos() {
+  const { ref, inView } = useInView<HTMLDivElement>();
+
   return (
     <section id="clients" className="bg-navy px-6 py-24">
       <div className="mx-auto max-w-3xl">
@@ -42,7 +47,7 @@ export function ClientLogos() {
 
         {/* Four across on large screens. aspect-square keeps the tile square when
             max-w-full has to shrink it below 150px on a narrow phone. */}
-        <div className="grid grid-cols-1 justify-items-center gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div ref={ref} className="grid grid-cols-2 justify-items-center gap-4 sm:gap-5 lg:grid-cols-4">
           {t.clients.items.map((client) => {
             const asset = clientAssets[client.name];
             if (!asset) return null;
@@ -60,7 +65,9 @@ export function ClientLogos() {
                   alt={client.name}
                   width={asset.width}
                   height={asset.height}
-                  className="max-h-full w-auto object-contain grayscale transition duration-200 group-hover:grayscale-0"
+                  className={`max-h-full w-auto object-contain transition duration-500 group-hover:grayscale-0 ${
+                    inView ? "grayscale-0" : "grayscale"
+                  }`}
                 />
               </a>
             );

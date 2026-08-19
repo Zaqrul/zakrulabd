@@ -1,9 +1,8 @@
 import Link from "next/link";
 import Image from "next/image";
 import { content as t } from "@/lib/content";
+import { WHATSAPP_NUMBER } from "@/lib/contact";
 import { ArrowRightIcon, MapPinIcon, PhoneIcon } from "@/components/icons";
-
-const WHATSAPP_NUMBER = "60102551527";
 
 export default function TermsPage() {
   const terms = t.termsPage;
