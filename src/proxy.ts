@@ -111,7 +111,13 @@ function isRateLimited(ip: string): boolean {
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const userAgent = request.headers.get("user-agent") || "";
+  /* cf-connecting-ip first: while a hostname is proxied through Cloudflare it
+     is the only header guaranteed to hold the visitor's own address, so the
+     rate limiter counts visitors rather than a handful of Cloudflare edges.
+     It is simply absent when the record is DNS-only, and the usual forwarding
+     headers take over. */
   const ip =
+    request.headers.get("cf-connecting-ip") ||
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
     request.headers.get("x-real-ip") ||
     "127.0.0.1";
