@@ -10,6 +10,7 @@ const routes = [
   { path: "", lastModified: "2026-08-20", changeFrequency: "weekly" as const, priority: 1.0 },
   { path: "/compare", lastModified: "2026-08-20", changeFrequency: "monthly" as const, priority: 0.7 },
   { path: "/notes", lastModified: "2026-08-20", changeFrequency: "monthly" as const, priority: 0.7 },
+  { path: "/contact", lastModified: "2026-08-20", changeFrequency: "yearly" as const, priority: 0.8 },
   { path: "/privacy", lastModified: "2026-08-20", changeFrequency: "monthly" as const, priority: 0.5 },
   { path: "/terms", lastModified: "2026-08-20", changeFrequency: "monthly" as const, priority: 0.5 },
 ];

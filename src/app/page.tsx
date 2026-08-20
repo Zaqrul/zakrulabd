@@ -962,15 +962,15 @@ export default function Home() {
             {t.finalCta.headingB}
           </h2>
           <p className="text-base leading-relaxed text-slate-300">{t.finalCta.sub}</p>
-          <a
-            href={wa(waMessages.start)}
-            target="_blank"
-            rel="noopener noreferrer"
+          {/* The one place the site asks for a written brief rather than a
+              chat, so it goes to the form. WhatsApp is still offered below. */}
+          <Link
+            href="/contact"
             className="btn-primary mt-2 inline-flex items-center gap-2 rounded-lg bg-amber-500 px-7 py-3.5 text-[15px] font-bold text-navy hover:bg-amber-600"
           >
             {t.finalCta.cta}
             <ArrowRightIcon className="h-[18px] w-[18px]" />
-          </a>
+          </Link>
           <div className="flex flex-wrap items-center justify-center gap-1.5 text-[13.5px] text-slate-400">
             <span>{t.finalCta.whatsapp}</span>
             <a
