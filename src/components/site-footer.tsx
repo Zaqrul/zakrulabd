@@ -10,7 +10,7 @@ import { WHATSAPP_NUMBER, wa, waMessages } from "@/lib/contact";
 export function SiteFooter() {
   return (
     <footer className="bg-navy px-6 py-14 text-slate-400">
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-shell">
         <div className="mb-10 grid grid-cols-2 gap-8 md:grid-cols-[2fr_1fr_1fr_1fr]">
           <div className="col-span-2 flex max-w-xs flex-col gap-3.5 md:col-span-1">
             <div className="flex items-center gap-2.5">

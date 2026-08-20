@@ -138,7 +138,7 @@ export const content = {
     headingHl: "Clients",
     headingB: " I’ve Worked With",
     sub: "Businesses across Malaysia I’ve built, fixed, and launched for. Every project was scoped and delivered by me directly.",
-    items: [{ name: "Sri Tanduk Enterprise" }, { name: "Salaam Cola MY" }, { name: "KNZ Engineering" }],
+    items: [{ name: "Sri Tanduk Enterprise" }, { name: "Haikai Tech" }, { name: "KNZ Engineering" }],
     next: "You might be next",
   },
   process: {

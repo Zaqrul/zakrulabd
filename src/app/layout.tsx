@@ -1,6 +1,9 @@
 import type { Metadata } from "next";
 import { Inter, Plus_Jakarta_Sans, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
+import { GoogleAnalytics } from "@/components/google-analytics";
+import { Analytics } from "@vercel/analytics/next";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 import { TawkWidget } from "@/components/tawk-widget";
 import { structuredData } from "@/lib/structured-data";
 
@@ -90,6 +93,12 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
+  /* Search Console's meta-tag method. Set the env var to the token's content
+     value only, not the whole tag. Verifying by DNS TXT in Cloudflare instead
+     is fine — then leave this unset and no tag is emitted. */
+  verification: {
+    google: process.env.NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION,
+  },
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -107,6 +116,11 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body className="min-h-full flex flex-col">
         {children}
         <TawkWidget />
+        {/* Web Analytics and Speed Insights only report once these are on the
+            page — turning them on in the Vercel dashboard is not enough. */}
+        <Analytics />
+        <SpeedInsights />
+        <GoogleAnalytics />
       </body>
     </html>
   );

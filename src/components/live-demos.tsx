@@ -1,4 +1,4 @@
-import Image from "next/image";
+import { ImageWithSkeleton } from "@/components/skeleton";
 
 function CodeLine({
   growAnim,
@@ -100,12 +100,13 @@ export function HeroDemo() {
             sritanduk.com
           </span>
         </div>
-        <Image
+        <ImageWithSkeleton
           src="/sritanduk-preview.webp"
           alt="Sri Tanduk website built by zakrulabd"
           width={1000}
           height={483}
           priority
+          wrapperClassName="aspect-[1000/483] w-full"
           className="h-auto w-full"
         />
       </div>

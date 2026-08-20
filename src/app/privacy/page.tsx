@@ -31,7 +31,7 @@ export default function PrivacyPage() {
       />
       {/* HEADER */}
       <header className="sticky top-0 z-50 border-b border-border bg-bg/90 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-6 py-4">
+        <div className="mx-auto flex max-w-shell items-center justify-between gap-4 px-6 py-4">
           <Link href="/" className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center">
               <Image
@@ -122,7 +122,7 @@ export default function PrivacyPage() {
 
       {/* FOOTER */}
       <footer className="border-t border-border bg-white px-6 py-8 text-slate-500">
-        <div className="mx-auto flex max-w-5xl flex-col items-center justify-between gap-4 text-xs sm:flex-row">
+        <div className="mx-auto flex max-w-shell flex-col items-center justify-between gap-4 text-xs sm:flex-row">
           <div className="flex items-center gap-4">
             <span>© 2026 zakrulabd. {t.footer.rights}</span>
             <span>•</span>

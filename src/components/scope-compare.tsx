@@ -50,7 +50,7 @@ function TierCta({ index, className = "" }: { index: number; className?: string 
       href={wa(tierWaMessages[index])}
       target="_blank"
       rel="noopener noreferrer"
-      className={`btn-primary inline-flex items-center justify-center rounded-lg px-3.5 py-1.5 text-[11.5px] font-bold transition-colors ${
+      className={`btn-primary inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-1.5 text-[11.5px] font-bold transition-colors ${
         index === 1
           ? "bg-amber-500 text-navy hover:bg-amber-600"
           : "border-[1.5px] border-primary-900 text-primary-900 hover:bg-primary-900 hover:text-white"
@@ -78,9 +78,9 @@ export function ScopeCompareTable() {
   }, [query]);
 
   return (
-    <div className="rounded-[18px] border border-border bg-white">
-      <div className="px-5 py-4 md:px-6">
-        <label className="flex items-center gap-2.5 rounded-lg border border-border bg-bg px-3 py-2 focus-within:border-navy">
+    <div>
+      <div className="pb-4">
+        <label className="flex items-center gap-2.5 bg-white px-3 py-2.5 ring-1 ring-transparent focus-within:ring-navy">
           <SearchIcon className="h-4 w-4 flex-shrink-0 text-muted" />
           <input
             value={query}
@@ -95,7 +95,7 @@ export function ScopeCompareTable() {
       {/* MOBILE: the row label takes a line of its own and the three marks sit
           under it, aligned to the tier row pinned below the site header. */}
       <div className="md:hidden">
-        <div className="sticky top-[69px] z-30 grid grid-cols-3 border-y border-border bg-white">
+        <div className="sticky top-[69px] z-30 grid grid-cols-3 border-y border-border bg-bg">
           {c.columns.map((col, i) => (
             <div key={col} className="flex flex-col items-center gap-1.5 px-1 py-3">
               <span className="text-center font-display text-[13px] font-bold text-navy">{col}</span>
@@ -106,11 +106,11 @@ export function ScopeCompareTable() {
 
         {groups.map((group) => (
           <div key={group.label}>
-            <div className="border-b border-border px-5 pb-3 pt-7">
+            <div className="border-b border-border pb-3 pt-7">
               <h2 className="font-display text-[16px] font-bold text-navy">{group.label}</h2>
             </div>
             {group.rows.map((row) => (
-              <div key={row.what} className="border-b border-border px-5 py-4">
+              <div key={row.what} className="border-b border-border py-4">
                 <span className="block text-[14px] font-medium text-ink">{row.what}</span>
                 <span className="block text-[12.5px] leading-snug text-muted">{row.note}</span>
                 <div className="mt-3 grid grid-cols-3">
@@ -125,7 +125,7 @@ export function ScopeCompareTable() {
           </div>
         ))}
 
-        {groups.length === 0 && <p className="px-5 py-12 text-center text-[13.5px] text-muted">{c.searchEmpty}</p>}
+        {groups.length === 0 && <p className="py-12 text-center text-[13.5px] text-muted">{c.searchEmpty}</p>}
       </div>
 
       {/* DESKTOP: one grid, with the tier row pinned so a mark far down the table
@@ -134,11 +134,11 @@ export function ScopeCompareTable() {
         <table className="w-full border-collapse text-left">
           <thead>
             <tr>
-              <th className="sticky top-[69px] z-30 bg-white px-6 py-3 shadow-[inset_0_-1px_0_var(--color-border)]" />
+              <th className="sticky top-[69px] z-30 bg-bg py-3 pr-6 shadow-[inset_0_-1px_0_var(--color-border)]" />
               {c.columns.map((col, i) => (
                 <th
                   key={col}
-                  className="sticky top-[69px] z-30 w-[132px] bg-white px-3 py-3 text-center align-middle shadow-[inset_0_-1px_0_var(--color-border)]"
+                  className="sticky top-[69px] z-30 w-[132px] bg-bg px-3 py-3 text-center align-middle shadow-[inset_0_-1px_0_var(--color-border)]"
                 >
                   <span className="block font-display text-[14px] font-bold text-navy">{col}</span>
                   <TierCta index={i} className="mt-2" />
@@ -151,13 +151,13 @@ export function ScopeCompareTable() {
             {groups.map((group) => (
               <Fragment key={group.label}>
                 <tr>
-                  <td colSpan={4} className="px-6 pb-3 pt-9">
+                  <td colSpan={4} className="pb-3 pt-9">
                     <h2 className="font-display text-[17px] font-bold text-navy">{group.label}</h2>
                   </td>
                 </tr>
                 {group.rows.map((row) => (
-                  <tr key={row.what} className="border-t border-border hover:bg-bg">
-                    <td className="px-6 py-4 align-middle">
+                  <tr key={row.what} className="border-t border-border hover:bg-white/60">
+                    <td className="py-4 pr-6 align-middle">
                       <span className="block text-[14px] font-medium text-ink">{row.what}</span>
                       <span className="block text-[12.5px] leading-snug text-muted">{row.note}</span>
                     </td>
@@ -173,7 +173,7 @@ export function ScopeCompareTable() {
 
             {groups.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-6 py-12 text-center text-[13.5px] text-muted">
+                <td colSpan={4} className="py-12 text-center text-[13.5px] text-muted">
                   {c.searchEmpty}
                 </td>
               </tr>
@@ -182,7 +182,7 @@ export function ScopeCompareTable() {
         </table>
       </div>
 
-      <div className="flex flex-wrap gap-x-6 gap-y-2 border-t border-border px-5 py-4 text-[12.5px] text-muted md:px-6">
+      <div className="flex flex-wrap gap-x-6 gap-y-2 border-t border-border py-4 text-[12.5px] text-muted">
         {c.legend.map((l) => (
           <span key={l.mark} className="flex items-center gap-2">
             <Mark mark={l.mark} />

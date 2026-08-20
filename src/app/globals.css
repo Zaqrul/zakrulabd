@@ -32,6 +32,10 @@
   --color-amber-400: #fbcf33;
   --color-amber-500: #f7c325;
   --color-amber-600: #e0ad12;
+
+  /* One shell width for header, hero, content and footer, so every band on
+     every page lines up on the same left and right edge. */
+  --container-shell: 1200px;
 }
 
 html {
@@ -328,3 +332,44 @@ p:has(.hl) {
   }
 }
 
+
+/* Skeleton placeholder: a soft grey block with one light band sweeping across
+   it, so a pending section reads as loading rather than as empty layout. */
+.skeleton {
+  position: relative;
+  overflow: hidden;
+  background-color: color-mix(in srgb, var(--color-border) 75%, var(--color-bg));
+  border-radius: 4px;
+}
+
+.skeleton::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.85), transparent);
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+}
+
+/* On the dark bands the same block has to lift off navy instead of off grey. */
+.skeleton-dark {
+  background-color: rgba(255, 255, 255, 0.09);
+}
+
+.skeleton-dark::after {
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.16), transparent);
+}
+
+@keyframes skeleton-sweep {
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+/* The sweep is decoration; anyone who asked for less motion still gets the
+   block, just without anything moving across it. */
+@media (prefers-reduced-motion: reduce) {
+  .skeleton::after {
+    animation: none;
+  }
+}

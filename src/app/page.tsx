@@ -457,7 +457,7 @@ export default function Home() {
     <div className="w-full">
       {/* NAV */}
       <nav ref={navRef} className="sticky top-0 z-50 border-b border-border bg-bg/95 backdrop-blur-md">
-        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3.5 sm:px-6 sm:py-4">
+        <div className="mx-auto flex max-w-shell items-center justify-between gap-3 px-4 py-3.5 sm:px-6 sm:py-4">
           <a href="#" className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center">
               <Image
@@ -530,7 +530,7 @@ export default function Home() {
           <div className="absolute bottom-0 left-1/3 h-56 w-56 rounded-full bg-amber-300/20 blur-3xl" />
         </div>
 
-        <div className="relative z-10 mx-auto grid max-w-6xl items-center gap-16 px-6 pb-16 pt-5 md:pb-24 md:pt-8 lg:grid-cols-2 lg:gap-12">
+        <div className="relative z-10 mx-auto grid max-w-shell items-center gap-16 px-6 pb-16 pt-5 md:pb-24 md:pt-8 lg:grid-cols-2 lg:gap-12">
           <div className="flex flex-col items-center gap-6 text-center lg:items-start lg:text-left">
             <h1 className="font-display text-[38px] font-bold leading-[1.2] tracking-tight text-navy md:text-[62px]">
               {t.hero.titleA}{" "}
@@ -571,7 +571,7 @@ export default function Home() {
 
       {/* SERVICES */}
       <section id="services" className="border-y border-border bg-white px-6 py-24 overflow-hidden">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-shell">
           <div className="mx-auto mb-12 flex max-w-xl flex-col items-center gap-3 text-center">
             <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl">{t.services.heading}</h2>
             <p className="text-base text-body">{t.services.sub}</p>
@@ -613,7 +613,7 @@ export default function Home() {
 
       {/* PROCESS */}
       <section id="process" className="px-6 py-24 overflow-hidden">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-shell">
           <div className="mx-auto mb-12 flex max-w-xl flex-col items-center gap-3 text-center">
             <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl">{t.process.heading}</h2>
             <p className="text-base text-body">{t.process.sub}</p>
@@ -640,7 +640,7 @@ export default function Home() {
 
       {/* PRICING */}
       <section id="pricing" className="border-y border-border bg-white px-6 py-24 overflow-hidden">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-shell">
           <div className="mx-auto mb-12 flex max-w-xl flex-col items-center gap-3 text-center">
             <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl">
               {t.pricing.headingA}
@@ -650,11 +650,11 @@ export default function Home() {
             <p className="text-base text-body">{t.pricing.sub}</p>
           </div>
           <PricingCards tiers={t.pricing.tiers} badge={t.pricing.badge} />
-          <p className="mt-8 text-center text-[13.5px] text-muted">
+          <p className="mt-8 flex flex-col items-center gap-3 text-center text-[13.5px] text-muted lg:block">
             {t.pricing.compare.footnote}{" "}
             <Link
               href="/compare"
-              className="font-semibold text-navy underline decoration-amber-500 decoration-2 underline-offset-4 hover:decoration-navy"
+              className="inline-block w-fit max-w-full self-center rounded-full bg-amber-400 px-4 py-2 font-semibold text-navy underline decoration-navy decoration-2 underline-offset-4 lg:w-auto lg:rounded-none lg:bg-transparent lg:p-0 lg:decoration-amber-500 lg:hover:decoration-navy"
             >
               {t.pricing.compare.link}
             </Link>
@@ -664,7 +664,7 @@ export default function Home() {
 
       {/* RESULTS */}
       <section id="results" className="bg-navy px-6 py-24 overflow-hidden">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-shell">
           <div className="mx-auto mb-11 flex max-w-2xl flex-col items-center gap-3 text-center">
             <h2 className="font-display text-[30px] font-bold text-white md:text-5xl">
               {t.results.headingA}
@@ -746,7 +746,7 @@ export default function Home() {
 
       {/* TESTIMONIALS */}
       <section className="px-6 py-24">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-shell">
           <div className="mx-auto mb-11 flex max-w-xl flex-col items-center gap-3 text-center">
             <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl">{t.testimonials.heading}</h2>
             <p className="text-base text-body">{t.testimonials.sub}</p>
@@ -842,7 +842,7 @@ export default function Home() {
 
       {/* GET STARTED */}
       <section className="border-y border-border bg-white px-6 py-24">
-        <div className="mx-auto max-w-6xl">
+        <div className="mx-auto max-w-shell">
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
             <div>
               <h2 className="font-display text-[30px] font-bold leading-tight text-navy md:text-5xl">
@@ -890,7 +890,7 @@ export default function Home() {
       {/* FINAL CTA */}
       <section id="contact" className="relative overflow-hidden bg-navy px-6 py-32 lg:py-36">
         {/* Floating prompt pills (desktop only: radial arc, 6 left / 6 right) */}
-        <div className="absolute inset-0 mx-auto hidden max-w-6xl select-none lg:block">
+        <div className="absolute inset-0 mx-auto hidden max-w-shell select-none lg:block">
           {t.finalCta.prompts.map((prompt, i) => (
             <div
               key={prompt}

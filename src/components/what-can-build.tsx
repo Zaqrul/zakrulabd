@@ -43,7 +43,7 @@ export function WhatCanBuild() {
 
   return (
     <section id="projects" className="border-y border-border bg-white px-6 py-24">
-      <div className="mx-auto max-w-6xl">
+      <div className="mx-auto max-w-shell">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start lg:gap-12">
           <h2 className="font-display text-[30px] font-bold leading-tight text-navy md:text-5xl">
             {current.headingBefore}
