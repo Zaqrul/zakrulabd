@@ -48,6 +48,15 @@ export default function ContactPage() {
             fills the space that leaves instead of a stretch of empty grey. */}
         <div className="grid items-start gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] lg:gap-16">
           <div className="max-w-2xl">
+            {/* Phones lose the whole side column, so the form opened on a bare
+                field with nothing of the site around it. One drawing above it,
+                smaller than the desktop pair and only shown where that column
+                is gone, keeps the page recognisable without pushing the first
+                field off the screen. */}
+            <div className="mb-8 w-full max-w-[280px] lg:hidden">
+              <SvgConversation primarycolor="#f7c325" height={200} className="h-auto w-full" />
+            </div>
+
             <ContactForm />
           </div>
 
