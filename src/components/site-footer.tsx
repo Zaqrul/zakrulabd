@@ -75,7 +75,11 @@ export function SiteFooter() {
           <div className="flex flex-col gap-3">
             <span className="text-[12.5px] font-bold tracking-wide text-slate-200">{t.footer.howIWork}</span>
             {t.footer.howIWorkLinks.map((l, i) => (
-              <Link key={l} href={["/#process", "/#pricing", "/#results"][i]} className="text-[13.5px] hover:text-white">
+              <Link
+                key={l}
+                href={["/#process", "/#pricing", "/#results", "/blog"][i]}
+                className="text-[13.5px] hover:text-white"
+              >
                 {l}
               </Link>
             ))}

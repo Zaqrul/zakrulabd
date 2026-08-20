@@ -563,7 +563,7 @@ export const content = {
     services: "SERVICES",
     servicesLinks: ["Web Development", "SEO & Marketing", "Live Chat & Automation", "Hosting & Support"],
     howIWork: "HOW I WORK",
-    howIWorkLinks: ["Process", "Pricing", "Results"],
+    howIWorkLinks: ["Process", "Pricing", "Results", "Notes"],
     getStarted: "GET STARTED",
     getStartedLinks: ["Get a Free Quote", "See Pricing"],
     privacy: "Privacy Policy",

@@ -1,5 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
+import { posts } from "@/lib/posts";
 
 /* lastModified used to be new Date(), which restamped every page on every
    deploy — a deploy that only changed a colour claimed all four pages were
@@ -8,10 +9,20 @@ import { SITE_URL } from "@/lib/site";
 const routes = [
   { path: "", lastModified: "2026-08-20", changeFrequency: "weekly" as const, priority: 1.0 },
   { path: "/compare", lastModified: "2026-08-20", changeFrequency: "monthly" as const, priority: 0.7 },
+  { path: "/blog", lastModified: "2026-08-20", changeFrequency: "monthly" as const, priority: 0.7 },
   { path: "/privacy", lastModified: "2026-08-20", changeFrequency: "monthly" as const, priority: 0.5 },
   { path: "/terms", lastModified: "2026-08-20", changeFrequency: "monthly" as const, priority: 0.5 },
 ];
 
 export default function sitemap(): MetadataRoute.Sitemap {
-  return routes.map(({ path, ...rest }) => ({ url: `${SITE_URL}${path}`, ...rest }));
+  /* Articles carry their own publication date, so unlike the fixed pages above
+     their lastmod is true without anyone remembering to update it. */
+  const articles = posts.map((post) => ({
+    url: `${SITE_URL}/blog/${post.slug}`,
+    lastModified: post.date,
+    changeFrequency: "yearly" as const,
+    priority: 0.6,
+  }));
+
+  return [...routes.map(({ path, ...rest }) => ({ url: `${SITE_URL}${path}`, ...rest })), ...articles];
 }
