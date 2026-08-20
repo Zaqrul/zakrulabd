@@ -73,21 +73,12 @@ export const metadata: Metadata = {
     title: "zakrulabd — Web Development & Digital Marketing in Malaysia",
     description:
       "Websites and custom web systems built with React, Laravel, and WordPress — alongside technical SEO, GA4 analytics, and automation.",
-    images: [
-      {
-        url: "/og-image.png",
-        width: 1200,
-        height: 630,
-        alt: "zakrulabd — Web Development & SEO for Businesses in Malaysia",
-      },
-    ],
   },
   twitter: {
     card: "summary_large_image",
     title: "zakrulabd — Web Development & Digital Marketing in Malaysia",
     description:
       "Websites and custom web systems built with React, Laravel, and WordPress — alongside technical SEO, GA4 analytics, and automation.",
-    images: ["/og-image.png"],
   },
   robots: {
     index: true,
