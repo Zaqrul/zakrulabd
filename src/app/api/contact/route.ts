@@ -116,6 +116,7 @@ export async function POST(request: Request) {
     ["name", name],
     ["email", email],
     ["phone", phone],
+    ["package", chosenPackage],
     ["website", website],
     ["message", message],
   ] as const) {
@@ -154,16 +155,52 @@ export async function POST(request: Request) {
     attachments.push({ filename: safeName(file.name), content: Buffer.from(await file.arrayBuffer()) });
   }
 
-  const lines = [
-    `Name: ${name}`,
-    `Email: ${email}`,
-    phone ? `Phone: +60${phone}` : null,
-    chosenPackage ? `Package: ${chosenPackage}` : null,
-    website ? `Website: ${website}` : null,
-    attachments.length ? `Attachments: ${attachments.map((a) => a.filename).join(", ")}` : null,
+  /* Read on a phone between other work, so it leads with the line that decides
+     what happens next, then the details as labelled rows, then the brief. Every
+     value is escaped: the body is written by whoever filled the form and lands
+     in a client that renders markup. */
+  const rows: [string, string][] = [
+    ["Name", name],
+    ["Package", chosenPackage],
+    ["Email", email],
+    ["Phone", `+60${phone}`],
+    ...(website ? ([["Website", website]] as [string, string][]) : []),
+    ...(attachments.length
+      ? ([["Attachments", attachments.map((a) => a.filename).join(", ")]] as [string, string][])
+      : []),
+  ];
+
+  const text = [
+    `New enquiry from ${name} — ${chosenPackage}`,
     "",
+    ...rows.map(([key, value]) => `${key}: ${value}`),
+    "",
+    "Brief:",
     message,
-  ].filter((line) => line !== null);
+    "",
+    `Reply to this email and it goes straight to ${email}.`,
+  ].join("\n");
+
+  const row = ([key, value]: [string, string]) =>
+    `<tr><td style="padding:12px 24px;border-bottom:1px solid #e5e5e5;color:#767676;font-size:12px;width:110px;vertical-align:top">${escapeHtml(key)}</td><td style="padding:12px 24px 12px 0;border-bottom:1px solid #e5e5e5;color:#171717;font-size:14px;font-weight:600">${escapeHtml(value)}</td></tr>`;
+
+  const html = [
+    `<div style="font-family:-apple-system,Segoe UI,Roboto,Helvetica,Arial,sans-serif;background:#f5f5f5;padding:24px">`,
+    `<div style="max-width:600px;margin:0 auto;background:#ffffff;border:1px solid #e5e5e5">`,
+    `<div style="background:#171717;padding:20px 24px">`,
+    `<p style="margin:0;color:#fbcf33;font-size:11px;font-weight:700;letter-spacing:2px">NEW ENQUIRY</p>`,
+    `<p style="margin:6px 0 0;color:#ffffff;font-size:20px;font-weight:700">${escapeHtml(name)}</p>`,
+    `<p style="margin:4px 0 0;color:#d4d4d4;font-size:14px">${escapeHtml(chosenPackage)}</p>`,
+    `</div>`,
+    `<table style="width:100%;border-collapse:collapse">${rows.map(row).join("")}</table>`,
+    `<div style="padding:20px 24px">`,
+    `<p style="margin:0 0 8px;color:#767676;font-size:12px;letter-spacing:1px">BRIEF</p>`,
+    `<p style="margin:0;color:#171717;font-size:15px;line-height:1.6;white-space:pre-wrap">${escapeHtml(message)}</p>`,
+    `</div>`,
+    `<div style="padding:16px 24px;background:#f5f5f5;border-top:1px solid #e5e5e5">`,
+    `<p style="margin:0;color:#525252;font-size:12px">Reply to this email and it goes straight to ${escapeHtml(email)}.</p>`,
+    `</div></div></div>`,
+  ].join("");
 
   try {
     const { error } = await client().emails.send({
@@ -173,10 +210,8 @@ export async function POST(request: Request) {
          rather than a copy-paste out of the message body. */
       replyTo: email,
       subject: `New enquiry from ${name}${chosenPackage ? ` — ${chosenPackage}` : ""}`,
-      text: lines.join("\n"),
-      /* Escaped before it becomes HTML: this body is written by whoever filled
-         the form, and it is read in a client that renders markup. */
-      html: lines.map((line) => (line ? `<p>${escapeHtml(line)}</p>` : "<br />")).join(""),
+      text,
+      html,
       ...(attachments.length ? { attachments } : {}),
     });
 

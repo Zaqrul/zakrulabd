@@ -55,7 +55,7 @@ export function isWebsite(value: string) {
   }
 }
 
-export type FieldName = "name" | "email" | "phone" | "website" | "message";
+export type FieldName = "name" | "email" | "phone" | "package" | "website" | "message";
 
 /* Whether a value is acceptable, and if not, why. The message is written for
    the person who has to fix it, so it says what to do rather than what failed. */
@@ -75,6 +75,10 @@ export function checkField(name: FieldName, value: string): { ok: boolean; messa
       if (!value) return { ok: false, message: "I need a number I can reach you on." };
       if (!isPhone(value))
         return { ok: false, message: "Enter the number without the leading 0, for example 123456789." };
+      return { ok: true };
+
+    case "package":
+      if (!value) return { ok: false, message: "Pick the package closest to what you need." };
       return { ok: true };
 
     case "website":

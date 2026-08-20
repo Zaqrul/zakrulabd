@@ -59,6 +59,7 @@ export function ContactForm() {
     name: checkField("name", values.name),
     email: checkField("email", values.email),
     phone: checkField("phone", values.phone),
+    package: checkField("package", values.package),
     website: checkField("website", values.website),
     message: checkField("message", values.message),
   };
@@ -127,13 +128,13 @@ export function ContactForm() {
       /* No form-level notice here. Every field that fails carries its own
          bubble, and a banner repeating that in the abstract is one more thing
          to read on the way to the fix. */
-      setTouched({ name: true, email: true, phone: true, website: true, message: true });
+      setTouched({ name: true, email: true, phone: true, package: true, website: true, message: true });
       setState("idle");
 
       /* Take the reader to the first thing to fix rather than leaving them to
          hunt for it: the form is longer than a phone screen, and the field at
          fault is often scrolled out of sight when send is pressed. */
-      const order: FieldName[] = ["name", "email", "phone", "website", "message"];
+      const order: FieldName[] = ["name", "package", "email", "phone", "website", "message"];
       const first = order.find((field) => !results[field].ok);
       const element = first ? fieldRefs.current[first] : null;
 
@@ -287,10 +288,19 @@ export function ContactForm() {
         <label className="flex flex-col gap-2">
           <span className={labelText}>{c.packageLabel}</span>
           <span className="relative block">
+            {touched.package && !results.package.ok && (
+              <FieldToast id="error-package" message={results.package.message!} />
+            )}
             <select
+              ref={(el) => { fieldRefs.current["package"] = el; }}
               value={values.package}
+              aria-describedby="note-package error-package"
+              aria-invalid={touched.package && !results.package.ok}
               onChange={(e) => set("package", e.target.value)}
-              className={`${fieldBase} cursor-pointer appearance-none border-border focus:border-navy`}
+              onBlur={() => touch("package")}
+              className={`${fieldBase} cursor-pointer appearance-none ${borderOf("package")} ${
+                values.package ? "text-ink" : "text-muted"
+              }`}
             >
               <option value="">{c.packagePlaceholder}</option>
               {t.pricing.tiers.map((tier) => (
@@ -298,11 +308,9 @@ export function ContactForm() {
                   {tier.name}
                 </option>
               ))}
+              <option value={c.packageUnsure}>{c.packageUnsure}</option>
             </select>
             <span className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1">
-              {values.package ? (
-                <ClearButton onClick={() => set("package", "")} title={`${c.clear} ${c.packageLabel}`} />
-              ) : null}
               <svg
                 viewBox="0 0 24 24"
                 aria-hidden
@@ -313,9 +321,10 @@ export function ContactForm() {
               >
                 <polyline points="6 9 12 15 18 9" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
+              <StatusMark status={markOf("package")} />
             </span>
           </span>
-          <FieldNote id="note-package" hint={c.packagePlaceholder} />
+          <FieldNote id="note-package" hint={c.packageHint} error={undefined} />
         </label>
       </div>
 
