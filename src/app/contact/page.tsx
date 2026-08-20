@@ -54,16 +54,16 @@ export default function ContactPage() {
                 is gone, keeps the page recognisable without pushing the first
                 field off the screen. */}
             <div className="mb-8 flex items-center gap-4 border-b border-border pb-6 lg:hidden">
-              <div className="w-[38%] max-w-[150px] flex-shrink-0">
-                <SvgConversation primarycolor="#f7c325" height={150} className="h-auto w-full" />
+              <div className="w-1/2 max-w-[190px] flex-shrink-0">
+                <SvgConversation primarycolor="#f7c325" height={190} className="h-auto w-full" />
               </div>
 
               {/* Beside the drawing rather than under it: the two together fill
                   one band above the form, where stacked they would push the
                   first field off a phone screen. */}
-              <blockquote className="min-w-0 border-l-[3px] border-amber-400 pl-3.5">
-                <p className="font-display text-[13.5px] font-bold leading-snug text-navy">{c.quote}</p>
-                <footer className="mt-2 flex items-center gap-1.5 text-[11.5px] text-muted">
+              <blockquote className="min-w-0 border-l-2 border-amber-400 pl-3">
+                <p className="font-display text-[11.5px] font-bold leading-snug text-navy">{c.quote}</p>
+                <footer className="mt-1.5 flex items-center gap-1 text-[10.5px] text-muted">
                   <span>{c.quoteByLabel}</span>
                   <span className="font-bold text-navy">{c.quoteBy}</span>
                   <Image
@@ -71,7 +71,7 @@ export default function ContactPage() {
                     alt=""
                     width={512}
                     height={512}
-                    className="h-4 w-4 flex-shrink-0 object-contain"
+                    className="h-3.5 w-3.5 flex-shrink-0 object-contain"
                   />
                 </footer>
               </blockquote>
