@@ -78,11 +78,30 @@ const nextConfig: NextConfig = {
     ];
   },
   async redirects() {
-    return waShortLinks.map(({ path, message }) => ({
-      source: path,
-      destination: `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`,
-      permanent: false,
-    }));
+    return [
+      ...waShortLinks.map(({ path, message }) => ({
+        source: path,
+        destination: `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`,
+        permanent: false,
+      })),
+
+      /* Addresses that were live for part of a day, before the section was
+         renamed to /notes and slugs became the headline. A link already sent to
+         someone in WhatsApp does not get a second chance, so these keep working
+         and pass their ranking on rather than dead-ending on a 404. */
+      { source: "/blog", destination: "/notes", permanent: true },
+      {
+        source: "/blog/sri-tanduk-kuih-website",
+        destination: "/notes/the-kuih-maker-who-had-no-time-to-market",
+        permanent: true,
+      },
+      {
+        source: "/notes/sri-tanduk-kuih-website",
+        destination: "/notes/the-kuih-maker-who-had-no-time-to-market",
+        permanent: true,
+      },
+      { source: "/blog/:slug", destination: "/notes/:slug", permanent: true },
+    ];
   },
 };
 

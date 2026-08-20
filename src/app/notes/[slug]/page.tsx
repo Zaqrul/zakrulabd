@@ -15,9 +15,17 @@ export function generateStaticParams() {
   return posts.map((post) => ({ slug: postSlug(post) }));
 }
 
+/* Only the slugs above exist. Without this an unknown one is rendered on
+   demand, which answered 200 and, because generateMetadata had nothing to
+   return, served the homepage's title and share card under a dead article
+   URL. Anything shared from such a link previewed as the homepage. */
+export const dynamicParams = false;
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const post = getPost((await params).slug);
-  if (!post) return {};
+  /* Never inherit the root metadata here: a missing article that borrows the
+     homepage title and image is worse than one with no preview at all. */
+  if (!post) return { title: "Page Not Found", robots: { index: false, follow: true } };
 
   return {
     title: post.title,
