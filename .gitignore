@@ -42,7 +42,12 @@ next-env.d.ts
 
 # logs & local scratch files
 dev.log
-/image*.png
-/images*.png
-/sritanduk.com.png
-/zakrulabd-ghost*.webp
+
+# Working images kept in the repo root: screenshots, client logos before they
+# are processed, design exports. Only the finished assets under public/ and the
+# app icons belong in git.
+/*.png
+/*.jpg
+/*.jpeg
+/*.webp
+/*.gif
