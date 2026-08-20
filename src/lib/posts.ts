@@ -80,10 +80,10 @@ export const posts: Post[] = [
       },
       {
         type: "image",
-        src: "/blog/sri-tanduk-about.webp",
+        src: "/notes/sri-tanduk-about.webp",
         alt: "The Kisah Sri Tanduk page telling the business story from 1999 onwards",
-        width: 1400,
-        height: 788,
+        width: 1920,
+        height: 1080,
         caption:
           "The story page. A script face for the brand name, a plain one for everything you actually have to read.",
       },
@@ -141,10 +141,10 @@ export const posts: Post[] = [
       },
       {
         type: "image",
-        src: "/blog/sri-tanduk-order-modal.webp",
+        src: "/notes/sri-tanduk-order-modal.webp",
         alt: "The Kek Gula Hangus product panel with a size picker and a Tempah via WhatsApp button",
-        width: 1400,
-        height: 788,
+        width: 1920,
+        height: 1080,
         caption: "Price, size, minimum order, and the two delivery notes customers used to ask about every single time.",
       },
       {

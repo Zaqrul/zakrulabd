@@ -9,12 +9,12 @@ export const metadata: Metadata = {
   title: "Notes",
   description:
     "Write-ups of real client projects: what the business needed, what I built, what it cost them, and what actually happened after launch.",
-  alternates: { canonical: "/blog" },
+  alternates: { canonical: "/notes" },
   openGraph: {
     title: "Notes | zakrulabd",
     description:
       "Write-ups of real client projects: what the business needed, what I built, and what happened after launch.",
-    url: url("/blog"),
+    url: url("/notes"),
   },
 };
 
@@ -41,7 +41,7 @@ export default function BlogIndex() {
           {posts.map((post) => (
             <NoteCard key={post.slug} post={post} />
           ))}
-          <NoteNextCard label={t.notes.next} />
+          <NoteNextCard label={t.notes.nextStory} />
         </div>
       </main>
     </PostShell>

@@ -9,7 +9,7 @@ import { posts } from "@/lib/posts";
 const routes = [
   { path: "", lastModified: "2026-08-20", changeFrequency: "weekly" as const, priority: 1.0 },
   { path: "/compare", lastModified: "2026-08-20", changeFrequency: "monthly" as const, priority: 0.7 },
-  { path: "/blog", lastModified: "2026-08-20", changeFrequency: "monthly" as const, priority: 0.7 },
+  { path: "/notes", lastModified: "2026-08-20", changeFrequency: "monthly" as const, priority: 0.7 },
   { path: "/privacy", lastModified: "2026-08-20", changeFrequency: "monthly" as const, priority: 0.5 },
   { path: "/terms", lastModified: "2026-08-20", changeFrequency: "monthly" as const, priority: 0.5 },
 ];
@@ -18,7 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   /* Articles carry their own publication date, so unlike the fixed pages above
      their lastmod is true without anyone remembering to update it. */
   const articles = posts.map((post) => ({
-    url: `${SITE_URL}/blog/${post.slug}`,
+    url: `${SITE_URL}/notes/${post.slug}`,
     lastModified: post.date,
     changeFrequency: "yearly" as const,
     priority: 0.6,

@@ -77,7 +77,7 @@ export function SiteFooter() {
             {t.footer.howIWorkLinks.map((l, i) => (
               <Link
                 key={l}
-                href={["/#process", "/#pricing", "/#results", "/blog"][i]}
+                href={["/#process", "/#pricing", "/#results", "/notes"][i]}
                 className="text-[13.5px] hover:text-white"
               >
                 {l}

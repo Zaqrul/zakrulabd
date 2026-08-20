@@ -21,7 +21,7 @@ export function NoteCard({ post }: { post: Post }) {
 
   return (
     <Link
-      href={`/blog/${post.slug}`}
+      href={`/notes/${post.slug}`}
       className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-white transition duration-200 hover:-translate-y-1 hover:border-amber-400/70 hover:shadow-lg hover:shadow-black/5"
     >
       <div className="flex aspect-[4/3] items-center justify-center border-b border-border bg-bg p-6">

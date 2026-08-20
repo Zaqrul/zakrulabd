@@ -563,6 +563,9 @@ export const content = {
     sub: "Write-ups of real projects: what the business needed, what I built and why, and what happened after it went live.",
     read: "Read this note",
     next: "Your project could be next",
+    /* On the index the slot is the end of the list, so it speaks about what
+       comes next rather than inviting a click the way the homepage tile does. */
+    nextStory: "My next story gets written here",
     all: "All Notes",
   },
   footer: {

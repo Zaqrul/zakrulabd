@@ -19,12 +19,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: post.title,
     description: post.description,
-    alternates: { canonical: `/blog/${post.slug}` },
+    alternates: { canonical: `/notes/${post.slug}` },
     openGraph: {
       type: "article",
       title: post.title,
       description: post.description,
-      url: url(`/blog/${post.slug}`),
+      url: url(`/notes/${post.slug}`),
       publishedTime: post.date,
       authors: ["Muhamad Zaqrul"],
     },
@@ -67,13 +67,19 @@ function Blocks({ blocks }: { blocks: Block[] }) {
           );
         }
         if (block.type === "image") {
+          /* Screenshots are held to a narrower column than the page. Stretched
+             to the full 1200 the interface text inside them goes soft on a
+             retina screen, and quality is raised because Next's default
+             re-encode is tuned for photographs rather than flat UI. */
           return (
-            <figure key={i} className="my-9 flex flex-col gap-2.5">
+            <figure key={i} className="my-9 mx-auto flex max-w-3xl flex-col gap-2.5">
               <Image
                 src={block.src}
                 alt={block.alt}
                 width={block.width}
                 height={block.height}
+                quality={90}
+                sizes="(max-width: 768px) 100vw, 768px"
                 className="h-auto w-full border border-border"
               />
               <figcaption className="text-[13px] text-muted">{block.caption}</figcaption>
@@ -100,14 +106,14 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   const articleSchema = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
-    "@id": `${SITE_URL}/blog/${post.slug}#article`,
+    "@id": `${SITE_URL}/notes/${post.slug}#article`,
     headline: post.title,
     description: post.description,
     datePublished: post.date,
     dateModified: post.date,
     author: { "@id": ID.person },
     publisher: { "@id": ID.business },
-    mainEntityOfPage: url(`/blog/${post.slug}`),
+    mainEntityOfPage: url(`/notes/${post.slug}`),
     inLanguage: "en-MY",
   };
 
@@ -116,13 +122,13 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
-      { "@type": "ListItem", position: 2, name: "Notes", item: url("/blog") },
-      { "@type": "ListItem", position: 3, name: post.title, item: url(`/blog/${post.slug}`) },
+      { "@type": "ListItem", position: 2, name: "Notes", item: url("/notes") },
+      { "@type": "ListItem", position: 3, name: post.title, item: url(`/notes/${post.slug}`) },
     ],
   };
 
   return (
-    <PostShell back={{ href: "/blog", label: "All Notes" }}>
+    <PostShell back={{ href: "/notes", label: "All Notes" }}>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
