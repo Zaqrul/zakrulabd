@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SvgBusinessShop, SvgChef, SvgBusinessChat } from "iblis-react-undraw";
-import { ArrowRightIcon } from "@/components/icons";
+import { ArrowRightIcon, PlusIcon } from "@/components/icons";
 import { content as t } from "@/lib/content";
 import type { Post } from "@/lib/posts";
 
@@ -24,8 +24,8 @@ export function NoteCard({ post }: { post: Post }) {
       href={`/blog/${post.slug}`}
       className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-white transition duration-200 hover:-translate-y-1 hover:border-amber-400/70 hover:shadow-lg hover:shadow-black/5"
     >
-      <div className="flex aspect-[16/9] items-center justify-center border-b border-border bg-bg p-8">
-        <Art primarycolor="#f7c325" height={150} className="h-full max-h-[150px] w-auto max-w-full" />
+      <div className="flex aspect-[4/3] items-center justify-center border-b border-border bg-bg p-6">
+        <Art primarycolor="#f7c325" height={120} className="h-full max-h-[120px] w-auto max-w-full" />
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-6">
@@ -34,7 +34,7 @@ export function NoteCard({ post }: { post: Post }) {
           <span>{post.readingTime}</span>
         </div>
 
-        <h3 className="font-display text-xl font-bold leading-snug text-navy">
+        <h3 className="font-display text-[17px] font-bold leading-snug text-navy">
           <span className="relative inline">
             {post.title}
             <span
@@ -44,7 +44,9 @@ export function NoteCard({ post }: { post: Post }) {
           </span>
         </h3>
 
-        <p className="text-[14.5px] leading-relaxed text-body">{post.excerpt}</p>
+        {/* Clamped: four across leaves a narrow column, and one long excerpt
+            would otherwise push its card taller than the three beside it. */}
+        <p className="line-clamp-4 text-[14px] leading-relaxed text-body">{post.excerpt}</p>
 
         {/* Byline with the site mark: these are first-hand accounts of my own
             projects, and the card should say so before anyone opens it. */}
@@ -66,6 +68,31 @@ export function NoteCard({ post }: { post: Post }) {
           </span>
         </div>
       </div>
+    </Link>
+  );
+}
+
+/* Fills the fourth slot the way the client grid does: an open invitation rather
+   than a post, so it is dashed, carries no artwork, and goes to contact. The
+   bloom is the light-background twin of the one on the navy client tiles. */
+export function NoteNextCard({ label, href = "/#contact" }: { label: string; href?: string }) {
+  return (
+    <Link
+      href={href}
+      className="group relative flex flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border-2 border-dashed border-navy/15 p-6 text-center transition duration-300 hover:-translate-y-1 hover:border-amber-400"
+    >
+      <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,color-mix(in_srgb,var(--color-amber-400)_28%,transparent),transparent_70%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+      <span className="relative flex h-9 w-9 items-center justify-center">
+        <span className="absolute inline-flex h-full w-full rounded-full bg-amber-400/30 opacity-0 group-hover:animate-ping group-hover:opacity-100" />
+        <span className="relative flex h-9 w-9 items-center justify-center rounded-full border border-navy/20 text-muted transition duration-300 group-hover:rotate-90 group-hover:border-amber-400 group-hover:bg-amber-400 group-hover:text-navy">
+          <PlusIcon className="h-4 w-4" />
+        </span>
+      </span>
+
+      <span className="relative font-display text-[13.5px] font-bold leading-snug text-body transition-colors duration-300 group-hover:text-navy">
+        {label}
+      </span>
     </Link>
   );
 }

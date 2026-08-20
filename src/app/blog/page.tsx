@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
-import { NoteCard } from "@/components/note-card";
+import { NoteCard, NoteNextCard } from "@/components/note-card";
 import { PostShell } from "@/components/post-shell";
+import { content as t } from "@/lib/content";
 import { posts } from "@/lib/posts";
 import { url } from "@/lib/site";
 
@@ -34,12 +35,13 @@ export default function BlogIndex() {
       </section>
 
       <main id="main" className="mx-auto w-full max-w-shell flex-1 px-5 py-14 md:px-6 md:py-16">
-        {/* Same tiles as the homepage section, so arriving here from the site or
-            from search gives you the same grid either way. */}
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+        {/* Same tiles and the same four-wide grid as the homepage section, so
+            arriving here from the site or from search looks identical. */}
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {posts.map((post) => (
             <NoteCard key={post.slug} post={post} />
           ))}
+          <NoteNextCard label={t.notes.next} />
         </div>
       </main>
     </PostShell>

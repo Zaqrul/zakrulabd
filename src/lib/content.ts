@@ -562,6 +562,7 @@ export const content = {
     headingHl: "Gets Done",
     sub: "Write-ups of real projects: what the business needed, what I built and why, and what happened after it went live.",
     read: "Read this note",
+    next: "Your project could be next",
     all: "All Notes",
   },
   footer: {

@@ -15,7 +15,7 @@ import {
 import { HeroDemo, LiveChartDemo, LiveChatDemo, LiveCodeDemo, LiveStatusDemo } from "@/components/live-demos";
 import { WhatCanBuild } from "@/components/what-can-build";
 import { ClientLogos } from "@/components/client-logos";
-import { NoteCard } from "@/components/note-card";
+import { NoteCard, NoteNextCard } from "@/components/note-card";
 import { SiteFooter } from "@/components/site-footer";
 import { content as t } from "@/lib/content";
 import { posts } from "@/lib/posts";
@@ -857,11 +857,13 @@ export default function Home() {
             <p className="text-base text-body">{t.notes.sub}</p>
           </div>
 
-          {/* Three across on large screens, same rhythm as the client tiles. */}
-          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+          {/* Four across, laid out like the client grid: the notes fill the
+              slots and the last one stays an open invitation. */}
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {posts.slice(0, 3).map((post) => (
               <NoteCard key={post.slug} post={post} />
             ))}
+            <NoteNextCard label={t.notes.next} />
           </div>
 
           <div className="mt-8 flex justify-center">
