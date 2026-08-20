@@ -60,7 +60,7 @@ export default function TermsPage() {
       </header>
 
       {/* CONTENT */}
-      <main className="mx-auto max-w-4xl px-6 py-16 flex-1 w-full">
+      <main id="main" className="mx-auto max-w-4xl px-6 py-16 flex-1 w-full">
         {/* Title Header */}
         <div className="mb-12">
           <div className="inline-flex items-center gap-2 rounded-full border border-border bg-white px-3 py-1 text-xs font-bold tracking-wider text-muted">

@@ -42,7 +42,7 @@ export function StatusPage({
         </div>
       </header>
 
-      <main className="mx-auto flex w-full max-w-shell flex-1 items-center justify-center px-6 py-16">
+      <main id="main" className="mx-auto flex w-full max-w-shell flex-1 items-center justify-center px-6 py-16">
         <div className="flex w-full max-w-xl flex-col items-center gap-5 text-center">
           <div className="w-full max-w-[300px]">{illustration}</div>
 

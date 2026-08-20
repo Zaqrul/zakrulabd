@@ -523,7 +523,7 @@ export default function Home() {
       </nav>
 
       {/* HERO */}
-      <section className="relative overflow-hidden">
+      <section id="main" className="relative overflow-hidden">
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-amber-400/25 blur-3xl" />
           <div className="absolute -right-10 top-10 h-64 w-64 rounded-full bg-bg blur-3xl" />

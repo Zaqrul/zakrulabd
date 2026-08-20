@@ -81,7 +81,7 @@ export default function ComparePage() {
       </section>
 
       {/* CONTENT */}
-      <main className="mx-auto w-full max-w-shell flex-1 px-5 py-14 md:px-6 md:py-16">
+      <main id="main" className="mx-auto w-full max-w-shell flex-1 px-5 py-14 md:px-6 md:py-16">
         <ScopeCompareTable />
 
         {/* The two jumps, spelled out for anyone still hovering between columns. */}

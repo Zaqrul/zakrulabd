@@ -40,6 +40,33 @@ const securityHeaders = [
   },
 ];
 
+/* Content-Security-Policy, written out per directive so each origin says why it
+   is here. Reported, not enforced, on the first pass: Report-Only lets the
+   console show what a real policy would have blocked without breaking the chat
+   widget or analytics for a visitor. Swap the header name to
+   "Content-Security-Policy" once the console stays quiet.
+   'unsafe-inline' is unavoidable for scripts here: the JSON-LD block and the
+   gtag bootstrap are inline, and a nonce cannot be minted for a page that is
+   prerendered to static HTML at build time. */
+const csp = [
+  "default-src 'self'",
+  // googletagmanager: gtag.js. tawk.to: the chat widget loads its own bundles.
+  "script-src 'self' 'unsafe-inline' https://www.googletagmanager.com https://*.tawk.to",
+  "style-src 'self' 'unsafe-inline' https://*.tawk.to",
+  "img-src 'self' data: blob: https://www.googletagmanager.com https://*.google-analytics.com https://*.tawk.to",
+  "font-src 'self' data: https://*.tawk.to",
+  // GA4 beacons, Tawk's websocket for live messages, Vercel Speed Insights.
+  "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.tawk.to wss://*.tawk.to https://vitals.vercel-insights.com",
+  "frame-src 'self' https://*.tawk.to",
+  "frame-ancestors 'self'",
+  "base-uri 'self'",
+  "form-action 'self'",
+  "object-src 'none'",
+  "upgrade-insecure-requests",
+].join("; ");
+
+securityHeaders.push({ key: "Content-Security-Policy-Report-Only", value: csp });
+
 const nextConfig: NextConfig = {
   poweredByHeader: false,
   async headers() {
