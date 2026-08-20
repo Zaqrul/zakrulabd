@@ -17,8 +17,10 @@ export type Block =
   | { type: "image"; src: string; alt: string; width: number; height: number; caption: string };
 
 export type Post = {
-  slug: string;
   title: string;
+  /* Set only to keep an old URL alive after a title is reworded. Left unset,
+     the slug is the title itself, so the address always reads as the piece. */
+  slugOverride?: string;
   /* Names the drawing used as the card thumbnail. A key rather than a component
      keeps this file plain data, and the card decides how to render it. */
   art: "chef" | "shop" | "chat";
@@ -35,7 +37,6 @@ export type Post = {
 
 export const posts: Post[] = [
   {
-    slug: "sri-tanduk-kuih-website",
     title: "The kuih maker who had no time to market",
     art: "chef",
     excerpt:
@@ -200,6 +201,20 @@ export const posts: Post[] = [
   },
 ];
 
+/* Lowercase, punctuation dropped, spaces to hyphens: "The kuih maker who had
+   no time to market" becomes the-kuih-maker-who-had-no-time-to-market. */
+export function slugify(text: string) {
+  return text
+    .toLowerCase()
+    .replace(/['‘’]/g, "")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
+export function postSlug(post: Post) {
+  return post.slugOverride ?? slugify(post.title);
+}
+
 export function getPost(slug: string) {
-  return posts.find((p) => p.slug === slug);
+  return posts.find((p) => postSlug(p) === slug);
 }

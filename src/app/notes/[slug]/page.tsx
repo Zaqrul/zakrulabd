@@ -5,14 +5,14 @@ import { notFound } from "next/navigation";
 import { PostArt } from "@/components/post-art";
 import { PostShell } from "@/components/post-shell";
 import { ShareLinks } from "@/components/share-links";
-import { getPost, posts, type Block } from "@/lib/posts";
+import { getPost, postSlug, posts, type Block } from "@/lib/posts";
 import { ID } from "@/lib/structured-data";
 import { SITE_URL, url } from "@/lib/site";
 import { tech } from "@/lib/tech";
 import { wa, waMessages } from "@/lib/contact";
 
 export function generateStaticParams() {
-  return posts.map((post) => ({ slug: post.slug }));
+  return posts.map((post) => ({ slug: postSlug(post) }));
 }
 
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
@@ -22,12 +22,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: post.title,
     description: post.description,
-    alternates: { canonical: `/notes/${post.slug}` },
+    alternates: { canonical: `/notes/${postSlug(post)}` },
     openGraph: {
       type: "article",
       title: post.title,
       description: post.description,
-      url: url(`/notes/${post.slug}`),
+      url: url(`/notes/${postSlug(post)}`),
       publishedTime: post.date,
       authors: ["Muhamad Zaqrul"],
     },
@@ -122,14 +122,14 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   const articleSchema = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
-    "@id": `${SITE_URL}/notes/${post.slug}#article`,
+    "@id": `${SITE_URL}/notes/${postSlug(post)}#article`,
     headline: post.title,
     description: post.description,
     datePublished: post.date,
     dateModified: post.date,
     author: { "@id": ID.person },
     publisher: { "@id": ID.business },
-    mainEntityOfPage: url(`/notes/${post.slug}`),
+    mainEntityOfPage: url(`/notes/${postSlug(post)}`),
     inLanguage: "en-MY",
   };
 
@@ -139,7 +139,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
       { "@type": "ListItem", position: 2, name: "Notes", item: url("/notes") },
-      { "@type": "ListItem", position: 3, name: post.title, item: url(`/notes/${post.slug}`) },
+      { "@type": "ListItem", position: 3, name: post.title, item: url(`/notes/${postSlug(post)}`) },
     ],
   };
 
@@ -192,7 +192,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
           {/* Sharing sits at the end of the article, where someone who found it
               worth passing on has just finished reading. */}
-          <ShareLinks url={url(`/notes/${post.slug}`)} title={post.title} />
+          <ShareLinks url={url(`/notes/${postSlug(post)}`)} title={post.title} />
         </div>
 
         <div className="mt-8 flex flex-col gap-4 bg-amber-300/20 p-6 md:p-8">

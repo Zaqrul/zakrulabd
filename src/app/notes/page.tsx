@@ -39,7 +39,7 @@ export default function BlogIndex() {
             arriving here from the site or from search looks identical. */}
         <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {posts.map((post) => (
-            <NoteCard key={post.slug} post={post} />
+            <NoteCard key={post.title} post={post} />
           ))}
           <NoteNextCard label={t.notes.nextStory} />
         </div>

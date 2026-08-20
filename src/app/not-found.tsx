@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { SvgLost } from "iblis-react-undraw";
+import { AutoRecover } from "@/components/auto-recover";
 import { StatusPage, statusButton } from "@/components/status-page";
 import { UnderlineLink } from "@/components/underline-link";
 import { content as t } from "@/lib/content";
@@ -38,6 +39,10 @@ export default function NotFound() {
     >
       {/* The site is small enough to list in full, which beats sending someone
           back to the homepage to hunt for what they were after. */}
+      {/* A 404 during a deploy is temporary: the address starts answering once
+          the new build is live, and the page follows it. */}
+      <AutoRecover />
+
       <div className="mt-6 flex flex-col items-center gap-3 border-t border-border pt-6">
         <span className="text-[11px] font-bold uppercase tracking-wide text-muted">{c.linksLabel}</span>
         <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">

@@ -862,7 +862,7 @@ export default function Home() {
               slots and the last one stays an open invitation. */}
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
             {posts.slice(0, 3).map((post) => (
-              <NoteCard key={post.slug} post={post} />
+              <NoteCard key={post.title} post={post} />
             ))}
             <NoteNextCard label={t.notes.next} href="/#contact" />
           </div>

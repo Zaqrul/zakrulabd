@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useEffect } from "react";
 import { SvgBugFixing } from "iblis-react-undraw";
+import { AutoRecover } from "@/components/auto-recover";
 import { StatusPage, statusButton } from "@/components/status-page";
 import { UnderlineLink } from "@/components/underline-link";
 import { content as t } from "@/lib/content";
@@ -30,6 +31,9 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
       illustration={<SvgBugFixing primarycolor="#f7c325" height={200} className="mx-auto h-auto w-full" />}
       actions={
         <>
+          {/* Most of these clear on their own, so the page keeps checking and
+              recovers without the reader having to press anything. */}
+          <AutoRecover onRetry={reset} />
           <button type="button" onClick={reset} className={statusButton.primary}>
             {c.primary}
           </button>

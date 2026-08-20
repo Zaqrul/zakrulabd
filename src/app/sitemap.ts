@@ -1,6 +1,6 @@
 import type { MetadataRoute } from "next";
 import { SITE_URL } from "@/lib/site";
-import { posts } from "@/lib/posts";
+import { postSlug, posts } from "@/lib/posts";
 
 /* lastModified used to be new Date(), which restamped every page on every
    deploy — a deploy that only changed a colour claimed all four pages were
@@ -18,7 +18,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
   /* Articles carry their own publication date, so unlike the fixed pages above
      their lastmod is true without anyone remembering to update it. */
   const articles = posts.map((post) => ({
-    url: `${SITE_URL}/notes/${post.slug}`,
+    url: `${SITE_URL}/notes/${postSlug(post)}`,
     lastModified: post.date,
     changeFrequency: "yearly" as const,
     priority: 0.6,
