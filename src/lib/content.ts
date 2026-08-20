@@ -612,8 +612,7 @@ export const content = {
   notes: {
     readDoneTitle: "You read the whole thing",
     readDoneBody:
-      "Which puts you ahead of most people who open a case study. If any of it sounded like your business, tell me about it and I will give you a straight answer on what it would take.",
-    readDoneCta: "Start a Project",
+      "Which puts you ahead of most people who open a case study. There are more notes like this one, each about a different business and a different problem.",
     readDoneMore: "Read another note",
     badge: "NOTES",
     headingA: "How the Work Actually ",

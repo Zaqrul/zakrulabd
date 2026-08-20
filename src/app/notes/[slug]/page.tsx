@@ -217,12 +217,6 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             <p className="max-w-lg text-[14.5px] leading-relaxed text-body">{t.notes.readDoneBody}</p>
             <div className="mt-1 flex flex-wrap items-center justify-center gap-3">
               <Link
-                href="/contact"
-                className="btn-primary inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-sm font-bold text-navy transition-colors hover:bg-amber-600"
-              >
-                {t.notes.readDoneCta}
-              </Link>
-              <Link
                 href="/notes"
                 className="btn-primary inline-flex items-center justify-center gap-2 rounded-lg border-[1.5px] border-primary-900 px-6 py-3 text-sm font-bold text-primary-900 transition-colors hover:bg-primary-900 hover:text-white"
               >
