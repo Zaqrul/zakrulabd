@@ -12,6 +12,9 @@ export type Block =
 export type Post = {
   slug: string;
   title: string;
+  /* Names the drawing used as the card thumbnail. A key rather than a component
+     keeps this file plain data, and the card decides how to render it. */
+  art: "chef" | "shop" | "chat";
   /* Shown on the index card and used as the meta description, so it has to read
      as a sentence rather than as a keyword list. */
   excerpt: string;
@@ -27,6 +30,7 @@ export const posts: Post[] = [
   {
     slug: "sri-tanduk-kuih-website",
     title: "The kuih maker who had no time to market",
+    art: "chef",
     excerpt:
       "Siti Sapura makes traditional kuih in Ipoh and sells most of it by word of mouth. Here is what I built for her, and why it has no shopping cart.",
     description:

@@ -15,6 +15,7 @@ import {
 import { HeroDemo, LiveChartDemo, LiveChatDemo, LiveCodeDemo, LiveStatusDemo } from "@/components/live-demos";
 import { WhatCanBuild } from "@/components/what-can-build";
 import { ClientLogos } from "@/components/client-logos";
+import { NoteCard } from "@/components/note-card";
 import { SiteFooter } from "@/components/site-footer";
 import { content as t } from "@/lib/content";
 import { posts } from "@/lib/posts";
@@ -856,32 +857,10 @@ export default function Home() {
             <p className="text-base text-body">{t.notes.sub}</p>
           </div>
 
-          <div className="grid gap-5 md:grid-cols-2">
-            {posts.slice(0, 2).map((post) => (
-              <Link
-                key={post.slug}
-                href={`/blog/${post.slug}`}
-                className="group flex flex-col gap-3 rounded-[18px] border border-border bg-white p-6 transition duration-200 hover:-translate-y-1 hover:border-amber-400/70 hover:shadow-lg hover:shadow-black/5 md:p-7"
-              >
-                <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold uppercase tracking-wide text-muted">
-                  <span className="text-navy">{post.tag}</span>
-                  <span>{post.readingTime}</span>
-                </div>
-                <h3 className="font-display text-xl font-bold leading-snug text-navy md:text-2xl">
-                  <span className="relative inline">
-                    {post.title}
-                    <span
-                      aria-hidden
-                      className="absolute -bottom-1 left-0 h-[2.5px] w-0 rounded-full bg-amber-400 transition-all duration-200 ease-out group-hover:w-full"
-                    />
-                  </span>
-                </h3>
-                <p className="text-[14.5px] leading-relaxed text-body">{post.excerpt}</p>
-                <span className="mt-1 inline-flex items-center gap-1.5 text-[13px] font-bold text-navy">
-                  {t.notes.read}
-                  <ArrowRightIcon className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1" />
-                </span>
-              </Link>
+          {/* Three across on large screens, same rhythm as the client tiles. */}
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+            {posts.slice(0, 3).map((post) => (
+              <NoteCard key={post.slug} post={post} />
             ))}
           </div>
 

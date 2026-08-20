@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { NoteCard } from "@/components/note-card";
 import { PostShell } from "@/components/post-shell";
 import { posts } from "@/lib/posts";
 import { url } from "@/lib/site";
@@ -34,28 +34,11 @@ export default function BlogIndex() {
       </section>
 
       <main id="main" className="mx-auto w-full max-w-shell flex-1 px-5 py-14 md:px-6 md:py-16">
-        <div className="flex flex-col">
+        {/* Same tiles as the homepage section, so arriving here from the site or
+            from search gives you the same grid either way. */}
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {posts.map((post) => (
-            <article key={post.slug} className="border-t border-border py-8 first:border-t-0 first:pt-0">
-              <Link href={`/blog/${post.slug}`} className="group flex flex-col gap-3">
-                <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold uppercase tracking-wide text-muted">
-                  <span className="text-navy">{post.tag}</span>
-                  <span>{post.readingTime}</span>
-                </div>
-                <h2 className="max-w-3xl font-display text-2xl font-bold leading-snug text-navy md:text-3xl">
-                  {/* Same hover underline as the nav: a bar that grows from the
-                      left, sized to the title rather than to the whole row. */}
-                  <span className="relative inline">
-                    {post.title}
-                    <span
-                      aria-hidden
-                      className="absolute -bottom-1 left-0 h-[2.5px] w-0 rounded-full bg-amber-400 transition-all duration-200 ease-out group-hover:w-full"
-                    />
-                  </span>
-                </h2>
-                <p className="max-w-2xl text-[15px] leading-relaxed text-body">{post.excerpt}</p>
-              </Link>
-            </article>
+            <NoteCard key={post.slug} post={post} />
           ))}
         </div>
       </main>
