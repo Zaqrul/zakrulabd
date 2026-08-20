@@ -1,8 +1,18 @@
 import Image from "next/image";
 import Link from "next/link";
+import { SiGithub, SiThreads, SiTiktok } from "react-icons/si";
 import { MailIcon, MapPinIcon, PhoneIcon } from "@/components/icons";
 import { content as t } from "@/lib/content";
 import { WHATSAPP_NUMBER, wa, waMessages } from "@/lib/contact";
+
+/* The handle is zakrulabd everywhere except GitHub, which predates it. rel="me"
+   states that each link is another profile of the same person, so the markup
+   makes the same claim the JSON-LD sameAs list does. */
+const socials = [
+  { href: "https://www.threads.com/@zakrulabd", label: "zakrulabd on Threads", Icon: SiThreads },
+  { href: "https://www.tiktok.com/@zakrulabd", label: "zakrulabd on TikTok", Icon: SiTiktok },
+  { href: "https://github.com/Zaqrul", label: "Zaqrul on GitHub", Icon: SiGithub },
+];
 
 /* The one footer the whole site uses. Section links are absolute (/#pricing)
    rather than bare hashes so they work from a sub page as well as the homepage,
@@ -36,6 +46,22 @@ export function SiteFooter() {
             <div className="flex items-center gap-2 text-[13px]">
               <MapPinIcon className="h-[15px] w-[15px]" />
               <span>{t.footer.location}</span>
+            </div>
+
+            <div className="mt-1 flex items-center gap-2.5">
+              {socials.map(({ href, label, Icon }) => (
+                <a
+                  key={href}
+                  href={href}
+                  target="_blank"
+                  rel="noopener noreferrer me"
+                  aria-label={label}
+                  title={label}
+                  className="flex h-9 w-9 items-center justify-center rounded-lg border border-white/10 text-slate-300 transition hover:border-amber-400 hover:bg-amber-400 hover:text-navy"
+                >
+                  <Icon className="h-[17px] w-[17px]" aria-hidden />
+                </a>
+              ))}
             </div>
           </div>
           <div className="flex flex-col gap-3">

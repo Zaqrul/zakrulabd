@@ -1,6 +1,16 @@
 import { content } from "@/lib/content";
 import { SITE_URL as SITE } from "@/lib/site";
 
+/* The profiles that carry the zakrulabd handle. sameAs is what actually ties
+   that handle to this domain for a crawler, so the person and the business
+   point at the same list. Threads canonicalised to threads.com — threads.net
+   301s there, and a redirect is a weaker signal than the final URL. */
+export const PROFILES = [
+  "https://www.threads.com/@zakrulabd",
+  "https://www.tiktok.com/@zakrulabd",
+  "https://github.com/Zaqrul",
+];
+
 /* Stable @id anchors. Using one graph with cross-references, rather than several
    loose nodes, lets a crawler resolve "the person", "the business" and "the page"
    as the same three entities everywhere they are mentioned. */
@@ -27,9 +37,8 @@ export const structuredData = {
       url: SITE,
       name: "zakrulabd",
       /* The domain reads "zakrul" while every handle and the email read
-         "zakrulabd". Listing both, plus the full legal name, lets a crawler
-         resolve all three spellings to this one entity instead of guessing at
-         two unrelated brands. */
+         "zakrulabd". Naming the other spellings here lets a crawler resolve all
+         of them to this one entity instead of guessing at unrelated brands. */
       alternateName: ["zakrul", "Muhamad Zaqrul"],
       description: content.footer.blurb,
       publisher: { "@id": ID.business },
@@ -48,6 +57,7 @@ export const structuredData = {
       name: "Muhamad Zaqrul",
       alternateName: ["zakrulabd", "zakrul"],
       url: SITE,
+      sameAs: PROFILES,
       email: "zakrulabd@gmail.com",
       telephone: "+60102551527",
       jobTitle: "Freelance Web Developer & Digital Marketer",
@@ -75,6 +85,7 @@ export const structuredData = {
       name: "zakrulabd — Web Development & Digital Marketing",
       alternateName: ["zakrul", "zakrulabd", "Muhamad Zaqrul"],
       url: SITE,
+      sameAs: PROFILES,
       description: content.footer.blurb,
       email: "zakrulabd@gmail.com",
       telephone: "+60102551527",
