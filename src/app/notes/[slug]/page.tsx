@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { PostArt } from "@/components/post-art";
+import { ChatBubble, PostArt } from "@/components/post-art";
 import { PostShell } from "@/components/post-shell";
 import { getPost, posts, type Block } from "@/lib/posts";
 import { ID } from "@/lib/structured-data";
@@ -137,7 +137,10 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
         {/* Banner across the full column, above everything. The same drawing the
             card carries, so arriving from the grid feels continuous. */}
         <div className="mb-8 flex h-44 items-center justify-center overflow-hidden rounded-2xl border border-border bg-white md:h-64">
-          <PostArt art={post.art} height={220} className="h-full max-h-full w-auto max-w-[80%] py-6" />
+          <div className="relative flex h-full items-center justify-center py-6">
+            <PostArt art={post.art} height={220} className="h-full max-h-full w-auto" />
+            <ChatBubble className="absolute -right-6 top-2 w-14 -rotate-6 drop-shadow-sm md:-right-12 md:w-20" />
+          </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold uppercase tracking-wide text-muted">
