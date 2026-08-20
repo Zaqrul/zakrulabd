@@ -34,6 +34,11 @@ export const metadata: Metadata = {
   description:
     "Freelance web developer in Malaysia building websites and custom web systems with React, Laravel, and WordPress — alongside technical SEO, GA4 analytics, and workflow automation.",
   keywords: [
+    /* Both spellings of the brand: the domain is zakrul.com while the email and
+       the social handles are zakrulabd, and people search for either. */
+    "zakrul",
+    "zakrulabd",
+    "Zakrul Abdul",
     "Freelance Web Developer Malaysia",
     "Web Developer Malaysia",
     "React Developer Malaysia",
