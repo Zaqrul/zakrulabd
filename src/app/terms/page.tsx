@@ -6,11 +6,11 @@ import { url } from "@/lib/site";
    would apply here, telling Google this page is a duplicate of the homepage. */
 export const metadata: Metadata = {
   title: "Terms & Conditions",
-  description: "Scope of work, payment milestones, code ownership, and warranty terms for freelance web development by Zakrul Abdul.",
+  description: "Scope of work, payment milestones, code ownership, and warranty terms for freelance web development by Muhamad Zaqrul.",
   alternates: { canonical: "/terms" },
   openGraph: {
     title: "Terms & Conditions | zakrulabd",
-    description: "Scope of work, payment milestones, code ownership, and warranty terms for freelance web development by Zakrul Abdul.",
+    description: "Scope of work, payment milestones, code ownership, and warranty terms for freelance web development by Muhamad Zaqrul.",
     url: url("/terms"),
   },
 };

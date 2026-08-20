@@ -38,7 +38,7 @@ export const metadata: Metadata = {
        the social handles are zakrulabd, and people search for either. */
     "zakrul",
     "zakrulabd",
-    "Zakrul Abdul",
+    "Muhamad Zaqrul",
     "Freelance Web Developer Malaysia",
     "Web Developer Malaysia",
     "React Developer Malaysia",
@@ -50,8 +50,8 @@ export const metadata: Metadata = {
     "SME Web Development Malaysia",
     "Full Stack Developer",
   ],
-  authors: [{ name: "Zakrul Abdul", url: SITE_URL }],
-  creator: "Zakrul Abdul",
+  authors: [{ name: "Muhamad Zaqrul", url: SITE_URL }],
+  creator: "Muhamad Zaqrul",
   publisher: "zakrulabd",
   formatDetection: {
     email: false,

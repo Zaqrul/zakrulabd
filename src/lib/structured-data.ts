@@ -30,7 +30,7 @@ export const structuredData = {
          "zakrulabd". Listing both, plus the full legal name, lets a crawler
          resolve all three spellings to this one entity instead of guessing at
          two unrelated brands. */
-      alternateName: ["zakrul", "zakrul.com", "Zakrul Abdul"],
+      alternateName: ["zakrul", "zakrul.com", "Muhamad Zaqrul"],
       description: content.footer.blurb,
       publisher: { "@id": ID.business },
       inLanguage: "en-MY",
@@ -45,7 +45,7 @@ export const structuredData = {
     {
       "@type": "Person",
       "@id": ID.person,
-      name: "Zakrul Abdul",
+      name: "Muhamad Zaqrul",
       alternateName: ["zakrulabd", "zakrul"],
       url: SITE,
       email: "zakrulabd@gmail.com",
@@ -73,7 +73,7 @@ export const structuredData = {
       "@type": "ProfessionalService",
       "@id": ID.business,
       name: "zakrulabd — Web Development & Digital Marketing",
-      alternateName: ["zakrul", "zakrulabd", "Zakrul Abdul"],
+      alternateName: ["zakrul", "zakrulabd", "Muhamad Zaqrul"],
       url: SITE,
       description: content.footer.blurb,
       email: "zakrulabd@gmail.com",

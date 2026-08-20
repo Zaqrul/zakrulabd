@@ -1,7 +1,7 @@
 # Project Guidelines & Preferences (zakrulabd)
 
 ## Identity & Persona
-- **Developer:** Zakrul Abdul (`zakrulabd`)
+- **Developer:** Muhamad Zaqrul (`zakrulabd`)
 - **Email:** `zakrulabd@gmail.com`
 - **Location:** Selangor, Malaysia
 - **Role:** Dedicated Solo Freelance Web Developer & Technical Marketer (No agency / No team wording).

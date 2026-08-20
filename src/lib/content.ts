@@ -627,7 +627,7 @@ export const content = {
     titleHl: "Conditions",
     lastUpdated: "Effective date: August 2026",
     intro:
-      "These terms govern the freelance web development, custom software, and technical SEO consulting services provided by Zakrul Abdul (zakrulabd) to clients.",
+      "These terms govern the freelance web development, custom software, and technical SEO consulting services provided by Muhamad Zaqrul (zakrulabd) to clients.",
     sections: [
       {
         title: "1. Scope of Work & Quotations",
