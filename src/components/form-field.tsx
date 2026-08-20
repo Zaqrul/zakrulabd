@@ -115,7 +115,10 @@ export function FieldToast({ message, id }: { message: string; id: string }) {
     <span
       id={id}
       role="alert"
-      className="pop-in absolute bottom-full left-0 z-20 mb-2 flex w-max max-w-full items-start gap-2 rounded-lg bg-navy px-3 py-2 text-left shadow-lg shadow-black/20"
+      /* pointer-events-none so the bubble cannot intercept a click meant for
+         the field it overlaps: it sits over the row above, and a notice that
+         swallows taps is worse than the error it reports. */
+      className="pop-in pointer-events-none absolute bottom-full left-0 z-20 mb-2 flex w-max max-w-full items-start gap-2 rounded-lg bg-navy px-3 py-2 text-left shadow-lg shadow-black/20"
     >
       <span
         aria-hidden
@@ -128,6 +131,36 @@ export function FieldToast({ message, id }: { message: string; id: string }) {
         aria-hidden
         className="absolute -bottom-1 left-5 h-2.5 w-2.5 rotate-45 rounded-[2px] bg-navy"
       />
+    </span>
+  );
+}
+
+/* The wait before the redirect, drawn rather than described: the ring empties
+   once per second and the figure inside it counts down, so leaving the page is
+   something the reader can see coming and step out of. */
+export function CountdownRing({ left, total }: { left: number; total: number }) {
+  const radius = 16;
+  const circumference = 2 * Math.PI * radius;
+  const ratio = Math.max(0, Math.min(left / total, 1));
+
+  return (
+    <span className="relative flex h-11 w-11 items-center justify-center" role="timer" aria-live="off">
+      <svg viewBox="0 0 40 40" className="absolute inset-0 h-full w-full -rotate-90" aria-hidden>
+        <circle cx="20" cy="20" r={radius} fill="none" stroke="var(--color-border)" strokeWidth="3" />
+        <circle
+          cx="20"
+          cy="20"
+          r={radius}
+          fill="none"
+          stroke="var(--color-amber-500)"
+          strokeWidth="3"
+          strokeLinecap="round"
+          strokeDasharray={circumference}
+          strokeDashoffset={circumference * (1 - ratio)}
+          style={{ transition: "stroke-dashoffset 1s linear" }}
+        />
+      </svg>
+      <span className="font-display text-[15px] font-bold text-navy">{left}</span>
     </span>
   );
 }

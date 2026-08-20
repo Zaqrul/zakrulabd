@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { SvgMailSent } from "iblis-react-undraw";
-import { ClearButton, CountRing, Cross, FieldNote, FieldToast, StatusMark } from "@/components/form-field";
+import { ClearButton, CountRing, CountdownRing, Cross, FieldNote, FieldToast, StatusMark } from "@/components/form-field";
 import { Toast } from "@/components/toast";
 import { content as t } from "@/lib/content";
 import { wa, waMessages } from "@/lib/contact";
@@ -37,6 +37,9 @@ function Spinner({ className = "" }: { className?: string }) {
 
 const EMPTY = { name: "", package: "", email: "", phone: "", website: "", message: "", company: "" };
 
+/* Long enough to read the thanks, short enough not to feel stuck. */
+const REDIRECT_SECONDS = 6;
+
 export function ContactForm() {
   const c = t.contactPage;
   const router = useRouter();
@@ -47,6 +50,7 @@ export function ContactForm() {
   const [error, setError] = useState("");
   const [progress, setProgress] = useState(0);
   const [dragging, setDragging] = useState(false);
+  const [left, setLeft] = useState(REDIRECT_SECONDS);
 
   const [values, setValues] = useState(EMPTY);
   const [touched, setTouched] = useState<Partial<Record<FieldName, boolean>>>({});
@@ -81,9 +85,20 @@ export function ContactForm() {
 
   useEffect(() => {
     if (state !== "sent") return;
+
+    /* The form is taller than the screen, so the panel that replaces it can
+       open below the fold. Carried up gently rather than jumped, so it is
+       clear the page changed rather than reloaded. */
+    window.scrollTo({ top: 0, behavior: "smooth" });
     router.prefetch("/");
-    const timer = setTimeout(() => router.push("/"), 4000);
-    return () => clearTimeout(timer);
+
+    const tick = setInterval(() => setLeft((n) => n - 1), 1000);
+    const timer = setTimeout(() => router.push("/"), REDIRECT_SECONDS * 1000);
+
+    return () => {
+      clearInterval(tick);
+      clearTimeout(timer);
+    };
   }, [state, router]);
 
   function addFiles(incoming: File[]) {
@@ -224,6 +239,13 @@ export function ContactForm() {
 
         <h2 className="font-display text-2xl font-bold text-navy md:text-3xl">{c.successTitle}</h2>
         <p className="max-w-lg text-[15px] leading-relaxed text-body">{c.successBody}</p>
+
+        <div className="flex items-center gap-3 rounded-full border border-border bg-bg py-2 pl-2 pr-5">
+          <CountdownRing left={Math.max(left, 0)} total={REDIRECT_SECONDS} />
+          <span className="text-[13px] text-body">
+            {c.successCountdown} <span className="font-bold text-navy">{Math.max(left, 0)}</span> {c.successSeconds}
+          </span>
+        </div>
 
         <Link
           href="/"
