@@ -574,6 +574,12 @@ export const content = {
     successBody: "I read every enquiry myself and reply within one working day, usually sooner. Taking you back to the homepage.",
     successHome: "Back to Home now",
     errorFallback: "Something went wrong. Message me on WhatsApp and I will pick it up there.",
+    assurances: [
+      "You deal with me directly, not an account manager.",
+      "I reply within one working day, usually sooner.",
+      "A plan and a fixed quote before any work starts.",
+      "No obligation, and I will say so if a website is not what you need.",
+    ],
   },
   notes: {
     badge: "NOTES",

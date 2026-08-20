@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
+import { SvgContactUs } from "iblis-react-undraw";
 import { ContactForm } from "@/components/contact-form";
+import { CheckIcon } from "@/components/icons";
 import { PostShell } from "@/components/post-shell";
 import { content as t } from "@/lib/content";
 import { breadcrumb } from "@/lib/structured-data";
@@ -39,10 +41,29 @@ export default function ContactPage() {
       </section>
 
       <main id="main" className="mx-auto w-full max-w-shell flex-1 px-5 py-14 md:px-6 md:py-16">
-        {/* The form itself keeps a reading measure rather than the full shell:
-            a 1200px-wide text field looks like a search bar, not an answer box. */}
-        <div className="max-w-2xl">
-          <ContactForm />
+        {/* Two columns from lg up. The form keeps a reading measure rather than
+            the full shell, because a 1200px text field looks like a search bar
+            rather than somewhere to write a few paragraphs, and the drawing
+            fills the space that leaves instead of a stretch of empty grey. */}
+        <div className="grid items-start gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] lg:gap-16">
+          <div className="max-w-2xl">
+            <ContactForm />
+          </div>
+
+          <aside className="hidden flex-col items-center gap-6 lg:flex">
+            <div className="float-soft w-full max-w-[340px]">
+              <SvgContactUs primarycolor="#f7c325" height={260} className="mx-auto h-auto w-full" />
+            </div>
+
+            <ul className="flex w-full flex-col gap-3 border-t border-border pt-6">
+              {c.assurances.map((line) => (
+                <li key={line} className="flex items-start gap-2.5 text-[14px] leading-relaxed text-body">
+                  <CheckIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-teal-600" />
+                  {line}
+                </li>
+              ))}
+            </ul>
+          </aside>
         </div>
       </main>
     </PostShell>

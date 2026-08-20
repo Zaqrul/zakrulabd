@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { CheckIcon } from "@/components/icons";
+import { SvgMailSent } from "iblis-react-undraw";
 import { content as t } from "@/lib/content";
 import { wa, waMessages } from "@/lib/contact";
 
@@ -58,12 +58,33 @@ export function ContactForm() {
 
   if (state === "sent") {
     return (
-      <div role="status" className="flex flex-col items-start gap-4 border border-border bg-white p-8">
-        <span className="flex h-12 w-12 items-center justify-center rounded-full bg-teal-600 text-white">
-          <CheckIcon className="h-6 w-6" />
+      <div
+        role="status"
+        aria-live="polite"
+        className="rise-in flex flex-col items-center gap-5 rounded-2xl border border-border bg-white p-8 text-center md:p-10"
+      >
+        {/* The drawing floats gently while the tick strokes itself on, so the
+            few seconds before the redirect are not a frozen screen. */}
+        <div className="float-soft w-full max-w-[260px]">
+          <SvgMailSent primarycolor="#f7c325" height={180} className="mx-auto h-auto w-full" />
+        </div>
+
+        <span className="pop-in flex h-14 w-14 items-center justify-center rounded-full bg-teal-600">
+          <svg viewBox="0 0 24 24" fill="none" className="h-7 w-7" aria-hidden>
+            <polyline
+              points="20 6 9 17 4 12"
+              stroke="#ffffff"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="draw-tick"
+            />
+          </svg>
         </span>
-        <h2 className="font-display text-2xl font-bold text-navy">{c.successTitle}</h2>
+
+        <h2 className="font-display text-2xl font-bold text-navy md:text-3xl">{c.successTitle}</h2>
         <p className="max-w-lg text-[15px] leading-relaxed text-body">{c.successBody}</p>
+
         <Link
           href="/"
           className="btn-primary inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-sm font-bold text-navy transition-colors hover:bg-amber-600"

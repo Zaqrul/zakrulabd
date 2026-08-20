@@ -373,3 +373,71 @@ p:has(.hl) {
     animation: none;
   }
 }
+
+/* Confirmation on the enquiry form. The drawing rises into place while the tick
+   is stroked on, so the moment reads as "sent" rather than as a screen swap. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes draw-tick {
+  from {
+    stroke-dashoffset: 34;
+  }
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes pop-in {
+  0% {
+    opacity: 0;
+    transform: scale(0.6);
+  }
+  70% {
+    transform: scale(1.08);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.rise-in {
+  animation: rise-in 0.5s ease-out both;
+}
+
+.pop-in {
+  animation: pop-in 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+.draw-tick {
+  stroke-dasharray: 34;
+  animation: draw-tick 0.5s ease-out 0.35s both;
+}
+
+/* The float keeps going after the entrance, so the confirmation stays alive
+   for the few seconds before the redirect. */
+.float-soft {
+  animation: gentle-float 4s ease-in-out 0.6s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rise-in,
+  .pop-in,
+  .draw-tick,
+  .float-soft {
+    animation: none;
+  }
+
+  .draw-tick {
+    stroke-dashoffset: 0;
+  }
+}
