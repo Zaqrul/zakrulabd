@@ -2,9 +2,12 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { SvgCelebration } from "iblis-react-undraw";
 import { PostArt } from "@/components/post-art";
 import { PostShell } from "@/components/post-shell";
+import { ReadComplete, ReadingProgress } from "@/components/reading-progress";
 import { ShareLinks } from "@/components/share-links";
+import { content as t } from "@/lib/content";
 import { getPost, postSlug, posts, type Block } from "@/lib/posts";
 import { ID } from "@/lib/structured-data";
 import { SITE_URL, url } from "@/lib/site";
@@ -153,6 +156,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
   return (
     <PostShell back={{ href: "/notes", label: "All Notes" }}>
+      <ReadingProgress targetId="article-body" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
@@ -179,7 +183,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
           {post.excerpt}
         </p>
 
-        <article>
+        <article id="article-body">
           <Blocks blocks={post.body} />
         </article>
 
@@ -202,6 +206,31 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               worth passing on has just finished reading. */}
           <ShareLinks url={url(`/notes/${postSlug(post)}`)} title={post.title} />
         </div>
+
+        {/* Only appears once the end is actually on screen. */}
+        <ReadComplete>
+          <div className="mt-10 flex flex-col items-center gap-4 rounded-2xl border border-border bg-white p-8 text-center md:p-10">
+            <div className="w-full max-w-[220px]">
+              <SvgCelebration primarycolor="#f7c325" height={160} className="mx-auto h-auto w-full" />
+            </div>
+            <h2 className="font-display text-xl font-bold text-navy md:text-2xl">{t.notes.readDoneTitle}</h2>
+            <p className="max-w-lg text-[14.5px] leading-relaxed text-body">{t.notes.readDoneBody}</p>
+            <div className="mt-1 flex flex-wrap items-center justify-center gap-3">
+              <Link
+                href="/contact"
+                className="btn-primary inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-sm font-bold text-navy transition-colors hover:bg-amber-600"
+              >
+                {t.notes.readDoneCta}
+              </Link>
+              <Link
+                href="/notes"
+                className="btn-primary inline-flex items-center justify-center gap-2 rounded-lg border-[1.5px] border-primary-900 px-6 py-3 text-sm font-bold text-primary-900 transition-colors hover:bg-primary-900 hover:text-white"
+              >
+                {t.notes.readDoneMore}
+              </Link>
+            </div>
+          </div>
+        </ReadComplete>
 
         <div className="mt-8 flex flex-col gap-4 bg-amber-300/20 p-6 md:p-8">
           <h2 className="font-display text-lg font-bold text-navy">Got a business in the same spot?</h2>
