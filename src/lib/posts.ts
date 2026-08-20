@@ -74,6 +74,19 @@ export const posts: Post[] = [
         type: "p",
         text: "So I spent time looking at how other food businesses handle it, in Malaysia and elsewhere. What kept working was restraint. Warm colours rather than bright ones. Generous space around the photographs, because the kuih is the thing worth looking at. Type that has some character in the headings and gets out of the way in the body text. None of that is invention on my part. It is just what suits the product.",
       },
+      {
+        type: "image",
+        src: "/blog/sri-tanduk-about.webp",
+        alt: "The Kisah Sri Tanduk page telling the business story from 1999 onwards",
+        width: 1400,
+        height: 788,
+        caption:
+          "The story page. A script face for the brand name, a plain one for everything you actually have to read.",
+      },
+      {
+        type: "p",
+        text: "The business has been going since 1999, and it started with banana crisps before it became kuih. That history is worth a page of its own rather than a line in a footer. It is the part a competitor cannot copy.",
+      },
       { type: "h2", text: "Wireframes before anything gets built" },
       {
         type: "p",
@@ -123,8 +136,20 @@ export const posts: Post[] = [
         text: "So the site lists what she sells, and the order form does the tedious part. A customer picks the type of kuih, the size, the quantity, and the delivery details. When they submit, all of it is composed into a WhatsApp message and opens straight in her personal WhatsApp, already filled in.",
       },
       {
+        type: "image",
+        src: "/blog/sri-tanduk-order-modal.webp",
+        alt: "The Kek Gula Hangus product panel with a size picker and a Tempah via WhatsApp button",
+        width: 1400,
+        height: 788,
+        caption: "Price, size, minimum order, and the two delivery notes customers used to ask about every single time.",
+      },
+      {
         type: "p",
         text: "Nothing new to learn. She answers orders the same way she always has, in the app she already has open. The customer does not fill in a form and then wait, wondering whether anyone saw it. The conversation starts immediately, which is also when a customer is most likely to add one more tray.",
+      },
+      {
+        type: "p",
+        text: "The panel also does quiet work that has nothing to do with software. It states the minimum order, that delivery cost depends on distance, and that two days notice helps. Those were the questions she answered by hand, in every conversation, before anyone got round to ordering anything.",
       },
       { type: "h2", text: "What happened after launch" },
       {
