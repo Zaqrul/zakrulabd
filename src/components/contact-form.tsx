@@ -45,6 +45,7 @@ export function ContactForm() {
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const fieldRefs = useRef<Partial<Record<FieldName, HTMLElement | null>>>({});
+  const panelRef = useRef<HTMLDivElement>(null);
 
   const [state, setState] = useState<State>("idle");
   const [error, setError] = useState("");
@@ -87,9 +88,10 @@ export function ContactForm() {
     if (state !== "sent") return;
 
     /* The form is taller than the screen, so the panel that replaces it can
-       open below the fold. Carried up gently rather than jumped, so it is
-       clear the page changed rather than reloaded. */
-    window.scrollTo({ top: 0, behavior: "smooth" });
+       open below the fold. Scrolling to the top of the document overshot it
+       and landed on the hero, so the panel itself is centred instead, and
+       gently rather than jumped, to show the page changed. */
+    panelRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     router.prefetch("/");
 
     const tick = setInterval(() => setLeft((n) => n - 1), 1000);
@@ -216,6 +218,7 @@ export function ContactForm() {
   if (state === "sent") {
     return (
       <div
+        ref={panelRef}
         role="status"
         aria-live="polite"
         className="rise-in flex flex-col items-center gap-5 rounded-2xl border border-border bg-white p-8 text-center md:p-10"
