@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { url } from "@/lib/site";
 
 /* Metadata merges down the tree and unset fields are inherited, so without this
    block the root layout's title, description and — worst of all — its canonical
@@ -12,7 +13,7 @@ export const metadata: Metadata = {
     title: "Compare Packages | zakrulabd",
     description:
       "What the Starter, Professional, and Advanced packages each build: 18 project types side by side, from a one-page portfolio to a booking system or online store.",
-    url: "https://zakrulabd.com/compare",
+    url: url("/compare"),
   },
 };
 

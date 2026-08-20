@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { url } from "@/lib/site";
 
 /* Metadata merges down the tree and unset fields are inherited, so without this
    block the root layout's title, description and — worst of all — its canonical
@@ -10,7 +11,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Privacy Policy | zakrulabd",
     description: "How zakrulabd collects, uses, and protects your information, in line with the Malaysian Personal Data Protection Act 2010.",
-    url: "https://zakrulabd.com/privacy",
+    url: url("/privacy"),
   },
 };
 

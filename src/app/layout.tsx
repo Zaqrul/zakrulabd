@@ -6,6 +6,7 @@ import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { TawkWidget } from "@/components/tawk-widget";
 import { structuredData } from "@/lib/structured-data";
+import { SITE_URL } from "@/lib/site";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -25,7 +26,7 @@ const jetbrainsMono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  metadataBase: new URL("https://zakrulabd.com"),
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "zakrulabd — Freelance Web Developer & Digital Marketer in Malaysia",
     template: "%s | zakrulabd",
@@ -44,7 +45,7 @@ export const metadata: Metadata = {
     "SME Web Development Malaysia",
     "Full Stack Developer",
   ],
-  authors: [{ name: "Zakrul Abdul", url: "https://zakrulabd.com" }],
+  authors: [{ name: "Zakrul Abdul", url: SITE_URL }],
   creator: "Zakrul Abdul",
   publisher: "zakrulabd",
   formatDetection: {
@@ -55,13 +56,13 @@ export const metadata: Metadata = {
   alternates: {
     canonical: "/",
     languages: {
-      "en-MY": "https://zakrulabd.com",
+      "en-MY": SITE_URL,
     },
   },
   openGraph: {
     type: "website",
     locale: "en_MY",
-    url: "https://zakrulabd.com",
+    url: SITE_URL,
     siteName: "zakrulabd",
     title: "zakrulabd — Web Development & Digital Marketing in Malaysia",
     description:

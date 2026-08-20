@@ -577,7 +577,7 @@ export const content = {
     titleHl: "Policy",
     lastUpdated: "Effective date: August 2026",
     intro:
-      "This policy explains what information I collect, how I use it, and how I protect it when you visit zakrulabd.com or get in touch about web development and digital marketing work. It follows the Malaysian Personal Data Protection Act 2010 (PDPA).",
+      "This policy explains what information I collect, how I use it, and how I protect it when you visit zakrul.com or get in touch about web development and digital marketing work. It follows the Malaysian Personal Data Protection Act 2010 (PDPA).",
     sections: [
       {
         title: "1. Information I Collect",

@@ -1,6 +1,5 @@
 import { content } from "@/lib/content";
-
-const SITE = "https://zakrulabd.com";
+import { SITE_URL as SITE } from "@/lib/site";
 
 /* Stable @id anchors. Using one graph with cross-references, rather than several
    loose nodes, lets a crawler resolve "the person", "the business" and "the page"
