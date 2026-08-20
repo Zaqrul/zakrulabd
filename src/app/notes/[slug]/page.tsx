@@ -4,6 +4,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { PostArt } from "@/components/post-art";
 import { PostShell } from "@/components/post-shell";
+import { ShareLinks } from "@/components/share-links";
 import { getPost, posts, type Block } from "@/lib/posts";
 import { ID } from "@/lib/structured-data";
 import { SITE_URL, url } from "@/lib/site";
@@ -176,16 +177,22 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
         {/* Same mark the cards carry, so the byline at the end of the article
             and the byline on the tile that led here look like one signature. */}
-        <div className="mt-12 flex items-center gap-2 border-t border-border pt-6 text-[13.5px] text-muted">
-          <span>Written by</span>
-          <Image
-            src="/logo-ghost-outline.webp"
-            alt=""
-            width={512}
-            height={512}
-            className="h-7 w-7 flex-shrink-0 object-contain"
-          />
-          <span className="font-bold text-navy">{post.author}</span>
+        <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6 text-[13.5px] text-muted">
+          <span className="flex items-center gap-2">
+            <span>Written by</span>
+            <Image
+              src="/logo-ghost-outline.webp"
+              alt=""
+              width={512}
+              height={512}
+              className="h-7 w-7 flex-shrink-0 object-contain"
+            />
+            <span className="font-bold text-navy">{post.author}</span>
+          </span>
+
+          {/* Sharing sits at the end of the article, where someone who found it
+              worth passing on has just finished reading. */}
+          <ShareLinks url={url(`/notes/${post.slug}`)} title={post.title} />
         </div>
 
         <div className="mt-8 flex flex-col gap-4 bg-amber-300/20 p-6 md:p-8">
