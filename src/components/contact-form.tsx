@@ -124,9 +124,11 @@ export function ContactForm() {
     /* Marking everything on a failed send is what turns "it will not submit"
        into a list of things to fix. */
     if (!formValid) {
+      /* No form-level notice here. Every field that fails carries its own
+         bubble, and a banner repeating that in the abstract is one more thing
+         to read on the way to the fix. */
       setTouched({ name: true, email: true, phone: true, website: true, message: true });
-      setError(c.invalidSummary);
-      setState("error");
+      setState("idle");
 
       /* Take the reader to the first thing to fix rather than leaving them to
          hunt for it: the form is longer than a phone screen, and the field at
@@ -265,6 +267,7 @@ export function ContactForm() {
               type="text"
               maxLength={LIMITS.name}
               autoComplete="name"
+              placeholder={c.namePlaceholder}
               aria-describedby="note-name error-name"
               aria-invalid={touched.name && !results.name.ok}
               ref={(el) => { fieldRefs.current["name"] = el; }}
@@ -327,6 +330,7 @@ export function ContactForm() {
               type="email"
               maxLength={LIMITS.email}
               autoComplete="email"
+              placeholder={c.emailPlaceholder}
               aria-describedby="note-email error-email"
               aria-invalid={touched.email && !results.email.ok}
               ref={(el) => { fieldRefs.current["email"] = el; }}
@@ -359,6 +363,7 @@ export function ContactForm() {
               inputMode="numeric"
               autoComplete="tel-national"
               maxLength={LIMITS.phone}
+              placeholder={c.phonePlaceholder}
               aria-describedby="note-phone error-phone"
               aria-invalid={touched.phone && !results.phone.ok}
               ref={(el) => { fieldRefs.current["phone"] = el; }}

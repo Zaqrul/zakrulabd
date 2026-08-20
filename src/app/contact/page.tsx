@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SvgConversation } from "iblis-react-undraw";
+import { SvgConversation, SvgWebDevelopment } from "iblis-react-undraw";
 import { ContactForm } from "@/components/contact-form";
 import { CheckIcon } from "@/components/icons";
 import { PostShell } from "@/components/post-shell";
@@ -65,6 +65,13 @@ export default function ContactPage() {
                 </li>
               ))}
             </ul>
+
+            {/* The column ran out before the form did, leaving a stretch of
+                empty grey beside the longest fields. A second drawing from the
+                same set closes it: what happens after the enquiry. */}
+            <div className="w-full max-w-[380px] border-t border-border pt-8">
+              <SvgWebDevelopment primarycolor="#f7c325" height={300} className="mx-auto h-auto w-full" />
+            </div>
           </aside>
         </div>
       </main>
