@@ -863,7 +863,7 @@ export default function Home() {
             {posts.slice(0, 3).map((post) => (
               <NoteCard key={post.slug} post={post} />
             ))}
-            <NoteNextCard label={t.notes.next} />
+            <NoteNextCard label={t.notes.next} href="/#contact" />
           </div>
 
           <div className="mt-8 flex justify-center">

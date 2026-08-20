@@ -75,12 +75,15 @@ export function NoteCard({ post }: { post: Post }) {
 /* Fills the fourth slot the way the client grid does: an open invitation rather
    than a post, so it is dashed, carries no artwork, and goes to contact. The
    bloom is the light-background twin of the one on the navy client tiles. */
-export function NoteNextCard({ label, href = "/#contact" }: { label: string; href?: string }) {
-  return (
-    <Link
-      href={href}
-      className="group relative flex flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border-2 border-dashed border-navy/15 p-6 text-center transition duration-300 hover:-translate-y-1 hover:border-amber-400"
-    >
+export function NoteNextCard({ label, href }: { label: string; href?: string }) {
+  /* With no href the tile is a statement, not a control: on the index it closes
+     the list, and a link that goes nowhere useful is worse than no link. The
+     homepage passes the final CTA and gets the hover treatment with it. */
+  const base =
+    "group relative flex flex-col items-center justify-center gap-3 overflow-hidden rounded-2xl border-2 border-dashed border-navy/15 p-6 text-center";
+
+  const inner = (
+    <>
       <span className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_center,color-mix(in_srgb,var(--color-amber-400)_28%,transparent),transparent_70%)] opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
       <span className="relative flex h-9 w-9 items-center justify-center">
@@ -93,6 +96,14 @@ export function NoteNextCard({ label, href = "/#contact" }: { label: string; hre
       <span className="relative font-display text-[13.5px] font-bold leading-snug text-body transition-colors duration-300 group-hover:text-navy">
         {label}
       </span>
+    </>
+  );
+
+  if (!href) return <div className={base}>{inner}</div>;
+
+  return (
+    <Link href={href} className={`${base} transition duration-300 hover:-translate-y-1 hover:border-amber-400`}>
+      {inner}
     </Link>
   );
 }

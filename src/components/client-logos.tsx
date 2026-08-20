@@ -40,9 +40,10 @@ export function ClientLogos() {
           <p className="text-base text-slate-400">{t.clients.sub}</p>
         </div>
 
-        {/* Four across on large screens. aspect-square keeps the tile square when
-            max-w-full has to shrink it below 150px on a narrow phone. */}
-        <div className="grid grid-cols-2 justify-items-center gap-4 sm:gap-5 lg:grid-cols-4">
+        {/* The grid is capped rather than spread across the full 1200px shell:
+            four 150px tiles stretched over that width read as four stray marks
+            with holes between them. Capping it keeps them a group. */}
+        <div className="mx-auto grid max-w-[340px] grid-cols-2 justify-items-center gap-3 sm:max-w-[420px] sm:gap-4 lg:max-w-3xl lg:grid-cols-4">
           {t.clients.items.map((client) => {
             const asset = clientAssets[client.name];
             if (!asset) return null;
