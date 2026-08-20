@@ -10,7 +10,7 @@ import { content as t } from "@/lib/content";
 import { wa, waMessages } from "@/lib/contact";
 import { LIMITS, checkField, digitsOnly, sanitise, type FieldName } from "@/lib/validation";
 
-type State = "idle" | "sending" | "sent" | "error";
+type State = "idle" | "sending" | "submitted" | "sent" | "error";
 
 /* Mirrors the server. Checking here too means an oversized file is refused
    before it is uploaded over a phone connection, rather than after. */
@@ -160,7 +160,10 @@ export function ContactForm() {
       }
 
       if (request.status >= 200 && request.status < 300) {
-        setState("sent");
+        /* Held for a beat so the button finishes its own sentence before the
+           panel takes over, rather than the press appearing to do nothing. */
+        setState("submitted");
+        setTimeout(() => setState("sent"), 900);
         return;
       }
 
@@ -215,6 +218,7 @@ export function ContactForm() {
   }
 
   const sending = state === "sending";
+  const submitted = state === "submitted";
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
@@ -484,31 +488,22 @@ export function ContactForm() {
       </div>
 
 
-      {/* The bar carries the real upload figure rather than an indeterminate
-          animation, so a large attachment reads as progress, not a stall. */}
-      {sending && (
-        <div className="flex items-center gap-3" aria-live="polite">
-          <Spinner className="h-5 w-5 flex-shrink-0 text-navy" />
-          <span className="h-1.5 flex-1 overflow-hidden rounded-full bg-border">
-            <span
-              className="block h-full rounded-full bg-amber-500 transition-all duration-200"
-              style={{ width: `${Math.max(progress, 6)}%` }}
-            />
-          </span>
-          <span className="w-28 flex-shrink-0 text-right text-[12.5px] font-semibold text-muted">
-            {progress < 100 ? `${c.uploading} ${progress}%` : c.sending}
-          </span>
-        </div>
-      )}
-
       <div className="mt-1 flex flex-wrap items-center gap-4">
+        {/* The button is the only place progress is reported: it is what was
+            pressed, so it is where the eye already is, and one indicator cannot
+            disagree with another. Submit, submitting, submitted. */}
         <button
           type="submit"
-          disabled={sending}
-          className="btn-primary inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-7 py-3.5 text-[15px] font-bold text-navy transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-70"
+          disabled={sending || submitted}
+          className="btn-primary inline-flex min-w-[168px] items-center justify-center gap-2 rounded-lg bg-amber-500 px-7 py-3.5 text-[15px] font-bold text-navy transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-80"
         >
           {sending && <Spinner className="h-4 w-4" />}
-          {sending ? c.sending : c.submit}
+          {submitted && (
+            <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="3" aria-hidden>
+              <polyline points="20 6 9 17 4 12" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          )}
+          {sending ? `${c.sending}${progress > 0 && progress < 100 ? ` ${progress}%` : ""}` : submitted ? c.submitted : c.submit}
         </button>
 
         <span className="text-[13.5px] text-muted">

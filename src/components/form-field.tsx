@@ -93,14 +93,14 @@ export function CountRing({ used, max }: { used: number; max: number }) {
 export function FieldNote({ error, hint, id }: { error?: string; hint?: string; id: string }) {
   if (error) {
     return (
-      <span id={id} role="alert" className="text-[12.5px] font-medium text-navy">
+      <span id={id} role="alert" className="text-[11.5px] font-medium text-navy">
         {error}
       </span>
     );
   }
   if (!hint) return null;
   return (
-    <span id={id} className="text-[12.5px] font-medium text-amber-600">
+    <span id={id} className="text-[11.5px] text-muted">
       {hint}
     </span>
   );
