@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { SvgConversation, SvgWebDevelopment } from "iblis-react-undraw";
 import { ContactForm } from "@/components/contact-form";
 import { CheckIcon } from "@/components/icons";
@@ -76,7 +77,18 @@ export default function ContactPage() {
                   write to me is already looking. */}
               <blockquote className="border-l-[3px] border-amber-400 pl-4">
                 <p className="font-display text-[15px] font-bold leading-snug text-navy">{c.quote}</p>
-                <footer className="mt-2 text-[12.5px] text-muted">{c.quoteBy}</footer>
+                {/* Same mark and byline shape the note cards use, so a
+                    signature on this site always looks like one. */}
+                <footer className="mt-2.5 flex items-center gap-2 text-[12.5px] text-muted">
+                  <Image
+                    src="/logo-ghost-outline.webp"
+                    alt=""
+                    width={512}
+                    height={512}
+                    className="h-5 w-5 flex-shrink-0 object-contain"
+                  />
+                  <span className="font-bold text-navy">{c.quoteBy}</span>
+                </footer>
               </blockquote>
             </div>
           </aside>
