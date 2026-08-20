@@ -10,7 +10,7 @@ export const LIMITS = {
   phone: 10,
   package: 60,
   website: 200,
-  message: 2000,
+  message: 180,
 } as const;
 
 /* Strips the characters that have no business in a form field: C0 and C1
@@ -72,7 +72,7 @@ export function checkField(name: FieldName, value: string): { ok: boolean; messa
       return { ok: true };
 
     case "phone":
-      if (!value) return { ok: true };
+      if (!value) return { ok: false, message: "I need a number I can reach you on." };
       if (!isPhone(value))
         return { ok: false, message: "Enter the number without the leading 0, for example 123456789." };
       return { ok: true };
@@ -84,7 +84,7 @@ export function checkField(name: FieldName, value: string): { ok: boolean; messa
 
     case "message":
       if (!value) return { ok: false, message: "Tell me what you want built." };
-      if (value.length < 20) return { ok: false, message: "A sentence or two more would help me quote it properly." };
+      if (value.length < 20) return { ok: false, message: "One more sentence would help me quote it properly." };
       return { ok: true };
   }
 }

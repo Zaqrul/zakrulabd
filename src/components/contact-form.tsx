@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { SvgMailSent } from "iblis-react-undraw";
 import { ClearButton, CountRing, Cross, FieldNote, StatusMark } from "@/components/form-field";
+import { Toast } from "@/components/toast";
 import { content as t } from "@/lib/content";
 import { wa, waMessages } from "@/lib/contact";
 import { LIMITS, checkField, digitsOnly, sanitise, type FieldName } from "@/lib/validation";
@@ -217,6 +218,10 @@ export function ContactForm() {
 
   return (
     <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
+      {/* Anything about the form as a whole surfaces here, over the page, where
+          someone who has just pressed send is already looking. */}
+      {error && <Toast message={error} onDismiss={() => setError("")} />}
+
       {/* Hidden from people, tempting to a scripted submitter. A filled one is
           answered with success and dropped on the server. */}
       <input
@@ -478,11 +483,6 @@ export function ContactForm() {
         )}
       </div>
 
-      {state === "error" && (
-        <p role="alert" className="border-l-[3px] border-amber-500 bg-amber-300/20 px-4 py-3 text-[14px] text-body">
-          {error}
-        </p>
-      )}
 
       {/* The bar carries the real upload figure rather than an indeterminate
           animation, so a large attachment reads as progress, not a stall. */}

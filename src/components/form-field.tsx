@@ -100,7 +100,7 @@ export function FieldNote({ error, hint, id }: { error?: string; hint?: string; 
   }
   if (!hint) return null;
   return (
-    <span id={id} className="text-[12.5px] text-muted">
+    <span id={id} className="text-[12.5px] font-medium text-amber-600">
       {hint}
     </span>
   );
