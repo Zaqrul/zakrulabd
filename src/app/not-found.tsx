@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { SvgLost } from "iblis-react-undraw";
 import { StatusPage, statusButton } from "@/components/status-page";
+import { UnderlineLink } from "@/components/underline-link";
 import { content as t } from "@/lib/content";
 
 /* A 404 must never be indexed, and it must not inherit the homepage canonical
@@ -41,13 +42,9 @@ export default function NotFound() {
         <span className="text-[11px] font-bold uppercase tracking-wide text-muted">{c.linksLabel}</span>
         <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
           {c.links.map((label, i) => (
-            <Link
-              key={label}
-              href={jumpLinks[i]}
-              className="text-[13.5px] font-semibold text-navy underline decoration-amber-500 decoration-2 underline-offset-4 hover:decoration-navy"
-            >
+            <UnderlineLink key={label} href={jumpLinks[i]} className="text-[13.5px] font-semibold text-navy">
               {label}
-            </Link>
+            </UnderlineLink>
           ))}
         </div>
       </div>

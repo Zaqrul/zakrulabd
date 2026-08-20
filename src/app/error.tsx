@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useEffect } from "react";
 import { SvgBugFixing } from "iblis-react-undraw";
 import { StatusPage, statusButton } from "@/components/status-page";
+import { UnderlineLink } from "@/components/underline-link";
 import { content as t } from "@/lib/content";
 import { wa } from "@/lib/contact";
 
@@ -38,14 +39,13 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
         </>
       }
     >
-      <a
+      <UnderlineLink
         href={wa(`Hi Zakrul! Website anda keluar error${error.digest ? ` (ref: ${error.digest})` : ""}.`)}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-4 text-[13.5px] font-semibold text-navy underline decoration-amber-500 decoration-2 underline-offset-4 hover:decoration-navy"
+        external
+        className="mt-4 text-[13.5px] font-semibold text-navy"
       >
         {c.report}
-      </a>
+      </UnderlineLink>
     </StatusPage>
   );
 }

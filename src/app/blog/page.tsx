@@ -42,8 +42,16 @@ export default function BlogIndex() {
                   <span className="text-navy">{post.tag}</span>
                   <span>{post.readingTime}</span>
                 </div>
-                <h2 className="max-w-3xl font-display text-2xl font-bold leading-snug text-navy group-hover:underline group-hover:decoration-amber-500 group-hover:decoration-2 group-hover:underline-offset-4 md:text-3xl">
-                  {post.title}
+                <h2 className="max-w-3xl font-display text-2xl font-bold leading-snug text-navy md:text-3xl">
+                  {/* Same hover underline as the nav: a bar that grows from the
+                      left, sized to the title rather than to the whole row. */}
+                  <span className="relative inline">
+                    {post.title}
+                    <span
+                      aria-hidden
+                      className="absolute -bottom-1 left-0 h-[2.5px] w-0 rounded-full bg-amber-400 transition-all duration-200 ease-out group-hover:w-full"
+                    />
+                  </span>
                 </h2>
                 <p className="max-w-2xl text-[15px] leading-relaxed text-body">{post.excerpt}</p>
               </Link>
