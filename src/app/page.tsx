@@ -714,7 +714,7 @@ export default function Home() {
 
       {/* TECH STACK */}
       <section className="border-b border-border bg-bg py-11">
-        <div className="mx-auto flex max-w-3xl flex-col items-center px-6">
+        <div className="mx-auto flex max-w-shell flex-col items-center px-6">
           <span className="text-base font-bold tracking-[0.08em] text-muted">{t.tech.heading}</span>
         </div>
         <div className="marquee-fade mt-6 overflow-hidden">

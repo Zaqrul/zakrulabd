@@ -126,7 +126,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
 
-      <main id="main" className="mx-auto w-full max-w-3xl flex-1 px-5 py-12 md:px-6 md:py-16">
+      <main id="main" className="mx-auto w-full max-w-shell flex-1 px-5 py-12 md:px-6 md:py-16">
         <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold uppercase tracking-wide text-muted">
           <span className="text-navy">{post.tag}</span>
           <time dateTime={post.date}>

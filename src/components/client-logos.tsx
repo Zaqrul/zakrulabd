@@ -30,7 +30,7 @@ const clientAssets: Record<string, { url: string; logo: string; width: number; h
 export function ClientLogos() {
   return (
     <section id="clients" className="bg-navy px-6 py-24">
-      <div className="mx-auto max-w-3xl">
+      <div className="mx-auto max-w-shell">
         <div className="mx-auto mb-12 flex max-w-xl flex-col items-center gap-3 text-center">
           <h2 className="font-display text-[30px] font-bold text-white md:text-5xl">
             {t.clients.headingA}

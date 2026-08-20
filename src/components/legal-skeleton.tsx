@@ -16,7 +16,7 @@ export function LegalSkeleton({ label }: { label: string }) {
           </div>
         </div>
 
-        <div className="mx-auto w-full max-w-4xl flex-1 px-6 py-16">
+        <div className="mx-auto w-full max-w-shell flex-1 px-6 py-16">
           <Skeleton className="h-9 w-64 md:h-11" />
           <Skeleton className="mt-3 h-3.5 w-44" />
 
