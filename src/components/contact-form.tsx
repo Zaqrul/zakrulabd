@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { SvgMailSent } from "iblis-react-undraw";
-import { ClearButton, CountRing, Cross, FieldNote, StatusMark } from "@/components/form-field";
+import { ClearButton, CountRing, Cross, FieldNote, FieldToast, StatusMark } from "@/components/form-field";
 import { Toast } from "@/components/toast";
 import { content as t } from "@/lib/content";
 import { wa, waMessages } from "@/lib/contact";
@@ -41,6 +41,7 @@ export function ContactForm() {
   const c = t.contactPage;
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const fieldRefs = useRef<Partial<Record<FieldName, HTMLElement | null>>>({});
 
   const [state, setState] = useState<State>("idle");
   const [error, setError] = useState("");
@@ -126,6 +127,20 @@ export function ContactForm() {
       setTouched({ name: true, email: true, phone: true, website: true, message: true });
       setError(c.invalidSummary);
       setState("error");
+
+      /* Take the reader to the first thing to fix rather than leaving them to
+         hunt for it: the form is longer than a phone screen, and the field at
+         fault is often scrolled out of sight when send is pressed. */
+      const order: FieldName[] = ["name", "email", "phone", "website", "message"];
+      const first = order.find((field) => !results[field].ok);
+      const element = first ? fieldRefs.current[first] : null;
+
+      if (element) {
+        element.scrollIntoView({ behavior: "smooth", block: "center" });
+        /* Focused after the scroll settles, because focusing first makes the
+           browser jump there instantly and undo the smooth scroll. */
+        setTimeout(() => element.focus({ preventScroll: true }), 400);
+      }
       return;
     }
 
@@ -243,12 +258,16 @@ export function ContactForm() {
         <label className="flex flex-col gap-2">
           <span className={labelText}>{c.nameLabel}</span>
           <span className="relative block">
+            {touched.name && !results.name.ok && (
+              <FieldToast id="error-name" message={results.name.message!} />
+            )}
             <input
               type="text"
               maxLength={LIMITS.name}
               autoComplete="name"
-              aria-describedby="note-name"
+              aria-describedby="note-name error-name"
               aria-invalid={touched.name && !results.name.ok}
+              ref={(el) => { fieldRefs.current["name"] = el; }}
               value={values.name}
               onChange={(e) => set("name", e.target.value)}
               onBlur={() => touch("name")}
@@ -259,7 +278,7 @@ export function ContactForm() {
               <StatusMark status={markOf("name")} />
             </span>
           </span>
-          <FieldNote id="note-name" hint={c.nameHint} error={touched.name ? results.name.message : undefined} />
+          <FieldNote id="note-name" hint={c.nameHint}  />
         </label>
 
         <label className="flex flex-col gap-2">
@@ -301,12 +320,16 @@ export function ContactForm() {
         <label className="flex flex-col gap-2">
           <span className={labelText}>{c.emailLabel}</span>
           <span className="relative block">
+            {touched.email && !results.email.ok && (
+              <FieldToast id="error-email" message={results.email.message!} />
+            )}
             <input
               type="email"
               maxLength={LIMITS.email}
               autoComplete="email"
-              aria-describedby="note-email"
+              aria-describedby="note-email error-email"
               aria-invalid={touched.email && !results.email.ok}
+              ref={(el) => { fieldRefs.current["email"] = el; }}
               value={values.email}
               onChange={(e) => set("email", e.target.value)}
               onBlur={() => touch("email")}
@@ -317,7 +340,7 @@ export function ContactForm() {
               <StatusMark status={markOf("email")} />
             </span>
           </span>
-          <FieldNote id="note-email" hint={c.emailHint} error={touched.email ? results.email.message : undefined} />
+          <FieldNote id="note-email" hint={c.emailHint}  />
         </label>
 
         {/* +60 is printed in the field rather than typed, and only digits are
@@ -325,6 +348,9 @@ export function ContactForm() {
         <label className="flex flex-col gap-2">
           <span className={labelText}>{c.phoneLabel}</span>
           <span className="relative block">
+            {touched.phone && !results.phone.ok && (
+              <FieldToast id="error-phone" message={results.phone.message!} />
+            )}
             <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[15px] font-semibold text-muted">
               {c.phonePrefix}
             </span>
@@ -333,8 +359,9 @@ export function ContactForm() {
               inputMode="numeric"
               autoComplete="tel-national"
               maxLength={LIMITS.phone}
-              aria-describedby="note-phone"
+              aria-describedby="note-phone error-phone"
               aria-invalid={touched.phone && !results.phone.ok}
+              ref={(el) => { fieldRefs.current["phone"] = el; }}
               value={values.phone}
               onChange={(e) => set("phone", digitsOnly(e.target.value).slice(0, LIMITS.phone))}
               onBlur={() => touch("phone")}
@@ -345,21 +372,25 @@ export function ContactForm() {
               <StatusMark status={markOf("phone", true)} />
             </span>
           </span>
-          <FieldNote id="note-phone" hint={c.phoneHint} error={touched.phone ? results.phone.message : undefined} />
+          <FieldNote id="note-phone" hint={c.phoneHint}  />
         </label>
       </div>
 
       <label className="flex flex-col gap-2">
         <span className={labelText}>{c.websiteLabel}</span>
         <span className="relative block">
+          {touched.website && !results.website.ok && (
+            <FieldToast id="error-website" message={results.website.message!} />
+          )}
           <input
             type="text"
             inputMode="url"
             autoComplete="url"
             maxLength={LIMITS.website}
             placeholder={c.websitePlaceholder}
-            aria-describedby="note-website"
+            aria-describedby="note-website error-website"
             aria-invalid={touched.website && !results.website.ok}
+            ref={(el) => { fieldRefs.current["website"] = el; }}
             value={values.website}
             onChange={(e) => set("website", e.target.value)}
             onBlur={() => touch("website")}
@@ -370,7 +401,7 @@ export function ContactForm() {
             <StatusMark status={markOf("website", true)} />
           </span>
         </span>
-        <FieldNote id="note-website" hint={c.websiteHint} error={touched.website ? results.website.message : undefined} />
+        <FieldNote id="note-website" hint={c.websiteHint}  />
       </label>
 
       <label className="flex flex-col gap-2">
@@ -379,12 +410,16 @@ export function ContactForm() {
           <CountRing used={values.message.length} max={LIMITS.message} />
         </span>
         <span className="relative block">
+          {touched.message && !results.message.ok && (
+            <FieldToast id="error-message" message={results.message.message!} />
+          )}
           <textarea
             rows={7}
             maxLength={LIMITS.message}
             placeholder={c.messagePlaceholder}
-            aria-describedby="note-message"
+            aria-describedby="note-message error-message"
             aria-invalid={touched.message && !results.message.ok}
+            ref={(el) => { fieldRefs.current["message"] = el; }}
             value={values.message}
             onChange={(e) => set("message", e.target.value)}
             onBlur={() => touch("message")}
@@ -397,7 +432,7 @@ export function ContactForm() {
             <StatusMark status={markOf("message")} />
           </span>
         </span>
-        <FieldNote id="note-message" hint={c.messageHint} error={touched.message ? results.message.message : undefined} />
+        <FieldNote id="note-message" hint={c.messageHint}  />
       </label>
 
       {/* The drop zone is a button rather than a div, so it is reachable by

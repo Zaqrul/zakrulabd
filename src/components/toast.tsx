@@ -3,13 +3,13 @@
 import { useEffect } from "react";
 import { Cross } from "@/components/form-field";
 
-/* A message about the form as a whole belongs where the eye already is, not
-   pinned to the bottom of a long page: someone who presses send while a field
-   is wrong is looking at the button, and a notice further down goes unread.
-   So this floats over the page rather than sitting in the flow.
+/* The notice about the form as a whole, sitting above the first input rather
+   than floating in a corner: it introduces the field bubbles below it, and a
+   message pinned to the viewport reads as belonging to the page rather than to
+   the form.
 
-   Errors do not dismiss themselves. A notice that disappears while it is being
-   read is worse than no notice, and this one names what has to be fixed. */
+   It does not dismiss itself. A notice that disappears while it is being read
+   is worse than no notice, and this one names what has to be fixed. */
 export function Toast({
   message,
   tone = "error",
@@ -42,7 +42,7 @@ export function Toast({
     <div
       role={error ? "alert" : "status"}
       aria-live={error ? "assertive" : "polite"}
-      className="rise-in fixed inset-x-4 bottom-5 z-[80] mx-auto flex max-w-md items-start gap-3 rounded-xl border border-navy/10 bg-navy p-4 shadow-2xl shadow-black/25 sm:left-auto sm:right-6 sm:mx-0"
+      className="rise-in flex items-start gap-3 rounded-xl bg-navy p-4 shadow-lg shadow-black/15"
     >
       <span
         aria-hidden

@@ -105,3 +105,29 @@ export function FieldNote({ error, hint, id }: { error?: string; hint?: string; 
     </span>
   );
 }
+
+/* A bubble above the field it belongs to, with a tail pointing down at it.
+   Errors used to sit under the input, which on a phone is where the keyboard
+   is, so the message was hidden the moment the field was focused. Above it, the
+   field and the reason it is wrong are visible together. */
+export function FieldToast({ message, id }: { message: string; id: string }) {
+  return (
+    <span
+      id={id}
+      role="alert"
+      className="pop-in absolute bottom-full left-0 z-20 mb-2 flex w-max max-w-full items-start gap-2 rounded-lg bg-navy px-3 py-2 text-left shadow-lg shadow-black/20"
+    >
+      <span
+        aria-hidden
+        className="mt-px flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full bg-amber-400 font-display text-[10px] font-extrabold leading-none text-navy"
+      >
+        !
+      </span>
+      <span className="text-[12px] font-medium leading-snug text-white">{message}</span>
+      <span
+        aria-hidden
+        className="absolute -bottom-1 left-5 h-2.5 w-2.5 rotate-45 rounded-[2px] bg-navy"
+      />
+    </span>
+  );
+}
