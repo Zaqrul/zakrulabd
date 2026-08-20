@@ -162,7 +162,8 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
 
         {/* Same mark the cards carry, so the byline at the end of the article
             and the byline on the tile that led here look like one signature. */}
-        <div className="mt-12 flex items-center gap-2.5 border-t border-border pt-6 text-[13.5px] text-muted">
+        <div className="mt-12 flex items-center gap-2 border-t border-border pt-6 text-[13.5px] text-muted">
+          <span>Written by</span>
           <Image
             src="/logo-ghost-outline.webp"
             alt=""
@@ -170,9 +171,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             height={512}
             className="h-7 w-7 flex-shrink-0 object-contain"
           />
-          <span>
-            Written by <span className="font-bold text-navy">{post.author}</span>
-          </span>
+          <span className="font-bold text-navy">{post.author}</span>
         </div>
 
         <div className="mt-8 flex flex-col gap-4 bg-amber-300/20 p-6 md:p-8">
