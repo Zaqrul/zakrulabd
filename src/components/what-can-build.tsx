@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { CheckIcon, ChevronDownIcon } from "@/components/icons";
+import { TechMarks } from "@/components/tech-marks";
 import { tech, type TechKey } from "@/lib/tech";
 import { content as t } from "@/lib/content";
 import {
@@ -129,7 +130,10 @@ export function WhatCanBuild() {
                 {current.features.map((f) => (
                   <div key={f} className="flex items-start gap-2">
                     <CheckIcon className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-teal-600" />
-                    <span className="text-[12.5px] leading-snug text-ink">{f}</span>
+                    <span className="flex flex-wrap items-center gap-1.5 text-[12.5px] leading-snug text-ink">
+                      <TechMarks text={f} size={13} />
+                      {f}
+                    </span>
                   </div>
                 ))}
               </div>

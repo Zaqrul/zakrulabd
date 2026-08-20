@@ -17,6 +17,7 @@ import { WhatCanBuild } from "@/components/what-can-build";
 import { ClientLogos } from "@/components/client-logos";
 import { NoteCard, NoteNextCard } from "@/components/note-card";
 import { SiteFooter } from "@/components/site-footer";
+import { TechMarks } from "@/components/tech-marks";
 import { content as t } from "@/lib/content";
 import { posts } from "@/lib/posts";
 import { WHATSAPP_NUMBER, wa, waMessages } from "@/lib/contact";
@@ -373,8 +374,11 @@ function PricingCardItem({
               }`}
             />
             <span
-              className={`text-[13.5px] ${meta.highlighted ? "text-slate-200" : "text-ink"}`}
+              className={`flex flex-wrap items-center gap-1.5 text-[13.5px] ${
+                meta.highlighted ? "text-slate-200" : "text-ink"
+              }`}
             >
+              <TechMarks text={f} size={14} />
               {f}
             </span>
           </div>
@@ -557,8 +561,9 @@ export default function Home() {
               {t.hero.chips.map((chip) => (
                 <div
                   key={chip}
-                  className="rounded-[10px] border border-border bg-white px-4 py-2.5 text-[13.5px] font-semibold text-ink"
+                  className="inline-flex items-center gap-2 rounded-[10px] border border-border bg-white px-4 py-2.5 text-[13.5px] font-semibold text-ink"
                 >
+                  <TechMarks text={chip} size={15} />
                   {chip}
                 </div>
               ))}
@@ -596,8 +601,9 @@ export default function Home() {
                     {service.bullets.map((b) => (
                       <span
                         key={b}
-                        className="rounded-lg border border-border bg-white px-2.5 py-1 text-xs font-semibold text-ink shadow-xs"
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-white px-2.5 py-1 text-xs font-semibold text-ink shadow-xs"
                       >
+                        <TechMarks text={b} size={13} />
                         {b}
                       </span>
                     ))}
