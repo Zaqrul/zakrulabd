@@ -10,8 +10,8 @@ const clientAssets: Record<string, { url: string; logo: string; width: number; h
   "Sri Tanduk Enterprise": {
     url: "https://sritanduk.com/",
     logo: "/clients/sri-tanduk.png",
-    width: 512,
-    height: 438,
+    width: 900,
+    height: 848,
   },
   "Haikai Tech": {
     url: "https://haikaitech.my/",
