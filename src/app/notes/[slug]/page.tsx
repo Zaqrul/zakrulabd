@@ -7,6 +7,7 @@ import { PostShell } from "@/components/post-shell";
 import { getPost, posts, type Block } from "@/lib/posts";
 import { ID } from "@/lib/structured-data";
 import { SITE_URL, url } from "@/lib/site";
+import { tech } from "@/lib/tech";
 import { wa, waMessages } from "@/lib/contact";
 
 export function generateStaticParams() {
@@ -57,13 +58,26 @@ function Blocks({ blocks }: { blocks: Block[] }) {
         }
         if (block.type === "ul") {
           return (
-            <ul key={i} className="mt-5 flex flex-col gap-3">
-              {block.items.map((item) => (
-                <li key={item} className="flex gap-3 text-[16px] leading-relaxed text-body">
-                  <span aria-hidden className="mt-2.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-amber-500" />
-                  <span>{item}</span>
-                </li>
-              ))}
+            <ul key={i} className="mt-5 flex flex-col gap-3.5">
+              {block.items.map((item) => {
+                /* A bullet about a tool is marked with that tool's own logo in
+                   its brand colour; everything else keeps the amber dot. */
+                const Icon = item.tech ? tech[item.tech].Icon : null;
+                return (
+                  <li key={item.text} className="flex gap-3 text-[16px] leading-relaxed text-body">
+                    {Icon ? (
+                      <Icon
+                        aria-hidden="true"
+                        className="mt-1 h-[18px] w-[18px] flex-shrink-0"
+                        style={{ color: tech[item.tech!].color }}
+                      />
+                    ) : (
+                      <span aria-hidden className="mt-2.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-amber-500" />
+                    )}
+                    <span>{item.text}</span>
+                  </li>
+                );
+              })}
             </ul>
           );
         }

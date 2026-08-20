@@ -2,11 +2,18 @@
    fixed set of strings, while this list grows an entry at a time and each entry
    carries its own body. Blocks instead of raw HTML so the article renders in the
    site's own type styles and nothing arbitrary can be injected. */
+import type { TechKey } from "@/lib/tech";
+
+/* A bullet can name the tool it is about, and the renderer swaps the plain
+   marker for that tool's own mark. Keys are checked against the shared tech
+   list, so a typo is a build error rather than a missing icon. */
+export type Bullet = { text: string; tech?: TechKey };
+
 export type Block =
   | { type: "p"; text: string }
   | { type: "h2"; text: string }
   | { type: "quote"; text: string }
-  | { type: "ul"; items: string[] }
+  | { type: "ul"; items: Bullet[] }
   | { type: "image"; src: string; alt: string; width: number; height: number; caption: string };
 
 export type Post = {
@@ -108,10 +115,22 @@ export const posts: Post[] = [
       {
         type: "ul",
         items: [
-          "Next.js and React, so the pages are prerendered and arrive quickly on a phone with average reception, which is how most of her customers will see it.",
-          "Tailwind CSS, so the spacing and type stay consistent across pages instead of drifting as the site grows.",
-          "Vercel for hosting, which serves the site from a global edge and costs nothing at her traffic.",
-          "Cloudflare for DNS, and a proper domain of her own rather than a free subdomain, because the address is part of the business now.",
+          {
+            tech: "next",
+            text: "Next.js and React, so the pages are prerendered and arrive quickly on a phone with average reception, which is how most of her customers will see it.",
+          },
+          {
+            tech: "tailwind",
+            text: "Tailwind CSS, so the spacing and type stay consistent across pages instead of drifting as the site grows.",
+          },
+          {
+            tech: "vercel",
+            text: "Vercel for hosting, which serves the site from a global edge and costs nothing at her traffic.",
+          },
+          {
+            tech: "cloudflare",
+            text: "Cloudflare for DNS, and a proper domain of her own rather than a free subdomain, because the address is part of the business now.",
+          },
         ],
       },
       {

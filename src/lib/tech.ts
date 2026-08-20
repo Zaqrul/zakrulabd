@@ -3,6 +3,7 @@ import { DiMsqlServer } from "react-icons/di";
 import { TbBrandReactNative } from "react-icons/tb";
 import {
   SiAstro,
+  SiCloudflare,
   SiCodeigniter,
   SiCplusplus,
   SiDart,
@@ -11,6 +12,8 @@ import {
   SiFirebase,
   SiGit,
   SiGithub,
+  SiGoogleanalytics,
+  SiGooglesearchconsole,
   SiJavascript,
   SiLaravel,
   SiMysql,
@@ -60,6 +63,9 @@ export const tech = {
   tawkto: { name: "Tawk.to", Icon: TawkToIcon, color: "#03A84E" },
   n8n: { name: "n8n", Icon: SiN8N, color: "#EA4B71" },
   vercel: { name: "Vercel", Icon: SiVercel, color: "#000000" },
+  cloudflare: { name: "Cloudflare", Icon: SiCloudflare, color: "#F38020" },
+  ga4: { name: "Google Analytics 4", Icon: SiGoogleanalytics, color: "#E37400" },
+  searchConsole: { name: "Google Search Console", Icon: SiGooglesearchconsole, color: "#458CF5" },
   railway: { name: "Railway", Icon: SiRailway, color: "#0B0D0E" },
   wordpress: { name: "WordPress", Icon: SiWordpress, color: "#21759B" },
   shopify: { name: "Shopify", Icon: SiShopify, color: "#7AB55C" },
@@ -98,6 +104,9 @@ export const techMarquee: TechKey[] = [
   "n8n",
   "vercel",
   "railway",
+  "cloudflare",
+  "ga4",
+  "searchConsole",
   "git",
   "github",
 ];
