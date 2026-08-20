@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { SvgContactUs } from "iblis-react-undraw";
+import { SvgConversation } from "iblis-react-undraw";
 import { ContactForm } from "@/components/contact-form";
 import { CheckIcon } from "@/components/icons";
 import { PostShell } from "@/components/post-shell";
@@ -51,8 +51,10 @@ export default function ContactPage() {
           </div>
 
           <aside className="hidden flex-col items-center gap-6 lg:flex">
-            <div className="float-soft w-full max-w-[340px]">
-              <SvgContactUs primarycolor="#f7c325" height={260} className="mx-auto h-auto w-full" />
+            {/* Still, not floating: the form is where the attention belongs,
+                and a drawing that moves beside a text field competes with it. */}
+            <div className="w-full max-w-[420px]">
+              <SvgConversation primarycolor="#f7c325" height={360} className="mx-auto h-auto w-full" />
             </div>
 
             <ul className="flex w-full flex-col gap-3 border-t border-border pt-6">

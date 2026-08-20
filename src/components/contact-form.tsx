@@ -9,6 +9,15 @@ import { wa, waMessages } from "@/lib/contact";
 
 type State = "idle" | "sending" | "sent" | "error";
 
+/* Mirrors the server. Checking here too means an oversized file is refused
+   before it is uploaded over a phone connection, rather than after. */
+const ACCEPT = ".pdf,.doc,.docx,.png,.jpg,.jpeg";
+const MAX_FILES = 4;
+const MAX_FILE_BYTES = 5 * 1024 * 1024;
+
+const readableSize = (bytes: number) =>
+  bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)}MB` : `${Math.max(1, Math.round(bytes / 1024))}KB`;
+
 const field =
   "w-full rounded-lg border border-border bg-white px-4 py-3 text-[15px] text-ink outline-none transition placeholder:text-muted focus:border-navy";
 
@@ -17,6 +26,7 @@ export function ContactForm() {
   const router = useRouter();
   const [state, setState] = useState<State>("idle");
   const [error, setError] = useState("");
+  const [files, setFiles] = useState<File[]>([]);
 
   /* Back to the homepage once the thanks has had time to be read. Prefetching
      first means that hop is instant rather than a blank moment. */
@@ -27,19 +37,40 @@ export function ContactForm() {
     return () => clearTimeout(timer);
   }, [state, router]);
 
+  function onFilesChange(event: React.ChangeEvent<HTMLInputElement>) {
+    const chosen = Array.from(event.target.files ?? []);
+
+    if (chosen.length > MAX_FILES) {
+      setError(c.fileTooMany);
+      event.target.value = "";
+      setFiles([]);
+      return;
+    }
+
+    const tooBig = chosen.find((file) => file.size > MAX_FILE_BYTES);
+    if (tooBig) {
+      setError(`${tooBig.name} is larger than 5MB.`);
+      event.target.value = "";
+      setFiles([]);
+      return;
+    }
+
+    setError("");
+    if (state === "error") setState("idle");
+    setFiles(chosen);
+  }
+
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setState("sending");
     setError("");
 
-    const data = Object.fromEntries(new FormData(event.currentTarget));
+    /* FormData rather than JSON: attachments go up as binary instead of being
+       inflated by a third as base64, and the browser sets the boundary. */
+    const data = new FormData(event.currentTarget);
 
     try {
-      const response = await fetch("/api/contact", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
+      const response = await fetch("/api/contact", { method: "POST", body: data });
       const body = await response.json().catch(() => ({}));
 
       if (!response.ok) {
@@ -133,6 +164,30 @@ export function ContactForm() {
           placeholder={c.messagePlaceholder}
           className={`${field} resize-y`}
         />
+      </label>
+
+      <label className="flex flex-col gap-2">
+        <span className="text-[13px] font-bold text-navy">{c.filesLabel}</span>
+        <input
+          type="file"
+          name="files"
+          multiple
+          accept={ACCEPT}
+          onChange={onFilesChange}
+          className="w-full cursor-pointer rounded-lg border border-dashed border-navy/25 bg-white px-4 py-3 text-[14px] text-body outline-none transition file:mr-4 file:cursor-pointer file:rounded-lg file:border-0 file:bg-navy file:px-4 file:py-2 file:text-[13px] file:font-bold file:text-white hover:border-amber-400 focus:border-navy"
+        />
+        <span className="text-[12.5px] text-muted">{c.filesHint}</span>
+
+        {files.length > 0 && (
+          <ul className="mt-1 flex flex-col gap-1.5">
+            {files.map((file) => (
+              <li key={file.name} className="flex items-center justify-between gap-3 text-[12.5px] text-body">
+                <span className="truncate font-medium text-navy">{file.name}</span>
+                <span className="flex-shrink-0 text-muted">{readableSize(file.size)}</span>
+              </li>
+            ))}
+          </ul>
+        )}
       </label>
 
       {state === "error" && (
