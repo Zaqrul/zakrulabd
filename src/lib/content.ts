@@ -2,7 +2,7 @@ export const content = {
   nav: {
     services: "Services",
     projects: "Work",
-    pricing: "Pricing",
+    pricing: "Packages",
     contact: "Contact",
     cta: "Get a Free Quote",
   },
@@ -13,7 +13,7 @@ export const content = {
     titleHl2: "Find on Google",
     body: "I build websites and custom web systems with React, Laravel, and WordPress, then set up the SEO, analytics, and automation that bring people to them. You deal with me directly, from the first conversation through to launch.",
     ctaPrimary: "Get a Free Quote",
-    ctaSecondary: "See Pricing",
+    ctaSecondary: "See Packages",
     chips: ["You work with me directly", "Prototype, build, launch", "SEO and GA4 for healthcare clients"],
   },
   services: {
@@ -169,7 +169,7 @@ export const content = {
   },
   pricing: {
     headingA: "Straightforward ",
-    headingHl: "Pricing",
+    headingHl: "Packages",
     headingB: "",
     sub: "Every project is quoted individually. Pick the package closest to what you need and message me for a fixed price.",
     badge: "RECOMMENDED",
@@ -229,7 +229,7 @@ export const content = {
       titleHl: "Builds",
       sub: "Each package includes everything in the one before it. Scope only — every project is still quoted individually.",
       badge: "SCOPE COMPARISON",
-      back: "Back to Pricing",
+      back: "Back to Packages",
       closeTitle: "Compared everything and ready to start?",
       closeBody: "Message me with what you have in mind, or go back and pick the package closest to it. Ask me anything specific about your project and you get a straight answer, not a sales pitch.",
       columns: ["Starter", "Professional", "Advanced"],
@@ -412,7 +412,7 @@ export const content = {
     intro:
       "No agency middlemen and no long enquiry forms. Send a short message and we will take it from there.",
     ctaPrimary: "Let’s Discuss",
-    ctaSecondary: "See Pricing",
+    ctaSecondary: "See Packages",
     expectTitle: "What to expect",
     expect: [
       "A reply from me within one working day",
@@ -632,9 +632,9 @@ export const content = {
     services: "SERVICES",
     servicesLinks: ["Web Development", "SEO & Marketing", "Live Chat & Automation", "Hosting & Support"],
     howIWork: "HOW I WORK",
-    howIWorkLinks: ["Process", "Pricing", "Results", "Notes"],
+    howIWorkLinks: ["Process", "Packages", "Results", "Notes"],
     getStarted: "GET STARTED",
-    getStartedLinks: ["Get a Free Quote", "See Pricing"],
+    getStartedLinks: ["Get a Free Quote", "See Packages"],
     privacy: "Privacy Policy",
     terms: "Terms & Conditions",
     rights: "All rights reserved.",
@@ -646,9 +646,9 @@ export const content = {
     titleHl: "moved on",
     body: "The link is either out of date or the address has a typo in it. Everything on the site is one click away below, or message me and I will point you at the right page.",
     primary: "Back to Home",
-    secondary: "See Pricing",
+    secondary: "See Packages",
     linksLabel: "OR JUMP STRAIGHT TO",
-    links: ["Services", "Work", "Pricing", "Compare Packages"],
+    links: ["Services", "Work", "Packages", "Compare Packages"],
   },
   errorPage: {
     code: "500",

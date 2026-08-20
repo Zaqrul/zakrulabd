@@ -245,7 +245,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               href="/#pricing"
               className="btn-primary inline-flex items-center justify-center gap-2 rounded-lg border-[1.5px] border-primary-900 px-6 py-3 text-sm font-bold text-primary-900 transition-colors hover:bg-primary-900 hover:text-white"
             >
-              See Pricing
+              See Packages
             </Link>
           </div>
         </div>
