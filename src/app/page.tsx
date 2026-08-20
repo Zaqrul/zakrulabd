@@ -17,6 +17,7 @@ import { WhatCanBuild } from "@/components/what-can-build";
 import { ClientLogos } from "@/components/client-logos";
 import { SiteFooter } from "@/components/site-footer";
 import { content as t } from "@/lib/content";
+import { posts } from "@/lib/posts";
 import { WHATSAPP_NUMBER, wa, waMessages } from "@/lib/contact";
 import { tech, techMarquee } from "@/lib/tech";
 import {
@@ -836,6 +837,62 @@ export default function Home() {
                 </div>
               </div>
             ))}
+          </div>
+        </div>
+      </section>
+
+      {/* NOTES: the case studies sit here on purpose, straight after the
+          testimonials and before the pitch to start, so a visitor who is
+          weighing me up reads one project in full at the moment they are
+          deciding. */}
+      <section id="notes" className="border-t border-border px-6 py-24">
+        <div className="mx-auto max-w-shell">
+          <div className="mx-auto mb-11 flex max-w-xl flex-col items-center gap-3 text-center">
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted">{t.notes.badge}</span>
+            <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl">
+              {t.notes.headingA}
+              <span className="hl">{t.notes.headingHl}</span>
+            </h2>
+            <p className="text-base text-body">{t.notes.sub}</p>
+          </div>
+
+          <div className="grid gap-5 md:grid-cols-2">
+            {posts.slice(0, 2).map((post) => (
+              <Link
+                key={post.slug}
+                href={`/blog/${post.slug}`}
+                className="group flex flex-col gap-3 rounded-[18px] border border-border bg-white p-6 transition duration-200 hover:-translate-y-1 hover:border-amber-400/70 hover:shadow-lg hover:shadow-black/5 md:p-7"
+              >
+                <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold uppercase tracking-wide text-muted">
+                  <span className="text-navy">{post.tag}</span>
+                  <span>{post.readingTime}</span>
+                </div>
+                <h3 className="font-display text-xl font-bold leading-snug text-navy md:text-2xl">
+                  <span className="relative inline">
+                    {post.title}
+                    <span
+                      aria-hidden
+                      className="absolute -bottom-1 left-0 h-[2.5px] w-0 rounded-full bg-amber-400 transition-all duration-200 ease-out group-hover:w-full"
+                    />
+                  </span>
+                </h3>
+                <p className="text-[14.5px] leading-relaxed text-body">{post.excerpt}</p>
+                <span className="mt-1 inline-flex items-center gap-1.5 text-[13px] font-bold text-navy">
+                  {t.notes.read}
+                  <ArrowRightIcon className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1" />
+                </span>
+              </Link>
+            ))}
+          </div>
+
+          <div className="mt-8 flex justify-center">
+            <Link
+              href="/blog"
+              className="btn-primary inline-flex items-center justify-center gap-2 rounded-lg border-[1.5px] border-primary-900 px-6 py-3 text-sm font-bold text-primary-900 transition-colors hover:bg-primary-900 hover:text-white"
+            >
+              {t.notes.all}
+              <ArrowRightIcon className="h-4 w-4" />
+            </Link>
           </div>
         </div>
       </section>

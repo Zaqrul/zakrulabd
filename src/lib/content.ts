@@ -556,6 +556,14 @@ export const content = {
       },
     ],
   },
+  notes: {
+    badge: "NOTES",
+    headingA: "How the Work Actually ",
+    headingHl: "Gets Done",
+    sub: "Write-ups of real projects: what the business needed, what I built and why, and what happened after it went live.",
+    read: "Read this note",
+    all: "All Notes",
+  },
   footer: {
     blurb:
       "Freelance web development, custom web systems, and digital marketing for SMEs and healthcare providers in Malaysia.",
