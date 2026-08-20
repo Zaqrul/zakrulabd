@@ -560,7 +560,7 @@ export const content = {
     badge: "START A PROJECT",
     titleA: "Tell me what you ",
     titleHl: "need built",
-    sub: "Answer these four questions and I will come back with a plan and a fixed quote. If you would rather talk it through, WhatsApp is faster.",
+    sub: "A few details and a couple of sentences is enough. Attach a brief, a sketch, or a screenshot of what is broken if you have one, and I will come back with a plan and a fixed quote. If you would rather talk it through, WhatsApp is faster.",
     nameLabel: "Your name",
     emailLabel: "Email",
     phoneLabel: "Phone",

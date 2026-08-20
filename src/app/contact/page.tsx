@@ -11,11 +11,12 @@ import { url } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Start a Project",
   description:
-    "Tell me what you want built and I will come back with a plan and a fixed quote. Freelance web development, custom systems, and technical SEO in Malaysia.",
+    "Send me a brief for a website, a custom web system, or SEO work in Malaysia. Pick the package closest to what you need, attach anything that helps, and I reply within one working day with a plan and a fixed quote.",
   alternates: { canonical: "/contact" },
   openGraph: {
     title: "Start a Project | zakrulabd",
-    description: "Tell me what you want built and I will come back with a plan and a fixed quote.",
+    description:
+      "Pick a package, tell me what you need built, attach anything that helps. A plan and a fixed quote within one working day.",
     url: url("/contact"),
   },
 };
