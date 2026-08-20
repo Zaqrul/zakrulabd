@@ -570,7 +570,7 @@ export const content = {
     emailHint: "Where the reply goes.",
     websiteHint: "Your current site, if there is one.",
     messageHint: "Short and specific: what the business does and what the site has to do.",
-    namePlaceholder: "Siti Sapura",
+    namePlaceholder: "Muhamad Zaqrul",
     emailPlaceholder: "you@yourbusiness.com",
     phonePlaceholder: "123456789",
     packageLabel: "Package",
@@ -595,6 +595,8 @@ export const content = {
     successBody: "I read every enquiry myself and reply within one working day, usually sooner. Taking you back to the homepage.",
     successHome: "Back to Home now",
     errorFallback: "Something went wrong. Message me on WhatsApp and I will pick it up there.",
+    quote: "Most of this work is patience. Read the problem twice, build it once, and say plainly what is not finished yet.",
+    quoteBy: "Muhamad Zaqrul",
     assurances: [
       "You deal with me directly, not an account manager.",
       "I reply within one working day, usually sooner.",

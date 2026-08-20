@@ -69,8 +69,15 @@ export default function ContactPage() {
             {/* The column ran out before the form did, leaving a stretch of
                 empty grey beside the longest fields. A second drawing from the
                 same set closes it: what happens after the enquiry. */}
-            <div className="w-full max-w-[380px] border-t border-border pt-8">
+            <div className="flex w-full max-w-[380px] flex-col gap-6 border-t border-border pt-8">
               <SvgWebDevelopment primarycolor="#f7c325" height={300} className="mx-auto h-auto w-full" />
+
+              {/* How I work, in one sentence, where someone deciding whether to
+                  write to me is already looking. */}
+              <blockquote className="border-l-[3px] border-amber-400 pl-4">
+                <p className="font-display text-[15px] font-bold leading-snug text-navy">{c.quote}</p>
+                <footer className="mt-2 text-[12.5px] text-muted">{c.quoteBy}</footer>
+              </blockquote>
             </div>
           </aside>
         </div>
