@@ -596,6 +596,7 @@ export const content = {
     successHome: "Back to Home now",
     errorFallback: "Something went wrong. Message me on WhatsApp and I will pick it up there.",
     quote: "Most of this work is patience. Read the problem twice, build it once, and say plainly what is not finished yet.",
+    quoteByLabel: "quote by",
     quoteBy: "Zakrul",
     assurances: [
       "You deal with me directly, not an account manager.",

@@ -79,7 +79,9 @@ export default function ContactPage() {
                 <p className="font-display text-[15px] font-bold leading-snug text-navy">{c.quote}</p>
                 {/* Same mark and byline shape the note cards use, so a
                     signature on this site always looks like one. */}
-                <footer className="mt-2.5 flex items-center gap-2 text-[12.5px] text-muted">
+                <footer className="mt-2.5 flex items-center gap-1.5 text-[12.5px] text-muted">
+                  <span>{c.quoteByLabel}</span>
+                  <span className="font-bold text-navy">{c.quoteBy}</span>
                   <Image
                     src="/logo-ghost-outline.webp"
                     alt=""
@@ -87,7 +89,6 @@ export default function ContactPage() {
                     height={512}
                     className="h-5 w-5 flex-shrink-0 object-contain"
                   />
-                  <span className="font-bold text-navy">{c.quoteBy}</span>
                 </footer>
               </blockquote>
             </div>
