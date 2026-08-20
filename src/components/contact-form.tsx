@@ -4,8 +4,10 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import { SvgMailSent } from "iblis-react-undraw";
+import { ClearButton, CountRing, Cross, FieldNote, StatusMark } from "@/components/form-field";
 import { content as t } from "@/lib/content";
 import { wa, waMessages } from "@/lib/contact";
+import { LIMITS, checkField, digitsOnly, sanitise, type FieldName } from "@/lib/validation";
 
 type State = "idle" | "sending" | "sent" | "error";
 
@@ -18,34 +20,10 @@ const MAX_FILE_BYTES = 5 * 1024 * 1024;
 const readableSize = (bytes: number) =>
   bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)}MB` : `${Math.max(1, Math.round(bytes / 1024))}KB`;
 
-const field =
-  "w-full rounded-lg border border-border bg-white px-4 py-3 pr-10 text-[15px] text-ink outline-none transition placeholder:text-muted focus:border-navy";
+const fieldBase =
+  "w-full rounded-lg border bg-white px-4 py-3 pr-20 text-[15px] text-ink outline-none transition placeholder:text-muted";
 
 const labelText = "text-[13px] font-bold text-navy";
-
-function Cross({ className = "h-3.5 w-3.5" }: { className?: string }) {
-  return (
-    <svg viewBox="0 0 24 24" className={className} fill="none" stroke="currentColor" strokeWidth="2.5" aria-hidden>
-      <path d="M18 6 6 18M6 6l12 12" strokeLinecap="round" />
-    </svg>
-  );
-}
-
-/* Every field can be emptied without selecting the text first, which matters
-   most on a phone where select-all is fiddly. */
-function ClearButton({ onClick, title, top = "top-1/2 -translate-y-1/2" }: { onClick: () => void; title: string; top?: string }) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      aria-label={title}
-      title={title}
-      className={`absolute right-2.5 ${top} flex h-6 w-6 items-center justify-center rounded-full text-muted transition hover:bg-bg hover:text-navy`}
-    >
-      <Cross />
-    </button>
-  );
-}
 
 function Spinner({ className = "" }: { className?: string }) {
   return (
@@ -55,6 +33,8 @@ function Spinner({ className = "" }: { className?: string }) {
     </svg>
   );
 }
+
+const EMPTY = { name: "", package: "", email: "", phone: "", website: "", message: "", company: "" };
 
 export function ContactForm() {
   const c = t.contactPage;
@@ -66,13 +46,36 @@ export function ContactForm() {
   const [progress, setProgress] = useState(0);
   const [dragging, setDragging] = useState(false);
 
-  const [values, setValues] = useState({ name: "", package: "", email: "", website: "", message: "", company: "" });
+  const [values, setValues] = useState(EMPTY);
+  const [touched, setTouched] = useState<Partial<Record<FieldName, boolean>>>({});
   const [files, setFiles] = useState<File[]>([]);
 
   const set = (key: keyof typeof values, value: string) => setValues((v) => ({ ...v, [key]: value }));
+  const touch = (key: FieldName) => setTouched((current) => ({ ...current, [key]: true }));
 
-  /* Back to the homepage once the thanks has had time to be read. Prefetching
-     first means that hop is instant rather than a blank moment. */
+  const results: Record<FieldName, { ok: boolean; message?: string }> = {
+    name: checkField("name", values.name),
+    email: checkField("email", values.email),
+    phone: checkField("phone", values.phone),
+    website: checkField("website", values.website),
+    message: checkField("message", values.message),
+  };
+
+  const formValid = Object.values(results).every((r) => r.ok);
+
+  /* A field is only marked once it has been left or a send was attempted:
+     flagging an address as wrong while it is still being typed is noise,
+     because every address is invalid until its last character. */
+  function markOf(name: FieldName, optional = false) {
+    if (!touched[name]) return "none" as const;
+    if (!results[name].ok) return "invalid" as const;
+    if (optional && !values[name]) return "none" as const;
+    return "valid" as const;
+  }
+
+  const borderOf = (name: FieldName) =>
+    touched[name] && !results[name].ok ? "border-amber-500 focus:border-amber-500" : "border-border focus:border-navy";
+
   useEffect(() => {
     if (state !== "sent") return;
     router.prefetch("/");
@@ -115,12 +118,26 @@ export function ContactForm() {
 
   function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
+
+    /* Marking everything on a failed send is what turns "it will not submit"
+       into a list of things to fix. */
+    if (!formValid) {
+      setTouched({ name: true, email: true, phone: true, website: true, message: true });
+      setError(c.invalidSummary);
+      setState("error");
+      return;
+    }
+
     setState("sending");
     setError("");
     setProgress(0);
 
     const data = new FormData();
-    Object.entries(values).forEach(([key, value]) => data.append(key, value));
+    /* Sanitised on the way out as well as on arrival: what is sent should be
+       what was shown, and the server repeats every check regardless. */
+    Object.entries(values).forEach(([key, value]) =>
+      data.append(key, sanitise(value, LIMITS[key as keyof typeof LIMITS] ?? 200))
+    );
     files.forEach((file) => data.append("files", file));
 
     /* XHR rather than fetch: it reports upload progress, and with attachments
@@ -166,8 +183,6 @@ export function ContactForm() {
         aria-live="polite"
         className="rise-in flex flex-col items-center gap-5 rounded-2xl border border-border bg-white p-8 text-center md:p-10"
       >
-        {/* The drawing floats gently while the tick strokes itself on, so the
-            few seconds before the redirect are not a frozen screen. */}
         <div className="float-soft w-full max-w-[260px]">
           <SvgMailSent primarycolor="#f7c325" height={180} className="mx-auto h-auto w-full" />
         </div>
@@ -201,7 +216,7 @@ export function ContactForm() {
   const sending = state === "sending";
 
   return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-5">
+    <form onSubmit={onSubmit} noValidate className="flex flex-col gap-5">
       {/* Hidden from people, tempting to a scripted submitter. A filled one is
           answered with success and dropped on the server. */}
       <input
@@ -221,15 +236,21 @@ export function ContactForm() {
           <span className="relative block">
             <input
               type="text"
-              required
-              maxLength={100}
+              maxLength={LIMITS.name}
               autoComplete="name"
+              aria-describedby="note-name"
+              aria-invalid={touched.name && !results.name.ok}
               value={values.name}
               onChange={(e) => set("name", e.target.value)}
-              className={field}
+              onBlur={() => touch("name")}
+              className={`${fieldBase} ${borderOf("name")}`}
             />
-            {values.name && <ClearButton onClick={() => set("name", "")} title={`${c.clear} ${c.nameLabel}`} />}
+            <span className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1">
+              {values.name && <ClearButton onClick={() => set("name", "")} title={`${c.clear} ${c.nameLabel}`} />}
+              <StatusMark status={markOf("name")} />
+            </span>
           </span>
+          <FieldNote id="note-name" hint={c.nameHint} error={touched.name ? results.name.message : undefined} />
         </label>
 
         <label className="flex flex-col gap-2">
@@ -238,7 +259,7 @@ export function ContactForm() {
             <select
               value={values.package}
               onChange={(e) => set("package", e.target.value)}
-              className={`${field} cursor-pointer appearance-none`}
+              className={`${fieldBase} cursor-pointer appearance-none border-border focus:border-navy`}
             >
               <option value="">{c.packagePlaceholder}</option>
               {t.pricing.tiers.map((tier) => (
@@ -247,21 +268,23 @@ export function ContactForm() {
                 </option>
               ))}
             </select>
-            {values.package ? (
-              <ClearButton onClick={() => set("package", "")} title={`${c.clear} ${c.packageLabel}`} />
-            ) : (
+            <span className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1">
+              {values.package ? (
+                <ClearButton onClick={() => set("package", "")} title={`${c.clear} ${c.packageLabel}`} />
+              ) : null}
               <svg
                 viewBox="0 0 24 24"
                 aria-hidden
-                className="pointer-events-none absolute right-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted"
+                className="pointer-events-none h-4 w-4 text-muted"
                 fill="none"
                 stroke="currentColor"
                 strokeWidth="2"
               >
                 <polyline points="6 9 12 15 18 9" strokeLinecap="round" strokeLinejoin="round" />
               </svg>
-            )}
+            </span>
           </span>
+          <FieldNote id="note-package" hint={c.packagePlaceholder} />
         </label>
       </div>
 
@@ -271,51 +294,101 @@ export function ContactForm() {
           <span className="relative block">
             <input
               type="email"
-              required
-              maxLength={200}
+              maxLength={LIMITS.email}
               autoComplete="email"
+              aria-describedby="note-email"
+              aria-invalid={touched.email && !results.email.ok}
               value={values.email}
               onChange={(e) => set("email", e.target.value)}
-              className={field}
+              onBlur={() => touch("email")}
+              className={`${fieldBase} ${borderOf("email")}`}
             />
-            {values.email && <ClearButton onClick={() => set("email", "")} title={`${c.clear} ${c.emailLabel}`} />}
+            <span className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1">
+              {values.email && <ClearButton onClick={() => set("email", "")} title={`${c.clear} ${c.emailLabel}`} />}
+              <StatusMark status={markOf("email")} />
+            </span>
           </span>
+          <FieldNote id="note-email" hint={c.emailHint} error={touched.email ? results.email.message : undefined} />
         </label>
 
+        {/* +60 is printed in the field rather than typed, and only digits are
+            kept, so the number that arrives is always in one shape. */}
         <label className="flex flex-col gap-2">
-          <span className={labelText}>{c.websiteLabel}</span>
+          <span className={labelText}>{c.phoneLabel}</span>
           <span className="relative block">
+            <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-[15px] font-semibold text-muted">
+              {c.phonePrefix}
+            </span>
             <input
-              type="url"
-              maxLength={200}
-              inputMode="url"
-              autoComplete="url"
-              placeholder={c.websitePlaceholder}
-              value={values.website}
-              onChange={(e) => set("website", e.target.value)}
-              className={field}
+              type="tel"
+              inputMode="numeric"
+              autoComplete="tel-national"
+              maxLength={LIMITS.phone}
+              aria-describedby="note-phone"
+              aria-invalid={touched.phone && !results.phone.ok}
+              value={values.phone}
+              onChange={(e) => set("phone", digitsOnly(e.target.value).slice(0, LIMITS.phone))}
+              onBlur={() => touch("phone")}
+              className={`${fieldBase} pl-14 ${borderOf("phone")}`}
             />
-            {values.website && <ClearButton onClick={() => set("website", "")} title={`${c.clear} ${c.websiteLabel}`} />}
+            <span className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1">
+              {values.phone && <ClearButton onClick={() => set("phone", "")} title={`${c.clear} ${c.phoneLabel}`} />}
+              <StatusMark status={markOf("phone", true)} />
+            </span>
           </span>
+          <FieldNote id="note-phone" hint={c.phoneHint} error={touched.phone ? results.phone.message : undefined} />
         </label>
       </div>
 
       <label className="flex flex-col gap-2">
-        <span className={labelText}>{c.messageLabel}</span>
+        <span className={labelText}>{c.websiteLabel}</span>
+        <span className="relative block">
+          <input
+            type="text"
+            inputMode="url"
+            autoComplete="url"
+            maxLength={LIMITS.website}
+            placeholder={c.websitePlaceholder}
+            aria-describedby="note-website"
+            aria-invalid={touched.website && !results.website.ok}
+            value={values.website}
+            onChange={(e) => set("website", e.target.value)}
+            onBlur={() => touch("website")}
+            className={`${fieldBase} ${borderOf("website")}`}
+          />
+          <span className="absolute right-3 top-1/2 flex -translate-y-1/2 items-center gap-1">
+            {values.website && <ClearButton onClick={() => set("website", "")} title={`${c.clear} ${c.websiteLabel}`} />}
+            <StatusMark status={markOf("website", true)} />
+          </span>
+        </span>
+        <FieldNote id="note-website" hint={c.websiteHint} error={touched.website ? results.website.message : undefined} />
+      </label>
+
+      <label className="flex flex-col gap-2">
+        <span className="flex items-center justify-between gap-3">
+          <span className={labelText}>{c.messageLabel}</span>
+          <CountRing used={values.message.length} max={LIMITS.message} />
+        </span>
         <span className="relative block">
           <textarea
-            required
             rows={7}
-            maxLength={4000}
+            maxLength={LIMITS.message}
             placeholder={c.messagePlaceholder}
+            aria-describedby="note-message"
+            aria-invalid={touched.message && !results.message.ok}
             value={values.message}
             onChange={(e) => set("message", e.target.value)}
-            className={`${field} resize-y`}
+            onBlur={() => touch("message")}
+            className={`${fieldBase} resize-y ${borderOf("message")}`}
           />
-          {values.message && (
-            <ClearButton onClick={() => set("message", "")} title={`${c.clear} ${c.messageLabel}`} top="top-3" />
-          )}
+          <span className="absolute right-3 top-3 flex items-center gap-1">
+            {values.message && (
+              <ClearButton onClick={() => set("message", "")} title={`${c.clear} ${c.messageLabel}`} />
+            )}
+            <StatusMark status={markOf("message")} />
+          </span>
         </span>
+        <FieldNote id="note-message" hint={c.messageHint} error={touched.message ? results.message.message : undefined} />
       </label>
 
       {/* The drop zone is a button rather than a div, so it is reachable by
@@ -341,7 +414,14 @@ export function ContactForm() {
             dragging ? "border-amber-400 bg-amber-300/20" : "border-navy/20 bg-white hover:border-amber-400"
           }`}
         >
-          <svg viewBox="0 0 24 24" className="h-6 w-6 text-muted" fill="none" stroke="currentColor" strokeWidth="1.8" aria-hidden>
+          <svg
+            viewBox="0 0 24 24"
+            className="h-6 w-6 text-muted"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
+            aria-hidden
+          >
             <path d="M12 16V4m0 0 4 4m-4-4L8 8" strokeLinecap="round" strokeLinejoin="round" />
             <path d="M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2" strokeLinecap="round" />
           </svg>
