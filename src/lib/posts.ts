@@ -177,11 +177,11 @@ export const posts: Post[] = [
       { type: "h2", text: "What happened after launch" },
       {
         type: "p",
-        text: "The site started ranking on Google after a month or two. In that early stretch it was drawing somewhere between one and two hundred visitors, from roughly five hundred impressions in Search Console.",
+        text: "The site started ranking on Google after two or three months. In that early stretch it was drawing somewhere between one and two hundred visitors, from roughly five hundred impressions in Search Console.",
       },
       {
         type: "p",
-        text: "Those are small numbers by internet standards, and I would rather say so than dress them up. But they are not internet numbers. They are people in and around Ipoh looking for kuih, arriving at a page that answers them, with her WhatsApp one tap away. For a business that had no online presence at all a couple of months earlier, that is a real change.",
+        text: "Those are small numbers by internet standards, and I would rather say so than dress them up. But they are not internet numbers. They are people in and around Ipoh looking for kuih, arriving at a page that answers them, with her WhatsApp one tap away. For a business that had no online presence at all a few months earlier, that is a real change.",
       },
       {
         type: "p",

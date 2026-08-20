@@ -373,14 +373,9 @@ function PricingCardItem({
                 meta.highlighted ? "text-amber-500" : "text-teal-600"
               }`}
             />
-            <span
-              className={`flex flex-wrap items-center gap-1.5 text-[13.5px] ${
-                meta.highlighted ? "text-slate-200" : "text-ink"
-              }`}
-            >
-              <TechMarks text={f} size={14} />
-              {f}
-            </span>
+            {/* No tool marks here: a tier card is a list of what you get, and a
+                logo beside one line pulls the eye to it over the rest. */}
+            <span className={`text-[13.5px] ${meta.highlighted ? "text-slate-200" : "text-ink"}`}>{f}</span>
           </div>
           )
         )}
