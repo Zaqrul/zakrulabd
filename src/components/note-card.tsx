@@ -1,31 +1,21 @@
 import Image from "next/image";
 import Link from "next/link";
-import { SvgBusinessShop, SvgChef, SvgBusinessChat } from "iblis-react-undraw";
 import { ArrowRightIcon, PlusIcon } from "@/components/icons";
+import { PostArt } from "@/components/post-art";
 import { content as t } from "@/lib/content";
 import type { Post } from "@/lib/posts";
-
-/* Drawings live here rather than in posts.ts so that file stays plain data.
-   Each one is keyed by the post's `art` field. */
-const art = {
-  chef: SvgChef,
-  shop: SvgBusinessShop,
-  chat: SvgBusinessChat,
-};
 
 /* Built like the client logo tiles: a white card with the artwork sitting in
    its own square panel on top, then the text underneath. The tile lifts on
    hover the same way, so the two grids read as one family. */
 export function NoteCard({ post }: { post: Post }) {
-  const Art = art[post.art];
-
   return (
     <Link
       href={`/notes/${post.slug}`}
       className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-white transition duration-200 hover:-translate-y-1 hover:border-amber-400/70 hover:shadow-lg hover:shadow-black/5"
     >
       <div className="flex aspect-[4/3] items-center justify-center border-b border-border bg-bg p-6">
-        <Art primarycolor="#f7c325" height={120} className="h-full max-h-[120px] w-auto max-w-full" />
+        <PostArt art={post.art} height={120} className="h-full max-h-[120px] w-auto max-w-full" />
       </div>
 
       <div className="flex flex-1 flex-col gap-3 p-6">
