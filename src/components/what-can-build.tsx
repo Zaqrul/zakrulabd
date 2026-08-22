@@ -141,18 +141,23 @@ export function WhatCanBuild() {
 
             {/* The one capability on this list that is not a description: the
                 store is built and running, so it links to itself. */}
+            {/* The address carries the marker rather than the sentence: .hl is
+                the site's emphasis, and the destination is the part worth
+                emphasising. It replaces the brackets it would otherwise sit
+                inside — a marker and a pair of parentheses do the same job, and
+                two of them is one too many. */}
             {current.pill === t.build.storeLink.pill && (
               <a
                 href={t.build.storeLink.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-1 inline-flex w-fit items-center gap-1.5 rounded-full border border-border bg-bg px-3.5 py-1.5 text-[12.5px] font-semibold text-ink transition hover:border-navy hover:bg-white"
+                className="group mt-1 inline-flex w-fit flex-wrap items-center gap-x-1.5 gap-y-1 text-[12.5px] font-semibold leading-relaxed text-ink"
               >
                 {t.build.storeLink.label}
-                <span className="font-mono text-[11.5px] font-medium text-amber-600">
+                <span className="hl transition-colors group-hover:bg-amber-500">
                   {t.build.storeLink.note}
                 </span>
-                <ExternalLinkIcon className="h-3.5 w-3.5 flex-shrink-0 text-amber-600" />
+                <ExternalLinkIcon className="h-3.5 w-3.5 flex-shrink-0 text-muted transition-colors group-hover:text-navy" />
               </a>
             )}
           </div>
