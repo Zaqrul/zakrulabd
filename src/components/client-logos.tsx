@@ -67,7 +67,10 @@ export function ClientLogos() {
             </span>
           </span>
 
-          <span className="hl text-[12.5px] font-semibold transition-colors group-hover:bg-amber-500">
+          {/* A pill on the dark band, the same shape the tech marks use on the
+              light one: bordered, mono, the address left to read as an
+              address. */}
+          <span className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-3 py-1 font-mono text-[11.5px] font-medium text-amber-400 transition-colors group-hover:border-amber-400/60 group-hover:bg-amber-400 group-hover:text-navy">
             {t.clients.recent.hrefLabel}
           </span>
         </a>

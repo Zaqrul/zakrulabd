@@ -105,7 +105,7 @@ export function SiteFooter() {
               rel="noopener noreferrer"
               className="text-[13.5px] hover:text-white"
             >
-              {t.footer.store}
+              {t.footer.getStartedLinks[2]}
             </a>
           </div>
         </div>
