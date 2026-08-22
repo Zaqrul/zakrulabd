@@ -97,6 +97,16 @@ export function SiteFooter() {
             <Link href="/#pricing" className="text-[13.5px] hover:text-white">
               {t.footer.getStartedLinks[1]}
             </Link>
+            {/* The store is a separate site on its own subdomain, so it is an
+                absolute link rather than a section of this one. */}
+            <a
+              href={t.build.storeLink.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-[13.5px] hover:text-white"
+            >
+              {t.footer.store}
+            </a>
           </div>
         </div>
         <div className="flex flex-col items-center justify-between gap-3 border-t border-white/10 pt-5 text-center sm:flex-row sm:text-left">

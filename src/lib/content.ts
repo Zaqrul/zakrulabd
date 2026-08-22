@@ -149,6 +149,16 @@ export const content = {
     sub: "Businesses across Malaysia I’ve built, fixed, and launched for. Every project was scoped and delivered by me directly.",
     items: [{ name: "Sri Tanduk Enterprise" }, { name: "Haikai Tech" }, { name: "KNZ Engineering" }],
     next: "You might be next",
+    /* One personal site among the businesses. It sits under the line rather
+       than in the logo grid because it is a person, not a company, and a
+       wordmark tile would be the wrong shape for it. */
+    recent: {
+      initials: "AO",
+      lead: "Most recent build — a portfolio for",
+      name: "Afiq Othman, short-form video editor",
+      href: "https://afiqothman.vercel.app/",
+      hrefLabel: "afiqothman.vercel.app",
+    },
   },
   process: {
     heading: "How I Work",
@@ -644,6 +654,7 @@ export const content = {
     howIWorkLinks: ["Process", "Packages", "Results", "Notes"],
     getStarted: "GET STARTED",
     getStartedLinks: ["Get a Free Quote", "See Packages"],
+    store: "Visit the store",
     privacy: "Privacy Policy",
     terms: "Terms & Conditions",
     rights: "All rights reserved.",

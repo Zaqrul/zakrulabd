@@ -40,6 +40,34 @@ export function ClientLogos() {
           <p className="text-base text-slate-400">{t.clients.sub}</p>
         </div>
 
+        {/* One line, the way a credit line reads: a mark, who it was for, and
+            where it lives. A person's portfolio has no wordmark to put in the
+            grid below, so it is named here instead. */}
+        <a
+          href={t.clients.recent.href}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="group mx-auto mb-12 flex w-fit max-w-full flex-wrap items-center justify-center gap-x-3 gap-y-2 rounded-full border border-white/10 bg-white/5 py-2 pl-2 pr-5 transition duration-200 hover:border-amber-400/60 hover:bg-white/[0.07]"
+        >
+          <span
+            aria-hidden
+            className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-amber-400 font-display text-[12px] font-extrabold text-navy"
+          >
+            {t.clients.recent.initials}
+          </span>
+
+          <span className="text-[13.5px] text-slate-300">
+            {t.clients.recent.lead}{" "}
+            <span className="font-semibold text-white">
+              {t.clients.recent.name}
+            </span>
+          </span>
+
+          <span className="hl text-[12.5px] font-semibold transition-colors group-hover:bg-amber-500">
+            {t.clients.recent.hrefLabel}
+          </span>
+        </a>
+
         {/* The grid is capped rather than spread across the full 1200px shell:
             four 150px tiles stretched over that width read as four stray marks
             with holes between them. Capping it keeps them a group. */}
