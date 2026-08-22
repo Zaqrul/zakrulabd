@@ -20,6 +20,30 @@ export default function robots(): MetadataRoute.Robots {
         ],
         allow: "/",
       },
+      // 1b. Link-preview crawlers — what builds the card when a link is shared.
+      // facebookexternalhit is not FacebookBot: the first draws previews for
+      // Facebook, Instagram and WhatsApp, the second harvests training data,
+      // and only the second is refused below.
+      {
+        userAgent: [
+          "facebookexternalhit",
+          "WhatsApp",
+          "Twitterbot",
+          "LinkedInBot",
+          "Slackbot",
+          "Slackbot-LinkExpanding",
+          "Discordbot",
+          "TelegramBot",
+          "Pinterest",
+          "redditbot",
+          "Applebot",
+          "SkypeUriPreview",
+          "Embedly",
+          "Iframely",
+          "vkShare",
+        ],
+        allow: "/",
+      },
       // 2. Disallow aggressive AI training data scrapers and bulk harvesters
       {
         userAgent: [

@@ -16,6 +16,30 @@ const ALLOWED_BOT_PATTERNS = [
   /chatgpt-user/i,     // ChatGPT live user browsing
   /perplexitybot/i,   // Perplexity AI search and citations
   /claude-web/i,       // Claude web lookup for user citations
+
+  /* Link-preview crawlers. These are what fetch a page to build the card
+     shown in a chat or a timeline, and a share with no image is usually one
+     of them having been refused.
+
+     facebookexternalhit is not FacebookBot: the first builds previews for
+     Facebook, Instagram and WhatsApp, the second harvests training data. The
+     block list below keeps FacebookBot and Meta-ExternalAgent, and this list
+     lets the preview crawler through — they are different jobs under one
+     company name. */
+  /facebookexternalhit/i,
+  /whatsapp/i,
+  /twitterbot/i,
+  /linkedinbot/i,
+  /slackbot/i,
+  /discordbot/i,
+  /telegrambot/i,
+  /pinterest/i,
+  /redditbot/i,
+  /applebot/i,          // iMessage previews, Siri and Spotlight
+  /skypeuripreview/i,
+  /embedly/i,
+  /iframely/i,
+  /vkshare/i,
 ];
 
 /**
