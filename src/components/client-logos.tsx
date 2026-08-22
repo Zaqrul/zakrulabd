@@ -1,6 +1,6 @@
 import { ImageWithSkeleton } from "@/components/skeleton";
 import { content as t } from "@/lib/content";
-import { PlusIcon } from "@/components/icons";
+import { ExternalLinkIcon, PlusIcon } from "@/components/icons";
 
 /* Keyed by client name rather than by position: display order is set once in
    content.clients.items, and reordering it can never pair a logo with another
@@ -67,12 +67,7 @@ export function ClientLogos() {
             </span>
           </span>
 
-          {/* A pill on the dark band, the same shape the tech marks use on the
-              light one: bordered, mono, the address left to read as an
-              address. */}
-          <span className="inline-flex items-center rounded-full border border-white/15 bg-white/5 px-3 py-1 font-mono text-[11.5px] font-medium text-amber-400 transition-colors group-hover:border-amber-400/60 group-hover:bg-amber-400 group-hover:text-navy">
-            {t.clients.recent.hrefLabel}
-          </span>
+          <ExternalLinkIcon className="h-3.5 w-3.5 flex-shrink-0 text-slate-400 transition-colors group-hover:text-amber-400" />
         </a>
 
         {/* The grid is capped rather than spread across the full 1200px shell:

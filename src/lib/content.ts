@@ -157,7 +157,6 @@ export const content = {
       lead: "Most recent build — a portfolio for",
       name: "Afiq Othman, short-form video editor",
       href: "https://afiqothman.vercel.app/",
-      hrefLabel: "afiqothman.vercel.app",
     },
   },
   process: {
