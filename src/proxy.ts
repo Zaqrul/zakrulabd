@@ -27,6 +27,17 @@ const ALLOWED_BOT_PATTERNS = [
      lets the preview crawler through — they are different jobs under one
      company name. */
   /facebookexternalhit/i,
+
+  /* meta-externalagent does double duty: Meta uses it both to index content
+     for previews — Threads among them — and to gather training data. There is
+     no way to accept one and refuse the other, so this is a trade, not a
+     technicality. Allowed, because a public marketing site exists to be seen
+     and shared, and a grey card on Threads costs more than the training data
+     is worth withholding. FacebookBot, the pure training crawler, stays
+     blocked. */
+  /meta-externalagent/i,
+  /meta-externalfetcher/i,
+
   /whatsapp/i,
   /twitterbot/i,
   /linkedinbot/i,
@@ -53,7 +64,6 @@ const BLOCKED_BOT_PATTERNS = [
   /google-extended/i,
   /bytespider/i,
   /facebookbot/i,
-  /meta-externalagent/i,
   /cohere-ai/i,
   /diffbot/i,
   /omgilibot/i,

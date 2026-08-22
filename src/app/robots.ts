@@ -27,6 +27,10 @@ export default function robots(): MetadataRoute.Robots {
       {
         userAgent: [
           "facebookexternalhit",
+          // Meta indexes with this one for Threads previews as well as for
+          // training. The two cannot be separated, so it is allowed.
+          "meta-externalagent",
+          "meta-externalfetcher",
           "WhatsApp",
           "Twitterbot",
           "LinkedInBot",
@@ -54,7 +58,6 @@ export default function robots(): MetadataRoute.Robots {
           "Google-Extended",    // Google Gemini AI training crawler
           "Bytespider",         // ByteDance / TikTok aggressive scraper
           "FacebookBot",        // Meta AI training crawler
-          "Meta-ExternalAgent", // Meta web crawler
           "cohere-ai",          // Cohere training scraper
           "Diffbot",            // Diffbot scraper
           "Omgilibot",          // Web scraper
