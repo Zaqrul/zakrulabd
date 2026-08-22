@@ -50,6 +50,15 @@ export const content = {
     client: "Client",
     selectLabel: "Select what you want to build",
     builtWith: "Mostly built with",
+    /* The one capability here that is not a description — the store is built
+       and running, so it links to itself rather than being explained. Matched
+       to its card by pill, since only that one has somewhere to go. */
+    storeLink: {
+      pill: "Online Store",
+      label: "Visit my store",
+      note: "(view real simulation)",
+      href: "https://store.zakrul.com",
+    },
     items: [
       {
         pill: "Online Store",

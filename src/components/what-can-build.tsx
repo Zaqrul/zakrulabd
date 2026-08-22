@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { CheckIcon, ChevronDownIcon } from "@/components/icons";
+import { CheckIcon, ChevronDownIcon, ExternalLinkIcon } from "@/components/icons";
 import { TechMarks } from "@/components/tech-marks";
 import { tech, type TechKey } from "@/lib/tech";
 import { content as t } from "@/lib/content";
@@ -138,6 +138,21 @@ export function WhatCanBuild() {
                 ))}
               </div>
             </div>
+
+            {/* The one capability on this list that is not a description: the
+                store is built and running, so it links to itself. */}
+            {current.pill === t.build.storeLink.pill && (
+              <a
+                href={t.build.storeLink.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-1 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-ink underline decoration-amber-500 decoration-2 underline-offset-4 transition hover:decoration-navy"
+              >
+                {t.build.storeLink.label}
+                <span className="font-normal text-muted">{t.build.storeLink.note}</span>
+                <ExternalLinkIcon className="h-3.5 w-3.5 flex-shrink-0 text-amber-600" />
+              </a>
+            )}
           </div>
 
           <div className="h-80 overflow-hidden rounded-2xl border border-border bg-white shadow-xl md:h-96">
