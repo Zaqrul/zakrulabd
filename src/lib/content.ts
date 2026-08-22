@@ -56,7 +56,7 @@ export const content = {
     storeLink: {
       pill: "Online Store",
       label: "Visit my store",
-      note: "(view real simulation)",
+      note: "store.zakrul.com",
       href: "https://store.zakrul.com",
     },
     items: [

@@ -146,10 +146,12 @@ export function WhatCanBuild() {
                 href={t.build.storeLink.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-1 inline-flex items-center gap-1.5 text-[12.5px] font-semibold text-ink underline decoration-amber-500 decoration-2 underline-offset-4 transition hover:decoration-navy"
+                className="mt-1 inline-flex w-fit items-center gap-1.5 rounded-full border border-border bg-bg px-3.5 py-1.5 text-[12.5px] font-semibold text-ink transition hover:border-navy hover:bg-white"
               >
                 {t.build.storeLink.label}
-                <span className="font-normal text-muted">{t.build.storeLink.note}</span>
+                <span className="font-mono text-[11.5px] font-medium text-amber-600">
+                  {t.build.storeLink.note}
+                </span>
                 <ExternalLinkIcon className="h-3.5 w-3.5 flex-shrink-0 text-amber-600" />
               </a>
             )}
