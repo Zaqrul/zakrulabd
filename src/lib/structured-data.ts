@@ -1,6 +1,9 @@
 import { content } from "@/lib/content";
 import { SITE_URL as SITE } from "@/lib/site";
 
+/** The shop on the subdomain, run by the same person. */
+const STORE = "https://store.zakrul.com";
+
 /* The profiles that carry the zakrulabd handle. sameAs is what actually ties
    that handle to this domain for a crawler, so the person and the business
    point at the same list. Threads canonicalised to threads.com — threads.net
@@ -103,6 +106,16 @@ export const structuredData = {
       },
       areaServed: { "@type": "Country", name: "Malaysia" },
       availableLanguage: ["en", "ms"],
+      /* The shop on the subdomain is the same business, not a second one.
+         subOrganization would claim a separate entity; owns points at a thing
+         this business runs, which is what it is. Its own graph names this site
+         back, so the pair resolve to one operator from either side. */
+      owns: {
+        "@type": "OnlineStore",
+        "@id": `${STORE}/#organization`,
+        name: "zakrul store",
+        url: STORE,
+      },
       hasOfferCatalog: {
         "@type": "OfferCatalog",
         name: "Web development packages",
