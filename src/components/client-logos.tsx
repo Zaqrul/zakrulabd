@@ -58,7 +58,11 @@ export function ClientLogos() {
 
           <span className="text-[13.5px] text-slate-300">
             {t.clients.recent.lead}{" "}
-            <span className="font-semibold text-white">
+            {/* The name is underlined and turns amber with the row, so it reads
+                as the link it is. It is a span rather than a nested anchor —
+                the whole row is already the link, and an anchor inside an
+                anchor is invalid markup that browsers unnest for you. */}
+            <span className="font-semibold text-white underline decoration-white/30 decoration-2 underline-offset-4 transition-colors group-hover:text-amber-400 group-hover:decoration-amber-400">
               {t.clients.recent.name}
             </span>
           </span>
