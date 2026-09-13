@@ -33,13 +33,15 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   if (!post) return { title: "Page Not Found", robots: { index: false, follow: true } };
 
   return {
+    metadataBase: new URL(SITE_URL),
     title: post.title,
     description: post.description,
     alternates: {
       canonical: `/notes/${postSlug(post)}`,
       languages: {
-        "en-MY": url(`/notes/${postSlug(post)}`),
-        "ms-MY": url("/ms/notes/sri-tanduk"),
+        en: url(`/notes/${postSlug(post)}`),
+        ms: url("/ms/notes/sri-tanduk"),
+        "x-default": url(`/notes/${postSlug(post)}`),
       },
     },
     openGraph: {

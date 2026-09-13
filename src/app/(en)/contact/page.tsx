@@ -13,7 +13,7 @@ export const metadata: Metadata = {
   title: "Start a Project",
   description:
     "Send me a brief for a website, a custom web system, or SEO work in Malaysia. Pick the package closest to what you need, attach anything that helps, and I reply within one working day with a plan and a fixed quote.",
-  alternates: { canonical: "/contact", languages: { "en-MY": url("/contact"), "ms-MY": url("/ms/contact") } },
+  alternates: { canonical: "/contact", languages: { en: url("/contact"), ms: url("/ms/contact"), "x-default": url("/contact") } },
   openGraph: {
     title: "Start a Project | Zakrul",
     description:

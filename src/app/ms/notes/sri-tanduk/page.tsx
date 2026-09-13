@@ -8,7 +8,7 @@ const post = postsMs[0];
 export const metadata: Metadata = {
   title: post.title,
   description: post.description,
-  alternates: { canonical: "/ms/notes/sri-tanduk", languages: { "en-MY": url("/notes/the-kuih-maker-who-had-no-time-to-market"), "ms-MY": url("/ms/notes/sri-tanduk") } },
+  alternates: { canonical: "/ms/notes/sri-tanduk", languages: { en: url("/notes/the-kuih-maker-who-had-no-time-to-market"), ms: url("/ms/notes/sri-tanduk"), "x-default": url("/notes/the-kuih-maker-who-had-no-time-to-market") } },
   openGraph: { type: "article", title: post.title, description: post.description, url: url("/ms/notes/sri-tanduk"), locale: "ms_MY", publishedTime: post.date, authors: ["Muhamad Zaqrul"] },
 };
 

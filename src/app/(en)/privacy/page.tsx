@@ -7,7 +7,7 @@ import { url } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Privacy Policy",
   description: "How Zakrul collects, uses, and protects your information, in line with the Malaysian Personal Data Protection Act 2010.",
-  alternates: { canonical: "/privacy", languages: { "en-MY": url("/privacy"), "ms-MY": url("/ms/privacy") } },
+  alternates: { canonical: "/privacy", languages: { en: url("/privacy"), ms: url("/ms/privacy"), "x-default": url("/privacy") } },
   openGraph: {
     title: "Privacy Policy | Zakrul",
     description: "How Zakrul collects, uses, and protects your information, in line with the Malaysian Personal Data Protection Act 2010.",

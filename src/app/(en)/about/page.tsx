@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: "About Muhamad Zaqrul",
   description:
     "Meet Muhamad Zaqrul, a Selangor-based freelance web developer working with businesses in Ipoh and across Malaysia. See real projects, services and contact details.",
-  alternates: { canonical: "/about", languages: { "en-MY": url("/about"), "ms-MY": url("/ms/about") } },
+  alternates: { canonical: "/about", languages: { en: url("/about"), ms: url("/ms/about"), "x-default": url("/about") } },
   openGraph: {
     title: "About Muhamad Zaqrul | Zakrul",
     description:

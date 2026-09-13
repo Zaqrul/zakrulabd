@@ -11,70 +11,130 @@ const routes = [
     lastModified: "2026-09-13",
     changeFrequency: "weekly" as const,
     priority: 1.0,
-    alternates: { languages: { en: `${SITE_URL}`, ms: `${SITE_URL}/ms` } },
+    alternates: {
+      languages: {
+        en: `${SITE_URL}`,
+        ms: `${SITE_URL}/ms`,
+        "x-default": `${SITE_URL}`,
+      },
+    },
   },
   {
     path: "/ms",
     lastModified: "2026-09-13",
     changeFrequency: "weekly" as const,
     priority: 0.9,
-    alternates: { languages: { en: `${SITE_URL}`, ms: `${SITE_URL}/ms` } },
+    alternates: {
+      languages: {
+        en: `${SITE_URL}`,
+        ms: `${SITE_URL}/ms`,
+        "x-default": `${SITE_URL}`,
+      },
+    },
   },
   {
     path: "/about",
     lastModified: "2026-09-13",
     changeFrequency: "monthly" as const,
     priority: 0.7,
-    alternates: { languages: { en: `${SITE_URL}/about`, ms: `${SITE_URL}/ms/about` } },
+    alternates: {
+      languages: {
+        en: `${SITE_URL}/about`,
+        ms: `${SITE_URL}/ms/about`,
+        "x-default": `${SITE_URL}/about`,
+      },
+    },
   },
   {
     path: "/ms/about",
     lastModified: "2026-09-13",
     changeFrequency: "monthly" as const,
     priority: 0.7,
-    alternates: { languages: { en: `${SITE_URL}/about`, ms: `${SITE_URL}/ms/about` } },
+    alternates: {
+      languages: {
+        en: `${SITE_URL}/about`,
+        ms: `${SITE_URL}/ms/about`,
+        "x-default": `${SITE_URL}/about`,
+      },
+    },
   },
   {
     path: "/contact",
     lastModified: "2026-09-13",
     changeFrequency: "yearly" as const,
     priority: 0.8,
-    alternates: { languages: { en: `${SITE_URL}/contact`, ms: `${SITE_URL}/ms/contact` } },
+    alternates: {
+      languages: {
+        en: `${SITE_URL}/contact`,
+        ms: `${SITE_URL}/ms/contact`,
+        "x-default": `${SITE_URL}/contact`,
+      },
+    },
   },
   {
     path: "/ms/contact",
     lastModified: "2026-09-13",
     changeFrequency: "yearly" as const,
     priority: 0.7,
-    alternates: { languages: { en: `${SITE_URL}/contact`, ms: `${SITE_URL}/ms/contact` } },
+    alternates: {
+      languages: {
+        en: `${SITE_URL}/contact`,
+        ms: `${SITE_URL}/ms/contact`,
+        "x-default": `${SITE_URL}/contact`,
+      },
+    },
   },
   {
     path: "/compare",
     lastModified: "2026-09-13",
     changeFrequency: "monthly" as const,
     priority: 0.7,
-    alternates: { languages: { en: `${SITE_URL}/compare`, ms: `${SITE_URL}/ms/compare` } },
+    alternates: {
+      languages: {
+        en: `${SITE_URL}/compare`,
+        ms: `${SITE_URL}/ms/compare`,
+        "x-default": `${SITE_URL}/compare`,
+      },
+    },
   },
   {
     path: "/ms/compare",
     lastModified: "2026-09-13",
     changeFrequency: "monthly" as const,
     priority: 0.7,
-    alternates: { languages: { en: `${SITE_URL}/compare`, ms: `${SITE_URL}/ms/compare` } },
+    alternates: {
+      languages: {
+        en: `${SITE_URL}/compare`,
+        ms: `${SITE_URL}/ms/compare`,
+        "x-default": `${SITE_URL}/compare`,
+      },
+    },
   },
   {
     path: "/notes",
     lastModified: "2026-09-13",
     changeFrequency: "monthly" as const,
     priority: 0.7,
-    alternates: { languages: { en: `${SITE_URL}/notes`, ms: `${SITE_URL}/ms/notes` } },
+    alternates: {
+      languages: {
+        en: `${SITE_URL}/notes`,
+        ms: `${SITE_URL}/ms/notes`,
+        "x-default": `${SITE_URL}/notes`,
+      },
+    },
   },
   {
     path: "/ms/notes",
     lastModified: "2026-09-13",
     changeFrequency: "monthly" as const,
     priority: 0.7,
-    alternates: { languages: { en: `${SITE_URL}/notes`, ms: `${SITE_URL}/ms/notes` } },
+    alternates: {
+      languages: {
+        en: `${SITE_URL}/notes`,
+        ms: `${SITE_URL}/ms/notes`,
+        "x-default": `${SITE_URL}/notes`,
+      },
+    },
   },
   {
     path: "/notes/the-kuih-maker-who-had-no-time-to-market",
@@ -85,6 +145,7 @@ const routes = [
       languages: {
         en: `${SITE_URL}/notes/the-kuih-maker-who-had-no-time-to-market`,
         ms: `${SITE_URL}/ms/notes/sri-tanduk`,
+        "x-default": `${SITE_URL}/notes/the-kuih-maker-who-had-no-time-to-market`,
       },
     },
   },
@@ -97,6 +158,7 @@ const routes = [
       languages: {
         en: `${SITE_URL}/notes/the-kuih-maker-who-had-no-time-to-market`,
         ms: `${SITE_URL}/ms/notes/sri-tanduk`,
+        "x-default": `${SITE_URL}/notes/the-kuih-maker-who-had-no-time-to-market`,
       },
     },
   },
@@ -105,28 +167,52 @@ const routes = [
     lastModified: "2026-09-13",
     changeFrequency: "monthly" as const,
     priority: 0.5,
-    alternates: { languages: { en: `${SITE_URL}/privacy`, ms: `${SITE_URL}/ms/privacy` } },
+    alternates: {
+      languages: {
+        en: `${SITE_URL}/privacy`,
+        ms: `${SITE_URL}/ms/privacy`,
+        "x-default": `${SITE_URL}/privacy`,
+      },
+    },
   },
   {
     path: "/ms/privacy",
     lastModified: "2026-09-13",
     changeFrequency: "monthly" as const,
     priority: 0.5,
-    alternates: { languages: { en: `${SITE_URL}/privacy`, ms: `${SITE_URL}/ms/privacy` } },
+    alternates: {
+      languages: {
+        en: `${SITE_URL}/privacy`,
+        ms: `${SITE_URL}/ms/privacy`,
+        "x-default": `${SITE_URL}/privacy`,
+      },
+    },
   },
   {
     path: "/terms",
     lastModified: "2026-09-13",
     changeFrequency: "monthly" as const,
     priority: 0.5,
-    alternates: { languages: { en: `${SITE_URL}/terms`, ms: `${SITE_URL}/ms/terms` } },
+    alternates: {
+      languages: {
+        en: `${SITE_URL}/terms`,
+        ms: `${SITE_URL}/ms/terms`,
+        "x-default": `${SITE_URL}/terms`,
+      },
+    },
   },
   {
     path: "/ms/terms",
     lastModified: "2026-09-13",
     changeFrequency: "monthly" as const,
     priority: 0.5,
-    alternates: { languages: { en: `${SITE_URL}/terms`, ms: `${SITE_URL}/ms/terms` } },
+    alternates: {
+      languages: {
+        en: `${SITE_URL}/terms`,
+        ms: `${SITE_URL}/ms/terms`,
+        "x-default": `${SITE_URL}/terms`,
+      },
+    },
   },
 ];
 

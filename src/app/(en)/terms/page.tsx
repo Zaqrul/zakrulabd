@@ -7,7 +7,7 @@ import { url } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Terms & Conditions",
   description: "Scope of work, payment milestones, code ownership, and warranty terms for freelance web development by Muhamad Zaqrul.",
-  alternates: { canonical: "/terms", languages: { "en-MY": url("/terms"), "ms-MY": url("/ms/terms") } },
+  alternates: { canonical: "/terms", languages: { en: url("/terms"), ms: url("/ms/terms"), "x-default": url("/terms") } },
   openGraph: {
     title: "Terms & Conditions | Zakrul",
     description: "Scope of work, payment milestones, code ownership, and warranty terms for freelance web development by Muhamad Zaqrul.",

@@ -11,7 +11,7 @@ export const metadata: Metadata = {
   title: "Notes",
   description:
     "Write-ups of real client projects: what the business needed, what I built, what it cost them, and what actually happened after launch.",
-  alternates: { canonical: "/notes", languages: { "en-MY": url("/notes"), "ms-MY": url("/ms/notes") } },
+  alternates: { canonical: "/notes", languages: { en: url("/notes"), ms: url("/ms/notes"), "x-default": url("/notes") } },
   openGraph: {
     title: "Notes | Zakrul",
     description:

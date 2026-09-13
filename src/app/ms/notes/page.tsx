@@ -5,7 +5,7 @@ import { url } from "@/lib/site";
 export const metadata: Metadata = {
   title: "Catatan Projek",
   description: "Catatan projek sebenar oleh Muhamad Zaqrul: keperluan pelanggan, keputusan reka bentuk dan hasil selepas pelancaran.",
-  alternates: { canonical: "/ms/notes", languages: { "en-MY": url("/notes"), "ms-MY": url("/ms/notes") } },
+  alternates: { canonical: "/ms/notes", languages: { en: url("/notes"), ms: url("/ms/notes"), "x-default": url("/notes") } },
   openGraph: { title: "Catatan Projek | Zakrul", description: "Kisah sebenar di sebalik laman web dan sistem yang saya bina.", url: url("/ms/notes"), locale: "ms_MY" },
 };
 

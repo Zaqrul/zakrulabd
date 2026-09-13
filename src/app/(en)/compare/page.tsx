@@ -8,7 +8,7 @@ export const metadata: Metadata = {
   title: "Compare Packages",
   description:
     "What the Starter, Professional, and Advanced packages each build: 18 project types side by side, from a one-page portfolio to a booking system or online store.",
-  alternates: { canonical: "/compare", languages: { "en-MY": url("/compare"), "ms-MY": url("/ms/compare") } },
+  alternates: { canonical: "/compare", languages: { en: url("/compare"), ms: url("/ms/compare"), "x-default": url("/compare") } },
   openGraph: {
     title: "Compare Packages | Zakrul",
     description:
