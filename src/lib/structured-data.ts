@@ -4,10 +4,8 @@ import { SITE_URL as SITE } from "@/lib/site";
 /** The shop on the subdomain, run by the same person. */
 const STORE = "https://store.zakrul.com";
 
-/* The profiles that carry the zakrulabd handle. sameAs is what actually ties
-   that handle to this domain for a crawler, so the person and the business
-   point at the same list. Threads canonicalised to threads.com — threads.net
-   301s there, and a redirect is a weaker signal than the final URL. */
+/* These are Muhamad Zaqrul's social profiles. The handle is a username, not
+   the name of the website or professional service. */
 export const PROFILES = [
   "https://www.threads.com/@zakrulabd",
   "https://www.tiktok.com/@zakrulabd",
@@ -38,11 +36,8 @@ export const structuredData = {
       "@type": "WebSite",
       "@id": ID.website,
       url: SITE,
-      name: "zakrulabd",
-      /* The domain reads "zakrul" while every handle and the email read
-         "zakrulabd". Naming the other spellings here lets a crawler resolve all
-         of them to this one entity instead of guessing at unrelated brands. */
-      alternateName: ["zakrul", "Muhamad Zaqrul"],
+      name: "Zakrul",
+      alternateName: "zakrul.com",
       description: content.footer.blurb,
       publisher: { "@id": ID.business },
       inLanguage: "en-MY",
@@ -52,14 +47,14 @@ export const structuredData = {
       "@id": ID.logo,
       url: `${SITE}/logo-ghost-outline.webp`,
       contentUrl: `${SITE}/logo-ghost-outline.webp`,
-      caption: "zakrulabd",
+      caption: "Zakrul",
     },
     {
       "@type": "Person",
       "@id": ID.person,
       name: "Muhamad Zaqrul",
-      alternateName: ["zakrulabd", "zakrul"],
-      url: SITE,
+      alternateName: ["Zaqrul", "zakrulabd"],
+      url: `${SITE}/about`,
       sameAs: PROFILES,
       email: "zakrulabd@gmail.com",
       telephone: "+60102551527",
@@ -85,10 +80,9 @@ export const structuredData = {
     {
       "@type": "ProfessionalService",
       "@id": ID.business,
-      name: "zakrulabd — Web Development & Digital Marketing",
-      alternateName: ["zakrul", "zakrulabd", "Muhamad Zaqrul"],
+      name: "Zakrul — Web Development & Digital Marketing",
+      alternateName: "zakrul.com",
       url: SITE,
-      sameAs: PROFILES,
       description: content.footer.blurb,
       email: "zakrulabd@gmail.com",
       telephone: "+60102551527",
@@ -104,7 +98,11 @@ export const structuredData = {
         addressRegion: "Selangor",
         addressCountry: "MY",
       },
-      areaServed: { "@type": "Country", name: "Malaysia" },
+      areaServed: [
+        { "@type": "City", name: "Ipoh" },
+        { "@type": "AdministrativeArea", name: "Selangor" },
+        { "@type": "Country", name: "Malaysia" },
+      ],
       availableLanguage: ["en", "ms"],
       /* The shop on the subdomain is the same business, not a second one.
          subOrganization would claim a separate entity; owns points at a thing
@@ -148,7 +146,7 @@ export const structuredData = {
       "@type": "WebPage",
       "@id": ID.homepage,
       url: SITE,
-      name: "zakrulabd — Web Development & Digital Marketing in Malaysia",
+      name: "Web Developer in Ipoh & Selangor, Malaysia | Zakrul",
       isPartOf: { "@id": ID.website },
       about: { "@id": ID.business },
       primaryImageOfPage: { "@id": ID.logo },

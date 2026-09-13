@@ -2,16 +2,17 @@
 
 import { Fragment, useMemo, useState } from "react";
 import { CheckIcon, SearchIcon } from "@/components/icons";
-import { content as t } from "@/lib/content";
+import { content } from "@/lib/content";
+import { compareMs } from "@/lib/compare-ms";
 import { wa, waMessages } from "@/lib/contact";
 
-const c = t.pricing.compare;
+type CompareCopy = typeof content.pricing.compare | typeof compareMs;
 const tierWaMessages = [waMessages.starter, waMessages.business, waMessages.custom];
 
 /* Three states, three shapes, so a row reads without reaching for the legend:
    a teal tick for included, an amber tick for the basic version, a cross for not.
    Amber always carries dark ink, the same rule the .hl marker follows. */
-function Mark({ mark }: { mark: string }) {
+function Mark({ mark, c }: { mark: string; c: CompareCopy }) {
   if (mark === "full") {
     return (
       <span
@@ -44,7 +45,7 @@ function Mark({ mark }: { mark: string }) {
   );
 }
 
-function TierCta({ index, className = "" }: { index: number; className?: string }) {
+function TierCta({ index, c, className = "" }: { index: number; c: CompareCopy; className?: string }) {
   return (
     <a
       href={wa(tierWaMessages[index])}
@@ -61,7 +62,8 @@ function TierCta({ index, className = "" }: { index: number; className?: string 
   );
 }
 
-export function ScopeCompareTable() {
+export function ScopeCompareTable({ locale = "en" }: { locale?: "en" | "ms" }) {
+  const c = locale === "ms" ? compareMs : content.pricing.compare;
   const [query, setQuery] = useState("");
 
   // A group disappears once the search empties it, so the reader never scrolls
@@ -75,7 +77,7 @@ export function ScopeCompareTable() {
         rows: g.rows.filter((r) => `${r.what} ${r.note}`.toLowerCase().includes(q)),
       }))
       .filter((g) => g.rows.length > 0);
-  }, [query]);
+  }, [query, c]);
 
   return (
     <div>
@@ -99,7 +101,7 @@ export function ScopeCompareTable() {
           {c.columns.map((col, i) => (
             <div key={col} className="flex flex-col items-center gap-1.5 px-1 py-3">
               <span className="text-center font-display text-[13px] font-bold text-navy">{col}</span>
-              <TierCta index={i} />
+              <TierCta index={i} c={c} />
             </div>
           ))}
         </div>
@@ -116,7 +118,7 @@ export function ScopeCompareTable() {
                 <div className="mt-3 grid grid-cols-3">
                   {row.marks.map((mark, i) => (
                     <div key={c.columns[i]} className="flex justify-center">
-                      <Mark mark={mark} />
+                      <Mark mark={mark} c={c} />
                     </div>
                   ))}
                 </div>
@@ -141,7 +143,7 @@ export function ScopeCompareTable() {
                   className="sticky top-[69px] z-30 w-[132px] bg-bg px-3 py-3 text-center align-middle shadow-[inset_0_-1px_0_var(--color-border)]"
                 >
                   <span className="block font-display text-[14px] font-bold text-navy">{col}</span>
-                  <TierCta index={i} className="mt-2" />
+                  <TierCta index={i} c={c} className="mt-2" />
                 </th>
               ))}
             </tr>
@@ -163,7 +165,7 @@ export function ScopeCompareTable() {
                     </td>
                     {row.marks.map((mark, i) => (
                       <td key={c.columns[i]} className="px-3 py-4 align-middle">
-                        <Mark mark={mark} />
+                        <Mark mark={mark} c={c} />
                       </td>
                     ))}
                   </tr>
@@ -185,7 +187,7 @@ export function ScopeCompareTable() {
       <div className="flex flex-wrap gap-x-6 gap-y-2 border-t border-border py-4 text-[12.5px] text-muted">
         {c.legend.map((l) => (
           <span key={l.mark} className="flex items-center gap-2">
-            <Mark mark={l.mark} />
+            <Mark mark={l.mark} c={c} />
             {l.label}
           </span>
         ))}

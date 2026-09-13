@@ -6,7 +6,8 @@ import { useEffect, useRef, useState } from "react";
 import { SvgMailSent } from "iblis-react-undraw";
 import { ClearButton, CountRing, CountdownRing, Cross, FieldNote, FieldToast, StatusMark } from "@/components/form-field";
 import { Toast } from "@/components/toast";
-import { content as t } from "@/lib/content";
+import { content } from "@/lib/content";
+import { contentMs } from "@/lib/content-ms";
 import { wa, waMessages } from "@/lib/contact";
 import { LIMITS, checkField, digitsOnly, sanitise, type FieldName } from "@/lib/validation";
 
@@ -40,7 +41,8 @@ const EMPTY = { name: "", package: "", email: "", phone: "", website: "", messag
 /* Long enough to read the thanks, short enough not to feel stuck. */
 const REDIRECT_SECONDS = 6;
 
-export function ContactForm() {
+export function ContactForm({ locale = "en" }: { locale?: "en" | "ms" }) {
+  const t = locale === "ms" ? contentMs : content;
   const c = t.contactPage;
   const router = useRouter();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -61,12 +63,12 @@ export function ContactForm() {
   const touch = (key: FieldName) => setTouched((current) => ({ ...current, [key]: true }));
 
   const results: Record<FieldName, { ok: boolean; message?: string }> = {
-    name: checkField("name", values.name),
-    email: checkField("email", values.email),
-    phone: checkField("phone", values.phone),
-    package: checkField("package", values.package),
-    website: checkField("website", values.website),
-    message: checkField("message", values.message),
+    name: checkField("name", values.name, locale),
+    email: checkField("email", values.email, locale),
+    phone: checkField("phone", values.phone, locale),
+    package: checkField("package", values.package, locale),
+    website: checkField("website", values.website, locale),
+    message: checkField("message", values.message, locale),
   };
 
   const formValid = Object.values(results).every((r) => r.ok);
@@ -92,16 +94,16 @@ export function ContactForm() {
        and landed on the hero, so the panel itself is centred instead, and
        gently rather than jumped, to show the page changed. */
     panelRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
-    router.prefetch("/");
+    router.prefetch(locale === "ms" ? "/ms" : "/");
 
     const tick = setInterval(() => setLeft((n) => n - 1), 1000);
-    const timer = setTimeout(() => router.push("/"), REDIRECT_SECONDS * 1000);
+    const timer = setTimeout(() => router.push(locale === "ms" ? "/ms" : "/"), REDIRECT_SECONDS * 1000);
 
     return () => {
       clearInterval(tick);
       clearTimeout(timer);
     };
-  }, [state, router]);
+  }, [state, router, locale]);
 
   function addFiles(incoming: File[]) {
     const accepted: File[] = [];
@@ -109,11 +111,11 @@ export function ContactForm() {
     for (const file of incoming) {
       const extension = file.name.slice(file.name.lastIndexOf(".")).toLowerCase();
       if (!ACCEPT.includes(extension)) {
-        setError(`${file.name} is not an accepted file type. Use PDF, Word, PNG or JPG.`);
+        setError(locale === "ms" ? `${file.name} bukan jenis fail yang diterima. Gunakan PDF, Word, PNG atau JPG.` : `${file.name} is not an accepted file type. Use PDF, Word, PNG or JPG.`);
         return;
       }
       if (file.size > MAX_FILE_BYTES) {
-        setError(`${file.name} is larger than 5MB.`);
+        setError(locale === "ms" ? `${file.name} melebihi 5 MB.` : `${file.name} is larger than 5MB.`);
         return;
       }
       accepted.push(file);

@@ -14,7 +14,7 @@ function BrowserChrome({ url }: { url: string }) {
 function Sidebar({ items, active }: { items: string[]; active: string }) {
   return (
     <div className="hidden w-32 flex-shrink-0 flex-col gap-1 border-r border-border bg-navy p-3 sm:flex">
-      <span className="mb-2 text-[11px] font-bold text-white">zakrulabd</span>
+      <span className="mb-2 text-[11px] font-bold text-white">Zakrul</span>
       {items.map((i) => (
         <span
           key={i}

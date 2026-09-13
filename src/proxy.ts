@@ -71,16 +71,6 @@ const BLOCKED_BOT_PATTERNS = [
   /imagesiftbot/i,
   /amazonbot/i,
   /scrapy/i,
-  /headlesschrome/i,
-  /phantomjs/i,
-  /selenium/i,
-  /puppeteer/i,
-  /python-requests/i,
-  /aiohttp/i,
-  /httpx/i,
-  /libwww-perl/i,
-  /wget/i,
-  /curl\//i,
 ];
 
 /**

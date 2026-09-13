@@ -2,11 +2,11 @@
 
 import { useState } from "react";
 import { ChevronDownIcon, PlusMinus } from "@/components/icons";
-import { content as t } from "@/lib/content";
+import { content } from "@/lib/content";
+import { faqMs } from "@/lib/faq-ms";
 
-const faq = t.faq;
-
-export function Faq() {
+export function Faq({ locale = "en" }: { locale?: "en" | "ms" }) {
+  const faq = locale === "ms" ? faqMs : content.faq;
   const [activeCategory, setActiveCategory] = useState(0);
   const [openQuestion, setOpenQuestion] = useState<string | null>(faq.categories[0].items[0].q);
 

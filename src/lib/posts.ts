@@ -46,7 +46,7 @@ export const posts: Post[] = [
     date: "2026-08-20",
     readingTime: "6 min read",
     tag: "CASE STUDY",
-    author: "Zakrul",
+    author: "Muhamad Zaqrul",
     body: [
       {
         type: "p",

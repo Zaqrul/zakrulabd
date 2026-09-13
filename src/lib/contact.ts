@@ -4,13 +4,13 @@ export const WHATSAPP_NUMBER = "60102551527";
    Imported by both the page components and next.config.ts, which builds the
    branded /wa short links from the same strings. */
 export const waMessages = {
-  quote: "Hi Zakrul! Saya nak dapatkan sebut harga percuma untuk website. Boleh kita bincang?",
-  hero: "Hi Zakrul! Saya jumpa website anda dan berminat nak buat website untuk bisnes saya.",
-  starter: "Hi Zakrul! Saya berminat dengan pakej Starter Website. Boleh terangkan lanjut?",
-  business: "Hi Zakrul! Saya berminat dengan pakej Professional Website. Boleh kita bincang?",
-  custom: "Hi Zakrul! Saya perlukan sistem web custom untuk bisnes saya. Boleh kita bincang skop dan sebut harga?",
-  intro: "Hi Zakrul! Nama saya ___, bisnes saya ___. Saya nak buat: ___",
-  start: "Hi Zakrul! Saya nak mulakan projek. Ini yang saya perlukan: ___",
+  quote: "Hai Zaqrul, saya ingin mendapatkan sebut harga untuk laman web perniagaan saya. Boleh kita berbincang?",
+  hero: "Hai Zaqrul, saya menemui laman web anda dan ingin berbincang tentang laman web untuk perniagaan saya.",
+  starter: "Hai Zaqrul, saya berminat dengan pakej Starter Website. Boleh terangkan skopnya?",
+  business: "Hai Zaqrul, saya berminat dengan pakej Professional Website. Boleh kita berbincang?",
+  custom: "Hai Zaqrul, saya memerlukan sistem web tersuai untuk perniagaan saya. Boleh kita bincang skop dan sebut harga?",
+  intro: "Hai Zaqrul, nama saya ___ dan perniagaan saya ___. Saya memerlukan ___.",
+  start: "Hai Zaqrul, saya ingin memulakan projek. Ini keperluan saya: ___.",
 };
 
 export function wa(message: string) {

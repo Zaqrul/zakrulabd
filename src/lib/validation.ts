@@ -59,36 +59,37 @@ export type FieldName = "name" | "email" | "phone" | "package" | "website" | "me
 
 /* Whether a value is acceptable, and if not, why. The message is written for
    the person who has to fix it, so it says what to do rather than what failed. */
-export function checkField(name: FieldName, value: string): { ok: boolean; message?: string } {
+export function checkField(name: FieldName, value: string, locale: "en" | "ms" = "en"): { ok: boolean; message?: string } {
+  const message = (en: string, ms: string) => locale === "ms" ? ms : en;
   switch (name) {
     case "name":
-      if (!value) return { ok: false, message: "Tell me who I am replying to." };
-      if (value.length < 2) return { ok: false, message: "That looks too short to be a name." };
+      if (!value) return { ok: false, message: message("Tell me who I am replying to.", "Masukkan nama supaya saya tahu siapa yang perlu dibalas.") };
+      if (value.length < 2) return { ok: false, message: message("That looks too short to be a name.", "Nama ini terlalu pendek.") };
       return { ok: true };
 
     case "email":
-      if (!value) return { ok: false, message: "I need an address to reply to." };
-      if (!isEmail(value)) return { ok: false, message: "Check the address, it is missing an @ or a domain." };
+      if (!value) return { ok: false, message: message("I need an address to reply to.", "Masukkan alamat e-mel untuk saya membalas.") };
+      if (!isEmail(value)) return { ok: false, message: message("Check the address, it is missing an @ or a domain.", "Semak alamat e-mel. Pastikan ada @ dan nama domain.") };
       return { ok: true };
 
     case "phone":
-      if (!value) return { ok: false, message: "I need a number I can reach you on." };
+      if (!value) return { ok: false, message: message("I need a number I can reach you on.", "Masukkan nombor telefon yang boleh dihubungi.") };
       if (!isPhone(value))
-        return { ok: false, message: "Enter the number without the leading 0, for example 123456789." };
+        return { ok: false, message: message("Enter the number without the leading 0, for example 123456789.", "Masukkan nombor tanpa angka 0 di hadapan, contohnya 123456789.") };
       return { ok: true };
 
     case "package":
-      if (!value) return { ok: false, message: "Pick the package closest to what you need." };
+      if (!value) return { ok: false, message: message("Pick the package closest to what you need.", "Pilih pakej yang paling hampir dengan keperluan anda.") };
       return { ok: true };
 
     case "website":
       if (!value) return { ok: true };
-      if (!isWebsite(value)) return { ok: false, message: "Use a full address, such as example.com." };
+      if (!isWebsite(value)) return { ok: false, message: message("Use a full address, such as example.com.", "Masukkan alamat penuh, contohnya perniagaan.com.") };
       return { ok: true };
 
     case "message":
-      if (!value) return { ok: false, message: "Tell me what you want built." };
-      if (value.length < 20) return { ok: false, message: "One more sentence would help me quote it properly." };
+      if (!value) return { ok: false, message: message("Tell me what you want built.", "Terangkan perkara yang ingin anda bina.") };
+      if (value.length < 20) return { ok: false, message: message("One more sentence would help me quote it properly.", "Tambah sedikit penerangan supaya saya dapat menyediakan sebut harga yang tepat.") };
       return { ok: true };
   }
 }

@@ -102,7 +102,7 @@ export function HeroDemo() {
         </div>
         <ImageWithSkeleton
           src="/sritanduk-preview.webp"
-          alt="Sri Tanduk website built by zakrulabd"
+          alt="Sri Tanduk website built by Muhamad Zaqrul"
           width={1000}
           height={483}
           priority

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import {
@@ -18,8 +18,10 @@ import { ClientLogos } from "@/components/client-logos";
 import { NoteCard, NoteNextCard } from "@/components/note-card";
 import { SiteFooter } from "@/components/site-footer";
 import { TechMarks } from "@/components/tech-marks";
-import { content as t } from "@/lib/content";
+import { content } from "@/lib/content";
+import { contentMs } from "@/lib/content-ms";
 import { posts } from "@/lib/posts";
+import { postsMs } from "@/lib/posts-ms";
 import { WHATSAPP_NUMBER, wa, waMessages } from "@/lib/contact";
 import { tech, techMarquee } from "@/lib/tech";
 import {
@@ -104,12 +106,7 @@ const testimonials = [
 ];
 
 /* The sections the sticky nav links to, in the order they appear on the page. */
-const navItems = [
-  { id: "services", label: t.nav.services },
-  { id: "projects", label: t.nav.projects },
-  { id: "pricing", label: t.nav.pricing },
-  { id: "contact", label: t.nav.contact },
-];
+const navIds = ["services", "projects", "pricing", "contact"] as const;
 
 const tierWaMessages = [waMessages.starter, waMessages.business, waMessages.custom];
 
@@ -409,7 +406,7 @@ function PricingCards({
 /* Reports which nav section the reader is currently in. A section takes over once
    its top scrolls under the sticky nav, so the marker changes at the moment the
    heading reaches the bar rather than when the section merely comes into view. */
-function useActiveSection(navRef: React.RefObject<HTMLElement | null>) {
+function useActiveSection(navRef: React.RefObject<HTMLElement | null>, navItems: { id: string; label: string }[]) {
   const [activeId, setActiveId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -437,15 +434,18 @@ function useActiveSection(navRef: React.RefObject<HTMLElement | null>) {
       window.removeEventListener("scroll", update);
       window.removeEventListener("resize", update);
     };
-  }, [navRef]);
+  }, [navRef, navItems]);
 
   return activeId;
 }
 
-export default function Home() {
+export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
+  const t = locale === "ms" ? contentMs : content;
+  const root = locale === "ms" ? "/ms" : "";
+  const navItems = useMemo(() => navIds.map((id) => ({ id, label: t.nav[id] })), [t]);
   const [activeReview, setActiveReview] = useState(0);
   const navRef = useRef<HTMLElement>(null);
-  const activeSection = useActiveSection(navRef);
+  const activeSection = useActiveSection(navRef, navItems);
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -463,13 +463,13 @@ export default function Home() {
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center">
               <Image
                 src="/logo-ghost-outline.webp"
-                alt="zakrulabd logo"
+                alt="Zakrul logo"
                 width={512}
                 height={512}
                 className="h-8 w-8 object-contain"
               />
             </div>
-            <span className="font-display text-lg font-bold text-navy">zakrulabd</span>
+            <span className="font-display text-lg font-bold text-navy">Zakrul</span>
           </a>
 
           {/* Desktop Nav Links */}
@@ -484,9 +484,16 @@ export default function Home() {
                 <span className="absolute bottom-0 left-0 h-[2.5px] w-0 rounded-full bg-amber-400 transition-all duration-200 ease-out group-hover:w-full" />
               </a>
             ))}
+            <Link href={`${root}/about`} className="group relative py-1 text-sm font-semibold text-ink transition-colors hover:text-navy">
+              {locale === "ms" ? "Tentang Saya" : "About Me"}
+              <span className="absolute bottom-0 left-0 h-[2.5px] w-0 rounded-full bg-amber-400 transition-all duration-200 ease-out group-hover:w-full" />
+            </Link>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-2.5">
+            <Link href={locale === "ms" ? "/" : "/ms"} hrefLang={locale === "ms" ? "en-MY" : "ms-MY"} lang={locale === "ms" ? "en" : "ms"} className="text-xs font-bold text-navy underline-offset-4 hover:underline sm:text-sm">
+              {locale === "ms" ? "EN" : "MS"}
+            </Link>
             <a
               href={wa(waMessages.quote)}
               target="_blank"
@@ -520,18 +527,24 @@ export default function Home() {
               </a>
             );
           })}
+          <Link href={`${root}/about`} className="px-2.5 py-1 text-center text-ink hover:text-navy">
+            {locale === "ms" ? "Tentang" : "About"}
+          </Link>
         </div>
       </nav>
 
       {/* HERO */}
-      <section id="main" className="relative overflow-hidden">
+      <section
+        id="main"
+        className="relative flex min-h-[calc(100svh-6.25rem)] items-center overflow-hidden lg:min-h-[calc(100svh-4.3125rem)]"
+      >
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
           <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-amber-400/25 blur-3xl" />
           <div className="absolute -right-10 top-10 h-64 w-64 rounded-full bg-bg blur-3xl" />
           <div className="absolute bottom-0 left-1/3 h-56 w-56 rounded-full bg-amber-300/20 blur-3xl" />
         </div>
 
-        <div className="relative z-10 mx-auto grid max-w-shell items-center gap-16 px-6 pb-16 pt-5 md:pb-24 md:pt-8 lg:grid-cols-2 lg:gap-12">
+        <div className="relative z-10 mx-auto grid w-full max-w-shell items-center gap-16 px-6 pb-16 pt-5 md:pb-24 md:pt-8 lg:grid-cols-2 lg:gap-12">
           <div className="flex flex-col items-center gap-6 text-center lg:items-start lg:text-left">
             <h1 className="font-display text-[38px] font-bold leading-[1.2] tracking-tight text-navy md:text-[62px]">
               {t.hero.titleA}{" "}
@@ -610,9 +623,9 @@ export default function Home() {
         </div>
       </section>
 
-      <WhatCanBuild />
+      <WhatCanBuild copy={t} />
 
-      <ClientLogos />
+      <ClientLogos copy={t} />
 
       {/* PROCESS */}
       <section id="process" className="px-6 py-24 overflow-hidden">
@@ -656,7 +669,7 @@ export default function Home() {
           <p className="mt-8 flex flex-col items-center gap-3 text-center text-[13.5px] text-muted lg:block">
             {t.pricing.compare.footnote}{" "}
             <Link
-              href="/compare"
+              href={`${root}/compare`}
               className="inline-block w-fit max-w-full self-center rounded-full bg-amber-400 px-4 py-2 font-semibold text-navy underline decoration-navy decoration-2 underline-offset-4 lg:w-auto lg:rounded-none lg:bg-transparent lg:p-0 lg:decoration-amber-500 lg:hover:decoration-navy"
             >
               {t.pricing.compare.link}
@@ -861,15 +874,15 @@ export default function Home() {
           {/* Four across, laid out like the client grid: the notes fill the
               slots and the last one stays an open invitation. */}
           <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
-            {posts.slice(0, 3).map((post) => (
-              <NoteCard key={post.title} post={post} />
+            {(locale === "ms" ? postsMs : posts).slice(0, 3).map((post) => (
+              <NoteCard key={post.title} post={post} locale={locale} />
             ))}
-            <NoteNextCard label={t.notes.next} href="/#contact" />
+            <NoteNextCard label={t.notes.next} href="#contact" />
           </div>
 
           <div className="mt-8 flex justify-center">
             <Link
-              href="/notes"
+              href={`${root}/notes`}
               className="btn-primary inline-flex items-center justify-center gap-2 rounded-lg border-[1.5px] border-primary-900 px-6 py-3 text-sm font-bold text-primary-900 transition-colors hover:bg-primary-900 hover:text-white"
             >
               {t.notes.all}
@@ -965,7 +978,7 @@ export default function Home() {
           {/* The one place the site asks for a written brief rather than a
               chat, so it goes to the form. WhatsApp is still offered below. */}
           <Link
-            href="/contact"
+            href={`${root}/contact`}
             className="btn-primary mt-2 inline-flex items-center gap-2 rounded-lg bg-amber-500 px-7 py-3.5 text-[15px] font-bold text-navy hover:bg-amber-600"
           >
             {t.finalCta.cta}
@@ -993,7 +1006,7 @@ export default function Home() {
       </section>
 
       {/* FOOTER */}
-      <SiteFooter />
+      <SiteFooter locale={locale} />
     </div>
   );
 }

@@ -7,7 +7,16 @@ import { postSlug, posts } from "@/lib/posts";
    rewritten. Crawlers learn to ignore a lastmod that always says "today", so
    these are fixed dates: bump the one whose copy actually changed. */
 const routes = [
-  { path: "", lastModified: "2026-08-20", changeFrequency: "weekly" as const, priority: 1.0 },
+  { path: "", lastModified: "2026-09-13", changeFrequency: "weekly" as const, priority: 1.0 },
+  { path: "/about", lastModified: "2026-09-13", changeFrequency: "monthly" as const, priority: 0.7 },
+  { path: "/ms", lastModified: "2026-09-13", changeFrequency: "monthly" as const, priority: 0.9 },
+  { path: "/ms/about", lastModified: "2026-09-13", changeFrequency: "monthly" as const, priority: 0.7 },
+  { path: "/ms/contact", lastModified: "2026-09-13", changeFrequency: "yearly" as const, priority: 0.7 },
+  { path: "/ms/compare", lastModified: "2026-09-13", changeFrequency: "monthly" as const, priority: 0.7 },
+  { path: "/ms/notes", lastModified: "2026-09-13", changeFrequency: "monthly" as const, priority: 0.7 },
+  { path: "/ms/privacy", lastModified: "2026-09-13", changeFrequency: "monthly" as const, priority: 0.5 },
+  { path: "/ms/terms", lastModified: "2026-09-13", changeFrequency: "monthly" as const, priority: 0.5 },
+  { path: "/ms/notes/sri-tanduk", lastModified: "2026-09-13", changeFrequency: "yearly" as const, priority: 0.6 },
   { path: "/compare", lastModified: "2026-08-20", changeFrequency: "monthly" as const, priority: 0.7 },
   { path: "/notes", lastModified: "2026-08-20", changeFrequency: "monthly" as const, priority: 0.7 },
   { path: "/contact", lastModified: "2026-08-20", changeFrequency: "yearly" as const, priority: 0.8 },

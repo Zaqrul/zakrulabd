@@ -1,5 +1,6 @@
 import { ImageWithSkeleton } from "@/components/skeleton";
-import { content as t } from "@/lib/content";
+import { content } from "@/lib/content";
+import { contentMs } from "@/lib/content-ms";
 import { ExternalLinkIcon, PlusIcon } from "@/components/icons";
 
 /* Keyed by client name rather than by position: display order is set once in
@@ -27,7 +28,8 @@ const clientAssets: Record<string, { url: string; logo: string; width: number; h
   },
 };
 
-export function ClientLogos() {
+export function ClientLogos({ copy = content }: { copy?: typeof content | typeof contentMs }) {
+  const t = copy;
   return (
     <section id="clients" className="bg-navy px-6 py-24">
       <div className="mx-auto max-w-shell">

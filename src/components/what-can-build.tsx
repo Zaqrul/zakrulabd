@@ -4,7 +4,8 @@ import { useState } from "react";
 import { CheckIcon, ChevronDownIcon, ExternalLinkIcon } from "@/components/icons";
 import { TechMarks } from "@/components/tech-marks";
 import { tech, type TechKey } from "@/lib/tech";
-import { content as t } from "@/lib/content";
+import { content } from "@/lib/content";
+import { contentMs } from "@/lib/content-ms";
 import {
   BookingDemo,
   InventoryDemo,
@@ -35,7 +36,8 @@ const stacks: TechKey[][] = [
   ["laravel", "stripe", "mysql"],
 ];
 
-export function WhatCanBuild() {
+export function WhatCanBuild({ copy = content }: { copy?: typeof content | typeof contentMs }) {
+  const t = copy;
   const [active, setActive] = useState(0);
   const capabilities = t.build.items;
   const current = capabilities[active] ?? capabilities[0];
@@ -124,7 +126,7 @@ export function WhatCanBuild() {
             <span className="text-[10px] font-bold uppercase tracking-wider text-muted">{t.build.client}</span>
             <p className="rounded-xl bg-amber-50 px-3 py-2.5 text-[12.5px] leading-snug text-ink">{current.brief}</p>
 
-            <span className="mt-1 text-[10px] font-bold uppercase tracking-wider text-muted">zakrulabd</span>
+            <span className="mt-1 text-[10px] font-bold uppercase tracking-wider text-muted">Zakrul</span>
             <div className="rounded-xl bg-bg p-3">
               <div className="flex flex-col gap-2.5">
                 {current.features.map((f) => (

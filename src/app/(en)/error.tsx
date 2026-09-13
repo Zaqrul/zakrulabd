@@ -44,7 +44,7 @@ export default function Error({ error, reset }: { error: Error & { digest?: stri
       }
     >
       <UnderlineLink
-        href={wa(`Hi Zakrul! Website anda keluar error${error.digest ? ` (ref: ${error.digest})` : ""}.`)}
+        href={wa(`Hai Zaqrul, laman web anda memaparkan ralat${error.digest ? ` (rujukan: ${error.digest})` : ""}.`)}
         external
         className="mt-4 text-[13.5px] font-semibold text-navy"
       >

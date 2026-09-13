@@ -4,7 +4,8 @@ import { SvgConversation, SvgWebDevelopment } from "iblis-react-undraw";
 import { ContactForm } from "@/components/contact-form";
 import { CheckIcon } from "@/components/icons";
 import { PostShell } from "@/components/post-shell";
-import { content as t } from "@/lib/content";
+import { content } from "@/lib/content";
+import { contentMs } from "@/lib/content-ms";
 import { breadcrumb } from "@/lib/structured-data";
 import { url } from "@/lib/site";
 
@@ -12,23 +13,24 @@ export const metadata: Metadata = {
   title: "Start a Project",
   description:
     "Send me a brief for a website, a custom web system, or SEO work in Malaysia. Pick the package closest to what you need, attach anything that helps, and I reply within one working day with a plan and a fixed quote.",
-  alternates: { canonical: "/contact" },
+  alternates: { canonical: "/contact", languages: { "en-MY": url("/contact"), "ms-MY": url("/ms/contact") } },
   openGraph: {
-    title: "Start a Project | zakrulabd",
+    title: "Start a Project | Zakrul",
     description:
       "Pick a package, tell me what you need built, attach anything that helps. A plan and a fixed quote within one working day.",
     url: url("/contact"),
   },
 };
 
-export default function ContactPage() {
+export default function ContactPage({ locale = "en" }: { locale?: "en" | "ms" }) {
+  const t = locale === "ms" ? contentMs : content;
   const c = t.contactPage;
 
   return (
-    <PostShell back={{ href: "/", label: "Back to Home" }}>
+    <PostShell locale={locale} alternatePath={locale === "ms" ? "/contact" : "/ms/contact"} back={{ href: locale === "ms" ? "/ms" : "/", label: locale === "ms" ? "Kembali ke Laman Utama" : "Back to Home" }}>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb("Start a Project", "/contact")) }}
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb(locale === "ms" ? "Mulakan Projek" : "Start a Project", locale === "ms" ? "/ms/contact" : "/contact")) }}
       />
 
       <section className="bg-navy px-5 py-14 md:px-6 md:py-16">
@@ -78,7 +80,7 @@ export default function ContactPage() {
               </blockquote>
             </div>
 
-            <ContactForm />
+            <ContactForm locale={locale} />
           </div>
 
           <aside className="hidden flex-col items-center gap-6 lg:flex">

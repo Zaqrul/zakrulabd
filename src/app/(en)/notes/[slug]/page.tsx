@@ -7,8 +7,10 @@ import { PostArt } from "@/components/post-art";
 import { PostShell } from "@/components/post-shell";
 import { ReadComplete, ReadingProgress } from "@/components/reading-progress";
 import { ShareLinks } from "@/components/share-links";
-import { content as t } from "@/lib/content";
+import { content } from "@/lib/content";
+import { contentMs } from "@/lib/content-ms";
 import { getPost, postSlug, posts, type Block } from "@/lib/posts";
+import { postsMs } from "@/lib/posts-ms";
 import { ID } from "@/lib/structured-data";
 import { SITE_URL, url } from "@/lib/site";
 import { tech } from "@/lib/tech";
@@ -33,7 +35,13 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
   return {
     title: post.title,
     description: post.description,
-    alternates: { canonical: `/notes/${postSlug(post)}` },
+    alternates: {
+      canonical: `/notes/${postSlug(post)}`,
+      languages: {
+        "en-MY": url(`/notes/${postSlug(post)}`),
+        "ms-MY": url("/ms/notes/sri-tanduk"),
+      },
+    },
     openGraph: {
       type: "article",
       title: post.title,
@@ -123,9 +131,12 @@ function Blocks({ blocks }: { blocks: Block[] }) {
   );
 }
 
-export default async function PostPage({ params }: { params: Promise<{ slug: string }> }) {
-  const post = getPost((await params).slug);
+export default async function PostPage({ params, locale = "en" }: { params: Promise<{ slug: string }>; locale?: "en" | "ms" }) {
+  const post = locale === "ms" ? postsMs[0] : getPost((await params).slug);
   if (!post) notFound();
+  const t = locale === "ms" ? contentMs : content;
+  const articlePath = locale === "ms" ? "/ms/notes/sri-tanduk" : `/notes/${postSlug(post)}`;
+  const root = locale === "ms" ? "/ms" : "";
 
   /* Article, tied by author and publisher to the same Person and business nodes
      the rest of the site declares, so this reads as one more thing that entity
@@ -133,29 +144,29 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
   const articleSchema = {
     "@context": "https://schema.org",
     "@type": "BlogPosting",
-    "@id": `${SITE_URL}/notes/${postSlug(post)}#article`,
+    "@id": `${SITE_URL}${articlePath}#article`,
     headline: post.title,
     description: post.description,
     datePublished: post.date,
     dateModified: post.date,
     author: { "@id": ID.person },
     publisher: { "@id": ID.business },
-    mainEntityOfPage: url(`/notes/${postSlug(post)}`),
-    inLanguage: "en-MY",
+    mainEntityOfPage: url(articlePath),
+    inLanguage: locale === "ms" ? "ms-MY" : "en-MY",
   };
 
   const breadcrumbSchema = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
-      { "@type": "ListItem", position: 1, name: "Home", item: SITE_URL },
-      { "@type": "ListItem", position: 2, name: "Notes", item: url("/notes") },
-      { "@type": "ListItem", position: 3, name: post.title, item: url(`/notes/${postSlug(post)}`) },
+      { "@type": "ListItem", position: 1, name: locale === "ms" ? "Laman Utama" : "Home", item: url(root || "/") },
+      { "@type": "ListItem", position: 2, name: locale === "ms" ? "Catatan" : "Notes", item: url(`${root}/notes`) },
+      { "@type": "ListItem", position: 3, name: post.title, item: url(articlePath) },
     ],
   };
 
   return (
-    <PostShell back={{ href: "/notes", label: "All Notes" }}>
+    <PostShell locale={locale} alternatePath={locale === "ms" ? "/notes/the-kuih-maker-who-had-no-time-to-market" : "/ms/notes/sri-tanduk"} back={{ href: `${root}/notes`, label: t.notes.all }}>
       <ReadingProgress targetId="article-body" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
@@ -170,7 +181,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
         <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold uppercase tracking-wide text-muted">
           <span className="text-navy">{post.tag}</span>
           <time dateTime={post.date}>
-            {new Date(post.date).toLocaleDateString("en-GB", { day: "numeric", month: "long", year: "numeric" })}
+            {new Date(post.date).toLocaleDateString(locale === "ms" ? "ms-MY" : "en-GB", { day: "numeric", month: "long", year: "numeric" })}
           </time>
           <span>{post.readingTime}</span>
         </div>
@@ -191,7 +202,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             and the byline on the tile that led here look like one signature. */}
         <div className="mt-12 flex flex-wrap items-center justify-between gap-4 border-t border-border pt-6 text-[13.5px] text-muted">
           <span className="flex items-center gap-2">
-            <span>Written by</span>
+            <span>{locale === "ms" ? "Ditulis oleh" : "Written by"}</span>
             <Image
               src="/logo-ghost-outline.webp"
               alt=""
@@ -199,12 +210,14 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               height={512}
               className="h-7 w-7 flex-shrink-0 object-contain"
             />
-            <span className="font-bold text-navy">{post.author}</span>
+            <Link href={`${root}/about`} className="font-bold text-navy underline-offset-4 hover:underline">
+              Muhamad Zaqrul
+            </Link>
           </span>
 
           {/* Sharing sits at the end of the article, where someone who found it
               worth passing on has just finished reading. */}
-          <ShareLinks url={url(`/notes/${postSlug(post)}`)} title={post.title} />
+          <ShareLinks url={url(articlePath)} title={post.title} />
         </div>
 
         {/* Only appears once the end is actually on screen. */}
@@ -217,7 +230,7 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
             <p className="max-w-lg text-[14.5px] leading-relaxed text-body">{t.notes.readDoneBody}</p>
             <div className="mt-1 flex flex-wrap items-center justify-center gap-3">
               <Link
-                href="/notes"
+                href={`${root}/notes`}
                 className="btn-primary inline-flex items-center justify-center gap-2 rounded-lg border-[1.5px] border-primary-900 px-6 py-3 text-sm font-bold text-primary-900 transition-colors hover:bg-primary-900 hover:text-white"
               >
                 {t.notes.readDoneMore}
@@ -227,10 +240,9 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
         </ReadComplete>
 
         <div className="mt-8 flex flex-col gap-4 bg-amber-300/20 p-6 md:p-8">
-          <h2 className="font-display text-lg font-bold text-navy">Got a business in the same spot?</h2>
+          <h2 className="font-display text-lg font-bold text-navy">{locale === "ms" ? "Perniagaan anda menghadapi keadaan yang sama?" : "Got a business in the same spot?"}</h2>
           <p className="max-w-2xl text-sm leading-relaxed text-body">
-            If you are making the product and the marketing keeps getting pushed to tomorrow, tell me what you sell and
-            where you sell it. I will tell you straight whether a website is what you need.
+            {locale === "ms" ? "Jika anda sibuk menghasilkan produk hingga pemasaran sering tertangguh, ceritakan apa dan di mana anda menjualnya. Saya akan berterus terang sama ada laman web sesuai untuk anda." : "If you are making the product and the marketing keeps getting pushed to tomorrow, tell me what you sell and where you sell it. I will tell you straight whether a website is what you need."}
           </p>
           <div className="flex flex-wrap gap-3">
             <a
@@ -239,13 +251,13 @@ export default async function PostPage({ params }: { params: Promise<{ slug: str
               rel="noopener noreferrer"
               className="btn-primary inline-flex items-center justify-center gap-2 rounded-lg bg-amber-500 px-6 py-3 text-sm font-bold text-navy transition-colors hover:bg-amber-600"
             >
-              Let&rsquo;s Discuss
+              {locale === "ms" ? "Mari Berbincang" : "Let’s Discuss"}
             </a>
             <Link
-              href="/#pricing"
+              href={`${root}/#pricing`}
               className="btn-primary inline-flex items-center justify-center gap-2 rounded-lg border-[1.5px] border-primary-900 px-6 py-3 text-sm font-bold text-primary-900 transition-colors hover:bg-primary-900 hover:text-white"
             >
-              See Packages
+              {locale === "ms" ? "Lihat Pakej" : "See Packages"}
             </Link>
           </div>
         </div>

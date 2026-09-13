@@ -619,7 +619,7 @@ export const content = {
     errorFallback: "Something went wrong. Message me on WhatsApp and I will pick it up there.",
     quote: "Most of this work is patience. Read the problem twice, build it once, and say plainly what is not finished yet.",
     quoteByLabel: "Quote by",
-    quoteBy: "Zakrul",
+    quoteBy: "Muhamad Zaqrul",
     assurances: [
       "You deal with me directly, not an account manager.",
       "I reply within one working day, usually sooner.",
@@ -646,7 +646,7 @@ export const content = {
   footer: {
     blurb:
       "Freelance web development, custom web systems, and digital marketing for SMEs and healthcare providers in Malaysia.",
-    location: "Selangor, Malaysia",
+    location: "Based in Selangor · Serving Ipoh and Malaysia",
     services: "SERVICES",
     servicesLinks: ["Web Development", "SEO & Marketing", "Live Chat & Automation", "Hosting & Support"],
     howIWork: "HOW I WORK",
@@ -733,7 +733,7 @@ export const content = {
     titleHl: "Conditions",
     lastUpdated: "Effective date: August 2026",
     intro:
-      "These terms govern the freelance web development, custom software, and technical SEO consulting services provided by Muhamad Zaqrul (zakrulabd) to clients.",
+      "These terms govern the freelance web development, custom software, and technical SEO consulting services provided by Muhamad Zaqrul through Zakrul to clients.",
     sections: [
       {
         title: "1. Scope of Work & Quotations",

@@ -3,15 +3,16 @@ import Link from "next/link";
 import { ArrowRightIcon, PlusIcon } from "@/components/icons";
 import { PostArt } from "@/components/post-art";
 import { content as t } from "@/lib/content";
+import { contentMs } from "@/lib/content-ms";
 import { postSlug, type Post } from "@/lib/posts";
 
 /* Built like the client logo tiles: a white card with the artwork sitting in
    its own square panel on top, then the text underneath. The tile lifts on
    hover the same way, so the two grids read as one family. */
-export function NoteCard({ post }: { post: Post }) {
+export function NoteCard({ post, locale = "en" }: { post: Post; locale?: "en" | "ms" }) {
   return (
     <Link
-      href={`/notes/${postSlug(post)}`}
+      href={locale === "ms" ? "/ms/notes/sri-tanduk" : `/notes/${postSlug(post)}`}
       className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-white transition duration-200 hover:-translate-y-1 hover:border-amber-400/70 hover:shadow-lg hover:shadow-black/5"
     >
       <div className="flex aspect-[4/3] items-center justify-center border-b border-border bg-bg p-6">
@@ -53,7 +54,7 @@ export function NoteCard({ post }: { post: Post }) {
           </span>
 
           <span className="inline-flex items-center gap-1.5 text-[13px] font-bold text-navy">
-            {t.notes.read}
+            {locale === "ms" ? contentMs.notes.read : t.notes.read}
             <ArrowRightIcon className="h-3.5 w-3.5 transition-transform duration-200 group-hover:translate-x-1" />
           </span>
         </div>

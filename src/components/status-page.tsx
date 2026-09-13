@@ -14,6 +14,7 @@ export function StatusPage({
   illustration,
   actions,
   children,
+  locale = "en",
 }: {
   code: string;
   titleA: string;
@@ -22,23 +23,25 @@ export function StatusPage({
   illustration: React.ReactNode;
   actions: React.ReactNode;
   children?: React.ReactNode;
+  locale?: "en" | "ms";
 }) {
   return (
     <div className="flex min-h-screen flex-col justify-between bg-bg text-ink selection:bg-amber-400 selection:text-navy">
       <header className="border-b border-border bg-bg">
         <div className="mx-auto flex max-w-shell items-center justify-between gap-4 px-6 py-4">
-          <Link href="/" className="flex items-center gap-2.5">
+          <Link href={locale === "ms" ? "/ms" : "/"} className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center">
               <Image
                 src="/logo-ghost-outline.webp"
-                alt="zakrulabd logo"
+                alt="Zakrul logo"
                 width={512}
                 height={512}
                 className="h-8 w-8 object-contain"
               />
             </div>
-            <span className="font-display text-lg font-bold text-navy">zakrulabd</span>
+            <span className="font-display text-lg font-bold text-navy">Zakrul</span>
           </Link>
+          <Link href={locale === "ms" ? "/" : "/ms"} hrefLang={locale === "ms" ? "en-MY" : "ms-MY"} lang={locale === "ms" ? "en" : "ms"} className="text-sm font-bold text-primary-900 hover:underline">{locale === "ms" ? "EN" : "MS"}</Link>
         </div>
       </header>
 
@@ -61,7 +64,7 @@ export function StatusPage({
         </div>
       </main>
 
-      <SiteFooter />
+      <SiteFooter locale={locale} />
     </div>
   );
 }

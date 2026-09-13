@@ -36,7 +36,7 @@ export function ogImage({ eyebrow, title, note }: { eyebrow: string; title: stri
         </div>
 
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", fontSize: 26 }}>
-          <div style={{ display: "flex", color: "#ffffff", fontWeight: 700 }}>zakrulabd</div>
+          <div style={{ display: "flex", color: "#ffffff", fontWeight: 700 }}>Zakrul</div>
           <div style={{ display: "flex", color: "#fbcf33", fontWeight: 700 }}>zakrul.com</div>
         </div>
       </div>

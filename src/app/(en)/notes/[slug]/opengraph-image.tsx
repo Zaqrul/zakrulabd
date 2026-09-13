@@ -3,7 +3,7 @@ import { getPost, postSlug, posts } from "@/lib/posts";
 
 export const size = OG_SIZE;
 export const contentType = OG_CONTENT_TYPE;
-export const alt = "zakrulabd";
+export const alt = "Zakrul";
 
 export function generateStaticParams() {
   return posts.map((post) => ({ slug: postSlug(post) }));
