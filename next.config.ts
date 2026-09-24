@@ -38,6 +38,10 @@ const securityHeaders = [
     key: "X-Permitted-Cross-Domain-Policies",
     value: "none",
   },
+  {
+    key: "Content-Security-Policy",
+    value: "frame-ancestors 'self'; object-src 'none'; base-uri 'self'; form-action 'self'",
+  },
 ];
 
 /* Content-Security-Policy, written out per directive so each origin says why it
@@ -75,6 +79,13 @@ const nextConfig: NextConfig = {
         source: "/:path*",
         headers: securityHeaders,
       },
+      {
+        source: "/api/:path*",
+        headers: [
+          { key: "Cache-Control", value: "no-store" },
+          { key: "X-Robots-Tag", value: "noindex, nofollow" },
+        ],
+      },
     ];
   },
   async redirects() {
@@ -106,4 +117,3 @@ const nextConfig: NextConfig = {
 };
 
 export default nextConfig;
-

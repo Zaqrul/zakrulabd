@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { Resend } from "resend";
+import { MAX_CONTACT_BODY_BYTES, MAX_CONTACT_FILES, MAX_CONTACT_FILE_BYTES, MAX_CONTACT_TOTAL_FILE_BYTES } from "@/lib/contact-limits";
 import { LIMITS, checkField, digitsOnly, sanitise, singleLine } from "@/lib/validation";
 
 /* Constructed per request rather than at module scope: the Resend client throws
@@ -14,15 +15,8 @@ function client() {
 const FROM = "zakrul.com <support@zakrul.com>";
 const TO = "zakrulabd@gmail.com";
 
-/* Attachments. The per-file and total caps sit well under Resend's own 40MB
-   message limit, because a mailbox that rejects a 30MB email loses the enquiry
-   with it. Both the MIME type and the extension have to be allowed: a browser
-   reports type from the extension anyway, and checking one alone lets a
-   renamed executable through on the strength of a claimed type. */
-const MAX_FILES = 4;
-const MAX_FILE_BYTES = 5 * 1024 * 1024;
-const MAX_TOTAL_BYTES = 12 * 1024 * 1024;
-
+/* The request cap is lower than the Vercel function body limit. Extension,
+   claimed MIME type and file signature are checked before sending attachments. */
 const ALLOWED: Record<string, string[]> = {
   "application/pdf": [".pdf"],
   "application/msword": [".doc"],
@@ -31,11 +25,8 @@ const ALLOWED: Record<string, string[]> = {
   "image/jpeg": [".jpg", ".jpeg"],
 };
 
-/* A send costs money and inbox attention, so one address gets a handful per
-   window. In memory on purpose: a counter that resets when an instance recycles
-   is a fair trade against adding a database to a contact form. The proxy rate
-   limits the site as a whole; this is the narrower limit for the one route that
-   sends mail. */
+/* A best-effort local limit protects one function instance. Platform WAF rate
+   limiting is still needed because instances do not share this counter. */
 const WINDOW_MS = 10 * 60 * 1000;
 const MAX_PER_WINDOW = 5;
 const seen = new Map<string, number[]>();
@@ -51,6 +42,8 @@ function rateLimited(ip: string) {
     for (const [key, times] of seen) {
       if (times.every((at) => now - at >= WINDOW_MS)) seen.delete(key);
     }
+    // A stream of fresh IPs must not grow this process-local map indefinitely.
+    while (seen.size > 500) seen.delete(seen.keys().next().value!);
   }
 
   return hits.length > MAX_PER_WINDOW;
@@ -64,7 +57,7 @@ const escapeHtml = (value: string) =>
    client will show in full. */
 function safeName(name: string) {
   const base = name.split(/[\\/]/).pop() || "attachment";
-  return base.replace(/[<>:"|?*]/g, "").slice(-120) || "attachment";
+  return base.replace(/[\x00-\x1F\x7F<>:"|?*]/g, "").slice(-120) || "attachment";
 }
 
 function extensionOf(name: string) {
@@ -72,28 +65,103 @@ function extensionOf(name: string) {
   return dot === -1 ? "" : name.slice(dot).toLowerCase();
 }
 
+function hasExpectedSignature(extension: string, bytes: Uint8Array) {
+  const starts = (...signature: number[]) => signature.every((byte, index) => bytes[index] === byte);
+  switch (extension) {
+    case ".pdf": return starts(0x25, 0x50, 0x44, 0x46, 0x2d);
+    case ".doc": return starts(0xd0, 0xcf, 0x11, 0xe0, 0xa1, 0xb1, 0x1a, 0xe1);
+    case ".docx": return starts(0x50, 0x4b, 0x03, 0x04);
+    case ".png": return starts(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a);
+    case ".jpg":
+    case ".jpeg": return starts(0xff, 0xd8, 0xff);
+    default: return false;
+  }
+}
+
+async function boundedFormData(request: Request) {
+  const length = Number(request.headers.get("content-length"));
+  if (Number.isFinite(length) && length > MAX_CONTACT_BODY_BYTES) return { tooLarge: true } as const;
+
+  const reader = request.body?.getReader();
+  if (!reader) return { malformed: true } as const;
+  const chunks: Buffer[] = [];
+  let size = 0;
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      size += value.byteLength;
+      if (size > MAX_CONTACT_BODY_BYTES) {
+        await reader.cancel();
+        return { tooLarge: true } as const;
+      }
+      chunks.push(Buffer.from(value));
+    }
+    const body = Buffer.concat(chunks, size);
+    const form = await new Request(request.url, {
+      method: "POST",
+      headers: { "content-type": request.headers.get("content-type")! },
+      body,
+    }).formData();
+    return { form } as const;
+  } catch {
+    return { malformed: true } as const;
+  } finally {
+    reader.releaseLock();
+  }
+}
+
+const TEXT_FIELDS = new Set(["name", "email", "phone", "package", "website", "message", "company"]);
+
+function validFormShape(form: FormData) {
+  const counts = new Map<string, number>();
+  for (const [key, value] of form) {
+    if (key !== "files" && (!TEXT_FIELDS.has(key) || typeof value !== "string")) return false;
+    if (key === "files" && !(value instanceof File)) return false;
+    const count = (counts.get(key) ?? 0) + 1;
+    if (count > (key === "files" ? MAX_CONTACT_FILES : 1)) return false;
+    counts.set(key, count);
+  }
+  return true;
+}
+
 export async function POST(request: Request) {
+  const origin = request.headers.get("origin");
+  const fetchSite = request.headers.get("sec-fetch-site");
+  if (
+    origin !== new URL(request.url).origin ||
+    (fetchSite && fetchSite !== "same-origin") ||
+    request.headers.get("x-contact-form") !== "1"
+  ) {
+    return NextResponse.json({ error: "Request origin is not allowed." }, { status: 403 });
+  }
+
+  if (!/^multipart\/form-data\s*;\s*boundary=/i.test(request.headers.get("content-type") ?? "")) {
+    return NextResponse.json({ error: "Expected a multipart form." }, { status: 415 });
+  }
+
   if (!process.env.RESEND_API_KEY) {
     return NextResponse.json({ error: "Email is not configured on this deployment." }, { status: 503 });
   }
 
-  /* cf-connecting-ip first for the same reason the proxy prefers it: while a
-     hostname is proxied through Cloudflare it is the only header that carries
-     the visitor's own address. */
-  const ip =
-    request.headers.get("cf-connecting-ip") ||
-    request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    "unknown";
+  /* Vercel overwrites X-Forwarded-For, preventing clients from choosing a new
+     rate-limit key by sending their own forwarding header. */
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0].trim() || "unknown";
 
   if (rateLimited(ip)) {
     return NextResponse.json({ error: "Too many messages just now. Try again shortly." }, { status: 429 });
   }
 
-  let form: FormData;
-  try {
-    form = await request.formData();
-  } catch {
+  const parsed = await boundedFormData(request);
+  if ("tooLarge" in parsed) {
+    return NextResponse.json({ error: "The form is larger than 4 MB." }, { status: 413 });
+  }
+  if ("malformed" in parsed) {
     return NextResponse.json({ error: "Malformed request." }, { status: 400 });
+  }
+  const form = parsed.form;
+  if (!validFormShape(form)) {
+    return NextResponse.json({ error: "Malformed form fields." }, { status: 400 });
   }
 
   /* Honeypot: a field hidden from people and irresistible to simple bots. A
@@ -126,8 +194,8 @@ export async function POST(request: Request) {
 
   const uploads = form.getAll("files").filter((entry): entry is File => entry instanceof File && entry.size > 0);
 
-  if (uploads.length > MAX_FILES) {
-    return NextResponse.json({ error: `Please attach at most ${MAX_FILES} files.` }, { status: 400 });
+  if (uploads.length > MAX_CONTACT_FILES) {
+    return NextResponse.json({ error: `Please attach at most ${MAX_CONTACT_FILES} files.` }, { status: 400 });
   }
 
   const attachments: { filename: string; content: Buffer }[] = [];
@@ -143,13 +211,17 @@ export async function POST(request: Request) {
         { status: 400 }
       );
     }
-    if (file.size > MAX_FILE_BYTES) {
-      return NextResponse.json({ error: `${safeName(file.name)} is larger than 5MB.` }, { status: 400 });
+    if (file.size > MAX_CONTACT_FILE_BYTES) {
+      return NextResponse.json({ error: `${safeName(file.name)} is larger than 3MB.` }, { status: 400 });
     }
 
     total += file.size;
-    if (total > MAX_TOTAL_BYTES) {
-      return NextResponse.json({ error: "The attachments come to more than 12MB in total." }, { status: 400 });
+    if (total > MAX_CONTACT_TOTAL_FILE_BYTES) {
+      return NextResponse.json({ error: "The attachments come to more than 3MB in total." }, { status: 400 });
+    }
+
+    if (!hasExpectedSignature(extension, new Uint8Array(await file.slice(0, 8).arrayBuffer()))) {
+      return NextResponse.json({ error: `${safeName(file.name)} does not match its file type.` }, { status: 400 });
     }
 
     attachments.push({ filename: safeName(file.name), content: Buffer.from(await file.arrayBuffer()) });

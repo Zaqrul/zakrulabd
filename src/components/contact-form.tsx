@@ -9,6 +9,7 @@ import { Toast } from "@/components/toast";
 import { content } from "@/lib/content";
 import { contentMs } from "@/lib/content-ms";
 import { wa, waMessages } from "@/lib/contact";
+import { MAX_CONTACT_FILES, MAX_CONTACT_FILE_BYTES, MAX_CONTACT_TOTAL_FILE_BYTES } from "@/lib/contact-limits";
 import { LIMITS, checkField, digitsOnly, sanitise, type FieldName } from "@/lib/validation";
 
 type State = "idle" | "sending" | "submitted" | "sent" | "error";
@@ -16,8 +17,6 @@ type State = "idle" | "sending" | "submitted" | "sent" | "error";
 /* Mirrors the server. Checking here too means an oversized file is refused
    before it is uploaded over a phone connection, rather than after. */
 const ACCEPT = [".pdf", ".doc", ".docx", ".png", ".jpg", ".jpeg"];
-const MAX_FILES = 4;
-const MAX_FILE_BYTES = 5 * 1024 * 1024;
 
 const readableSize = (bytes: number) =>
   bytes >= 1024 * 1024 ? `${(bytes / 1024 / 1024).toFixed(1)}MB` : `${Math.max(1, Math.round(bytes / 1024))}KB`;
@@ -114,8 +113,8 @@ export function ContactForm({ locale = "en" }: { locale?: "en" | "ms" }) {
         setError(locale === "ms" ? `${file.name} bukan jenis fail yang diterima. Gunakan PDF, Word, PNG atau JPG.` : `${file.name} is not an accepted file type. Use PDF, Word, PNG or JPG.`);
         return;
       }
-      if (file.size > MAX_FILE_BYTES) {
-        setError(locale === "ms" ? `${file.name} melebihi 5 MB.` : `${file.name} is larger than 5MB.`);
+      if (file.size > MAX_CONTACT_FILE_BYTES) {
+        setError(locale === "ms" ? `${file.name} melebihi 3 MB.` : `${file.name} is larger than 3MB.`);
         return;
       }
       accepted.push(file);
@@ -128,8 +127,12 @@ export function ContactForm({ locale = "en" }: { locale?: "en" | "ms" }) {
       if (!merged.some((f) => f.name === file.name && f.size === file.size)) merged.push(file);
     }
 
-    if (merged.length > MAX_FILES) {
+    if (merged.length > MAX_CONTACT_FILES) {
       setError(c.fileTooMany);
+      return;
+    }
+    if (merged.reduce((sum, file) => sum + file.size, 0) > MAX_CONTACT_TOTAL_FILE_BYTES) {
+      setError(locale === "ms" ? "Jumlah lampiran melebihi 3 MB." : "Attachments exceed 3MB in total.");
       return;
     }
 
@@ -183,6 +186,7 @@ export function ContactForm({ locale = "en" }: { locale?: "en" | "ms" }) {
        waiting and assuming the form is broken. */
     const request = new XMLHttpRequest();
     request.open("POST", "/api/contact");
+    request.setRequestHeader("X-Contact-Form", "1");
 
     request.upload.onprogress = (e) => {
       if (e.lengthComputable) setProgress(Math.round((e.loaded / e.total) * 100));

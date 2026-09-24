@@ -119,6 +119,11 @@ function isRateLimited(ip: string): boolean {
     }
   }
 
+  // A flood of distinct active IPs must not retain an unbounded number of keys.
+  while (ipRequestHistory.size > 1000) {
+    ipRequestHistory.delete(ipRequestHistory.keys().next().value!);
+  }
+
   const timestamps = (ipRequestHistory.get(ip) || []).filter(
     (t) => now - t < RATE_LIMIT_WINDOW_MS
   );
@@ -135,16 +140,12 @@ function isRateLimited(ip: string): boolean {
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
   const userAgent = request.headers.get("user-agent") || "";
-  /* cf-connecting-ip first: while a hostname is proxied through Cloudflare it
-     is the only header guaranteed to hold the visitor's own address, so the
-     rate limiter counts visitors rather than a handful of Cloudflare edges.
-     It is simply absent when the record is DNS-only, and the usual forwarding
-     headers take over. */
+  /* Vercel overwrites X-Forwarded-For before this code runs. Headers supplied
+     by a client, including CF-Connecting-IP on a direct request, are not safe
+     rate-limit keys. */
   const ip =
-    request.headers.get("cf-connecting-ip") ||
     request.headers.get("x-forwarded-for")?.split(",")[0].trim() ||
-    request.headers.get("x-real-ip") ||
-    "127.0.0.1";
+    "unknown";
 
   // 1. Instantly block brute-force scanners targeting sensitive backend paths
   if (BLOCKED_SCANNER_PATHS.some((pattern) => pattern.test(pathname))) {
