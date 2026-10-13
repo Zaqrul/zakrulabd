@@ -8,6 +8,7 @@ import { content } from "@/lib/content";
 import { contentMs } from "@/lib/content-ms";
 import { breadcrumb } from "@/lib/structured-data";
 import { url } from "@/lib/site";
+import { RevealText } from "@/components/reveal-text";
 
 export const metadata: Metadata = {
   title: "Start a Project",
@@ -36,10 +37,10 @@ export default function ContactPage({ locale = "en" }: { locale?: "en" | "ms" })
       <section className="bg-navy px-5 py-14 md:px-6 md:py-16">
         <div className="mx-auto flex w-full max-w-shell flex-col gap-4">
           <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-400">{c.badge}</span>
-          <h1 className="font-display text-[30px] font-extrabold tracking-tight text-white md:text-5xl">
+          <h1 className="font-display text-[30px] font-extrabold tracking-tight text-white md:text-5xl"><RevealText immediate>
             {c.titleA}
             <span className="hl">{c.titleHl}</span>
-          </h1>
+          </RevealText></h1>
           <p className="max-w-2xl text-base leading-relaxed text-slate-300 md:text-lg">{c.sub}</p>
         </div>
       </section>

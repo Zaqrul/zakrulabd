@@ -16,6 +16,7 @@ import { ID } from "@/lib/structured-data";
 import { SITE_URL, url } from "@/lib/site";
 import { tech } from "@/lib/tech";
 import { wa, waMessages } from "@/lib/contact";
+import { RevealText } from "@/components/reveal-text";
 
 export function generateStaticParams() {
   return posts.map((post) => ({ slug: postSlug(post) }));
@@ -64,9 +65,9 @@ function Blocks({ blocks }: { blocks: Block[] }) {
       {blocks.map((block, i) => {
         if (block.type === "h2") {
           return (
-            <h2 key={i} className="mt-11 font-display text-[22px] font-bold leading-snug text-navy md:text-[26px]">
+            <h2 key={i} className="mt-11 font-display text-[22px] font-bold leading-snug text-navy md:text-[26px]"><RevealText>
               {block.text}
-            </h2>
+            </RevealText></h2>
           );
         }
         if (block.type === "quote") {
@@ -193,9 +194,9 @@ export default async function PostPage({ params, locale = "en" }: { params: Prom
           <span>{post.readingTime}</span>
         </div>
 
-        <h1 className="mt-4 font-display text-[32px] font-extrabold leading-[1.15] tracking-tight text-navy md:text-[46px]">
+        <h1 className="mt-4 font-display text-[32px] font-extrabold leading-[1.15] tracking-tight text-navy md:text-[46px]"><RevealText immediate>
           {post.title}
-        </h1>
+        </RevealText></h1>
 
         <p className="mt-4 border-b border-border pb-8 text-[17px] leading-relaxed text-body md:text-lg">
           {post.excerpt}
@@ -233,7 +234,7 @@ export default async function PostPage({ params, locale = "en" }: { params: Prom
             <div className="w-full max-w-[220px]">
               <SvgCelebration primarycolor="#f7c325" height={160} className="mx-auto h-auto w-full" />
             </div>
-            <h2 className="font-display text-xl font-bold text-navy md:text-2xl">{t.notes.readDoneTitle}</h2>
+            <h2 className="font-display text-xl font-bold text-navy md:text-2xl"><RevealText>{t.notes.readDoneTitle}</RevealText></h2>
             <p className="max-w-lg text-[14.5px] leading-relaxed text-body">{t.notes.readDoneBody}</p>
             <div className="mt-1 flex flex-wrap items-center justify-center gap-3">
               <Link
@@ -247,7 +248,7 @@ export default async function PostPage({ params, locale = "en" }: { params: Prom
         </ReadComplete>
 
         <div className="mt-8 flex flex-col gap-4 bg-amber-300/20 p-6 md:p-8">
-          <h2 className="font-display text-lg font-bold text-navy">{post.cta?.title ?? (locale === "ms" ? "Perniagaan anda menghadapi keadaan yang sama?" : "Got a business in the same spot?")}</h2>
+          <h2 className="font-display text-lg font-bold text-navy"><RevealText>{post.cta?.title ?? (locale === "ms" ? "Perniagaan anda menghadapi keadaan yang sama?" : "Got a business in the same spot?")}</RevealText></h2>
           <p className="max-w-2xl text-sm leading-relaxed text-body">
             {post.cta?.body ?? (locale === "ms" ? "Jika anda sibuk menghasilkan produk hingga pemasaran sering tertangguh, ceritakan apa dan di mana anda menjualnya. Saya akan berterus terang sama ada laman web sesuai untuk anda." : "If you are making the product and the marketing keeps getting pushed to tomorrow, tell me what you sell and where you sell it. I will tell you straight whether a website is what you need.")}
           </p>

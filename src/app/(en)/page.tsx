@@ -34,6 +34,7 @@ import {
   SvgSearchEngines,
   SvgWebDevelopment,
 } from "iblis-react-undraw";
+import { Mark, RevealText } from "@/components/reveal-text";
 
 /* Presentation-only data: visuals, layout, links, and contact details. */
 const serviceDemos = [LiveCodeDemo, LiveChartDemo, LiveChatDemo, LiveStatusDemo];
@@ -206,9 +207,9 @@ function MilestoneSteps({ steps }: { steps: readonly { title: string; body: stri
                 className={`font-display text-lg font-bold transition-colors duration-300 ${
                   isActive ? "text-navy" : "text-ink/80"
                 }`}
-              >
+              ><RevealText>
                 {s.title}
-              </h3>
+              </RevealText></h3>
               <p className="text-sm leading-relaxed text-body">{s.body}</p>
             </div>
           </div>
@@ -329,9 +330,9 @@ function PricingCardItem({
       <div>
         <h3
           className={`font-display text-[19px] font-bold ${meta.highlighted ? "text-white" : "text-navy"}`}
-        >
+        ><RevealText>
           {tier.name}
-        </h3>
+        </RevealText></h3>
         <p
           className={`mt-0.5 text-[12.5px] font-semibold ${
             meta.highlighted ? "text-amber-300" : "text-primary-600"
@@ -563,7 +564,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
 
         <div className="relative z-10 mx-auto grid w-full max-w-shell items-center gap-16 px-6 pb-16 pt-5 md:pb-24 md:pt-8 lg:grid-cols-2 lg:gap-12">
           <div className="flex flex-col items-center gap-6 text-center lg:items-start lg:text-left">
-            <h1 className="font-display text-[38px] font-bold leading-[1.2] tracking-tight text-navy md:text-[62px]">
+            <h1 className="font-display text-[38px] font-bold leading-[1.2] tracking-tight text-navy md:text-[62px]"><RevealText immediate>
               <span className="hl">{t.hero.titleHl1}</span>
               <span className="block">{t.hero.titleB.trim()}</span>
               {/* The keyword line carries the size; the promise sits under it
@@ -574,7 +575,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
                   {t.hero.titleHl2}
                 </span>
               </span>
-            </h1>
+            </RevealText></h1>
             <div className="w-full max-w-lg pb-12 pt-2 lg:hidden">
               <HeroDemo />
             </div>
@@ -611,7 +612,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
       <section id="services" className="border-y border-border bg-white px-6 py-24 overflow-hidden">
         <div className="mx-auto max-w-shell">
           <div className="mx-auto mb-12 flex max-w-xl flex-col items-center gap-3 text-center">
-            <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl">{t.services.heading}</h2>
+            <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl"><RevealText>{t.services.heading}</RevealText></h2>
             <p className="text-base text-body">{t.services.sub}</p>
           </div>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
@@ -626,7 +627,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
                   <div className="h-28 overflow-hidden rounded-xl border border-border">
                     <Demo />
                   </div>
-                  <h3 className="font-display text-[17px] font-bold text-navy">{service.title}</h3>
+                  <h3 className="font-display text-[17px] font-bold text-navy"><RevealText>{service.title}</RevealText></h3>
                   <p className="text-sm leading-relaxed text-body">{service.description}</p>
                   <div className="mt-auto flex flex-wrap gap-1.5 pt-1">
                     {service.bullets.map((b) => (
@@ -654,7 +655,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
       <section id="process" className="px-6 py-24 overflow-hidden">
         <div className="mx-auto max-w-shell">
           <div className="mx-auto mb-12 flex max-w-xl flex-col items-center gap-3 text-center">
-            <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl">{t.process.heading}</h2>
+            <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl"><RevealText>{t.process.heading}</RevealText></h2>
             <p className="text-base text-body">{t.process.sub}</p>
           </div>
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
@@ -668,7 +669,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
                       {`0${i + 1}`}
                     </div>
                   </div>
-                  <h3 className="font-display text-base font-bold text-navy">{p.title}</h3>
+                  <h3 className="font-display text-base font-bold text-navy"><RevealText>{p.title}</RevealText></h3>
                   <p className="text-sm leading-relaxed text-body">{p.description}</p>
                 </ScrollSlideItem>
               );
@@ -681,11 +682,11 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
       <section id="pricing" className="border-y border-border bg-white px-6 py-24 overflow-hidden">
         <div className="mx-auto max-w-shell">
           <div className="mx-auto mb-12 flex max-w-xl flex-col items-center gap-3 text-center">
-            <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl">
+            <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl"><RevealText>
               {t.pricing.headingA}
               <span className="hl">{t.pricing.headingHl}</span>
               {t.pricing.headingB}
-            </h2>
+            </RevealText></h2>
             <p className="text-base text-body">{t.pricing.sub}</p>
           </div>
           <PricingCards tiers={t.pricing.tiers} badge={t.pricing.badge} />
@@ -705,11 +706,11 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
       <section id="results" className="bg-navy px-6 py-24 overflow-hidden">
         <div className="mx-auto max-w-shell">
           <div className="mx-auto mb-11 flex max-w-2xl flex-col items-center gap-3 text-center">
-            <h2 className="font-display text-[30px] font-bold text-white md:text-5xl">
+            <h2 className="font-display text-[30px] font-bold text-white md:text-5xl"><RevealText>
               {t.results.headingA}
               <span className="hl">{t.results.headingHl}</span>
               {t.results.headingB}
-            </h2>
+            </RevealText></h2>
             <p className="text-base text-slate-400">{t.results.sub}</p>
           </div>
 
@@ -744,7 +745,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
               <span className="inline-flex w-fit rounded-full bg-teal-600 px-3.5 py-1.5 text-xs font-bold tracking-wide text-white">
                 {t.results.caseBadge}
               </span>
-              <h3 className="font-display text-[19px] font-bold text-white">{t.results.caseTitle}</h3>
+              <h3 className="font-display text-[19px] font-bold text-white"><RevealText>{t.results.caseTitle}</RevealText></h3>
               <p className="text-sm leading-relaxed text-slate-300">{t.results.caseBody}</p>
             </div>
           </ScrollSlideItem>
@@ -768,7 +769,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
               <span className="inline-flex w-fit rounded-full bg-amber-500 px-3.5 py-1.5 text-xs font-bold tracking-wide text-navy">
                 {t.results.smeBadge}
               </span>
-              <h3 className="font-display text-[19px] font-bold text-white">{t.results.smeTitle}</h3>
+              <h3 className="font-display text-[19px] font-bold text-white"><RevealText>{t.results.smeTitle}</RevealText></h3>
               <p className="text-sm leading-relaxed text-slate-300">{t.results.smeBody}</p>
               <div className="grid grid-cols-3 gap-3">
                 {t.results.smeStats.map((s) => (
@@ -826,7 +827,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
       <section className="px-6 py-24">
         <div className="mx-auto max-w-shell">
           <div className="mx-auto mb-11 flex max-w-xl flex-col items-center gap-3 text-center">
-            <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl">{t.testimonials.heading}</h2>
+            <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl"><RevealText>{t.testimonials.heading}</RevealText></h2>
             <p className="text-base text-body">{t.testimonials.sub}</p>
           </div>
           {/* Mobile Auto-Slide (< md) */}
@@ -846,7 +847,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
                       </div>
                       <p className="text-base font-bold leading-relaxed text-navy">
                         &ldquo;{item.before}
-                        <span className="hl">{item.highlight}</span>
+                        <Mark>{item.highlight}</Mark>
                         {item.after}&rdquo;
                       </p>
                       <div className="mt-auto border-t border-border pt-5">
@@ -897,7 +898,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
                 </div>
                 <p className="text-base font-bold leading-relaxed text-navy">
                   &ldquo;{item.before}
-                  <span className="hl">{item.highlight}</span>
+                  <Mark>{item.highlight}</Mark>
                   {item.after}&rdquo;
                 </p>
                 <div className="mt-auto border-t border-border pt-5">
@@ -926,10 +927,10 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
         <div className="mx-auto max-w-shell">
           <div className="mx-auto mb-11 flex max-w-xl flex-col items-center gap-3 text-center">
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted">{t.notes.badge}</span>
-            <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl">
+            <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl"><RevealText>
               {t.notes.headingA}
               <span className="hl">{t.notes.headingHl}</span>
-            </h2>
+            </RevealText></h2>
             <p className="text-base text-body">{t.notes.sub}</p>
           </div>
 
@@ -959,10 +960,10 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
         <div className="mx-auto max-w-shell">
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
             <div>
-              <h2 className="font-display text-[30px] font-bold leading-tight text-navy md:text-5xl">
+              <h2 className="font-display text-[30px] font-bold leading-tight text-navy md:text-5xl"><RevealText>
                 {t.started.headingA}
                 <span className="hl">{t.started.headingHl}</span>
-              </h2>
+              </RevealText></h2>
 
               <MilestoneSteps steps={t.started.steps} />
             </div>
@@ -1031,11 +1032,11 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
         </div>
 
         <div className="relative z-10 mx-auto flex max-w-xl flex-col items-center gap-5 text-center">
-          <h2 className="font-display text-[30px] font-bold text-white md:text-5xl">
+          <h2 className="font-display text-[30px] font-bold text-white md:text-5xl"><RevealText>
             {t.finalCta.headingA}
             <span className="hl">{t.finalCta.headingHl}</span>
             {t.finalCta.headingB}
-          </h2>
+          </RevealText></h2>
           <p className="text-base leading-relaxed text-slate-300">{t.finalCta.sub}</p>
           {/* The one place the site asks for a written brief rather than a
               chat, so it goes to the form. WhatsApp is still offered below. */}

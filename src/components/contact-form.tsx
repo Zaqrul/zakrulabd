@@ -11,6 +11,7 @@ import { contentMs } from "@/lib/content-ms";
 import { wa, waMessages } from "@/lib/contact";
 import { MAX_CONTACT_FILES, MAX_CONTACT_FILE_BYTES, MAX_CONTACT_TOTAL_FILE_BYTES } from "@/lib/contact-limits";
 import { LIMITS, checkField, digitsOnly, sanitise, type FieldName } from "@/lib/validation";
+import { RevealText } from "@/components/reveal-text";
 
 type State = "idle" | "sending" | "submitted" | "sent" | "error";
 
@@ -246,7 +247,7 @@ export function ContactForm({ locale = "en" }: { locale?: "en" | "ms" }) {
           </svg>
         </span>
 
-        <h2 className="font-display text-2xl font-bold text-navy md:text-3xl">{c.successTitle}</h2>
+        <h2 className="font-display text-2xl font-bold text-navy md:text-3xl"><RevealText>{c.successTitle}</RevealText></h2>
         <p className="max-w-lg text-[15px] leading-relaxed text-body">{c.successBody}</p>
 
         <div className="flex items-center gap-3 rounded-full border border-border bg-bg py-2 pl-2 pr-5">

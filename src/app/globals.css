@@ -80,7 +80,10 @@ body {
    gets its own rounded pill on each line instead of one giant blob. */
 .hl {
   display: inline;
-  background-color: var(--color-amber-400);
+  /* Painted as an image rather than a background colour, so its width can
+     grow from the left like a marker stroke. Same look at rest. Override
+     --hl-color to tint it (hover states). */
+  background: linear-gradient(var(--hl-color, var(--color-amber-400)), var(--hl-color, var(--color-amber-400))) no-repeat 0 0 / 100% 100%;
   /* Always dark text: the marker is light, so it must not inherit the white
      heading colour used on dark sections. */
   color: var(--color-navy);
@@ -111,6 +114,54 @@ p:has(.hl) {
   h2:has(.hl),
   h3:has(.hl) {
     overflow-wrap: anywhere;
+  }
+}
+
+/* Headings arrive word by word, left to right, each word sliding in from a
+   blur (RevealText). Highlight markers then grow from the left, slowly, like
+   a pen stroke, once their words are in. Without JavaScript, or with reduced
+   motion, everything simply shows. */
+.rw {
+  display: inline-block;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .rt .rw {
+    opacity: 0;
+    filter: blur(10px);
+    transform: translateX(-0.4em);
+  }
+
+  .rt[data-in] .rw {
+    animation: rt-word 900ms cubic-bezier(0.22, 0.61, 0.36, 1) both;
+    animation-delay: calc(var(--i) * 55ms);
+  }
+
+  .hl-grow {
+    background-size: 0% 100%;
+  }
+
+  .rt[data-in] .hl-grow,
+  .hl-grow[data-in] {
+    animation: hl-grow 1600ms cubic-bezier(0.65, 0, 0.35, 1) both;
+    animation-delay: var(--hl-delay, 150ms);
+  }
+}
+
+@keyframes rt-word {
+  to {
+    opacity: 1;
+    filter: blur(0);
+    transform: none;
+  }
+}
+
+@keyframes hl-grow {
+  from {
+    background-size: 0% 100%;
+  }
+  to {
+    background-size: 100% 100%;
   }
 }
 
@@ -448,6 +499,14 @@ p:has(.hl) {
     .store-shield { animation-name: store-shield; }
     .store-return { animation-name: store-return; }
   }
+}
+
+/* Inventory showcase: a stock figure that just changed is highlighted, then
+   fades back, the way spreadsheet-style tools mark a live update. Applied
+   with motion-safe: only. */
+@keyframes inv-flash {
+  0%, 30% { background-color: #fef3c7; }
+  100% { background-color: transparent; }
 }
 
 @keyframes grow-bar {

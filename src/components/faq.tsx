@@ -4,6 +4,7 @@ import { useState } from "react";
 import { ChevronDownIcon, PlusMinus } from "@/components/icons";
 import { content } from "@/lib/content";
 import { faqMs } from "@/lib/faq-ms";
+import { RevealText } from "@/components/reveal-text";
 
 export function Faq({ locale = "en" }: { locale?: "en" | "ms" }) {
   const faq = locale === "ms" ? faqMs : content.faq;
@@ -61,7 +62,7 @@ export function Faq({ locale = "en" }: { locale?: "en" | "ms" }) {
       </div>
 
       <div className="flex flex-col gap-1">
-        <h3 className="mb-2 font-display text-xl font-bold text-navy md:text-2xl">{category.label}</h3>
+        <h3 className="mb-2 font-display text-xl font-bold text-navy md:text-2xl"><RevealText>{category.label}</RevealText></h3>
 
         {category.items.map((item) => {
           const isOpen = openQuestion === item.q;

@@ -100,8 +100,14 @@ export function SiteFooter({ locale = "en", alternatePath }: { locale?: "en" | "
             <Link href={`${root}/#pricing`} className="text-[13.5px] hover:text-white">
               {t.footer.getStartedLinks[1]}
             </Link>
-            <Link href={t.build.storeLink.href} className="text-[13.5px] hover:text-white">
+            <Link href={t.build.showcases[0].href} className="text-[13.5px] hover:text-white">
               {t.footer.getStartedLinks[2]}
+            </Link>
+            <Link href={t.build.showcases[1].href} className="text-[13.5px] hover:text-white">
+              {t.footer.getStartedLinks[3]}
+            </Link>
+            <Link href={t.build.showcases[2].href} className="text-[13.5px] hover:text-white">
+              {t.footer.getStartedLinks[4]}
             </Link>
           </div>
         </div>

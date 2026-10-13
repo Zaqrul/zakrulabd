@@ -5,6 +5,7 @@ import { CheckIcon, SearchIcon } from "@/components/icons";
 import { content } from "@/lib/content";
 import { compareMs } from "@/lib/compare-ms";
 import { wa, waMessages } from "@/lib/contact";
+import { RevealText } from "@/components/reveal-text";
 
 type CompareCopy = typeof content.pricing.compare | typeof compareMs;
 const tierWaMessages = [waMessages.starter, waMessages.business, waMessages.custom];
@@ -109,7 +110,7 @@ export function ScopeCompareTable({ locale = "en" }: { locale?: "en" | "ms" }) {
         {groups.map((group) => (
           <div key={group.label}>
             <div className="border-b border-border pb-3 pt-7">
-              <h2 className="font-display text-[16px] font-bold text-navy">{group.label}</h2>
+              <h2 className="font-display text-[16px] font-bold text-navy"><RevealText>{group.label}</RevealText></h2>
             </div>
             {group.rows.map((row) => (
               <div key={row.what} className="border-b border-border py-4">
@@ -154,7 +155,7 @@ export function ScopeCompareTable({ locale = "en" }: { locale?: "en" | "ms" }) {
               <Fragment key={group.label}>
                 <tr>
                   <td colSpan={4} className="pb-3 pt-9">
-                    <h2 className="font-display text-[17px] font-bold text-navy">{group.label}</h2>
+                    <h2 className="font-display text-[17px] font-bold text-navy"><RevealText>{group.label}</RevealText></h2>
                   </td>
                 </tr>
                 {group.rows.map((row) => (

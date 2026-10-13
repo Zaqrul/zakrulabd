@@ -36,6 +36,8 @@ import {
   PiX,
 } from "react-icons/pi";
 import { wa, waMessages } from "@/lib/contact";
+import { RollingAmount } from "@/components/showcase/rolling-amount";
+import { RevealText } from "@/components/reveal-text";
 
 /* The store has its own identity, not the portfolio's: a client's shop should
    look like the client's brand. A serif for the brand voice, warm cream and a
@@ -117,34 +119,6 @@ const coupons: Record<string, { label: string; min?: number; discount: (subtotal
 const round2 = (n: number) => Math.round(n * 100) / 100;
 
 const rm = (n: number) => `RM ${n.toFixed(2)}`;
-
-/* Counts from the old figure to the new one, so totals roll rather than jump
-   when the cart, coupon or delivery changes. */
-function RollingAmount({ value, format }: { value: number; format: (n: number) => string }) {
-  const [shown, setShown] = useState(value);
-  const from = useRef(value);
-
-  useEffect(() => {
-    const start = from.current;
-    if (start === value) return;
-    /* Reduced motion still goes through one frame, just with no duration. */
-    const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 450;
-    const t0 = performance.now();
-    let raf = 0;
-    const tick = (now: number) => {
-      const k = duration ? Math.min(1, (now - t0) / duration) : 1;
-      const eased = 1 - Math.pow(1 - k, 3);
-      const n = start + (value - start) * eased;
-      from.current = n;
-      setShown(n);
-      if (k < 1) raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
-  }, [value]);
-
-  return <span className="tabular-nums">{format(shown)}</span>;
-}
 
 /* Tilts a product tile towards the mouse and moves a soft glare with it.
    Mouse only: touch has no hover, and reduced motion opts out. */
@@ -478,7 +452,7 @@ export function StoreShowcase() {
           <div>
             <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-[#c8643b]">Batik, kopi and homeware</p>
             <h1 className="mt-4 font-[family-name:var(--font-store-serif)] text-[40px] font-semibold leading-[1.05] tracking-tight text-[#1f3a2e] md:text-[58px]">
-              Made in small workshops across Malaysia.
+              <RevealText immediate>Made in small workshops across Malaysia.</RevealText>
             </h1>
             <p className="mt-5 max-w-md text-[16px] leading-relaxed text-[#5a5248]">
               Batik, clay cups, rattan and pantry items from small producers. We pack orders in Ipoh and ship across Peninsular Malaysia.
@@ -529,7 +503,7 @@ export function StoreShowcase() {
         <section id="shop" ref={shopRef} className="mx-auto max-w-6xl scroll-mt-28 px-4 py-14 sm:scroll-mt-20">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <h2 className="font-[family-name:var(--font-store-serif)] text-[32px] font-semibold tracking-tight text-[#1f3a2e]">
-              {category === "All" ? "All products" : category}
+              <RevealText key={category}>{category === "All" ? "All products" : category}</RevealText>
             </h2>
             <label className="flex items-center gap-2 text-[13.5px] text-[#5a5248]">
               Sort by
@@ -663,7 +637,7 @@ export function StoreShowcase() {
         <section className="bg-[#1f3a2e] text-[#f3eadb]">
           <div className="mx-auto max-w-6xl px-4 py-14">
             <h2 className="font-[family-name:var(--font-store-serif)] text-[30px] font-semibold leading-tight md:text-[38px]">
-              Who makes what we sell
+              <RevealText>Who makes what we sell</RevealText>
             </h2>
             <p className="mt-4 max-w-2xl text-[15.5px] leading-relaxed text-[#f3eadb]/75">
               Most of the range comes from about 40 small producers: potters in Sayong, batik workshops in Kota Bharu, a family roaster in
@@ -706,7 +680,7 @@ export function StoreShowcase() {
         >
           <div className="flex items-center justify-between border-b border-[#e8dfd0] px-5 py-4">
             <h2 className="font-[family-name:var(--font-store-serif)] text-[22px] font-semibold text-[#1f3a2e]">
-              {step === "cart" ? `Your cart (${count})` : step === "checkout" ? "Checkout" : "Order placed"}
+              <RevealText key={step}>{step === "cart" ? `Your cart (${count})` : step === "checkout" ? "Checkout" : "Order placed"}</RevealText>
             </h2>
             <button type="button" onClick={() => setOpen(false)} aria-label="Close cart" className="rounded-full p-2 hover:bg-black/5">
               <PiX className="h-5 w-5" />

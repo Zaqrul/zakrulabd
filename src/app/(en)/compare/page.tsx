@@ -27,6 +27,7 @@ import { ScopeCompareTable } from "@/components/scope-compare";
 import { Faq } from "@/components/faq";
 import { SiteFooter } from "@/components/site-footer";
 import { wa, waMessages } from "@/lib/contact";
+import { RevealText } from "@/components/reveal-text";
 
 export default function ComparePage({ locale = "en" }: { locale?: "en" | "ms" }) {
   const t = locale === "ms" ? contentMs : content;
@@ -78,10 +79,10 @@ export default function ComparePage({ locale = "en" }: { locale?: "en" | "ms" })
             <CompareIcon className="h-3.5 w-3.5" />
             {c.badge}
           </span>
-          <h1 className="font-display text-[30px] font-extrabold tracking-tight text-white md:text-5xl">
+          <h1 className="font-display text-[30px] font-extrabold tracking-tight text-white md:text-5xl"><RevealText immediate>
             {c.titleA}
             <span className="hl">{c.titleHl}</span>
-          </h1>
+          </RevealText></h1>
           <p className="max-w-2xl text-base leading-relaxed text-slate-300 md:text-lg">{c.sub}</p>
         </div>
       </section>
@@ -92,7 +93,7 @@ export default function ComparePage({ locale = "en" }: { locale?: "en" | "ms" })
 
         {/* The two jumps, spelled out for anyone still hovering between columns. */}
         <section className="mt-14 flex flex-col gap-5">
-          <h2 className="font-display text-xl font-bold text-navy md:text-2xl">{c.dividesTitle}</h2>
+          <h2 className="font-display text-xl font-bold text-navy md:text-2xl"><RevealText>{c.dividesTitle}</RevealText></h2>
           <div className="grid gap-4 md:grid-cols-2">
             {c.divides.map((d) => (
               <div key={d.step} className="flex flex-col gap-3 border-t border-border pt-5">
@@ -117,10 +118,10 @@ export default function ComparePage({ locale = "en" }: { locale?: "en" | "ms" })
             <span className="flex h-12 w-12 items-center justify-center rounded-full bg-white text-navy">
               <HelpIcon className="h-6 w-6" />
             </span>
-            <h2 className="font-display text-[26px] font-extrabold tracking-tight text-navy md:text-4xl">
+            <h2 className="font-display text-[26px] font-extrabold tracking-tight text-navy md:text-4xl"><RevealText>
               {t.faq.titleA}
               <span className="hl">{t.faq.titleHl}</span>
-            </h2>
+            </RevealText></h2>
             <p className="max-w-xl text-sm leading-relaxed text-body md:text-base">{t.faq.sub}</p>
           </div>
           <Faq locale={locale} />
@@ -129,7 +130,7 @@ export default function ComparePage({ locale = "en" }: { locale?: "en" | "ms" })
         {/* Both ways out: pick a package back on the pricing grid, or just ask. */}
         <div className="mt-12 flex flex-col items-start justify-between gap-5 bg-amber-300/20 p-6 sm:flex-row sm:items-center md:p-8">
           <div>
-            <h2 className="font-display text-lg font-bold text-navy">{c.closeTitle}</h2>
+            <h2 className="font-display text-lg font-bold text-navy"><RevealText>{c.closeTitle}</RevealText></h2>
             <p className="mt-1 max-w-xl text-sm leading-relaxed text-body">{c.closeBody}</p>
           </div>
           <div className="flex flex-shrink-0 flex-wrap gap-3">

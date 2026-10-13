@@ -73,6 +73,12 @@ securityHeaders.push({ key: "Content-Security-Policy-Report-Only", value: csp })
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  /* The booking showcase uses Unsplash photos as stand-ins for a client's
+     portfolio. They go through the image optimiser, so the browser only ever
+     loads them from this origin. */
+  images: {
+    remotePatterns: [{ protocol: "https", hostname: "images.unsplash.com", pathname: "/photo-**" }],
+  },
   async headers() {
     return [
       {

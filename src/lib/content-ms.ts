@@ -28,7 +28,11 @@ export const contentMs = {
   },
   build: {
     client: "Pelanggan", selectLabel: "Pilih perkara yang ingin dibina", builtWith: "Teknologi utama",
-    storeLink: { ...content.build.storeLink, pill: "Kedai Dalam Talian", label: "Lawati kedai saya" },
+    showcases: [
+      { ...content.build.showcases[0], pill: "Kedai Dalam Talian", label: "Lawati kedai saya" },
+      { ...content.build.showcases[1], pill: "Sistem Inventori", label: "Cuba sistem inventori" },
+      { ...content.build.showcases[2], pill: "Sistem Tempahan", label: "Tempah jurugambar" },
+    ],
     items: [
       { pill: "Kedai Dalam Talian", headingBefore: "Jual Produk Melalui ", headingHighlight: "Kedai Dalam Talian", headingAfter: "", description: "Kedai dalam talian lengkap dengan katalog produk, troli dan pembayaran selamat, supaya pelanggan boleh mencari produk dan membuat pesanan dengan mudah.", brief: "Saya perlukan kedai dalam talian supaya pelanggan boleh melihat produk dan membuat bayaran.", features: ["Katalog dan kategori produk", "Troli dan pembayaran selamat", "Pengurusan pesanan dan pelanggan", "Sedia untuk disambungkan ke gerbang pembayaran"] },
       { pill: "Sistem Inventori", headingBefore: "Pantau Stok dengan ", headingHighlight: "Sistem Inventori", headingAfter: "", description: "Papan pemuka untuk memantau stok, produk dan pesanan secara masa nyata, supaya pasukan anda tidak lagi bergantung pada spreadsheet yang sukar dikemas kini.", brief: "Kami sukar menjejak stok menggunakan spreadsheet. Bolehkah ia diuruskan dengan lebih teratur?", features: ["Pemantauan stok masa nyata", "Amaran stok rendah", "Sokongan pelbagai lokasi", "Rekod pesanan belian"] },
@@ -69,7 +73,7 @@ export const contentMs = {
   faq: faqMs,
   privacyPage: privacyMs,
   termsPage: termsMs,
-  footer: { ...content.footer, blurb: "Pembangunan web, sistem web tersuai dan pemasaran digital untuk PKS dan penyedia perkhidmatan kesihatan di Malaysia.", location: "Berpangkalan di Selangor · Berkhidmat di Ipoh dan seluruh Malaysia", services: "PERKHIDMATAN", servicesLinks: ["Pembangunan Web", "SEO dan Pemasaran", "Live Chat dan Automasi", "Hosting dan Sokongan"], howIWork: "CARA SAYA BEKERJA", howIWorkLinks: ["Proses", "Pakej", "Hasil", "Catatan"], getStarted: "MULAKAN", getStartedLinks: ["Minta Sebut Harga", "Lihat Pakej", "Lawati Kedai"], privacy: "Dasar Privasi", terms: "Terma dan Syarat", rights: "Hak cipta terpelihara.", backToHome: "Kembali ke Laman Utama" },
+  footer: { ...content.footer, blurb: "Pembangunan web, sistem web tersuai dan pemasaran digital untuk PKS dan penyedia perkhidmatan kesihatan di Malaysia.", location: "Berpangkalan di Selangor · Berkhidmat di Ipoh dan seluruh Malaysia", services: "PERKHIDMATAN", servicesLinks: ["Pembangunan Web", "SEO dan Pemasaran", "Live Chat dan Automasi", "Hosting dan Sokongan"], howIWork: "CARA SAYA BEKERJA", howIWorkLinks: ["Proses", "Pakej", "Hasil", "Catatan"], getStarted: "MULAKAN", getStartedLinks: ["Minta Sebut Harga", "Lihat Pakej", "Lawati Kedai", "Cuba Demo Inventori", "Cuba Demo Tempahan"], privacy: "Dasar Privasi", terms: "Terma dan Syarat", rights: "Hak cipta terpelihara.", backToHome: "Kembali ke Laman Utama" },
   notFound: { code: "404", titleA: "Halaman ini ", titleHl: "tidak ditemui", body: "Pautan ini mungkin sudah berubah atau alamatnya salah. Anda boleh kembali ke laman utama, melihat pakej atau menghubungi saya jika memerlukan bantuan.", primary: "Kembali ke Laman Utama", secondary: "Lihat Pakej", linksLabel: "ATAU TERUS KE", links: ["Perkhidmatan", "Hasil Kerja", "Pakej", "Bandingkan Pakej"] },
   errorPage: { code: "500", titleA: "Berlaku masalah pada ", titleHl: "laman ini", body: "Ralat ini berpunca daripada laman saya. Sila cuba semula sebentar lagi. Jika masalah berterusan, hubungi saya dan terangkan apa yang anda lakukan semasa ralat berlaku.", primary: "Cuba Lagi", secondary: "Kembali ke Laman Utama", report: "Laporkan ralat ini" },
 };

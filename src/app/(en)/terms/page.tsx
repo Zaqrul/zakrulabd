@@ -22,6 +22,7 @@ import { contentMs } from "@/lib/content-ms";
 import { breadcrumb } from "@/lib/structured-data";
 import { WHATSAPP_NUMBER } from "@/lib/contact";
 import { ArrowRightIcon, MapPinIcon, PhoneIcon } from "@/components/icons";
+import { RevealText } from "@/components/reveal-text";
 
 export default function TermsPage({ locale = "en" }: { locale?: "en" | "ms" }) {
   const t = locale === "ms" ? contentMs : content;
@@ -71,10 +72,10 @@ export default function TermsPage({ locale = "en" }: { locale?: "en" | "ms" }) {
             <span>{terms.badge}</span>
           </div>
 
-          <h1 className="mt-4 font-display text-[30px] font-extrabold tracking-tight text-navy md:text-5xl">
+          <h1 className="mt-4 font-display text-[30px] font-extrabold tracking-tight text-navy md:text-5xl"><RevealText immediate>
             {terms.titleA}
             <span className="hl">{terms.titleHl}</span>
-          </h1>
+          </RevealText></h1>
 
           <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-muted">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -93,9 +94,9 @@ export default function TermsPage({ locale = "en" }: { locale?: "en" | "ms" }) {
               key={idx}
               className="rounded-2xl border border-border bg-white p-7 shadow-xs transition duration-200 hover:shadow-sm"
             >
-              <h2 className="font-display text-xl font-bold text-navy">
+              <h2 className="font-display text-xl font-bold text-navy"><RevealText>
                 {section.title}
-              </h2>
+              </RevealText></h2>
               <div className="mt-4 flex flex-col gap-3">
                 {section.content.map((paragraph, pIdx) => (
                   <p key={pIdx} className="text-sm leading-relaxed text-body">
@@ -110,9 +111,9 @@ export default function TermsPage({ locale = "en" }: { locale?: "en" | "ms" }) {
         {/* Quick Consultation Callout */}
         <div className="mt-12 rounded-2xl border border-border bg-amber-300/15 p-6 md:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
           <div>
-            <h3 className="font-display text-lg font-bold text-navy">
+            <h3 className="font-display text-lg font-bold text-navy"><RevealText>
               {locale === "ms" ? "Bersedia memulakan projek?" : "Ready to start your project?"}
-            </h3>
+            </RevealText></h3>
             <p className="text-sm text-body mt-1">
               {locale === "ms" ? "Hubungi saya untuk membincangkan keperluan, menyetujui peringkat kerja dan mendapatkan sebut harga tetap." : "Message me to talk through your requirements, agree on milestones, and get a fixed quote."}
             </p>

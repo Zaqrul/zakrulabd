@@ -15,6 +15,7 @@ import {
   StoreDemo,
   TawkChatDemo,
 } from "@/components/capability-demos";
+import { Mark, RevealText } from "@/components/reveal-text";
 
 const demos = [StoreDemo, InventoryDemo, BookingDemo, TawkChatDemo, ShopifySyncDemo, PaymentDemo];
 
@@ -44,16 +45,17 @@ export function WhatCanBuild({ copy = content }: { copy?: typeof content | typeo
   const current = capabilities[active] ?? capabilities[0];
   const CurrentDemo = demos[active] ?? demos[0];
   const currentStack = stacks[active] ?? stacks[0];
+  const showcase = t.build.showcases.find((s) => s.pill === current.pill);
 
   return (
     <section id="projects" className="border-y border-border bg-white px-6 py-24">
       <div className="mx-auto max-w-shell">
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start lg:gap-12">
-          <h2 className="font-display text-[30px] font-bold leading-tight text-navy md:text-5xl">
+          <h2 className="font-display text-[30px] font-bold leading-tight text-navy md:text-5xl"><RevealText key={active}>
             {current.headingBefore}
             <span className="hl">{current.headingHighlight}</span>
             {current.headingAfter}
-          </h2>
+          </RevealText></h2>
           <div className="flex flex-col gap-4 lg:pt-2">
             <p className="text-base leading-relaxed text-body md:text-lg">{current.description}</p>
             <div className="flex flex-wrap items-center gap-2">
@@ -142,22 +144,21 @@ export function WhatCanBuild({ copy = content }: { copy?: typeof content | typeo
               </div>
             </div>
 
-            {/* The one capability on this list that is not a description: the
-                demo store is a working page, so it links to itself. */}
+            {/* Capabilities with a working demo page link to it. */}
             {/* The address carries the marker rather than the sentence: .hl is
                 the site's emphasis, and the destination is the part worth
                 emphasising. It replaces the brackets it would otherwise sit
                 inside — a marker and a pair of parentheses do the same job, and
                 two of them is one too many. */}
-            {current.pill === t.build.storeLink.pill && (
+            {showcase && (
               <Link
-                href={t.build.storeLink.href}
+                href={showcase.href}
                 className="group mt-1 inline-flex w-fit flex-wrap items-center gap-x-1.5 gap-y-1 text-[12.5px] font-semibold leading-relaxed text-ink"
               >
-                {t.build.storeLink.label}
-                <span className="hl transition-colors group-hover:bg-amber-500">
-                  {t.build.storeLink.note}
-                </span>
+                {showcase.label}
+                <Mark className="group-hover:[--hl-color:var(--color-amber-500)]">
+                  {showcase.note}
+                </Mark>
                 <ArrowRightIcon className="h-3.5 w-3.5 flex-shrink-0 text-muted transition-colors group-hover:text-navy" />
               </Link>
             )}

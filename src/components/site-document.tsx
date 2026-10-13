@@ -18,6 +18,11 @@ export function SiteDocument({ children, lang }: { children: React.ReactNode; la
     <html lang={lang} className={`${inter.variable} ${jetbrainsMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col">
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
+        {/* Headings and markers wait for a script to say they are on screen;
+            without one, show them as they are. */}
+        <noscript>
+          <style>{".rt .rw{opacity:1!important;filter:none!important;transform:none!important}.hl-grow{background-size:100% 100%!important}"}</style>
+        </noscript>
         <a
           href="#main"
           className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-amber-400 focus:px-4 focus:py-2.5 focus:text-sm focus:font-bold focus:text-navy focus:outline-none focus:ring-2 focus:ring-navy"

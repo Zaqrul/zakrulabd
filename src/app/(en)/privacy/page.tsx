@@ -21,6 +21,7 @@ import { content } from "@/lib/content";
 import { contentMs } from "@/lib/content-ms";
 import { breadcrumb } from "@/lib/structured-data";
 import { ArrowRightIcon, MailIcon, MapPinIcon } from "@/components/icons";
+import { RevealText } from "@/components/reveal-text";
 
 export default function PrivacyPage({ locale = "en" }: { locale?: "en" | "ms" }) {
   const t = locale === "ms" ? contentMs : content;
@@ -70,10 +71,10 @@ export default function PrivacyPage({ locale = "en" }: { locale?: "en" | "ms" })
             <span>{policy.badge}</span>
           </div>
 
-          <h1 className="mt-4 font-display text-[30px] font-extrabold tracking-tight text-navy md:text-5xl">
+          <h1 className="mt-4 font-display text-[30px] font-extrabold tracking-tight text-navy md:text-5xl"><RevealText immediate>
             {policy.titleA}
             <span className="hl">{policy.titleHl}</span>
-          </h1>
+          </RevealText></h1>
 
           <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-muted">
             <span className="inline-block h-1.5 w-1.5 rounded-full bg-emerald-500" />
@@ -92,9 +93,9 @@ export default function PrivacyPage({ locale = "en" }: { locale?: "en" | "ms" })
               key={idx}
               className="rounded-2xl border border-border bg-white p-7 shadow-xs transition duration-200 hover:shadow-sm"
             >
-              <h2 className="font-display text-xl font-bold text-navy">
+              <h2 className="font-display text-xl font-bold text-navy"><RevealText>
                 {section.title}
-              </h2>
+              </RevealText></h2>
               <div className="mt-4 flex flex-col gap-3">
                 {section.content.map((paragraph, pIdx) => (
                   <p key={pIdx} className="text-sm leading-relaxed text-body">
@@ -109,7 +110,7 @@ export default function PrivacyPage({ locale = "en" }: { locale?: "en" | "ms" })
         {/* Quick Contact Callout */}
         <div className="mt-12 rounded-2xl border border-border bg-amber-300/15 p-6 md:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
           <div>
-            <h3 className="font-display text-lg font-bold text-navy">{locale === "ms" ? "Ada soalan tentang data anda?" : "Questions about your data?"}</h3>
+            <h3 className="font-display text-lg font-bold text-navy"><RevealText>{locale === "ms" ? "Ada soalan tentang data anda?" : "Questions about your data?"}</RevealText></h3>
             <p className="text-sm text-body mt-1">
               {locale === "ms" ? "Hubungi saya jika ada perkara yang kurang jelas dalam dasar ini, atau jika anda mahu melihat, membetulkan atau bertanya tentang pemadaman data yang saya simpan tentang anda." : "Get in touch if anything in this policy is unclear, or if you’d like to see, correct, or delete the data I hold about you."}
             </p>

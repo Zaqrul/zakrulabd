@@ -50,15 +50,28 @@ export const content = {
     client: "Client",
     selectLabel: "Select what you want to build",
     builtWith: "Mostly built with",
-    /* The one capability here that is not a description: the demo store is a
-       working page, so it links to itself rather than being explained. Matched
-       to its card by pill, since only that one has somewhere to go. */
-    storeLink: {
-      pill: "Online Store",
-      label: "Visit my store",
-      note: "Shop Demo",
-      href: "/showcase/online-store",
-    },
+    /* Capabilities with a working demo page link to it rather than being
+       explained. Matched to their card by pill; the rest have nowhere to go. */
+    showcases: [
+      {
+        pill: "Online Store",
+        label: "Visit my store",
+        note: "Shop Demo",
+        href: "/showcase/online-store",
+      },
+      {
+        pill: "Inventory System",
+        label: "Try the inventory system",
+        note: "Live Demo",
+        href: "/showcase/inventory",
+      },
+      {
+        pill: "Booking System",
+        label: "Book a photographer",
+        note: "Booking Demo",
+        href: "/showcase/booking",
+      },
+    ],
     items: [
       {
         pill: "Online Store",
@@ -677,7 +690,7 @@ export const content = {
     howIWork: "HOW I WORK",
     howIWorkLinks: ["Process", "Packages", "Results", "Notes"],
     getStarted: "GET STARTED",
-    getStartedLinks: ["Get a Free Quote", "See Packages", "Visit the Store"],
+    getStartedLinks: ["Get a Free Quote", "See Packages", "Visit the Store", "Try the Inventory Demo", "Try the Booking Demo"],
     privacy: "Privacy Policy",
     terms: "Terms & Conditions",
     rights: "All rights reserved.",

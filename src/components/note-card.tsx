@@ -7,6 +7,7 @@ import { content as t } from "@/lib/content";
 import { contentMs } from "@/lib/content-ms";
 import { type Post, postSlug } from "@/lib/posts";
 import { postPaths } from "@/lib/posts-ms";
+import { RevealText } from "@/components/reveal-text";
 
 /* Built like the client logo tiles: a white card with the artwork sitting in
    its own square panel on top, then the text underneath. The tile lifts on
@@ -31,7 +32,7 @@ export function NoteCard({ post, locale = "en" }: { post: Post; locale?: "en" | 
           <span>{post.readingTime}</span>
         </div>
 
-        <h3 className="font-display text-[17px] font-bold leading-snug text-navy">
+        <h3 className="font-display text-[17px] font-bold leading-snug text-navy"><RevealText>
           <span className="relative inline">
             {post.title}
             <span
@@ -39,7 +40,7 @@ export function NoteCard({ post, locale = "en" }: { post: Post; locale?: "en" | 
               className="absolute -bottom-1 left-0 h-[2.5px] w-0 rounded-full bg-amber-400 transition-all duration-200 ease-out group-hover:w-full"
             />
           </span>
-        </h3>
+        </RevealText></h3>
 
         {/* Clamped: four across leaves a narrow column, and one long excerpt
             would otherwise push its card taller than the three beside it. */}
