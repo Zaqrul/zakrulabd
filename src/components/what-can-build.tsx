@@ -53,7 +53,7 @@ export function WhatCanBuild({ copy = content }: { copy?: typeof content | typeo
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-start lg:gap-12">
           <h2 className="font-display text-[30px] font-bold leading-tight text-navy md:text-5xl"><RevealText key={active}>
             {current.headingBefore}
-            <span className="hl">{current.headingHighlight}</span>
+            <Mark>{current.headingHighlight}</Mark>
             {current.headingAfter}
           </RevealText></h2>
           <div className="flex flex-col gap-4 lg:pt-2">

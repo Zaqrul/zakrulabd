@@ -2,7 +2,7 @@ import { ImageWithSkeleton } from "@/components/skeleton";
 import { content } from "@/lib/content";
 import { contentMs } from "@/lib/content-ms";
 import { ExternalLinkIcon, PlusIcon } from "@/components/icons";
-import { RevealText } from "@/components/reveal-text";
+import { Mark, RevealText } from "@/components/reveal-text";
 
 /* Keyed by client name rather than by position: display order is set once in
    content.clients.items, and reordering it can never pair a logo with another
@@ -43,7 +43,7 @@ export function ClientLogos({ copy = content }: { copy?: typeof content | typeof
         <div className="mx-auto mb-12 flex max-w-xl flex-col items-center gap-3 text-center">
           <h2 className="font-display text-[30px] font-bold text-white md:text-5xl"><RevealText>
             {t.clients.headingA}
-            <span className="hl">{t.clients.headingHl}</span>
+            <Mark>{t.clients.headingHl}</Mark>
             {t.clients.headingB}
           </RevealText></h2>
           <p className="text-base text-slate-400"><RevealText text>{t.clients.sub}</RevealText></p>

@@ -21,7 +21,7 @@ export function SiteDocument({ children, lang }: { children: React.ReactNode; la
         {/* Headings and markers wait for a script to say they are on screen;
             without one, show them as they are. */}
         <noscript>
-          <style>{".rt .rw{opacity:1!important;filter:none!important;transform:none!important}.hl-grow{background-size:100% 100%!important}"}</style>
+          <style>{".rt{opacity:1!important;animation:none!important}.hl-grow{background-size:100% 100%!important}"}</style>
         </noscript>
         <a
           href="#main"

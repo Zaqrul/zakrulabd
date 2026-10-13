@@ -27,7 +27,7 @@ import { ScopeCompareTable } from "@/components/scope-compare";
 import { Faq } from "@/components/faq";
 import { SiteFooter } from "@/components/site-footer";
 import { wa, waMessages } from "@/lib/contact";
-import { RevealText } from "@/components/reveal-text";
+import { Mark, RevealText } from "@/components/reveal-text";
 
 export default function ComparePage({ locale = "en" }: { locale?: "en" | "ms" }) {
   const t = locale === "ms" ? contentMs : content;
@@ -81,7 +81,7 @@ export default function ComparePage({ locale = "en" }: { locale?: "en" | "ms" })
           </span>
           <h1 className="font-display text-[30px] font-extrabold tracking-tight text-white md:text-5xl"><RevealText immediate>
             {c.titleA}
-            <span className="hl">{c.titleHl}</span>
+            <Mark>{c.titleHl}</Mark>
           </RevealText></h1>
           <p className="max-w-2xl text-base leading-relaxed text-slate-300 md:text-lg"><RevealText text immediate>{c.sub}</RevealText></p>
         </div>
@@ -120,7 +120,7 @@ export default function ComparePage({ locale = "en" }: { locale?: "en" | "ms" })
             </span>
             <h2 className="font-display text-[26px] font-extrabold tracking-tight text-navy md:text-4xl"><RevealText>
               {t.faq.titleA}
-              <span className="hl">{t.faq.titleHl}</span>
+              <Mark>{t.faq.titleHl}</Mark>
             </RevealText></h2>
             <p className="max-w-xl text-sm leading-relaxed text-body md:text-base"><RevealText text>{t.faq.sub}</RevealText></p>
           </div>

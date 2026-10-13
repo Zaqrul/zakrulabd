@@ -6,7 +6,7 @@ import { contentMs } from "@/lib/content-ms";
 import { posts } from "@/lib/posts";
 import { postsMs } from "@/lib/posts-ms";
 import { url } from "@/lib/site";
-import { RevealText } from "@/components/reveal-text";
+import { Mark, RevealText } from "@/components/reveal-text";
 
 export const metadata: Metadata = {
   title: "Notes",
@@ -29,7 +29,7 @@ export default function BlogIndex({ locale = "en" }: { locale?: "en" | "ms" }) {
         <div className="mx-auto flex w-full max-w-shell flex-col gap-4">
           <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-400"><RevealText text immediate>{t.notes.badge}</RevealText></span>
           <h1 className="font-display text-[30px] font-extrabold tracking-tight text-white md:text-5xl"><RevealText immediate>
-            {t.notes.headingA}<span className="hl">{t.notes.headingHl}</span>
+            {t.notes.headingA}<Mark>{t.notes.headingHl}</Mark>
           </RevealText></h1>
           <p className="max-w-2xl text-base leading-relaxed text-slate-300 md:text-lg"><RevealText text immediate>
             {locale === "ms" ? "Catatan projek sebenar: keperluan perniagaan, perkara yang saya bina serta sebabnya, hasil selepas pelancaran dan fungsi yang saya pilih untuk tidak bina." : "Write-ups of real projects. What the business needed, what I built and why, and what happened after it went live, including the parts I decided not to build."}

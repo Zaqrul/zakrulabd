@@ -21,7 +21,7 @@ import { content } from "@/lib/content";
 import { contentMs } from "@/lib/content-ms";
 import { breadcrumb } from "@/lib/structured-data";
 import { ArrowRightIcon, MailIcon, MapPinIcon } from "@/components/icons";
-import { RevealText } from "@/components/reveal-text";
+import { Mark, RevealText } from "@/components/reveal-text";
 
 export default function PrivacyPage({ locale = "en" }: { locale?: "en" | "ms" }) {
   const t = locale === "ms" ? contentMs : content;
@@ -73,7 +73,7 @@ export default function PrivacyPage({ locale = "en" }: { locale?: "en" | "ms" })
 
           <h1 className="mt-4 font-display text-[30px] font-extrabold tracking-tight text-navy md:text-5xl"><RevealText immediate>
             {policy.titleA}
-            <span className="hl">{policy.titleHl}</span>
+            <Mark>{policy.titleHl}</Mark>
           </RevealText></h1>
 
           <div className="mt-3 flex items-center gap-2 text-xs font-semibold text-muted">

@@ -1,7 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { SiteFooter } from "@/components/site-footer";
-import { RevealText } from "@/components/reveal-text";
+import { Mark, RevealText } from "@/components/reveal-text";
 
 /* 404 and the error boundary are the same page with different words and a
    different drawing, so the shell lives here: site header, one centred column,
@@ -54,7 +54,7 @@ export function StatusPage({
 
           <h1 className="font-display text-[30px] font-extrabold leading-tight tracking-tight text-navy md:text-5xl"><RevealText immediate>
             {titleA}
-            <span className="hl">{titleHl}</span>
+            <Mark>{titleHl}</Mark>
           </RevealText></h1>
 
           <p className="max-w-lg text-[15px] leading-relaxed text-body md:text-base"><RevealText text immediate>{body}</RevealText></p>

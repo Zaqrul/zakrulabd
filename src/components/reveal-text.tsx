@@ -1,20 +1,129 @@
 "use client";
 
-import { Children, cloneElement, isValidElement, useEffect, useRef, useState, type CSSProperties, type ReactElement, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 
-/* Milliseconds between one word and the next. */
-const STEP = 55;
+/* How long a block of text takes to decode, and how often its random
+   characters change while it does. */
+const DECODE = { heading: 900, text: 650 };
+const SHUFFLE_MS = 70;
 
-/* Plays once the element is mostly on screen. `immediate` starts it on the
-   first paint instead: for a page's own h1, which should never wait on
-   JavaScript to become readable. */
-function useInView<T extends Element>(immediate: boolean) {
-  const ref = useRef<T>(null);
-  const [inView, setInView] = useState(immediate);
+/* Stand-ins drawn from the same kind of character, so a capital stays about
+   as wide as a capital and lines do not rewrap while they decode. */
+const UPPER = "ABCDEFGHJKLMNPQRSTUVXYZ";
+const LOWER = "abcdeghknopqrsuvxyz";
+const DIGIT = "0123456789";
+const any = (set: string) => set[Math.floor(Math.random() * set.length)];
+
+/* Random stand-ins for letters and digits; spaces and punctuation stay. */
+const scramble = (s: string) =>
+  s.replace(/[\p{L}\p{N}]/gu, (c) => (/\p{N}/u.test(c) ? any(DIGIT) : c === c.toUpperCase() && c !== c.toLowerCase() ? any(UPPER) : any(LOWER)));
+
+const reducedMotion = () => window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* Text that decodes out of random characters, left to right, as it comes on
+   screen. It works on the element's own text nodes, with no extra markup:
+   just before the text scrolls into view it is swapped for random
+   characters, so nobody sees the real words flip to noise, and once it is
+   on screen it settles back into the real text. React keeps pointing at the
+   same text nodes, and the real text is always put back, finished or not.
+
+   Text at the very top of a page (`immediate`) is on screen before the
+   script runs, so it is hidden until the decode starts, and shows by itself
+   after 1.5 seconds if the script never comes. `text` decodes body copy a
+   little faster than headings. */
+export function RevealText({ children, immediate = false, text = false }: { children: ReactNode; immediate?: boolean; text?: boolean }) {
+  const ref = useRef<HTMLSpanElement>(null);
+
   useEffect(() => {
-    if (inView) return;
+    const root = ref.current;
+    if (!root) return;
+    const live = () => root.setAttribute("data-live", "");
+    if (reducedMotion()) return live();
+
+    /* `shown` is what was last written, so a change React makes mid-decode
+       (a count ticking up) is picked up as the new real text. */
+    const nodes: { node: Text; real: string; shown: string }[] = [];
+    const walk = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+    for (let n = walk.nextNode(); n; n = walk.nextNode()) {
+      const t = n as Text;
+      if (t.nodeValue?.trim()) nodes.push({ node: t, real: t.nodeValue, shown: t.nodeValue });
+    }
+    if (!nodes.length) return live();
+
+    const dur = text ? DECODE.text : DECODE.heading;
+    let raf = 0;
+    let state: "real" | "noise" | "decoding" | "done" = "real";
+
+    const write = (n: (typeof nodes)[number], value: string) => {
+      if (n.node.nodeValue !== n.shown) n.real = n.node.nodeValue ?? "";
+      n.node.nodeValue = n.shown = value;
+    };
+    const restore = () => {
+      for (const n of nodes) write(n, n.node.nodeValue !== n.shown ? (n.node.nodeValue ?? "") : n.real);
+    };
+    const toNoise = () => {
+      if (state !== "real") return;
+      for (const n of nodes) write(n, scramble(n.real));
+      state = "noise";
+    };
+    const decode = () => {
+      if (state === "decoding" || state === "done") return;
+      toNoise();
+      state = "decoding";
+      live();
+      const t0 = performance.now();
+      let last = 0;
+      const tick = (now: number) => {
+        const p = (now - t0) / dur;
+        if (p >= 1) {
+          restore();
+          state = "done";
+          return;
+        }
+        if (now - last >= SHUFFLE_MS) {
+          last = now;
+          for (const n of nodes) {
+            if (n.node.nodeValue !== n.shown) n.real = n.node.nodeValue ?? "";
+            const fixed = Math.floor(p * n.real.length);
+            write(n, n.real.slice(0, fixed) + scramble(n.real.slice(fixed)));
+          }
+        }
+        raf = requestAnimationFrame(tick);
+      };
+      raf = requestAnimationFrame(tick);
+    };
+
+    /* Scramble while still a little below the fold; decode once on screen. */
+    const near = new IntersectionObserver(([e]) => e.isIntersecting && toNoise(), { rootMargin: "0px 0px 25% 0px" });
+    const seen = new IntersectionObserver(([e]) => e.isIntersecting && (decode(), seen.disconnect(), near.disconnect()), {
+      rootMargin: "0px",
+    });
+    near.observe(root);
+    seen.observe(root);
+
+    return () => {
+      near.disconnect();
+      seen.disconnect();
+      cancelAnimationFrame(raf);
+      restore();
+    };
+  }, [immediate, text]);
+
+  return (
+    <span ref={ref} className="rt" data-top={immediate ? "" : undefined}>
+      {children}
+    </span>
+  );
+}
+
+/* A highlight marker: it grows from the left, slowly, like a pen stroke,
+   once it is on screen. */
+export function Mark({ children, className = "" }: { children: ReactNode; className?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [inView, setInView] = useState(false);
+  useEffect(() => {
     const el = ref.current;
-    if (!el) return;
+    if (!el || inView) return;
     const io = new IntersectionObserver(
       ([e]) => {
         if (e.isIntersecting) {
@@ -22,76 +131,13 @@ function useInView<T extends Element>(immediate: boolean) {
           io.disconnect();
         }
       },
-      { rootMargin: "0px 0px -12% 0px" },
+      { rootMargin: "0px 0px -10% 0px" },
     );
     io.observe(el);
     return () => io.disconnect();
   }, [inView]);
-  return [ref, inView] as const;
-}
-
-type Props = { className?: string; style?: CSSProperties; children?: ReactNode };
-
-/* Wraps every word of the text in its own span with its place in the line,
-   so CSS can stagger them left to right. Elements inside (the .hl marker, a
-   line break) are kept, with their own words split the same way; a marker
-   also learns when its first word arrives, so it grows after it. */
-function split(node: ReactNode, count: { n: number; step: number }): ReactNode {
-  return Children.map(node, (child) => {
-    if (typeof child === "string" || typeof child === "number") {
-      return String(child)
-        .split(/(\s+)/)
-        .map((part, k) =>
-          part.trim() ? (
-            <span key={k} className="rw" style={{ "--i": count.n++ } as CSSProperties}>
-              {part}
-            </span>
-          ) : (
-            part
-          ),
-        );
-    }
-    if (!isValidElement(child)) return child;
-    const el = child as ReactElement<Props>;
-    if (el.props.children === undefined) return el;
-    const marker = typeof el.props.className === "string" && /\bhl\b/.test(el.props.className);
-    const first = count.n;
-    const kids = split(el.props.children, count);
-    return cloneElement(
-      el,
-      marker ? { className: `${el.props.className} hl-grow`, style: { ...el.props.style, "--hl-delay": `${first * count.step + 260}ms` } as CSSProperties } : {},
-      kids,
-    );
-  });
-}
-
-/* How long a paragraph's sweep takes, end to end, however long it is. */
-const TEXT_SWEEP = 700;
-
-/* Text that arrives word by word, from the left, out of a blur. Put it inside
-   the heading or paragraph so that element stays a server element.
-   Headings step a word at a time. Body text (`text`) sweeps across in about
-   the same time whatever its length, so a long paragraph is never kept
-   waiting, and with a lighter blur. */
-export function RevealText({ children, immediate = false, text = false }: { children: ReactNode; immediate?: boolean; text?: boolean }) {
-  const [ref, inView] = useInView<HTMLSpanElement>(immediate);
-  /* Count the words first, then split again with the step that fits. */
-  const probe = { n: 0, step: STEP };
-  split(children, probe);
-  const step = text ? Math.max(4, Math.min(28, Math.round(TEXT_SWEEP / Math.max(probe.n, 1)))) : STEP;
   return (
-    <span ref={ref} className={text ? "rt rt-text" : "rt"} style={{ "--step": `${step}ms` } as CSSProperties} data-in={inView ? "" : undefined}>
-      {split(children, { n: 0, step })}
-    </span>
-  );
-}
-
-/* A highlight marker outside a heading: it grows from the left once it is on
-   screen. */
-export function Mark({ children, className = "" }: { children: ReactNode; className?: string }) {
-  const [ref, inView] = useInView<HTMLSpanElement>(false);
-  return (
-    <span ref={ref} className={`hl hl-grow ${className}`} data-in={inView ? "" : undefined}>
+    <span ref={ref} className={`hl hl-grow ${className}`.trim()} data-in={inView ? "" : undefined}>
       {children}
     </span>
   );

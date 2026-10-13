@@ -35,6 +35,7 @@ import {
   SvgWebDevelopment,
 } from "iblis-react-undraw";
 import { Mark, RevealText } from "@/components/reveal-text";
+import { AsciiRipple } from "@/components/ascii-ripple";
 
 /* Presentation-only data: visuals, layout, links, and contact details. */
 const serviceDemos = [LiveCodeDemo, LiveChartDemo, LiveChatDemo, LiveStatusDemo];
@@ -554,9 +555,16 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
       {/* HERO */}
       <section
         id="main"
+        data-ripple-host
         className="relative flex min-h-[calc(100svh-6.25rem)] items-center overflow-hidden lg:min-h-[calc(100svh-4.3125rem)]"
       >
         <div className="pointer-events-none absolute inset-0 -z-10 overflow-hidden">
+          {/* A faint field of dots that ripples as the pointer crosses the hero,
+              with the odd raindrop while it is still. Fades out towards the
+              text side so it never sits under the heading at full strength. */}
+          <div className="absolute inset-0 [mask-image:linear-gradient(to_right,transparent,black_45%)]">
+            <AsciiRipple color="rgb(23 23 23 / 0.3)" rippleColor="#e0ad12" base={0.45} rain={0.6} />
+          </div>
           <div className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-amber-400/25 blur-3xl" />
           <div className="absolute -right-10 top-10 h-64 w-64 rounded-full bg-bg blur-3xl" />
           <div className="absolute bottom-0 left-1/3 h-56 w-56 rounded-full bg-amber-300/20 blur-3xl" />
@@ -565,7 +573,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
         <div className="relative z-10 mx-auto grid w-full max-w-shell items-center gap-16 px-6 pb-16 pt-5 md:pb-24 md:pt-8 lg:grid-cols-2 lg:gap-12">
           <div className="flex flex-col items-center gap-6 text-center lg:items-start lg:text-left">
             <h1 className="font-display text-[38px] font-bold leading-[1.2] tracking-tight text-navy md:text-[62px]"><RevealText immediate>
-              <span className="hl">{t.hero.titleHl1}</span>
+              <Mark>{t.hero.titleHl1}</Mark>
               <span className="block">{t.hero.titleB.trim()}</span>
               {/* The keyword line carries the size; the promise sits under it
                   smaller, still inside the h1 so search engines read both. */}
@@ -684,7 +692,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
           <div className="mx-auto mb-12 flex max-w-xl flex-col items-center gap-3 text-center">
             <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl"><RevealText>
               {t.pricing.headingA}
-              <span className="hl">{t.pricing.headingHl}</span>
+              <Mark>{t.pricing.headingHl}</Mark>
               {t.pricing.headingB}
             </RevealText></h2>
             <p className="text-base text-body"><RevealText text>{t.pricing.sub}</RevealText></p>
@@ -708,7 +716,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
           <div className="mx-auto mb-11 flex max-w-2xl flex-col items-center gap-3 text-center">
             <h2 className="font-display text-[30px] font-bold text-white md:text-5xl"><RevealText>
               {t.results.headingA}
-              <span className="hl">{t.results.headingHl}</span>
+              <Mark>{t.results.headingHl}</Mark>
               {t.results.headingB}
             </RevealText></h2>
             <p className="text-base text-slate-400"><RevealText text>{t.results.sub}</RevealText></p>
@@ -929,7 +937,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
             <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted"><RevealText text>{t.notes.badge}</RevealText></span>
             <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl"><RevealText>
               {t.notes.headingA}
-              <span className="hl">{t.notes.headingHl}</span>
+              <Mark>{t.notes.headingHl}</Mark>
             </RevealText></h2>
             <p className="text-base text-body"><RevealText text>{t.notes.sub}</RevealText></p>
           </div>
@@ -962,7 +970,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
             <div>
               <h2 className="font-display text-[30px] font-bold leading-tight text-navy md:text-5xl"><RevealText>
                 {t.started.headingA}
-                <span className="hl">{t.started.headingHl}</span>
+                <Mark>{t.started.headingHl}</Mark>
               </RevealText></h2>
 
               <MilestoneSteps steps={t.started.steps} />
@@ -1003,7 +1011,11 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
       </section>
 
       {/* FINAL CTA */}
-      <section id="contact" className="relative overflow-hidden bg-navy px-6 py-32 lg:py-36">
+      <section id="contact" data-ripple-host className="relative overflow-hidden bg-navy px-6 py-32 lg:py-36">
+        {/* White glyphs on navy, rippling under the pointer and the prompts. */}
+        <div aria-hidden="true" className="pointer-events-none absolute inset-0 [mask-image:radial-gradient(ellipse_at_center,black_30%,transparent_80%)]">
+          <AsciiRipple color="rgb(255 255 255 / 0.35)" rippleColor="#fbcf33" base={0.3} rain={0.5} />
+        </div>
         {/* Floating prompt pills (desktop only: radial arc, 6 left / 6 right) */}
         <div className="absolute inset-0 mx-auto hidden max-w-shell select-none lg:block">
           {t.finalCta.prompts.map((prompt, i) => (
@@ -1034,7 +1046,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
         <div className="relative z-10 mx-auto flex max-w-xl flex-col items-center gap-5 text-center">
           <h2 className="font-display text-[30px] font-bold text-white md:text-5xl"><RevealText>
             {t.finalCta.headingA}
-            <span className="hl">{t.finalCta.headingHl}</span>
+            <Mark>{t.finalCta.headingHl}</Mark>
             {t.finalCta.headingB}
           </RevealText></h2>
           <p className="text-base leading-relaxed text-slate-300"><RevealText text>{t.finalCta.sub}</RevealText></p>

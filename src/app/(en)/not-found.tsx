@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { SvgLost } from "iblis-react-undraw";
 import { AutoRecover } from "@/components/auto-recover";
 import { StatusPage, statusButton } from "@/components/status-page";
 import { UnderlineLink } from "@/components/underline-link";
 import { content as t } from "@/lib/content";
 import { RevealText } from "@/components/reveal-text";
+import { AsciiRipple } from "@/components/ascii-ripple";
 
 /* A 404 must never be indexed, and it must not inherit the homepage canonical
    either — that would tell Google a missing page is the homepage. */
@@ -26,7 +26,12 @@ export default function NotFound() {
       titleA={c.titleA}
       titleHl={c.titleHl}
       body={c.body}
-      illustration={<SvgLost primarycolor="#f7c325" height={200} className="mx-auto h-auto w-full" />}
+      illustration={
+        /* The 404 itself, drawn in glyphs that ripple when touched. */
+        <div data-ripple-host className="h-44 w-full cursor-crosshair">
+          <AsciiRipple text={c.code} fontSize={9} color="#171717" rippleColor="#e0ad12" rain={0.5} />
+        </div>
+      }
       actions={
         <>
           <Link href="/" className={statusButton.primary}>
