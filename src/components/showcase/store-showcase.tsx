@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { Fraunces } from "next/font/google";
 import type { IconType } from "react-icons";
@@ -92,6 +92,44 @@ const FREE_DELIVERY_FROM = 150;
 
 const rm = (n: number) => `RM ${n.toFixed(2)}`;
 
+type Flyer = { key: number; product: Product; x: number; y: number; dx: number; dy: number };
+
+const FLYER_SIZE = 72;
+
+/* A copy of the product's drawing that arcs from its tile into the cart
+   button, shrinking as it goes, then tells the parent it has landed. */
+function FlyToCart({ flyer, onLanded }: { flyer: Flyer; onLanded: (key: number) => void }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const { dx, dy } = flyer;
+    const flight = el.animate(
+      [
+        { transform: "translate(0, 0) scale(1)", opacity: 1 },
+        { transform: `translate(${dx * 0.45}px, ${dy * 0.45 - 90}px) scale(0.75)`, opacity: 1, offset: 0.45 },
+        { transform: `translate(${dx}px, ${dy}px) scale(0.2)`, opacity: 0.5 },
+      ],
+      { duration: 700, easing: "cubic-bezier(0.45, 0, 0.55, 1)", fill: "forwards" },
+    );
+    flight.onfinish = () => onLanded(flyer.key);
+    return () => flight.cancel();
+  }, [flyer, onLanded]);
+
+  const { Icon, tint } = flyer.product;
+  return (
+    <div
+      ref={ref}
+      aria-hidden
+      style={{ left: flyer.x, top: flyer.y, width: FLYER_SIZE, height: FLYER_SIZE }}
+      className={`pointer-events-none fixed z-[60] flex items-center justify-center rounded-2xl shadow-lg ${tint}`}
+    >
+      <Icon className="h-9 w-9" />
+    </div>
+  );
+}
+
 export function StoreShowcase() {
   const [category, setCategory] = useState<(typeof categories)[number]>("All");
   const [sort, setSort] = useState<"featured" | "low" | "high">("featured");
@@ -103,6 +141,14 @@ export function StoreShowcase() {
   const [shipping, setShipping] = useState<(typeof delivery)[number]["id"]>("standard");
   const [payment, setPayment] = useState<(typeof payments)[number]["id"]>("fpx");
   const [toast, setToast] = useState<string | null>(null);
+  const [flyers, setFlyers] = useState<Flyer[]>([]);
+  const [bump, setBump] = useState(0);
+  const cartButton = useRef<HTMLButtonElement>(null);
+
+  const landed = useCallback((key: number) => {
+    setFlyers((f) => f.filter((x) => x.key !== key));
+    setBump((b) => b + 1);
+  }, []);
 
   const shown = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -139,9 +185,22 @@ export function StoreShowcase() {
     return () => clearTimeout(t);
   }, [toast]);
 
-  function add(p: Product) {
+  function add(p: Product, tile?: HTMLElement | null) {
     setCart((c) => ({ ...c, [p.id]: (c[p.id] ?? 0) + 1 }));
     setToast(`${p.name} added to cart`);
+
+    /* With reduced motion, or nothing to fly from, the badge still bumps. */
+    const to = cartButton.current?.getBoundingClientRect();
+    if (!tile || !to || window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setBump((b) => b + 1);
+      return;
+    }
+    const from = tile.getBoundingClientRect();
+    const x = from.left + from.width / 2 - FLYER_SIZE / 2;
+    const y = from.top + from.height / 2 - FLYER_SIZE / 2;
+    const dx = to.left + to.width / 2 - (x + FLYER_SIZE / 2);
+    const dy = to.top + to.height / 2 - (y + FLYER_SIZE / 2);
+    setFlyers((f) => [...f, { key: Date.now() + Math.random(), product: p, x, y, dx, dy }]);
   }
 
   function setQty(id: string, qty: number) {
@@ -208,12 +267,19 @@ export function StoreShowcase() {
           </label>
           <button
             type="button"
+            ref={cartButton}
             onClick={openCart}
             className="relative inline-flex flex-shrink-0 items-center gap-2 rounded-full bg-[#1f3a2e] px-4 py-2 text-[13.5px] font-semibold text-white hover:bg-[#2a4d3d]"
           >
             <PiShoppingBagDuotone aria-hidden className="h-4 w-4" />
             <span className="hidden sm:inline">Cart</span>
-            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#c8643b] px-1 text-[11px] font-bold">{count}</span>
+            {/* Keyed on each landing so the bump animation restarts. */}
+            <span
+              key={bump}
+              className={`flex h-5 min-w-5 items-center justify-center rounded-full bg-[#c8643b] px-1 text-[11px] font-bold ${bump ? "animate-[cart-bump_450ms_ease-out]" : ""}`}
+            >
+              {count}
+            </span>
           </button>
         </div>
       </header>
@@ -333,7 +399,7 @@ export function StoreShowcase() {
                     </button>
                     <button
                       type="button"
-                      onClick={() => add(p)}
+                      onClick={(e) => add(p, e.currentTarget.parentElement)}
                       className="absolute inset-x-3 bottom-3 translate-y-2 rounded-full bg-[#1f3a2e] py-2.5 text-[13px] font-semibold text-white opacity-0 transition duration-200 hover:bg-[#2a4d3d] focus:translate-y-0 focus:opacity-100 group-hover:translate-y-0 group-hover:opacity-100 max-md:translate-y-0 max-md:opacity-100"
                     >
                       Add to cart
@@ -373,6 +439,10 @@ export function StoreShowcase() {
         <span className="font-[family-name:var(--font-store-serif)] text-[18px] font-semibold text-[#1f3a2e]">Serambi</span>
         <span>A demo store designed and built by Zakrul. Serambi is not a real business.</span>
       </footer>
+
+      {flyers.map((f) => (
+        <FlyToCart key={f.key} flyer={f} onLanded={landed} />
+      ))}
 
       {/* Toast */}
       <div
@@ -457,10 +527,17 @@ export function StoreShowcase() {
                           <div className={`flex h-20 w-16 flex-shrink-0 items-center justify-center rounded-xl ${l.tint}`}>
                             <l.Icon aria-hidden className="h-8 w-8" />
                           </div>
-                          <div className="flex min-w-0 flex-1 flex-col">
-                            <p className="text-[14px] font-semibold leading-snug">{l.name}</p>
-                            <p className="text-[12.5px] text-[#8a7f70]">{rm(l.price)}</p>
-                            <div className="mt-auto flex items-center justify-between">
+                          {/* Two rows edge to edge: name and line total on top, quantity
+                              and delete underneath, so the delete sits under the price. */}
+                          <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
+                            <div className="flex items-start justify-between gap-3">
+                              <div className="min-w-0">
+                                <p className="text-[14px] font-semibold leading-snug">{l.name}</p>
+                                <p className="text-[12.5px] text-[#8a7f70]">{rm(l.price)}</p>
+                              </div>
+                              <p className="flex-shrink-0 text-[14px] font-semibold">{rm(l.qty * l.price)}</p>
+                            </div>
+                            <div className="flex items-center justify-between">
                               <div className="flex items-center rounded-full border border-[#e2d7c5] bg-white">
                                 <button type="button" onClick={() => setQty(l.id, l.qty - 1)} aria-label={`One less ${l.name}`} className="p-2">
                                   <PiMinus className="h-3.5 w-3.5" />
@@ -470,12 +547,17 @@ export function StoreShowcase() {
                                   <PiPlus className="h-3.5 w-3.5" />
                                 </button>
                               </div>
-                              <button type="button" onClick={() => setQty(l.id, 0)} aria-label={`Remove ${l.name}`} className="p-2 text-[#8a7f70] hover:text-[#c8643b]">
-                                <PiTrash className="h-4 w-4" />
+                              <button
+                                type="button"
+                                onClick={() => setQty(l.id, 0)}
+                                aria-label={`Delete ${l.name}`}
+                                className="inline-flex items-center gap-1.5 py-2 text-[13px] font-medium text-[#8a7f70] hover:text-[#c8643b]"
+                              >
+                                <PiTrash aria-hidden className="h-4 w-4" />
+                                Delete
                               </button>
                             </div>
                           </div>
-                          <p className="text-[14px] font-semibold">{rm(l.qty * l.price)}</p>
                         </li>
                       ))}
                     </ul>

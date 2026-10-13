@@ -228,6 +228,14 @@ p:has(.hl) {
   -webkit-mask-image: linear-gradient(to right, transparent, black 6%, black 94%, transparent);
 }
 
+/* Store showcase: the cart badge pops when an item lands in it. */
+@keyframes cart-bump {
+  0% { transform: scale(1); }
+  40% { transform: scale(1.45); }
+  70% { transform: scale(0.9); }
+  100% { transform: scale(1); }
+}
+
 @keyframes grow-bar {
   from {
     transform: scaleY(0.55);
