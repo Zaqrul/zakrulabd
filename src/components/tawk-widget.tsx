@@ -33,12 +33,13 @@ function installTawkApi() {
   window.Tawk_LoadStart = new Date();
 
   api.onLoad = () => {
-    /* Which page the visitor was reading when they opened the chat. AI Assist
-       answers from its own knowledge base and cannot see the tab, so this is the
-       only way a question about "the Professional package" reaches me knowing
-       the person was standing on the packages section, not a blog note. */
+    /* Which page the visitor was reading when they opened the chat, so a
+       question about "the Professional package" reaches me knowing the person
+       was standing on the packages section, not a blog note. Not named `page`:
+       the pre-chat form maps its notes field to that attribute, and writing it
+       on every load would wipe what the visitor typed. */
     api.setAttributes?.({
-      page: document.title,
+      pageTitle: document.title,
       pageUrl: window.location.href,
     });
   };
