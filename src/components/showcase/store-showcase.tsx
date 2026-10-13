@@ -222,16 +222,16 @@ export function StoreShowcase() {
         {/* Hero */}
         <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-12 md:grid-cols-2 md:py-20">
           <div>
-            <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-[#c8643b]">Made by Malaysian makers</p>
+            <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-[#c8643b]">Batik, kopi and homeware</p>
             <h1 className="mt-4 font-[family-name:var(--font-store-serif)] text-[40px] font-semibold leading-[1.05] tracking-tight text-[#1f3a2e] md:text-[58px]">
-              Things for the home, from kampung workshops.
+              Made in small workshops across Malaysia.
             </h1>
             <p className="mt-5 max-w-md text-[16px] leading-relaxed text-[#5a5248]">
-              Batik, clay, rattan and pantry favourites from small producers across Malaysia. Packed in Ipoh, delivered to your door.
+              Batik, clay cups, rattan and pantry items from small producers. We pack orders in Ipoh and ship across Peninsular Malaysia.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a href="#shop" className="inline-flex items-center gap-2 rounded-full bg-[#c8643b] px-6 py-3 text-[14.5px] font-semibold text-white hover:bg-[#b3552f]">
-                Shop the collection <PiArrowRight aria-hidden className="h-4 w-4" />
+                Shop all products <PiArrowRight aria-hidden className="h-4 w-4" />
               </a>
               <button type="button" onClick={() => setCategory("Gifts")} className="rounded-full border border-[#1f3a2e]/25 px-6 py-3 text-[14.5px] font-semibold text-[#1f3a2e] hover:border-[#1f3a2e]">
                 Raya gifts
@@ -355,29 +355,16 @@ export function StoreShowcase() {
           )}
         </section>
 
-        {/* Story band */}
+        {/* Where the products come from, said once and plainly. */}
         <section className="bg-[#1f3a2e] text-[#f3eadb]">
-          <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-14 md:grid-cols-[1.2fr_1fr]">
-            <div>
-              <h2 className="font-[family-name:var(--font-store-serif)] text-[30px] font-semibold leading-tight md:text-[38px]">
-                Every order pays a maker directly.
-              </h2>
-              <p className="mt-4 max-w-lg text-[15.5px] leading-relaxed text-[#f3eadb]/75">
-                We work with 40 small producers, from potters in Sayong to batik workshops in Kota Bharu. Each product page says who made it and where.
-              </p>
-            </div>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              {[
-                ["40", "makers"],
-                ["9", "states"],
-                ["4.8", "average rating"],
-              ].map(([n, l]) => (
-                <div key={l} className="rounded-2xl bg-white/5 px-2 py-5">
-                  <p className="font-[family-name:var(--font-store-serif)] text-[30px] font-semibold text-white">{n}</p>
-                  <p className="mt-1 text-[12.5px] text-[#f3eadb]/70">{l}</p>
-                </div>
-              ))}
-            </div>
+          <div className="mx-auto max-w-6xl px-4 py-14">
+            <h2 className="font-[family-name:var(--font-store-serif)] text-[30px] font-semibold leading-tight md:text-[38px]">
+              Who makes what we sell
+            </h2>
+            <p className="mt-4 max-w-2xl text-[15.5px] leading-relaxed text-[#f3eadb]/75">
+              Most of the range comes from about 40 small producers: potters in Sayong, batik workshops in Kota Bharu, a family roaster in
+              Ipoh. Each product shows the town it comes from, so you know who you are buying from.
+            </p>
           </div>
         </section>
       </main>
