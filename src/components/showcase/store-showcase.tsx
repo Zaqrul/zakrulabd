@@ -236,6 +236,25 @@ export function StoreShowcase() {
   const [removing, setRemoving] = useState<Record<string, "cut" | "split" | "gone">>({});
   const [bump, setBump] = useState(0);
   const cartButton = useRef<HTMLButtonElement>(null);
+  const shopRef = useRef<HTMLElement>(null);
+  const headerRef = useRef<HTMLElement>(null);
+
+  /* Typing in the header search changes how tall the grid is. If the reader is
+     already down in the products, a shorter grid would make the browser clamp
+     the scroll and the page would jump up and down with each key. Instead,
+     bring the top of the results under the header once, and keep the results
+     area tall enough that further typing does not move anything. */
+  function search(value: string) {
+    setQuery(value);
+    const shop = shopRef.current;
+    const header = headerRef.current;
+    if (!shop || !header) return;
+    const headerBottom = header.getBoundingClientRect().bottom;
+    const shopTop = shop.getBoundingClientRect().top;
+    if (shopTop < headerBottom - 1) {
+      window.scrollTo({ top: window.scrollY + shopTop - headerBottom, behavior: "instant" });
+    }
+  }
 
   const landed = useCallback((key: number) => {
     setFlyers((f) => f.filter((x) => x.key !== key));
@@ -414,7 +433,7 @@ export function StoreShowcase() {
         Free standard delivery on orders above RM {FREE_DELIVERY_FROM} in Peninsular Malaysia
       </div>
 
-      <header className="store-header sticky top-0 z-30 border-b border-[#e8dfd0] bg-[#faf6ef]/90 backdrop-blur">
+      <header ref={headerRef} className="store-header sticky top-0 z-30 border-b border-[#e8dfd0] bg-[#faf6ef]/90 backdrop-blur">
         <div className="store-header-bar mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2.5 px-4 py-3.5 sm:flex-nowrap md:gap-x-8">
           <span className="font-[family-name:var(--font-store-serif)] text-[22px] font-semibold tracking-tight text-[#1f3a2e]">Serambi</span>
           <nav className="hidden gap-6 text-[14px] font-medium text-[#5a5248] md:flex">
@@ -429,7 +448,7 @@ export function StoreShowcase() {
             <span className="sr-only">Search products</span>
             <input
               value={query}
-              onChange={(e) => setQuery(e.target.value)}
+              onChange={(e) => search(e.target.value)}
               placeholder="Search kopi, batik..."
               className="w-full min-w-0 bg-transparent outline-none placeholder:text-[#a69b8b]"
             />
@@ -507,7 +526,7 @@ export function StoreShowcase() {
         </section>
 
         {/* Shop */}
-        <section id="shop" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-14">
+        <section id="shop" ref={shopRef} className="mx-auto max-w-6xl scroll-mt-28 px-4 py-14 sm:scroll-mt-20">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <h2 className="font-[family-name:var(--font-store-serif)] text-[32px] font-semibold tracking-tight text-[#1f3a2e]">
               {category === "All" ? "All products" : category}
@@ -543,9 +562,9 @@ export function StoreShowcase() {
           </div>
 
           {shown.length === 0 ? (
-            <p className="mt-12 text-center text-[15px] text-[#7a6f60]">Nothing matches &ldquo;{query}&rdquo;. Try a shorter word.</p>
+            <p className="mt-12 min-h-[100svh] text-center text-[15px] text-[#7a6f60]">Nothing matches &ldquo;{query}&rdquo;. Try a shorter word.</p>
           ) : (
-            <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 lg:grid-cols-4">
+            <div className={`mt-8 grid grid-cols-2 content-start gap-x-4 gap-y-8 [overflow-anchor:none] md:grid-cols-3 lg:grid-cols-4 ${query ? "min-h-[100svh]" : ""}`}>
               {shown.map((p) => (
                 <ViewTransition key={p.id} name={`product-${p.id}`} enter="product-in" exit="product-out">
                   <article className="store-reveal group flex flex-col">
