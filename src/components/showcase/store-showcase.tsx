@@ -90,6 +90,18 @@ const payments = [
 
 const FREE_DELIVERY_FROM = 150;
 
+/* Sales tax on goods, charged on the subtotal after any coupon. Delivery is
+   not taxed. */
+const SST_RATE = 0.1;
+
+/* Demo codes, shown under the field so a visitor can try one. */
+const coupons: Record<string, { label: string; min?: number; discount: (subtotal: number) => number }> = {
+  RAYA15: { label: "15% off", discount: (s) => s * 0.15 },
+  WELCOME10: { label: "RM 10 off orders from RM 80", min: 80, discount: () => 10 },
+};
+
+const round2 = (n: number) => Math.round(n * 100) / 100;
+
 const rm = (n: number) => `RM ${n.toFixed(2)}`;
 
 type Flyer = { key: number; product: Product; x: number; y: number; dx: number; dy: number };
@@ -142,6 +154,11 @@ export function StoreShowcase() {
   const [payment, setPayment] = useState<(typeof payments)[number]["id"]>("fpx");
   const [toast, setToast] = useState<string | null>(null);
   const [flyers, setFlyers] = useState<Flyer[]>([]);
+  const [couponInput, setCouponInput] = useState("");
+  const [appliedCode, setAppliedCode] = useState<string | null>(null);
+  const [couponError, setCouponError] = useState<string | null>(null);
+  /* A deleted row is first struck through, then collapses, then leaves. */
+  const [removing, setRemoving] = useState<Record<string, "cut" | "gone">>({});
   const [bump, setBump] = useState(0);
   const cartButton = useRef<HTMLButtonElement>(null);
 
@@ -164,7 +181,11 @@ export function StoreShowcase() {
   const count = lines.reduce((n, l) => n + l.qty, 0);
   const subtotal = lines.reduce((n, l) => n + l.qty * l.price, 0);
   const shippingFee = subtotal >= FREE_DELIVERY_FROM && shipping === "standard" ? 0 : delivery.find((d) => d.id === shipping)!.price;
-  const total = subtotal + (lines.length ? shippingFee : 0);
+  const coupon = appliedCode ? coupons[appliedCode] : undefined;
+  const couponShort = coupon?.min !== undefined && subtotal < coupon.min;
+  const discount = coupon && !couponShort ? round2(Math.min(coupon.discount(subtotal), subtotal)) : 0;
+  const sst = round2((subtotal - discount) * SST_RATE);
+  const total = subtotal - discount + sst + (lines.length ? shippingFee : 0);
 
   /* Escape closes the drawer, and the page behind it stops scrolling. */
   useEffect(() => {
@@ -201,6 +222,35 @@ export function StoreShowcase() {
     const dx = to.left + to.width / 2 - (x + FLYER_SIZE / 2);
     const dy = to.top + to.height / 2 - (y + FLYER_SIZE / 2);
     setFlyers((f) => [...f, { key: Date.now() + Math.random(), product: p, x, y, dx, dy }]);
+  }
+
+  function applyCoupon() {
+    const code = couponInput.trim().toUpperCase();
+    if (!code) return;
+    if (!coupons[code]) {
+      setCouponError(`"${code}" is not a valid code.`);
+      return;
+    }
+    setAppliedCode(code);
+    setCouponInput("");
+    setCouponError(null);
+  }
+
+  function remove(id: string) {
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      setQty(id, 0);
+      return;
+    }
+    setRemoving((r) => ({ ...r, [id]: "cut" }));
+    setTimeout(() => setRemoving((r) => ({ ...r, [id]: "gone" })), 420);
+    setTimeout(() => {
+      setQty(id, 0);
+      setRemoving((r) => {
+        const next = { ...r };
+        delete next[id];
+        return next;
+      });
+    }, 760);
   }
 
   function setQty(id: string, qty: number) {
@@ -490,6 +540,7 @@ export function StoreShowcase() {
                 type="button"
                 onClick={() => {
                   setCart({});
+                  setAppliedCode(null);
                   setStep("cart");
                   setOpen(false);
                 }}
@@ -523,39 +574,55 @@ export function StoreShowcase() {
                     )}
                     <ul className="divide-y divide-[#e8dfd0]">
                       {lines.map((l) => (
-                        <li key={l.id} className="flex gap-3 py-4">
-                          <div className={`flex h-20 w-16 flex-shrink-0 items-center justify-center rounded-xl ${l.tint}`}>
-                            <l.Icon aria-hidden className="h-8 w-8" />
-                          </div>
-                          {/* Two rows edge to edge: name and line total on top, quantity
-                              and delete underneath, so the delete sits under the price. */}
-                          <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
-                            <div className="flex items-start justify-between gap-3">
-                              <div className="min-w-0">
-                                <p className="text-[14px] font-semibold leading-snug">{l.name}</p>
-                                <p className="text-[12.5px] text-[#8a7f70]">{rm(l.price)}</p>
+                        <li
+                          key={l.id}
+                          className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+                            removing[l.id] === "gone" ? "grid-rows-[0fr] border-transparent opacity-0" : "grid-rows-[1fr]"
+                          }`}
+                        >
+                          <div className="min-h-0 overflow-hidden">
+                            <div className={`relative flex gap-3 py-4 transition-opacity duration-300 ${removing[l.id] ? "pointer-events-none opacity-60" : ""}`}>
+                              {/* The cut: a line drawn left to right through the row before it goes. */}
+                              <span
+                                aria-hidden
+                                className={`absolute inset-x-0 top-1/2 z-10 h-[2px] origin-left rounded-full bg-[#c8643b] transition-transform duration-[400ms] ease-out ${
+                                  removing[l.id] ? "scale-x-100" : "scale-x-0"
+                                }`}
+                              />
+                              <div className={`flex h-20 w-16 flex-shrink-0 items-center justify-center rounded-xl ${l.tint}`}>
+                                <l.Icon aria-hidden className="h-8 w-8" />
                               </div>
-                              <p className="flex-shrink-0 text-[14px] font-semibold">{rm(l.qty * l.price)}</p>
-                            </div>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center rounded-full border border-[#e2d7c5] bg-white">
-                                <button type="button" onClick={() => setQty(l.id, l.qty - 1)} aria-label={`One less ${l.name}`} className="p-2">
-                                  <PiMinus className="h-3.5 w-3.5" />
-                                </button>
-                                <span className="w-6 text-center text-[13.5px] font-semibold">{l.qty}</span>
-                                <button type="button" onClick={() => setQty(l.id, l.qty + 1)} aria-label={`One more ${l.name}`} className="p-2">
-                                  <PiPlus className="h-3.5 w-3.5" />
-                                </button>
+                              {/* Two rows edge to edge: name and line total on top, quantity
+                                  and delete underneath, so the delete sits under the price. */}
+                              <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
+                                <div className="flex items-start justify-between gap-3">
+                                  <div className="min-w-0">
+                                    <p className="text-[14px] font-semibold leading-snug">{l.name}</p>
+                                    <p className="text-[12.5px] text-[#8a7f70]">{rm(l.price)}</p>
+                                  </div>
+                                  <p className="flex-shrink-0 text-[14px] font-semibold">{rm(l.qty * l.price)}</p>
+                                </div>
+                                <div className="flex items-center justify-between">
+                                  <div className="flex items-center rounded-full border border-[#e2d7c5] bg-white">
+                                    <button type="button" onClick={() => setQty(l.id, l.qty - 1)} aria-label={`One less ${l.name}`} className="p-2">
+                                      <PiMinus className="h-3.5 w-3.5" />
+                                    </button>
+                                    <span className="w-6 text-center text-[13.5px] font-semibold">{l.qty}</span>
+                                    <button type="button" onClick={() => setQty(l.id, l.qty + 1)} aria-label={`One more ${l.name}`} className="p-2">
+                                      <PiPlus className="h-3.5 w-3.5" />
+                                    </button>
+                                  </div>
+                                  <button
+                                    type="button"
+                                    onClick={() => remove(l.id)}
+                                    aria-label={`Delete ${l.name}`}
+                                    className="inline-flex items-center gap-1.5 py-2 text-[13px] font-medium text-[#8a7f70] hover:text-[#c8643b]"
+                                  >
+                                    <PiTrash aria-hidden className="h-4 w-4" />
+                                    Delete
+                                  </button>
+                                </div>
                               </div>
-                              <button
-                                type="button"
-                                onClick={() => setQty(l.id, 0)}
-                                aria-label={`Delete ${l.name}`}
-                                className="inline-flex items-center gap-1.5 py-2 text-[13px] font-medium text-[#8a7f70] hover:text-[#c8643b]"
-                              >
-                                <PiTrash aria-hidden className="h-4 w-4" />
-                                Delete
-                              </button>
                             </div>
                           </div>
                         </li>
@@ -607,10 +674,65 @@ export function StoreShowcase() {
               </div>
 
               <div className="border-t border-[#e8dfd0] bg-white px-5 py-4">
+                {step === "cart" && (
+                  <div className="mb-4">
+                    {appliedCode ? (
+                      <div className="flex items-center justify-between gap-3 rounded-xl bg-[#e1eedb] px-3.5 py-2.5 text-[13px] text-[#2f5d46]">
+                        <span>
+                          <span className="font-bold">{appliedCode}</span> applied: {coupon!.label}
+                          {couponShort && <span className="block text-[#a2553a]">Add {rm(coupon!.min! - subtotal)} more to use this code.</span>}
+                        </span>
+                        <button type="button" onClick={() => setAppliedCode(null)} className="font-semibold underline underline-offset-2">
+                          Remove
+                        </button>
+                      </div>
+                    ) : (
+                      <form
+                        onSubmit={(e) => {
+                          e.preventDefault();
+                          applyCoupon();
+                        }}
+                      >
+                        <div className="flex gap-2">
+                          <label className="sr-only" htmlFor="coupon">
+                            Promo code
+                          </label>
+                          <input
+                            id="coupon"
+                            value={couponInput}
+                            onChange={(e) => {
+                              setCouponInput(e.target.value);
+                              setCouponError(null);
+                            }}
+                            placeholder="Promo code"
+                            autoComplete="off"
+                            className="min-w-0 flex-1 rounded-full border border-[#e2d7c5] bg-[#faf6ef] px-4 py-2.5 text-[13.5px] uppercase outline-none placeholder:normal-case focus:border-[#1f3a2e]"
+                          />
+                          <button type="submit" className="rounded-full border border-[#1f3a2e] px-5 text-[13.5px] font-semibold text-[#1f3a2e] hover:bg-[#1f3a2e] hover:text-white">
+                            Apply
+                          </button>
+                        </div>
+                        <p className={`mt-1.5 text-[12px] ${couponError ? "text-[#b0493a]" : "text-[#8a7f70]"}`}>
+                          {couponError ?? "Demo codes: RAYA15 or WELCOME10"}
+                        </p>
+                      </form>
+                    )}
+                  </div>
+                )}
                 <dl className="space-y-1.5 text-[14px]">
                   <div className="flex justify-between text-[#5a5248]">
                     <dt>Subtotal</dt>
                     <dd>{rm(subtotal)}</dd>
+                  </div>
+                  {discount > 0 && (
+                    <div className="flex justify-between text-[#2f6b4f]">
+                      <dt>Promo ({appliedCode})</dt>
+                      <dd>-{rm(discount)}</dd>
+                    </div>
+                  )}
+                  <div className="flex justify-between text-[#5a5248]">
+                    <dt>SST (10%)</dt>
+                    <dd>{rm(sst)}</dd>
                   </div>
                   <div className="flex justify-between text-[#5a5248]">
                     <dt>Delivery</dt>
