@@ -1,10 +1,11 @@
 import Image from "next/image";
 import Link from "next/link";
+import { ViewTransition } from "react";
 import { ArrowRightIcon, PlusIcon } from "@/components/icons";
 import { PostArt } from "@/components/post-art";
 import { content as t } from "@/lib/content";
 import { contentMs } from "@/lib/content-ms";
-import { type Post } from "@/lib/posts";
+import { type Post, postSlug } from "@/lib/posts";
 import { postPaths } from "@/lib/posts-ms";
 
 /* Built like the client logo tiles: a white card with the artwork sitting in
@@ -16,9 +17,13 @@ export function NoteCard({ post, locale = "en" }: { post: Post; locale?: "en" | 
       href={locale === "ms" ? postPaths(post).ms : postPaths(post).en}
       className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-white transition duration-200 hover:-translate-y-1 hover:border-amber-400/70 hover:shadow-lg hover:shadow-black/5"
     >
-      <div className="flex aspect-[4/3] items-center justify-center border-b border-border bg-bg p-6">
-        <PostArt art={post.art} height={120} className="h-full max-h-[120px] w-auto max-w-full" />
-      </div>
+      {/* Shares its name with the article banner, so opening a note morphs this
+          panel into the banner instead of swapping one page for another. */}
+      <ViewTransition name={`note-art-${postSlug(post)}`} share="note-morph" default="none">
+        <div className="flex aspect-[4/3] items-center justify-center border-b border-border bg-bg p-6">
+          <PostArt art={post.art} height={120} className="h-full max-h-[120px] w-auto max-w-full" />
+        </div>
+      </ViewTransition>
 
       <div className="flex flex-1 flex-col gap-3 p-6">
         <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold uppercase tracking-wide text-muted">

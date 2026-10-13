@@ -45,9 +45,22 @@ html {
   scroll-padding-top: 5rem;
 }
 
+/* A note card's artwork panel morphing into the article banner (and back).
+   Named in note-card.tsx and the note page. */
+::view-transition-group(.note-morph) {
+  animation-duration: 380ms;
+  animation-timing-function: cubic-bezier(0.2, 0, 0, 1);
+}
+
 @media (prefers-reduced-motion: reduce) {
   html {
     scroll-behavior: auto;
+  }
+
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
   }
 
   /* Accordions open and close instantly for anyone who asked for less motion. */
