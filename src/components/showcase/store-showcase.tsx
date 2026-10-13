@@ -22,6 +22,7 @@ import {
   PiMagnifyingGlass,
   PiMinus,
   PiPlus,
+  PiScissorsFill,
   PiPottedPlantDuotone,
   PiQrCodeDuotone,
   PiShieldCheckDuotone,
@@ -157,8 +158,8 @@ export function StoreShowcase() {
   const [couponInput, setCouponInput] = useState("");
   const [appliedCode, setAppliedCode] = useState<string | null>(null);
   const [couponError, setCouponError] = useState<string | null>(null);
-  /* A deleted row is first struck through, then collapses, then leaves. */
-  const [removing, setRemoving] = useState<Record<string, "cut" | "gone">>({});
+  /* A deleted row is cut along a dashed line, splits in two, then collapses. */
+  const [removing, setRemoving] = useState<Record<string, "cut" | "split" | "gone">>({});
   const [bump, setBump] = useState(0);
   const cartButton = useRef<HTMLButtonElement>(null);
 
@@ -242,7 +243,8 @@ export function StoreShowcase() {
       return;
     }
     setRemoving((r) => ({ ...r, [id]: "cut" }));
-    setTimeout(() => setRemoving((r) => ({ ...r, [id]: "gone" })), 420);
+    setTimeout(() => setRemoving((r) => ({ ...r, [id]: "split" })), 460);
+    setTimeout(() => setRemoving((r) => ({ ...r, [id]: "gone" })), 860);
     setTimeout(() => {
       setQty(id, 0);
       setRemoving((r) => {
@@ -250,7 +252,7 @@ export function StoreShowcase() {
         delete next[id];
         return next;
       });
-    }, 760);
+    }, 1160);
   }
 
   function setQty(id: string, qty: number) {
@@ -274,6 +276,49 @@ export function StoreShowcase() {
   function openCart() {
     setStep("cart");
     setOpen(true);
+  }
+
+  /* One cart line. Rendered once normally, and twice while it is being cut in
+     half, so it lives in one place. */
+  function cartRow(l: (typeof lines)[number]) {
+    return (
+      <div className="flex gap-3 py-4">
+        <div className={`flex h-20 w-16 flex-shrink-0 items-center justify-center rounded-xl ${l.tint}`}>
+          <l.Icon aria-hidden className="h-8 w-8" />
+        </div>
+        {/* Two rows edge to edge: name and line total on top, quantity and
+            delete underneath, so the delete sits under the price. */}
+        <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0">
+              <p className="text-[14px] font-semibold leading-snug">{l.name}</p>
+              <p className="text-[12.5px] text-[#8a7f70]">{rm(l.price)}</p>
+            </div>
+            <p className="flex-shrink-0 text-[14px] font-semibold">{rm(l.qty * l.price)}</p>
+          </div>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center rounded-full border border-[#e2d7c5] bg-white">
+              <button type="button" onClick={() => setQty(l.id, l.qty - 1)} aria-label={`One less ${l.name}`} className="p-2">
+                <PiMinus className="h-3.5 w-3.5" />
+              </button>
+              <span className="w-6 text-center text-[13.5px] font-semibold">{l.qty}</span>
+              <button type="button" onClick={() => setQty(l.id, l.qty + 1)} aria-label={`One more ${l.name}`} className="p-2">
+                <PiPlus className="h-3.5 w-3.5" />
+              </button>
+            </div>
+            <button
+              type="button"
+              onClick={() => remove(l.id)}
+              aria-label={`Delete ${l.name}`}
+              className="inline-flex items-center gap-1.5 py-2 text-[13px] font-medium text-[#8a7f70] hover:text-[#c8643b]"
+            >
+              <PiTrash aria-hidden className="h-4 w-4" />
+              Delete
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -580,49 +625,33 @@ export function StoreShowcase() {
                             removing[l.id] === "gone" ? "grid-rows-[0fr] border-transparent opacity-0" : "grid-rows-[1fr]"
                           }`}
                         >
-                          <div className="min-h-0 overflow-hidden">
-                            <div className={`relative flex gap-3 py-4 transition-opacity duration-300 ${removing[l.id] ? "pointer-events-none opacity-60" : ""}`}>
-                              {/* The cut: a line drawn left to right through the row before it goes. */}
-                              <span
-                                aria-hidden
-                                className={`absolute inset-x-0 top-1/2 z-10 h-[2px] origin-left rounded-full bg-[#c8643b] transition-transform duration-[400ms] ease-out ${
-                                  removing[l.id] ? "scale-x-100" : "scale-x-0"
-                                }`}
-                              />
-                              <div className={`flex h-20 w-16 flex-shrink-0 items-center justify-center rounded-xl ${l.tint}`}>
-                                <l.Icon aria-hidden className="h-8 w-8" />
-                              </div>
-                              {/* Two rows edge to edge: name and line total on top, quantity
-                                  and delete underneath, so the delete sits under the price. */}
-                              <div className="flex min-w-0 flex-1 flex-col justify-between gap-2">
-                                <div className="flex items-start justify-between gap-3">
-                                  <div className="min-w-0">
-                                    <p className="text-[14px] font-semibold leading-snug">{l.name}</p>
-                                    <p className="text-[12.5px] text-[#8a7f70]">{rm(l.price)}</p>
+                          <div className={`min-h-0 ${removing[l.id] === "gone" ? "overflow-hidden" : ""}`}>
+                            <div className="relative">
+                              {removing[l.id] === "split" || removing[l.id] === "gone" ? (
+                                /* Split along the cut: two copies of the row, each clipped to
+                                   one half, drift apart and fade. */
+                                <>
+                                  <div inert className="animate-[cut-top_420ms_cubic-bezier(0.4,0,0.2,1)_forwards] [clip-path:inset(0_0_50%_0)]">
+                                    {cartRow(l)}
                                   </div>
-                                  <p className="flex-shrink-0 text-[14px] font-semibold">{rm(l.qty * l.price)}</p>
-                                </div>
-                                <div className="flex items-center justify-between">
-                                  <div className="flex items-center rounded-full border border-[#e2d7c5] bg-white">
-                                    <button type="button" onClick={() => setQty(l.id, l.qty - 1)} aria-label={`One less ${l.name}`} className="p-2">
-                                      <PiMinus className="h-3.5 w-3.5" />
-                                    </button>
-                                    <span className="w-6 text-center text-[13.5px] font-semibold">{l.qty}</span>
-                                    <button type="button" onClick={() => setQty(l.id, l.qty + 1)} aria-label={`One more ${l.name}`} className="p-2">
-                                      <PiPlus className="h-3.5 w-3.5" />
-                                    </button>
+                                  <div inert className="absolute inset-0 animate-[cut-bottom_420ms_cubic-bezier(0.4,0,0.2,1)_forwards] [clip-path:inset(50%_0_0_0)]">
+                                    {cartRow(l)}
                                   </div>
-                                  <button
-                                    type="button"
-                                    onClick={() => remove(l.id)}
-                                    aria-label={`Delete ${l.name}`}
-                                    className="inline-flex items-center gap-1.5 py-2 text-[13px] font-medium text-[#8a7f70] hover:text-[#c8643b]"
-                                  >
-                                    <PiTrash aria-hidden className="h-4 w-4" />
-                                    Delete
-                                  </button>
+                                </>
+                              ) : (
+                                <div inert={!!removing[l.id]} className={`transition-opacity duration-300 ${removing[l.id] ? "opacity-70" : ""}`}>
+                                  {cartRow(l)}
                                 </div>
-                              </div>
+                              )}
+                              {removing[l.id] === "cut" && (
+                                /* A dashed cutting line drawn by scissors that snip across the row. */
+                                <div aria-hidden className="pointer-events-none absolute inset-x-0 top-1/2 z-10">
+                                  <span className="absolute left-0 top-0 h-[2px] w-full origin-left -translate-y-1/2 animate-[cut-line_450ms_ease-in-out_forwards] bg-[repeating-linear-gradient(90deg,#c8643b_0_6px,transparent_6px_10px)]" />
+                                  <span className="absolute top-0 -translate-x-1/2 -translate-y-1/2 animate-[scissor-run_450ms_ease-in-out_forwards] rounded-full bg-[#faf6ef] p-0.5">
+                                    <PiScissorsFill className="h-5 w-5 rotate-180 animate-[snip_150ms_ease-in-out_3] text-[#c8643b]" />
+                                  </span>
+                                </div>
+                              )}
                             </div>
                           </div>
                         </li>

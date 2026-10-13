@@ -236,6 +236,30 @@ p:has(.hl) {
   100% { transform: scale(1); }
 }
 
+/* Store showcase: deleting a cart row. Scissors run along a dashed line,
+   then the two halves of the row drift apart. */
+@keyframes cut-line {
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
+}
+
+@keyframes scissor-run {
+  from { left: 0%; }
+  to { left: 100%; }
+}
+
+@keyframes snip {
+  50% { transform: rotate(180deg) scaleY(0.55); }
+}
+
+@keyframes cut-top {
+  to { transform: translate(-10px, -14px) rotate(-2.5deg); opacity: 0; }
+}
+
+@keyframes cut-bottom {
+  to { transform: translate(10px, 14px) rotate(2.5deg); opacity: 0; }
+}
+
 @keyframes grow-bar {
   from {
     transform: scaleY(0.55);
