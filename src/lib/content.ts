@@ -56,7 +56,7 @@ export const content = {
     storeLink: {
       pill: "Online Store",
       label: "Visit my store",
-      note: "Serambi demo",
+      note: "Shop Demo",
       href: "/showcase/online-store",
     },
     items: [
