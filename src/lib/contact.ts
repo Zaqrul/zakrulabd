@@ -11,6 +11,7 @@ export const waMessages = {
   custom: "Hai Zaqrul, saya memerlukan sistem web tersuai untuk perniagaan saya. Boleh kita bincang skop dan sebut harga?",
   intro: "Hai Zaqrul, nama saya ___ dan perniagaan saya ___. Saya memerlukan ___.",
   start: "Hai Zaqrul, saya ingin memulakan projek. Ini keperluan saya: ___.",
+  store: "Hai Zaqrul, saya nampak demo kedai dalam talian di laman web anda dan berminat untuk bina kedai seperti ini. Boleh kita berbincang?",
 };
 
 export function wa(message: string) {

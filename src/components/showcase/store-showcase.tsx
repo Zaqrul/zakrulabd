@@ -1,0 +1,576 @@
+"use client";
+
+import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
+import { Fraunces } from "next/font/google";
+import type { IconType } from "react-icons";
+import {
+  PiArrowLeft,
+  PiArrowRight,
+  PiBankDuotone,
+  PiCheckCircleFill,
+  PiCoffeeBeanDuotone,
+  PiCoffeeDuotone,
+  PiCookieDuotone,
+  PiCreditCardDuotone,
+  PiDressDuotone,
+  PiGiftDuotone,
+  PiHeart,
+  PiHeartFill,
+  PiJarDuotone,
+  PiLampDuotone,
+  PiMagnifyingGlass,
+  PiMinus,
+  PiPlus,
+  PiPottedPlantDuotone,
+  PiQrCodeDuotone,
+  PiShieldCheckDuotone,
+  PiShoppingBagDuotone,
+  PiStarFill,
+  PiTShirtDuotone,
+  PiTeaBagDuotone,
+  PiToteDuotone,
+  PiTrash,
+  PiTruckDuotone,
+  PiArrowCounterClockwiseDuotone,
+  PiX,
+} from "react-icons/pi";
+import { wa, waMessages } from "@/lib/contact";
+
+/* The store has its own identity, not the portfolio's: a client's shop should
+   look like the client's brand. A serif for the brand voice, warm cream and a
+   deep green, with terracotta for prices and calls to action. */
+const serif = Fraunces({ subsets: ["latin"], weight: ["500", "600"], variable: "--font-store-serif" });
+
+type Category = "Apparel" | "Home" | "Pantry" | "Gifts";
+
+type Product = {
+  id: string;
+  name: string;
+  maker: string;
+  category: Category;
+  price: number;
+  was?: number;
+  badge?: "New" | "Best seller";
+  rating: number;
+  reviews: number;
+  Icon: IconType;
+  tint: string;
+};
+
+/* Fictional products. Drawings stand in for photography so the page carries
+   no stock images and no real brand. */
+const products: Product[] = [
+  { id: "batik-shirt", name: "Batik Lepas Shirt", maker: "Kelantan", category: "Apparel", price: 89, badge: "Best seller", rating: 4.8, reviews: 214, Icon: PiTShirtDuotone, tint: "bg-[#f6e7d3] text-[#b5652f]" },
+  { id: "kurta-dress", name: "Batik Kurta Dress", maker: "Terengganu", category: "Apparel", price: 129, badge: "New", rating: 4.7, reviews: 38, Icon: PiDressDuotone, tint: "bg-[#e3ece4] text-[#2f5d46]" },
+  { id: "kopi-ipoh", name: "Kopi Ipoh Beans, 250g", maker: "Ipoh, Perak", category: "Pantry", price: 32, badge: "Best seller", rating: 4.9, reviews: 502, Icon: PiCoffeeBeanDuotone, tint: "bg-[#eadfd6] text-[#6b3f26]" },
+  { id: "teh-tarik", name: "Teh Tarik Blend", maker: "Cameron Highlands", category: "Pantry", price: 24, rating: 4.6, reviews: 167, Icon: PiTeaBagDuotone, tint: "bg-[#f1e9d2] text-[#8a6a1f]" },
+  { id: "kaya-jar", name: "Pandan Kaya, 300g", maker: "Melaka", category: "Pantry", price: 18, was: 21, rating: 4.8, reviews: 289, Icon: PiJarDuotone, tint: "bg-[#e1eedb] text-[#4e7a3a]" },
+  { id: "kuih-bangkit", name: "Kuih Bangkit Tin", maker: "Penang", category: "Pantry", price: 22, rating: 4.7, reviews: 96, Icon: PiCookieDuotone, tint: "bg-[#f4e4dc] text-[#a2553a]" },
+  { id: "clay-cups", name: "Clay Kopi Cups, set of 2", maker: "Sayong, Perak", category: "Home", price: 58, rating: 4.9, reviews: 73, Icon: PiCoffeeDuotone, tint: "bg-[#ecdccf] text-[#8c4a2f]" },
+  { id: "rattan-lamp", name: "Rattan Pendant Lamp", maker: "Sarawak", category: "Home", price: 149, badge: "New", rating: 4.8, reviews: 21, Icon: PiLampDuotone, tint: "bg-[#efe6d4] text-[#7a5a24]" },
+  { id: "monstera", name: "Terracotta Planter", maker: "Johor", category: "Home", price: 65, was: 79, rating: 4.6, reviews: 58, Icon: PiPottedPlantDuotone, tint: "bg-[#dfeae3] text-[#2f6b4f]" },
+  { id: "linen-tote", name: "Mengkuang Tote", maker: "Pahang", category: "Gifts", price: 45, rating: 4.7, reviews: 132, Icon: PiToteDuotone, tint: "bg-[#ece7d8] text-[#6f6a3a]" },
+  { id: "raya-box", name: "Raya Gift Box", maker: "Curated set", category: "Gifts", price: 119, badge: "Best seller", rating: 4.9, reviews: 147, Icon: PiGiftDuotone, tint: "bg-[#f5e0d8] text-[#b0493a]" },
+  { id: "bag-set", name: "Songket Pouch", maker: "Terengganu", category: "Gifts", price: 39, rating: 4.5, reviews: 44, Icon: PiShoppingBagDuotone, tint: "bg-[#e6e1ef] text-[#5a4a8a]" },
+];
+
+const categories: ("All" | Category)[] = ["All", "Apparel", "Home", "Pantry", "Gifts"];
+
+const delivery = [
+  { id: "standard", label: "Standard delivery", note: "2 to 4 working days, Peninsular Malaysia", price: 8 },
+  { id: "sameday", label: "Same-day delivery", note: "Klang Valley, order before 1pm", price: 15 },
+] as const;
+
+const payments = [
+  { id: "fpx", label: "FPX online banking", Icon: PiBankDuotone },
+  { id: "duitnow", label: "DuitNow QR", Icon: PiQrCodeDuotone },
+  { id: "card", label: "Debit or credit card", Icon: PiCreditCardDuotone },
+] as const;
+
+const FREE_DELIVERY_FROM = 150;
+
+const rm = (n: number) => `RM ${n.toFixed(2)}`;
+
+export function StoreShowcase() {
+  const [category, setCategory] = useState<(typeof categories)[number]>("All");
+  const [sort, setSort] = useState<"featured" | "low" | "high">("featured");
+  const [query, setQuery] = useState("");
+  const [cart, setCart] = useState<Record<string, number>>({ "kopi-ipoh": 1 });
+  const [liked, setLiked] = useState<Set<string>>(new Set());
+  const [open, setOpen] = useState(false);
+  const [step, setStep] = useState<"cart" | "checkout" | "done">("cart");
+  const [shipping, setShipping] = useState<(typeof delivery)[number]["id"]>("standard");
+  const [payment, setPayment] = useState<(typeof payments)[number]["id"]>("fpx");
+  const [toast, setToast] = useState<string | null>(null);
+
+  const shown = useMemo(() => {
+    const q = query.trim().toLowerCase();
+    const list = products.filter(
+      (p) => (category === "All" || p.category === category) && (!q || `${p.name} ${p.maker}`.toLowerCase().includes(q)),
+    );
+    if (sort === "low") return [...list].sort((a, b) => a.price - b.price);
+    if (sort === "high") return [...list].sort((a, b) => b.price - a.price);
+    return list;
+  }, [category, sort, query]);
+
+  const lines = products.filter((p) => cart[p.id]).map((p) => ({ ...p, qty: cart[p.id] }));
+  const count = lines.reduce((n, l) => n + l.qty, 0);
+  const subtotal = lines.reduce((n, l) => n + l.qty * l.price, 0);
+  const shippingFee = subtotal >= FREE_DELIVERY_FROM && shipping === "standard" ? 0 : delivery.find((d) => d.id === shipping)!.price;
+  const total = subtotal + (lines.length ? shippingFee : 0);
+
+  /* Escape closes the drawer, and the page behind it stops scrolling. */
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => e.key === "Escape" && setOpen(false);
+    document.addEventListener("keydown", onKey);
+    const overflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = overflow;
+    };
+  }, [open]);
+
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 2200);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  function add(p: Product) {
+    setCart((c) => ({ ...c, [p.id]: (c[p.id] ?? 0) + 1 }));
+    setToast(`${p.name} added to cart`);
+  }
+
+  function setQty(id: string, qty: number) {
+    setCart((c) => {
+      const next = { ...c };
+      if (qty <= 0) delete next[id];
+      else next[id] = qty;
+      return next;
+    });
+  }
+
+  function toggleLike(id: string) {
+    setLiked((s) => {
+      const next = new Set(s);
+      if (next.has(id)) next.delete(id);
+      else next.add(id);
+      return next;
+    });
+  }
+
+  function openCart() {
+    setStep("cart");
+    setOpen(true);
+  }
+
+  return (
+    <div className={`${serif.variable} min-h-screen bg-[#faf6ef] text-[#2a2620]`}>
+      {/* Showcase frame: says plainly that this is a demo, and leads back. */}
+      <div className="bg-navy px-4 py-2.5 text-[12.5px] text-white/80">
+        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-x-4 gap-y-1.5">
+          <Link href="/" className="inline-flex items-center gap-1.5 font-semibold text-white hover:text-amber-400">
+            <PiArrowLeft aria-hidden className="h-3.5 w-3.5" /> Back to Zakrul
+          </Link>
+          <span className="hidden sm:inline">Design showcase. A demo store: nothing here is for sale.</span>
+          <a href={wa(waMessages.store)} target="_blank" rel="noopener noreferrer" className="rounded-full bg-amber-400 px-3 py-1 font-bold text-navy hover:bg-amber-300">
+            Build a store like this
+          </a>
+        </div>
+      </div>
+
+      <div className="bg-[#1f3a2e] px-4 py-2 text-center text-[12.5px] font-medium text-[#f3eadb]">
+        Free standard delivery on orders above RM {FREE_DELIVERY_FROM} in Peninsular Malaysia
+      </div>
+
+      <header className="sticky top-0 z-30 border-b border-[#e8dfd0] bg-[#faf6ef]/90 backdrop-blur">
+        <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3.5 md:gap-8">
+          <span className="font-[family-name:var(--font-store-serif)] text-[22px] font-semibold tracking-tight text-[#1f3a2e]">Serambi</span>
+          <nav className="hidden gap-6 text-[14px] font-medium text-[#5a5248] md:flex">
+            {categories.slice(1).map((c) => (
+              <button key={c} type="button" onClick={() => setCategory(c)} className="hover:text-[#1f3a2e]">
+                {c}
+              </button>
+            ))}
+          </nav>
+          <label className="ml-auto flex min-w-0 max-w-[260px] flex-1 items-center gap-2 rounded-full border border-[#e2d7c5] bg-white px-3.5 py-2 text-[13.5px] focus-within:border-[#1f3a2e]">
+            <PiMagnifyingGlass aria-hidden className="h-4 w-4 flex-shrink-0 text-[#8a7f70]" />
+            <span className="sr-only">Search products</span>
+            <input
+              value={query}
+              onChange={(e) => setQuery(e.target.value)}
+              placeholder="Search kopi, batik..."
+              className="w-full min-w-0 bg-transparent outline-none placeholder:text-[#a69b8b]"
+            />
+          </label>
+          <button
+            type="button"
+            onClick={openCart}
+            className="relative inline-flex flex-shrink-0 items-center gap-2 rounded-full bg-[#1f3a2e] px-4 py-2 text-[13.5px] font-semibold text-white hover:bg-[#2a4d3d]"
+          >
+            <PiShoppingBagDuotone aria-hidden className="h-4 w-4" />
+            <span className="hidden sm:inline">Cart</span>
+            <span className="flex h-5 min-w-5 items-center justify-center rounded-full bg-[#c8643b] px-1 text-[11px] font-bold">{count}</span>
+          </button>
+        </div>
+      </header>
+
+      <main id="main">
+        {/* Hero */}
+        <section className="mx-auto grid max-w-6xl items-center gap-10 px-4 py-12 md:grid-cols-2 md:py-20">
+          <div>
+            <p className="text-[12px] font-bold uppercase tracking-[0.18em] text-[#c8643b]">Made by Malaysian makers</p>
+            <h1 className="mt-4 font-[family-name:var(--font-store-serif)] text-[40px] font-semibold leading-[1.05] tracking-tight text-[#1f3a2e] md:text-[58px]">
+              Things for the home, from kampung workshops.
+            </h1>
+            <p className="mt-5 max-w-md text-[16px] leading-relaxed text-[#5a5248]">
+              Batik, clay, rattan and pantry favourites from small producers across Malaysia. Packed in Ipoh, delivered to your door.
+            </p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              <a href="#shop" className="inline-flex items-center gap-2 rounded-full bg-[#c8643b] px-6 py-3 text-[14.5px] font-semibold text-white hover:bg-[#b3552f]">
+                Shop the collection <PiArrowRight aria-hidden className="h-4 w-4" />
+              </a>
+              <button type="button" onClick={() => setCategory("Gifts")} className="rounded-full border border-[#1f3a2e]/25 px-6 py-3 text-[14.5px] font-semibold text-[#1f3a2e] hover:border-[#1f3a2e]">
+                Raya gifts
+              </button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            {[products[0], products[6], products[2], products[7]].map((p, i) => (
+              <div
+                key={p.id}
+                className={`flex aspect-square items-center justify-center rounded-3xl ${p.tint} ${i % 2 ? "translate-y-6" : ""}`}
+              >
+                <p.Icon aria-hidden className="h-2/5 w-2/5" />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Trust strip */}
+        <section className="border-y border-[#e8dfd0] bg-white/60">
+          <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 text-[13.5px] sm:grid-cols-3">
+            {[
+              { Icon: PiTruckDuotone, title: "Delivered in 2 to 4 days", body: "Same-day in the Klang Valley" },
+              { Icon: PiShieldCheckDuotone, title: "Secure checkout", body: "FPX, DuitNow QR and cards" },
+              { Icon: PiArrowCounterClockwiseDuotone, title: "Easy returns", body: "Within 14 days of delivery" },
+            ].map(({ Icon, title, body }) => (
+              <div key={title} className="flex items-center gap-3">
+                <Icon aria-hidden className="h-7 w-7 flex-shrink-0 text-[#1f3a2e]" />
+                <div>
+                  <p className="font-semibold text-[#2a2620]">{title}</p>
+                  <p className="text-[#7a6f60]">{body}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Shop */}
+        <section id="shop" className="mx-auto max-w-6xl scroll-mt-20 px-4 py-14">
+          <div className="flex flex-wrap items-end justify-between gap-4">
+            <h2 className="font-[family-name:var(--font-store-serif)] text-[32px] font-semibold tracking-tight text-[#1f3a2e]">
+              {category === "All" ? "All products" : category}
+            </h2>
+            <label className="flex items-center gap-2 text-[13.5px] text-[#5a5248]">
+              Sort by
+              <select
+                value={sort}
+                onChange={(e) => setSort(e.target.value as typeof sort)}
+                className="rounded-full border border-[#e2d7c5] bg-white px-3 py-1.5 text-[13.5px] text-[#2a2620] outline-none focus:border-[#1f3a2e]"
+              >
+                <option value="featured">Featured</option>
+                <option value="low">Price: low to high</option>
+                <option value="high">Price: high to low</option>
+              </select>
+            </label>
+          </div>
+
+          <div className="mt-6 flex flex-wrap gap-2">
+            {categories.map((c) => (
+              <button
+                key={c}
+                type="button"
+                onClick={() => setCategory(c)}
+                aria-pressed={category === c}
+                className={`rounded-full px-4 py-1.5 text-[13.5px] font-medium transition ${
+                  category === c ? "bg-[#1f3a2e] text-white" : "border border-[#e2d7c5] bg-white text-[#5a5248] hover:border-[#1f3a2e]"
+                }`}
+              >
+                {c}
+              </button>
+            ))}
+          </div>
+
+          {shown.length === 0 ? (
+            <p className="mt-12 text-center text-[15px] text-[#7a6f60]">Nothing matches &ldquo;{query}&rdquo;. Try a shorter word.</p>
+          ) : (
+            <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 lg:grid-cols-4">
+              {shown.map((p) => (
+                <article key={p.id} className="group flex flex-col">
+                  <div className={`relative flex aspect-[4/5] items-center justify-center overflow-hidden rounded-2xl ${p.tint}`}>
+                    <p.Icon aria-hidden className="h-2/5 w-2/5 transition duration-300 group-hover:scale-110" />
+                    {p.badge && (
+                      <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-[#1f3a2e]">{p.badge}</span>
+                    )}
+                    {p.was && (
+                      <span className="absolute left-3 top-3 rounded-full bg-[#c8643b] px-2.5 py-1 text-[11px] font-bold text-white">
+                        -{Math.round((1 - p.price / p.was) * 100)}%
+                      </span>
+                    )}
+                    <button
+                      type="button"
+                      onClick={() => toggleLike(p.id)}
+                      aria-label={liked.has(p.id) ? `Remove ${p.name} from wishlist` : `Save ${p.name} to wishlist`}
+                      aria-pressed={liked.has(p.id)}
+                      className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#2a2620] hover:text-[#c8643b]"
+                    >
+                      {liked.has(p.id) ? <PiHeartFill className="h-4 w-4 text-[#c8643b]" /> : <PiHeart className="h-4 w-4" />}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => add(p)}
+                      className="absolute inset-x-3 bottom-3 translate-y-2 rounded-full bg-[#1f3a2e] py-2.5 text-[13px] font-semibold text-white opacity-0 transition duration-200 hover:bg-[#2a4d3d] focus:translate-y-0 focus:opacity-100 group-hover:translate-y-0 group-hover:opacity-100 max-md:translate-y-0 max-md:opacity-100"
+                    >
+                      Add to cart
+                    </button>
+                  </div>
+                  <p className="mt-3 text-[11.5px] font-medium uppercase tracking-wide text-[#8a7f70]">{p.maker}</p>
+                  <h3 className="mt-1 text-[15px] font-semibold leading-snug text-[#2a2620]">{p.name}</h3>
+                  <div className="mt-1 flex items-center gap-1 text-[12.5px] text-[#7a6f60]">
+                    <PiStarFill aria-hidden className="h-3.5 w-3.5 text-[#d79a2b]" />
+                    {p.rating} <span>({p.reviews})</span>
+                  </div>
+                  <p className="mt-1.5 text-[15px] font-bold text-[#c8643b]">
+                    {rm(p.price)}
+                    {p.was && <span className="ml-2 text-[13px] font-medium text-[#a69b8b] line-through">{rm(p.was)}</span>}
+                  </p>
+                </article>
+              ))}
+            </div>
+          )}
+        </section>
+
+        {/* Story band */}
+        <section className="bg-[#1f3a2e] text-[#f3eadb]">
+          <div className="mx-auto grid max-w-6xl items-center gap-8 px-4 py-14 md:grid-cols-[1.2fr_1fr]">
+            <div>
+              <h2 className="font-[family-name:var(--font-store-serif)] text-[30px] font-semibold leading-tight md:text-[38px]">
+                Every order pays a maker directly.
+              </h2>
+              <p className="mt-4 max-w-lg text-[15.5px] leading-relaxed text-[#f3eadb]/75">
+                We work with 40 small producers, from potters in Sayong to batik workshops in Kota Bharu. Each product page says who made it and where.
+              </p>
+            </div>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              {[
+                ["40", "makers"],
+                ["9", "states"],
+                ["4.8", "average rating"],
+              ].map(([n, l]) => (
+                <div key={l} className="rounded-2xl bg-white/5 px-2 py-5">
+                  <p className="font-[family-name:var(--font-store-serif)] text-[30px] font-semibold text-white">{n}</p>
+                  <p className="mt-1 text-[12.5px] text-[#f3eadb]/70">{l}</p>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      </main>
+
+      <footer className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-4 px-4 py-10 text-[13px] text-[#7a6f60]">
+        <span className="font-[family-name:var(--font-store-serif)] text-[18px] font-semibold text-[#1f3a2e]">Serambi</span>
+        <span>A demo store designed and built by Zakrul. Serambi is not a real business.</span>
+      </footer>
+
+      {/* Toast */}
+      <div
+        role="status"
+        aria-live="polite"
+        className={`fixed bottom-6 left-1/2 z-40 -translate-x-1/2 rounded-full bg-[#2a2620] px-5 py-2.5 text-[13.5px] font-medium text-white shadow-lg transition ${
+          toast ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-3 opacity-0"
+        }`}
+      >
+        {toast}
+      </div>
+
+      {/* Cart drawer */}
+      <div className={`fixed inset-0 z-50 ${open ? "" : "pointer-events-none"}`} aria-hidden={!open}>
+        <div onClick={() => setOpen(false)} className={`absolute inset-0 bg-black/40 transition-opacity ${open ? "opacity-100" : "opacity-0"}`} />
+        <aside
+          role="dialog"
+          aria-modal="true"
+          aria-label="Shopping cart"
+          className={`absolute right-0 top-0 flex h-full w-full max-w-md flex-col bg-[#faf6ef] shadow-2xl transition-transform duration-300 ${
+            open ? "translate-x-0" : "translate-x-full"
+          }`}
+        >
+          <div className="flex items-center justify-between border-b border-[#e8dfd0] px-5 py-4">
+            <h2 className="font-[family-name:var(--font-store-serif)] text-[22px] font-semibold text-[#1f3a2e]">
+              {step === "cart" ? `Your cart (${count})` : step === "checkout" ? "Checkout" : "Order placed"}
+            </h2>
+            <button type="button" onClick={() => setOpen(false)} aria-label="Close cart" className="rounded-full p-2 hover:bg-black/5">
+              <PiX className="h-5 w-5" />
+            </button>
+          </div>
+
+          {step === "done" ? (
+            <div className="flex flex-1 flex-col items-center justify-center px-8 text-center">
+              <PiCheckCircleFill aria-hidden className="h-14 w-14 text-[#2f6b4f]" />
+              <p className="mt-4 font-[family-name:var(--font-store-serif)] text-[24px] font-semibold text-[#1f3a2e]">Terima kasih!</p>
+              <p className="mt-2 text-[14.5px] leading-relaxed text-[#5a5248]">
+                Order #SRB-1042 is confirmed. In a real store, this is where the customer gets an email and a WhatsApp update.
+              </p>
+              <p className="mt-4 rounded-xl bg-[#f3eadb] px-4 py-3 text-[13px] text-[#7a5a24]">This is a demo. No order was placed and no payment was taken.</p>
+              <a href={wa(waMessages.store)} target="_blank" rel="noopener noreferrer" className="mt-6 rounded-full bg-[#c8643b] px-6 py-3 text-[14px] font-semibold text-white hover:bg-[#b3552f]">
+                Build a store like this
+              </a>
+              <button
+                type="button"
+                onClick={() => {
+                  setCart({});
+                  setStep("cart");
+                  setOpen(false);
+                }}
+                className="mt-3 text-[13.5px] font-semibold text-[#1f3a2e] underline underline-offset-4"
+              >
+                Back to the shop
+              </button>
+            </div>
+          ) : lines.length === 0 ? (
+            <div className="flex flex-1 flex-col items-center justify-center px-8 text-center">
+              <PiShoppingBagDuotone aria-hidden className="h-12 w-12 text-[#a69b8b]" />
+              <p className="mt-3 text-[15px] text-[#5a5248]">Your cart is empty.</p>
+              <button type="button" onClick={() => setOpen(false)} className="mt-5 rounded-full bg-[#1f3a2e] px-6 py-2.5 text-[14px] font-semibold text-white">
+                Keep shopping
+              </button>
+            </div>
+          ) : (
+            <>
+              <div className="flex-1 overflow-y-auto px-5 py-4">
+                {step === "cart" ? (
+                  <>
+                    {subtotal < FREE_DELIVERY_FROM ? (
+                      <div className="mb-4 rounded-xl bg-white p-3 text-[13px] text-[#5a5248]">
+                        Add {rm(FREE_DELIVERY_FROM - subtotal)} more for free standard delivery.
+                        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#ece3d3]">
+                          <div className="h-full rounded-full bg-[#2f6b4f] transition-all" style={{ width: `${(subtotal / FREE_DELIVERY_FROM) * 100}%` }} />
+                        </div>
+                      </div>
+                    ) : (
+                      <p className="mb-4 rounded-xl bg-[#e1eedb] p-3 text-[13px] font-medium text-[#2f5d46]">You get free standard delivery.</p>
+                    )}
+                    <ul className="divide-y divide-[#e8dfd0]">
+                      {lines.map((l) => (
+                        <li key={l.id} className="flex gap-3 py-4">
+                          <div className={`flex h-20 w-16 flex-shrink-0 items-center justify-center rounded-xl ${l.tint}`}>
+                            <l.Icon aria-hidden className="h-8 w-8" />
+                          </div>
+                          <div className="flex min-w-0 flex-1 flex-col">
+                            <p className="text-[14px] font-semibold leading-snug">{l.name}</p>
+                            <p className="text-[12.5px] text-[#8a7f70]">{rm(l.price)}</p>
+                            <div className="mt-auto flex items-center justify-between">
+                              <div className="flex items-center rounded-full border border-[#e2d7c5] bg-white">
+                                <button type="button" onClick={() => setQty(l.id, l.qty - 1)} aria-label={`One less ${l.name}`} className="p-2">
+                                  <PiMinus className="h-3.5 w-3.5" />
+                                </button>
+                                <span className="w-6 text-center text-[13.5px] font-semibold">{l.qty}</span>
+                                <button type="button" onClick={() => setQty(l.id, l.qty + 1)} aria-label={`One more ${l.name}`} className="p-2">
+                                  <PiPlus className="h-3.5 w-3.5" />
+                                </button>
+                              </div>
+                              <button type="button" onClick={() => setQty(l.id, 0)} aria-label={`Remove ${l.name}`} className="p-2 text-[#8a7f70] hover:text-[#c8643b]">
+                                <PiTrash className="h-4 w-4" />
+                              </button>
+                            </div>
+                          </div>
+                          <p className="text-[14px] font-semibold">{rm(l.qty * l.price)}</p>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
+                ) : (
+                  <div className="space-y-6">
+                    <fieldset>
+                      <legend className="mb-2 text-[13px] font-bold uppercase tracking-wide text-[#8a7f70]">Delivery</legend>
+                      <div className="space-y-2">
+                        {delivery.map((d) => (
+                          <label
+                            key={d.id}
+                            className={`flex cursor-pointer items-center gap-3 rounded-xl border bg-white p-3.5 ${shipping === d.id ? "border-[#1f3a2e]" : "border-[#e2d7c5]"}`}
+                          >
+                            <input type="radio" name="shipping" checked={shipping === d.id} onChange={() => setShipping(d.id)} className="accent-[#1f3a2e]" />
+                            <span className="flex-1">
+                              <span className="block text-[14px] font-semibold">{d.label}</span>
+                              <span className="block text-[12.5px] text-[#8a7f70]">{d.note}</span>
+                            </span>
+                            <span className="text-[13.5px] font-semibold">
+                              {d.id === "standard" && subtotal >= FREE_DELIVERY_FROM ? "Free" : rm(d.price)}
+                            </span>
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                    <fieldset>
+                      <legend className="mb-2 text-[13px] font-bold uppercase tracking-wide text-[#8a7f70]">Payment</legend>
+                      <div className="space-y-2">
+                        {payments.map(({ id, label, Icon }) => (
+                          <label
+                            key={id}
+                            className={`flex cursor-pointer items-center gap-3 rounded-xl border bg-white p-3.5 ${payment === id ? "border-[#1f3a2e]" : "border-[#e2d7c5]"}`}
+                          >
+                            <input type="radio" name="payment" checked={payment === id} onChange={() => setPayment(id)} className="accent-[#1f3a2e]" />
+                            <Icon aria-hidden className="h-5 w-5 text-[#1f3a2e]" />
+                            <span className="text-[14px] font-semibold">{label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    </fieldset>
+                    <p className="rounded-xl bg-[#f3eadb] px-4 py-3 text-[12.5px] leading-relaxed text-[#7a5a24]">
+                      Demo checkout: there are no address or card fields, and nothing is charged.
+                    </p>
+                  </div>
+                )}
+              </div>
+
+              <div className="border-t border-[#e8dfd0] bg-white px-5 py-4">
+                <dl className="space-y-1.5 text-[14px]">
+                  <div className="flex justify-between text-[#5a5248]">
+                    <dt>Subtotal</dt>
+                    <dd>{rm(subtotal)}</dd>
+                  </div>
+                  <div className="flex justify-between text-[#5a5248]">
+                    <dt>Delivery</dt>
+                    <dd>{shippingFee === 0 ? "Free" : rm(shippingFee)}</dd>
+                  </div>
+                  <div className="flex justify-between pt-1.5 text-[16px] font-bold text-[#2a2620]">
+                    <dt>Total</dt>
+                    <dd>{rm(total)}</dd>
+                  </div>
+                </dl>
+                {step === "cart" ? (
+                  <button type="button" onClick={() => setStep("checkout")} className="mt-4 w-full rounded-full bg-[#c8643b] py-3.5 text-[15px] font-semibold text-white hover:bg-[#b3552f]">
+                    Checkout
+                  </button>
+                ) : (
+                  <div className="mt-4 flex gap-2">
+                    <button type="button" onClick={() => setStep("cart")} className="rounded-full border border-[#e2d7c5] px-5 py-3.5 text-[14px] font-semibold">
+                      Back
+                    </button>
+                    <button type="button" onClick={() => setStep("done")} className="flex-1 rounded-full bg-[#c8643b] py-3.5 text-[15px] font-semibold text-white hover:bg-[#b3552f]">
+                      Pay {rm(total)}
+                    </button>
+                  </div>
+                )}
+              </div>
+            </>
+          )}
+        </aside>
+      </div>
+    </div>
+  );
+}
