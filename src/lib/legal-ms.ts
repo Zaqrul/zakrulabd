@@ -1,64 +1,64 @@
 export const privacyMs = {
   badge: "UNDANG-UNDANG DAN PRIVASI", titleA: "Dasar ", titleHl: "Privasi", lastUpdated: "Tarikh kuat kuasa: Ogos 2026",
-  intro: "Dasar ini menerangkan maklumat yang saya kumpulkan, cara saya menggunakannya dan langkah perlindungan apabila anda melawat zakrul.com atau menghubungi saya tentang pembangunan web dan pemasaran digital. Pengendalian data peribadi tertakluk pada Akta Perlindungan Data Peribadi 2010 (APDP) Malaysia, sebagaimana dipinda.",
+  intro: "Dasar ini menerangkan maklumat yang saya kumpul, cara maklumat tersebut digunakan dan langkah perlindungan yang diambil apabila anda melayari zakrul.com atau menghubungi saya berkaitan pembangunan web dan pemasaran digital. Pengendalian data peribadi adalah tertakluk kepada Akta Perlindungan Data Peribadi 2010 (PDPA) Malaysia, sebagaimana yang dipinda.",
   sections: [
-    { title: "1. Maklumat yang Saya Kumpulkan", content: [
-      "Maklumat hubungan. Apabila anda menghubungi saya melalui WhatsApp, e-mel atau borang hubungan, saya menerima nama, nama perniagaan, nombor telefon, alamat e-mel dan butiran projek yang anda pilih untuk kongsi.",
-      "Data analitik dan penggunaan. Data teknikal seperti jenis pelayar, peranti, halaman yang dilihat dan tempoh lawatan digunakan melalui Google Analytics 4 untuk memahami prestasi laman.",
-      "Kuki. Kuki yang diperlukan membantu laman berfungsi, manakala kuki analitik digunakan untuk mengukur trafik.",
+    { title: "1. Maklumat yang Dikumpul", content: [
+      "Maklumat hubungan. Apabila anda menghubungi saya melalui WhatsApp, e-mel atau borang hubungan, saya menerima nama, nama perniagaan, nombor telefon, alamat e-mel dan butiran projek yang anda kongsikan.",
+      "Data analitik dan penggunaan. Data teknikal seperti jenis pelayar, peranti, halaman yang dilawati dan tempoh lawatan dikumpul melalui Google Analytics 4 untuk memahami prestasi laman web.",
+      "Kuki. Kuki yang diperlukan membantu laman web berfungsi dengan betul, manakala kuki analitik digunakan untuk mengukur trafik.",
     ] },
     { title: "2. Cara Maklumat Digunakan", content: [
-      "Menilai skop projek, menyediakan sebut harga dan melaksanakan kerja yang dipersetujui.",
-      "Berhubung dengan anda tentang pencapaian projek, perundingan, sokongan teknikal dan serahan.",
-      "Menjaga keselamatan laman, menghalang serangan automatik dan memenuhi kewajipan undang-undang Malaysia.",
+      "Untuk menilai skop projek, menyediakan sebut harga dan melaksanakan kerja yang dipersetujui.",
+      "Untuk berhubung dengan anda berkaitan perkembangan projek, perundingan, sokongan teknikal dan serahan.",
+      "Untuk menjaga keselamatan laman web, menyekat serangan automatik dan mematuhi undang-undang Malaysia.",
       "Saya tidak menjual, menyewakan atau berkongsi data anda dengan pengiklan pihak ketiga.",
     ] },
     { title: "3. Perkhidmatan Pihak Ketiga", content: [
-      "Pengehosan dan infrastruktur: Vercel dan Railway untuk pengehosan awan.",
-      "Komunikasi: WhatsApp dan Google Workspace untuk urusan dengan pelanggan.",
-      "Analitik: Google Analytics 4 untuk memahami penggunaan dan prestasi laman.",
-      "Pembayaran: bagi projek e-dagang, transaksi dikendalikan oleh penyedia pembayaran seperti Stripe, ToyyibPay atau gerbang FPX. Butiran kad tidak disimpan pada pelayan laman ini.",
+      "Hosting dan infrastruktur: Vercel dan Railway untuk hosting awan.",
+      "Komunikasi: WhatsApp dan Google Workspace untuk berurusan dengan pelanggan.",
+      "Analitik: Google Analytics 4 untuk memahami penggunaan dan prestasi laman web.",
+      "Pembayaran: bagi projek e-dagang, transaksi dikendalikan oleh penyedia pembayaran seperti Stripe, ToyyibPay atau gerbang FPX. Butiran kad tidak disimpan di server laman web ini.",
     ] },
     { title: "4. Keselamatan dan Tempoh Penyimpanan Data", content: [
-      "Saya menggunakan langkah perlindungan seperti penyulitan SSL/TLS, pengepala keselamatan HTTP dan had kadar untuk mengurangkan risiko akses tanpa kebenaran, kehilangan atau perubahan data.",
-      "Data pelanggan dan aset projek disimpan hanya selama diperlukan untuk menyiapkan kerja, memenuhi tempoh jaminan dan mematuhi kewajipan penyimpanan rekod yang berkaitan.",
+      "Saya menggunakan langkah keselamatan seperti penyulitan SSL/TLS, header keselamatan HTTP dan had kadar permintaan untuk mengurangkan risiko akses tanpa kebenaran, kehilangan atau pengubahan data.",
+      "Data pelanggan dan bahan projek hanya disimpan selama yang diperlukan untuk menyiapkan kerja, memenuhi tempoh sokongan dan mematuhi keperluan penyimpanan rekod yang berkaitan.",
     ] },
     { title: "5. Hak Anda dan Cara Menghubungi Saya", content: [
-      "Anda boleh menghubungi saya untuk meminta akses kepada data peribadi yang saya simpan, membetulkannya atau bertanya tentang pemadamannya, tertakluk pada undang-undang yang terpakai.",
-      "Untuk pertanyaan privasi atau permintaan berkaitan data, e-mel zakrulabd@gmail.com atau hubungi WhatsApp di +6010-255 1527.",
+      "Anda boleh menghubungi saya untuk meminta akses kepada data peribadi anda yang saya simpan, membetulkannya atau meminta ia dipadam, tertakluk kepada undang-undang yang berkuat kuasa.",
+      "Untuk sebarang pertanyaan berkaitan privasi atau data, e-mel zakrulabd@gmail.com atau hubungi WhatsApp di +6010-255 1527.",
     ] },
   ],
 };
 
 export const termsMs = {
   badge: "TERMA PERKHIDMATAN", titleA: "Terma dan ", titleHl: "Syarat", lastUpdated: "Tarikh kuat kuasa: Ogos 2026",
-  intro: "Terma ini mengawal khidmat pembangunan web bebas, perisian tersuai dan perundingan SEO teknikal yang disediakan oleh Muhamad Zaqrul melalui Zakrul kepada pelanggan.",
+  intro: "Terma ini terpakai bagi perkhidmatan pembangunan web, perisian tersuai dan perundingan SEO teknikal yang disediakan oleh Muhamad Zaqrul melalui Zakrul kepada pelanggan.",
   sections: [
     { title: "1. Skop Kerja dan Sebut Harga", content: [
-      "Setiap projek bermula dengan skop kerja, spesifikasi teknikal dan sebut harga tetap yang dipersetujui secara bertulis melalui invois, cadangan atau pengesahan WhatsApp atau e-mel.",
+      "Setiap projek bermula dengan skop kerja, spesifikasi teknikal dan sebut harga tetap yang dipersetujui secara bertulis, sama ada melalui invois, cadangan projek atau pengesahan melalui WhatsApp atau e-mel.",
       "Fungsi tambahan, pindaan melebihi jumlah yang dipersetujui atau integrasi pihak ketiga di luar skop asal akan diberi sebut harga berasingan sebagai perubahan skop.",
     ] },
-    { title: "2. Syarat Bayaran dan Pencapaian Projek", content: [
-      "Laman Permulaan dan Profesional: lazimnya deposit 50% sebelum kerja bermula, dengan baki 50% selepas projek siap dan diluluskan pada persekitaran semakan, sebelum serahan ke laman langsung.",
-      "Sistem tersuai dan projek lebih besar: bayaran mengikut peringkat seperti yang dinyatakan dalam sebut harga projek.",
-      "Invois perlu dibayar melalui pindahan bank atau FPX dalam tempoh tujuh hari selepas dikeluarkan.",
+    { title: "2. Terma Bayaran", content: [
+      "Laman Permulaan dan Laman Profesional: deposit sebanyak 50% lazimnya perlu dibayar sebelum kerja bermula. Pelanggan yang mempunyai kekangan kewangan boleh membayar deposit sebanyak 35%. Baki bayaran perlu dijelaskan selepas projek siap dan diluluskan di persekitaran ujian (staging), sebelum laman web dilancarkan.",
+      "Sistem tersuai dan projek berskala besar: bayaran dibuat mengikut peringkat seperti yang dinyatakan dalam sebut harga projek.",
+      "Invois perlu dijelaskan melalui pindahan bank atau FPX dalam tempoh tujuh hari dari tarikh invois dikeluarkan.",
     ] },
-    { title: "3. Tanggungjawab Pelanggan dan Bahan", content: [
-      "Pelanggan menyediakan bahan jenama, kandungan, akses akaun dan maklum balas yang diperlukan untuk mengekalkan jadual projek.",
-      "Pelanggan mengesahkan bahawa semua bahan, media dan kandungan yang dibekalkan tidak melanggar harta intelek atau hak cipta pihak lain.",
+    { title: "3. Tanggungjawab Pelanggan", content: [
+      "Pelanggan perlu menyediakan bahan jenama, kandungan, akses akaun dan maklum balas yang diperlukan supaya projek dapat disiapkan mengikut jadual.",
+      "Pelanggan mengesahkan bahawa semua bahan, media dan kandungan yang dibekalkan tidak melanggar hak cipta atau harta intelek pihak lain.",
     ] },
     { title: "4. Harta Intelek dan Pemilikan Kod", content: [
-      "Selepas bayaran akhir diterima, pemilikan penuh kod laman tersuai, struktur pangkalan data dan aset kreatif yang diserahkan berpindah kepada pelanggan.",
-      "Pustaka dan rangka kerja sumber terbuka seperti Next.js, React, Laravel dan WordPress kekal tertakluk pada lesen masing-masing.",
-      "Saya boleh memaparkan projek yang siap dalam portfolio dan kajian kes kecuali perjanjian kerahsiaan bertulis menyatakan sebaliknya.",
+      "Produk akhir dan kod sumber hanya akan diserahkan setelah pelanggan mengesahkan bahawa mereka berpuas hati dan bayaran penuh telah diterima, sebelum laman web dilancarkan. Setelah bayaran penuh diterima, pemilikan kod laman web tersuai, struktur pangkalan data dan aset kreatif yang diserahkan akan dipindahkan kepada pelanggan.",
+      "Pustaka dan rangka kerja sumber terbuka seperti Next.js, React, Laravel dan WordPress kekal tertakluk kepada lesen masing-masing.",
+      "Saya berhak memaparkan projek yang telah siap dalam portfolio dan kajian kes, kecuali terdapat perjanjian kerahsiaan bertulis yang menyatakan sebaliknya.",
     ] },
     { title: "5. Jaminan, Serahan dan Sokongan", content: [
-      "Setiap binaan tersuai disertakan jaminan 30 hari selepas pelancaran bagi pepijat dan kerosakan fungsi dalam skop asal.",
-      "Pengurusan pelayan berterusan, perubahan besar pada API pihak ketiga dan kemas kini kandungan selepas tempoh jaminan boleh diurus melalui perjanjian penyelenggaraan yang fleksibel.",
+      "Setiap pakej termasuk sokongan selepas pelancaran bagi pepijat dan kerosakan fungsi dalam skop asal, iaitu 2 minggu untuk Laman Permulaan, 30 hari untuk Laman Profesional, dan 60 hingga 90 hari untuk Sistem Web Lanjutan, seperti yang dinyatakan dalam sebut harga. Jumlah pindaan yang termasuk ialah 3, 5 dan 20 kali mengikut pakej.",
+      "Pengurusan server berterusan, perubahan besar pada API pihak ketiga dan kemas kini kandungan selepas tempoh sokongan boleh diuruskan melalui perjanjian penyelenggaraan yang fleksibel.",
     ] },
     { title: "6. Liabiliti dan Undang-Undang yang Terpakai", content: [
-      "Amalan baik keselamatan dan prestasi diikuti sepanjang projek, tetapi saya tidak bertanggungjawab atas kerugian tidak langsung, gangguan pengehosan pihak ketiga atau gangguan API di luar kawalan saya.",
-      "Terma ini tertakluk pada undang-undang Malaysia. Sebarang pertikaian akan cuba diselesaikan terlebih dahulu melalui perbincangan langsung dengan niat baik.",
+      "Amalan terbaik dari segi keselamatan dan prestasi dipatuhi sepanjang projek. Walau bagaimanapun, saya tidak bertanggungjawab atas kerugian tidak langsung, gangguan hosting pihak ketiga atau gangguan API yang di luar kawalan saya.",
+      "Terma ini tertakluk kepada undang-undang Malaysia. Sebarang pertikaian akan diselesaikan terlebih dahulu melalui perbincangan secara baik.",
     ] },
   ],
 };

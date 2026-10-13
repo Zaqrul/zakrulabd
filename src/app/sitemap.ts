@@ -1,4 +1,6 @@
 import type { MetadataRoute } from "next";
+import { posts } from "@/lib/posts";
+import { postPaths } from "@/lib/posts-ms";
 import { SITE_URL } from "@/lib/site";
 
 /* lastModified used to be new Date(), which restamped every page on every
@@ -136,32 +138,25 @@ const routes = [
       },
     },
   },
-  {
-    path: "/notes/the-kuih-maker-who-had-no-time-to-market",
-    lastModified: "2026-09-13",
-    changeFrequency: "yearly" as const,
-    priority: 0.6,
-    alternates: {
+  /* One pair per article, generated so a new post cannot be left out. Each
+     takes the article's own date, which is bumped when it is rewritten. */
+  ...posts.flatMap((post) => {
+    const paths = postPaths(post);
+    const alternates = {
       languages: {
-        en: `${SITE_URL}/notes/the-kuih-maker-who-had-no-time-to-market`,
-        ms: `${SITE_URL}/ms/notes/sri-tanduk`,
-        "x-default": `${SITE_URL}/notes/the-kuih-maker-who-had-no-time-to-market`,
+        en: `${SITE_URL}${paths.en}`,
+        ms: `${SITE_URL}${paths.ms}`,
+        "x-default": `${SITE_URL}${paths.en}`,
       },
-    },
-  },
-  {
-    path: "/ms/notes/sri-tanduk",
-    lastModified: "2026-09-13",
-    changeFrequency: "yearly" as const,
-    priority: 0.6,
-    alternates: {
-      languages: {
-        en: `${SITE_URL}/notes/the-kuih-maker-who-had-no-time-to-market`,
-        ms: `${SITE_URL}/ms/notes/sri-tanduk`,
-        "x-default": `${SITE_URL}/notes/the-kuih-maker-who-had-no-time-to-market`,
-      },
-    },
-  },
+    };
+    return [paths.en, paths.ms].map((path) => ({
+      path,
+      lastModified: post.date,
+      changeFrequency: "yearly" as const,
+      priority: 0.6,
+      alternates,
+    }));
+  }),
   {
     path: "/privacy",
     lastModified: "2026-09-13",

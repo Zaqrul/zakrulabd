@@ -10,7 +10,7 @@ import { ShareLinks } from "@/components/share-links";
 import { content } from "@/lib/content";
 import { contentMs } from "@/lib/content-ms";
 import { getPost, postSlug, posts, type Block } from "@/lib/posts";
-import { postsMs } from "@/lib/posts-ms";
+import { getPostMs, postPaths } from "@/lib/posts-ms";
 import { ID } from "@/lib/structured-data";
 import { SITE_URL, url } from "@/lib/site";
 import { tech } from "@/lib/tech";
@@ -40,7 +40,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
       canonical: `/notes/${postSlug(post)}`,
       languages: {
         en: url(`/notes/${postSlug(post)}`),
-        ms: url("/ms/notes/sri-tanduk"),
+        ms: url(postPaths(post).ms),
         "x-default": url(`/notes/${postSlug(post)}`),
       },
     },
@@ -134,10 +134,12 @@ function Blocks({ blocks }: { blocks: Block[] }) {
 }
 
 export default async function PostPage({ params, locale = "en" }: { params: Promise<{ slug: string }>; locale?: "en" | "ms" }) {
-  const post = locale === "ms" ? postsMs[0] : getPost((await params).slug);
+  const slug = (await params).slug;
+  const post = locale === "ms" ? getPostMs(slug) : getPost(slug);
   if (!post) notFound();
   const t = locale === "ms" ? contentMs : content;
-  const articlePath = locale === "ms" ? "/ms/notes/sri-tanduk" : `/notes/${postSlug(post)}`;
+  const paths = postPaths(post);
+  const articlePath = locale === "ms" ? paths.ms : paths.en;
   const root = locale === "ms" ? "/ms" : "";
 
   /* Article, tied by author and publisher to the same Person and business nodes
@@ -168,7 +170,7 @@ export default async function PostPage({ params, locale = "en" }: { params: Prom
   };
 
   return (
-    <PostShell locale={locale} alternatePath={locale === "ms" ? "/notes/the-kuih-maker-who-had-no-time-to-market" : "/ms/notes/sri-tanduk"} back={{ href: `${root}/notes`, label: t.notes.all }}>
+    <PostShell locale={locale} alternatePath={locale === "ms" ? paths.en : paths.ms} back={{ href: `${root}/notes`, label: t.notes.all }}>
       <ReadingProgress targetId="article-body" />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }} />
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }} />
@@ -242,9 +244,9 @@ export default async function PostPage({ params, locale = "en" }: { params: Prom
         </ReadComplete>
 
         <div className="mt-8 flex flex-col gap-4 bg-amber-300/20 p-6 md:p-8">
-          <h2 className="font-display text-lg font-bold text-navy">{locale === "ms" ? "Perniagaan anda menghadapi keadaan yang sama?" : "Got a business in the same spot?"}</h2>
+          <h2 className="font-display text-lg font-bold text-navy">{post.cta?.title ?? (locale === "ms" ? "Perniagaan anda menghadapi keadaan yang sama?" : "Got a business in the same spot?")}</h2>
           <p className="max-w-2xl text-sm leading-relaxed text-body">
-            {locale === "ms" ? "Jika anda sibuk menghasilkan produk hingga pemasaran sering tertangguh, ceritakan apa dan di mana anda menjualnya. Saya akan berterus terang sama ada laman web sesuai untuk anda." : "If you are making the product and the marketing keeps getting pushed to tomorrow, tell me what you sell and where you sell it. I will tell you straight whether a website is what you need."}
+            {post.cta?.body ?? (locale === "ms" ? "Jika anda sibuk menghasilkan produk hingga pemasaran sering tertangguh, ceritakan apa dan di mana anda menjualnya. Saya akan berterus terang sama ada laman web sesuai untuk anda." : "If you are making the product and the marketing keeps getting pushed to tomorrow, tell me what you sell and where you sell it. I will tell you straight whether a website is what you need.")}
           </p>
           <div className="flex flex-wrap gap-3">
             <a

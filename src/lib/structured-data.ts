@@ -117,12 +117,19 @@ export const structuredData = {
       hasOfferCatalog: {
         "@type": "OfferCatalog",
         name: "Web development packages",
-        /* No price fields: the site quotes each project individually, and inventing
-           a figure here would misstate the offer. */
-        itemListElement: content.pricing.tiers.map((tier) => ({
+        /* Starter is a fixed price and Professional a floor; Advanced is quoted per
+           project, so it carries no price rather than an invented one. */
+        itemListElement: content.pricing.tiers.map((tier, i) => ({
           "@type": "Offer",
           name: tier.name,
           description: tier.description,
+          ...(tier.priceAmount !== null && {
+            priceSpecification: {
+              "@type": "PriceSpecification",
+              priceCurrency: "MYR",
+              ...(i === 0 ? { price: tier.priceAmount } : { minPrice: tier.priceAmount }),
+            },
+          }),
           itemOffered: {
             "@type": "Service",
             name: tier.name,

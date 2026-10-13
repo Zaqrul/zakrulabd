@@ -23,7 +23,7 @@ export type Post = {
   slugOverride?: string;
   /* Names the drawing used as the card thumbnail. A key rather than a component
      keeps this file plain data, and the card decides how to render it. */
-  art: "chef" | "shop" | "chat";
+  art: "chef" | "shop" | "chat" | "security";
   /* Shown on the index card and used as the meta description, so it has to read
      as a sentence rather than as a keyword list. */
   excerpt: string;
@@ -32,10 +32,119 @@ export type Post = {
   readingTime: string;
   tag: string;
   author: string;
+  /* The closing box under the article. Left unset, the page uses its default
+     pitch, which was written for the case studies. */
+  cta?: { title: string; body: string };
   body: Block[];
 };
 
 export const posts: Post[] = [
+  {
+    title: "The security holes vibe coding leaves behind",
+    art: "security",
+    excerpt:
+      "AI tools can turn an idea into a working app in a weekend. What they do not do is ask who else can use it. These are the security gaps that show up when someone with no technical background ships an AI-built app.",
+    description:
+      "Common security problems in apps built with AI coding tools by non-developers: exposed API keys, open databases, unprotected admin pages, and unlimited endpoints, plus a checklist before launch.",
+    date: "2026-10-13",
+    readingTime: "7 min read",
+    tag: "SECURITY",
+    author: "Muhamad Zaqrul",
+    cta: {
+      title: "Built your app with AI and not sure it is safe?",
+      body: "Send me the link or the repository. I will go through the points in this article and tell you plainly what needs fixing before you launch, or before you take more users.",
+    },
+    body: [
+      {
+        type: "p",
+        text: "Vibe coding means describing what you want to an AI tool and letting it write the code. You do not read the code. You run it, see if it works, and ask for the next change. For a lot of people, it is the first time they can build software without hiring anyone.",
+      },
+      {
+        type: "p",
+        text: "I think that is a good thing. A business owner who can prototype their own booking form or internal dashboard understands their problem better than any developer they could brief. The trouble starts when that prototype goes live with real customers, real data, and real money behind it.",
+      },
+      { type: "h2", text: "Working is not the same as safe" },
+      {
+        type: "p",
+        text: "When you test an app, you test it as yourself. You log in, click the buttons, and check that the right thing happens. An attacker does none of that. They skip the buttons and talk to your server directly, send data your form would never send, and open pages that are not linked anywhere.",
+      },
+      {
+        type: "p",
+        text: "AI tools build what you ask for. If you ask for a page that shows a customer their orders, you get one. Unless you also ask how it stops one customer from reading another customer's orders, that part is often missing, and nothing on screen tells you.",
+      },
+      { type: "quote", text: "The app does what you asked. Nobody asked who else is allowed to use it." },
+      { type: "h2", text: "1. Secret keys sitting in the browser" },
+      {
+        type: "p",
+        text: "Most apps talk to paid services: OpenAI, Stripe, an email provider, a database. Each one gives you a secret key. If that key is placed in front-end code, anyone can open the browser's developer tools and copy it. With an AI key, they run their own workload on your bill. With a payment or database key, the damage is worse.",
+      },
+      {
+        type: "p",
+        text: "The same goes for a .env file pushed to a public GitHub repository. Bots scan GitHub for leaked keys constantly, and a key can be abused within minutes of being pushed. Secret keys belong on the server only, and any key that has ever been exposed should be revoked and replaced, not just deleted from the code.",
+      },
+      { type: "h2", text: "2. A database anyone can read" },
+      {
+        type: "p",
+        text: "Supabase and Firebase are popular with AI tools because the app can talk to the database straight from the browser. That design is safe only when access rules are switched on: Row Level Security in Supabase, Security Rules in Firebase. Without them, the public key shipped in your app can read, and sometimes change or delete, every row in the table.",
+      },
+      {
+        type: "p",
+        text: "This is one of the most common problems in AI-built apps, because the app works perfectly with the rules off. Customer names, phone numbers, addresses, and orders end up readable by anyone who knows where to look. In Malaysia, that is also a PDPA problem, not just a technical one.",
+      },
+      { type: "h2", text: "3. Admin pages that only hide the button" },
+      {
+        type: "p",
+        text: "A common pattern: the app checks whether you are an admin, and if not, hides the admin menu. But the admin page itself, and the server functions behind it, never check anything. Anyone who types the address or calls the function directly gets in.",
+      },
+      {
+        type: "p",
+        text: "Every action that reads or changes data must check on the server who is asking and whether they are allowed. Hiding a button is decoration, not security.",
+      },
+      { type: "h2", text: "4. Trusting whatever the form sends" },
+      {
+        type: "p",
+        text: "Checks in the browser, like a required field or a maximum length, are there to help honest users. They do nothing against someone sending requests directly. If the server does not check the data again, it can end up stored, displayed to other users, or passed into a database query as it is. That is how injection and cross-site scripting happen. File uploads are a related risk: an upload that accepts any file type can be used to host malware on your domain.",
+      },
+      { type: "h2", text: "5. No limits on anything that costs money" },
+      {
+        type: "p",
+        text: "A contact form that sends an email, a chatbot that calls an AI model, a sign-up that sends an SMS code. Each request costs a little. Without rate limits, a single script can send thousands of requests an hour, and you find out when the bill arrives or your email provider suspends the account for spam.",
+      },
+      { type: "h2", text: "6. Packages nobody checked" },
+      {
+        type: "p",
+        text: "AI tools install packages freely, and sometimes suggest package names that do not exist. Attackers register those invented names and fill them with malicious code, waiting for the next AI to suggest them. Others are real but years out of date, with known vulnerabilities. If nobody reads the list of what was installed, nobody knows what is running.",
+      },
+      { type: "h2", text: "Asking the AI if it is secure is not a check" },
+      {
+        type: "p",
+        text: "It is tempting to finish with \"make sure this is secure\" and trust the answer. The AI will usually say yes, and may add a few improvements. But it is checking its own work, with the same blind spots it had when it wrote it, and it cannot see your database settings, your hosting, or what you pasted into the dashboard. A review needs someone, or something, that looks at the running app from the outside.",
+      },
+      { type: "h2", text: "A short checklist before you launch" },
+      {
+        type: "ul",
+        items: [
+          { text: "No secret keys in front-end code or in the GitHub repository. Any key that was exposed has been revoked and replaced." },
+          { text: "Database access rules are on, and you have tested that one user cannot read another user's data." },
+          { text: "Every admin page and server function checks the user's role on the server, not only in the menu." },
+          { text: "The server validates all input again, including file type and size for uploads." },
+          { text: "Forms, AI features, and anything that sends email or SMS have rate limits and a spending cap." },
+          { text: "Dependencies are reviewed, up to date, and every package name is one you can find on its official page." },
+          { text: "Error messages shown to users do not reveal code, file paths, or database details." },
+          { text: "There is a backup of the database, and you know how to restore it." },
+        ],
+      },
+      { type: "h2", text: "When to bring in someone technical" },
+      {
+        type: "p",
+        text: "You do not need a developer to build a prototype, test an idea, or make an internal tool that only you use. You do need a technical review once the app holds customer data, takes payments, or runs on a paid API that someone else could trigger.",
+      },
+      {
+        type: "p",
+        text: "A review is usually much cheaper than a rebuild, and far cheaper than a breach. Keep using AI to build. Just have someone check the parts it does not think about before real users arrive.",
+      },
+    ],
+  },
   {
     title: "The kuih maker who had no time to market",
     art: "chef",
@@ -178,7 +287,15 @@ export const posts: Post[] = [
       { type: "h2", text: "What happened after launch" },
       {
         type: "p",
-        text: "The site started ranking on Google after two or three months. In that early stretch it was drawing somewhere between one and two hundred visitors, from roughly five hundred impressions in Search Console.",
+        text: "From July to September 2026, Search Console recorded 3,260 impressions and 75 clicks from Google, at an average position of 6.6 and a click-through rate of 2.3%. Most of that period was steady at around 20 to 40 impressions a day. In the second half of September, impressions climbed past 100 a day as more pages started ranking.",
+      },
+      {
+        type: "image",
+        src: "/notes/sri-tanduk-search-console.webp",
+        alt: "Google Search Console performance for Sri Tanduk from July to September 2026: 75 clicks, 3.26K impressions, 2.3% average CTR, average position 6.6",
+        width: 1946,
+        height: 650,
+        caption: "Google Search Console, July to September 2026. Impressions in purple, clicks in blue.",
       },
       {
         type: "p",

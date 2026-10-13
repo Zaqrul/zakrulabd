@@ -7,10 +7,10 @@ export const content = {
     cta: "Get a Free Quote",
   },
   hero: {
-    titleA: "Websites Built to",
-    titleHl1: "Perform",
-    titleB: " — and Easy to ",
-    titleHl2: "Find on Google",
+    titleHl1: "Web Developer",
+    titleB: " in Malaysia",
+    titleSub: "Websites and Systems That Bring You ",
+    titleHl2: "Customers",
     body: "I build websites and custom web systems with React, Laravel, and WordPress, then set up the SEO, analytics, and automation that bring people to them. You deal with me directly, from the first conversation through to launch.",
     ctaPrimary: "Get a Free Quote",
     ctaSecondary: "See Packages",
@@ -147,7 +147,7 @@ export const content = {
     headingHl: "Clients",
     headingB: " I’ve Worked With",
     sub: "Businesses across Malaysia I’ve built, fixed, and launched for. Every project was scoped and delivered by me directly.",
-    items: [{ name: "Sri Tanduk Enterprise" }, { name: "Haikai Tech" }, { name: "KNZ Engineering" }],
+    items: [{ name: "Sri Tanduk Enterprise" }, { name: "Haikai Tech" }, { name: "KNZ Engineering" }, { name: "Law Practice of Junny Erfisyahry" }],
     next: "You might be next",
     /* One personal site among the businesses. It sits under the line rather
        than in the logo grid because it is a person, not a company, and a
@@ -189,12 +189,15 @@ export const content = {
     headingA: "Straightforward ",
     headingHl: "Packages",
     headingB: "",
-    sub: "Every project is quoted individually. Pick the package closest to what you need and message me for a fixed price.",
+    sub: "Starter is RM500. Professional starts from RM1,000, and the final price depends on scope. Pick the package closest to what you need and message me for a fixed quote.",
     badge: "RECOMMENDED",
     tiers: [
       {
         name: "Starter Website",
         tagline: "For getting online quickly",
+        price: "RM500*",
+        priceNote: "*Final price depends on where your website is hosted.",
+        priceAmount: 500,
         description:
           "Suited to personal brands, freelancers, and portfolios that need a clean, credible presence online without a long build.",
         cta: "Ask About Starter",
@@ -205,11 +208,14 @@ export const content = {
           "Essential on-page SEO",
           "Domain and hosting setup",
           "Launch and basic edit guide",
+          "2 weeks free support and 3 revisions",
         ],
       },
       {
         name: "Professional Website",
         tagline: "For established businesses",
+        price: "From RM1,000",
+        priceAmount: 1000,
         description:
           "Suited to SMEs, service businesses, and consultants who need a site customers can trust, understand, and enquire through.",
         cta: "Ask About Professional",
@@ -221,11 +227,14 @@ export const content = {
           "Google Analytics 4 and conversion tracking",
           "Page speed and Core Web Vitals tuning",
           "Handover walkthrough and training video",
+          "30 days support and 5 revisions",
         ],
       },
       {
         name: "Advanced Web System",
         tagline: "For custom systems and integrations",
+        price: "Custom quote",
+        priceAmount: null,
         description:
           "For businesses that need a custom web application, third-party integrations, automated lead handling, and advanced technical SEO.",
         cta: "Let’s Discuss",
@@ -236,7 +245,8 @@ export const content = {
           "Live chat and automated lead routing",
           "Workflow automation and webhooks",
           "Advanced technical SEO and structured data",
-          "Security hardening and ongoing support",
+          "Security hardening",
+          "60 to 90 days support and 20 revisions",
         ],
       },
     ],
@@ -341,7 +351,7 @@ export const content = {
           rows: [
             {
               what: "Domain, hosting, and going live",
-              note: "Vercel, Railway, Hostinger, or a local host",
+              note: "Vercel, Railway, ServerFreak, Exabyte, or others",
               marks: ["full", "full", "full"],
             },
             {
@@ -404,6 +414,17 @@ export const content = {
     caseTitle: "SEO, GA4, and Live Chat Overhaul for a Cancer Treatment Centre",
     caseBody:
       "I led the technical SEO, the migration to Google Analytics 4, and the live chat setup for a Malaysian cancer-care hospital, making it easier for patients to find the right treatment and reach the right people.",
+    smeBadge: "SME / SRI TANDUK ENTERPRISE",
+    smeTitle: "3 Months on Google for a Kuih Business in Ipoh",
+    smeBody:
+      "From July to September 2026, the site I built for Sri Tanduk recorded 3,260 impressions and 75 clicks from Google, at an average position of 6.6. Impressions passed 100 a day by late September.",
+    smeStats: [
+      { value: "3.26K", label: "Impressions" },
+      { value: "75", label: "Clicks" },
+      { value: "6.6", label: "Avg. position" },
+    ],
+    smeImageAlt: "Google Search Console performance for Sri Tanduk from July to September 2026",
+    smeLink: "Read the case study",
   },
   tech: { heading: "BUILT WITH" },
   testimonials: {
@@ -481,23 +502,23 @@ export const content = {
         items: [
           {
             q: "I am not sure which package I need. What now?",
-            a: "Message me with what your business does and what you want people to do on the site. I will tell you which package covers it, and I will say so plainly if a smaller one is enough.",
+            a: "Tell me what your business does and what you want visitors to do. I will recommend a package, including a smaller one if that is enough.",
           },
           {
             q: "Can I start with Starter and upgrade later?",
-            a: "Yes. I build every site on the same modern stack, so a Starter site can grow into a Professional one, or gain a booking or store system later, without starting from zero.",
+            a: "Yes. A Starter site can be upgraded to Professional, or have a booking or store system added later, without a rebuild.",
           },
           {
             q: "My project does not fit any of the three. Is that a problem?",
-            a: "No. The packages are a starting point for the conversation, not a menu I refuse to leave. Custom scopes are quoted the same way as anything else.",
+            a: "No. Message me with what you need and I will quote it based on the work involved.",
           },
           {
             q: "Do you build on WordPress or custom code?",
-            a: "Whichever fits the job. WordPress when your team needs to edit content daily, custom Next.js when speed, integrations, or a real system matter more. I will explain the trade-off before we decide.",
+            a: "It depends on the project. WordPress if you edit content often. Next.js if you need speed, integrations, or a custom system. I will explain which one fits before we start.",
           },
           {
             q: "Can you fix or redesign the website I already have?",
-            a: "Yes, and it is a common request. Broken, slow, hacked, or abandoned by the previous developer, I take it over, and you keep whatever is still worth keeping.",
+            a: "Yes. I can take over a site that is broken, slow, hacked, or no longer maintained, and keep the parts that still work.",
           },
         ],
       },
@@ -505,20 +526,24 @@ export const content = {
         label: "Pricing and payment",
         items: [
           {
-            q: "Why are there no prices on the site?",
-            a: "Because a five-page company profile and a five-page site with a booking system are not the same job. I quote a fixed price per project once I know the scope, so you never get a surprise invoice.",
+            q: "How much does a website cost?",
+            a: "Starter is RM500, depending on where the site is hosted. Professional starts from RM1,000. Advanced systems are quoted per project. You get a fixed price before work starts.",
           },
           {
             q: "How do I get a quote?",
-            a: "Message me on WhatsApp with a short description of what you need. Most quotes go out within a day or two, after one call or a few messages to pin down the scope.",
+            a: "Send me a short description on WhatsApp. You usually get a quote within one or two days.",
           },
           {
             q: "How is payment usually split?",
-            a: "A deposit to start and the balance on completion, before handover. Larger systems are split into milestones so you pay as parts get delivered, not all upfront.",
+            a: "A 50% deposit before work starts. If you have financial constraints, a 35% deposit is accepted. The balance is paid once you are satisfied with the site, before it goes live. Larger systems are paid in milestones.",
           },
           {
             q: "Are hosting and domain included in the quote?",
-            a: "The setup work is. The domain and hosting subscriptions are billed by the provider, and I keep them in your name so you own them, not me.",
+            a: "The setup work is included. Domain and hosting fees are paid to the provider, registered in your name. I recommend your own custom domain (for example, yourbusiness.com) rather than a free subdomain. You need it to set up Google Search Console, Google Analytics, and Google Business properly.",
+          },
+          {
+            q: "Where will my website be hosted?",
+            a: "It depends on what suits you and your project. I usually use Vercel, Railway, Serverfreak, or Exabyte, among others. Hosting fees are normally paid by the client.",
           },
         ],
       },
@@ -527,23 +552,23 @@ export const content = {
         items: [
           {
             q: "How long does a website take?",
-            a: "A Starter site is usually days rather than weeks. A Professional site typically takes a few weeks, and a custom system depends on how much it has to do. You get a real date with the quote.",
+            a: "Starter: a few days. Professional: a few weeks. Custom systems depend on the features. The quote includes a target date.",
           },
           {
             q: "What do you need from me before you start?",
-            a: "Your logo if you have one, whatever content and photos exist, and access to your domain. If you have none of that, tell me early and we plan around it.",
+            a: "Your logo, any content and photos you have, and access to your domain. If you do not have them yet, tell me.",
           },
           {
             q: "I do not have content or photos yet. Can we still start?",
-            a: "Yes. I structure the pages first and mark what is missing, so you know exactly what to write or shoot. I will not leave you guessing at a blank page.",
+            a: "Yes. I set up the page structure and list the text and photos still needed.",
           },
           {
             q: "How many rounds of changes do I get?",
-            a: "Enough to get it right. Revisions during the build are part of the job. What sits outside is new scope added after we agreed the plan, and I will always say so before doing it.",
+            a: "Starter: 3 revisions. Professional: 5 revisions. Advanced: 20 revisions. Extra revisions and new features outside the scope are quoted separately before I do them.",
           },
           {
             q: "Am I dealing with you or with a team?",
-            a: "With me, from the first message to handover. No account manager in between, and nothing passed to someone you have never spoken to.",
+            a: "With me, from the first message to handover.",
           },
         ],
       },
@@ -552,23 +577,23 @@ export const content = {
         items: [
           {
             q: "Do I own the website when it is done?",
-            a: "Yes. The domain, the hosting account, the code, and the content are yours. Nothing is held hostage, and you can move to another developer whenever you want.",
+            a: "Yes, after full payment. The final site and source code are handed over once you are satisfied and the full payment is received, before the site goes live. After that, the domain, hosting account, code, and content are yours, and you can move to another developer at any time.",
           },
           {
             q: "Can I update the site myself afterwards?",
-            a: "Yes. Every project ends with a handover walkthrough covering the parts you will edit. If you would rather not touch it, I can handle updates instead.",
+            a: "Yes. I show you how to edit your site at handover. I can also do the updates for you.",
           },
           {
             q: "What happens if something breaks after launch?",
-            a: "Anything broken that I built gets fixed, no charge. Message me and I will look at it, not send you a ticket number.",
+            a: "If something I built breaks during the support period, I fix it at no charge. Support is 2 weeks for Starter, 30 days for Professional, and 60 to 90 days for Advanced. After that, fixes are covered by a maintenance plan or quoted separately.",
           },
           {
             q: "Will my site rank on Google?",
-            a: "I build the technical side properly so it can rank: clean structure, fast pages, correct metadata, and tracking that shows what works. Ranking itself also depends on your market and content, and I will be honest about that rather than promise page one.",
+            a: "I build the technical foundation: clear structure, fast pages, correct metadata, and tracking. Ranking also depends on your competition and content, so I do not promise page one.",
           },
           {
             q: "Do you offer ongoing maintenance?",
-            a: "Yes, as an ongoing arrangement covering updates, monitoring, backups, and small changes. It is optional, and plenty of clients handle their own site after handover.",
+            a: "Yes, optional. It covers updates, monitoring, backups, and small changes.",
           },
         ],
       },
@@ -745,7 +770,7 @@ export const content = {
       {
         title: "2. Payment Terms & Milestones",
         content: [
-          "Starter and Professional websites: typically a 50% deposit before work begins, and the remaining 50% once the project is complete and approved on staging, before handover to production.",
+          "Starter and Professional websites: typically a 50% deposit before work begins. Clients with financial constraints may pay a 35% deposit instead. The balance is due once the project is complete and approved on staging, before it goes live.",
           "Custom systems and larger engagements: milestone-based payments, structured as set out in the project quotation.",
           "Invoices are payable by bank transfer or FPX within 7 days of issue.",
         ],
@@ -760,7 +785,7 @@ export const content = {
       {
         title: "4. Intellectual Property & Code Ownership",
         content: [
-          "On receipt of final payment, full ownership of the custom website code, database schema, and delivered creative assets transfers to the client.",
+          "The final product and source code are delivered only after the client confirms they are satisfied and full payment is received, before the site goes live. On receipt of full payment, ownership of the custom website code, database schema, and delivered creative assets transfers to the client.",
           "Open-source libraries and frameworks such as Next.js, React, Laravel, and WordPress remain governed by their own licences.",
           "I may feature the completed project in my portfolio and case studies unless a written non-disclosure agreement says otherwise.",
         ],
@@ -768,7 +793,7 @@ export const content = {
       {
         title: "5. Warranty, Handover & Support",
         content: [
-          "Every custom build includes a 30-day post-launch warranty covering bugs and functional defects within the original scope.",
+          "Each package includes post-launch support covering bugs and functional defects within the original scope: 2 weeks for Starter, 30 days for Professional, and 60 to 90 days for Advanced, as stated in the quote. Included revisions are 3, 5, and 20 rounds respectively.",
           "Ongoing server management, major third-party API changes, and content updates after the warranty period are available under a flexible maintenance arrangement.",
         ],
       },

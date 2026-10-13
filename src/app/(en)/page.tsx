@@ -20,7 +20,7 @@ import { SiteFooter } from "@/components/site-footer";
 import { TechMarks } from "@/components/tech-marks";
 import { content } from "@/lib/content";
 import { contentMs } from "@/lib/content-ms";
-import { posts } from "@/lib/posts";
+import { postSlug, posts } from "@/lib/posts";
 import { postsMs } from "@/lib/posts-ms";
 import { WHATSAPP_NUMBER, wa, waMessages } from "@/lib/contact";
 import { tech, techMarquee } from "@/lib/tech";
@@ -273,6 +273,8 @@ function PricingCardItem({
   tier: {
     name: string;
     tagline: string;
+    price: string;
+    priceNote?: string;
     description: string;
     cta: string;
     features: readonly string[];
@@ -338,6 +340,13 @@ function PricingCardItem({
           {tier.tagline}
         </p>
         <p
+          className={`mt-3 font-display text-[26px] font-extrabold leading-none ${
+            meta.highlighted ? "text-white" : "text-navy"
+          }`}
+        >
+          {tier.price}
+        </p>
+        <p
           className={`mt-1.5 line-clamp-3 min-h-[60px] text-[13.5px] leading-normal ${
             meta.highlighted ? "text-slate-400" : "text-muted"
           }`}
@@ -377,6 +386,12 @@ function PricingCardItem({
           )
         )}
       </div>
+      {/* Pushed to the card's foot so it reads as small print, not a feature. */}
+      {tier.priceNote && (
+        <p className={`mt-auto pt-2 text-[11.5px] ${meta.highlighted ? "text-slate-400" : "text-muted"}`}>
+          {tier.priceNote}
+        </p>
+      )}
     </div>
   );
 }
@@ -388,6 +403,8 @@ function PricingCards({
   tiers: readonly {
     name: string;
     tagline: string;
+    price: string;
+    priceNote?: string;
     description: string;
     cta: string;
     features: readonly string[];
@@ -547,15 +564,21 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
         <div className="relative z-10 mx-auto grid w-full max-w-shell items-center gap-16 px-6 pb-16 pt-5 md:pb-24 md:pt-8 lg:grid-cols-2 lg:gap-12">
           <div className="flex flex-col items-center gap-6 text-center lg:items-start lg:text-left">
             <h1 className="font-display text-[38px] font-bold leading-[1.2] tracking-tight text-navy md:text-[62px]">
-              {t.hero.titleA}{" "}
               <span className="hl">{t.hero.titleHl1}</span>
-              {t.hero.titleB}
-              <span className="hl">{t.hero.titleHl2}</span>
+              <span className="block">{t.hero.titleB.trim()}</span>
+              {/* The keyword line carries the size; the promise sits under it
+                  smaller, still inside the h1 so search engines read both. */}
+              <span className="mt-3 block text-[24px] font-semibold leading-snug text-body md:text-[34px]">
+                {t.hero.titleSub}
+                <span className="text-navy underline decoration-amber-500 decoration-[5px] underline-offset-[6px] [text-decoration-skip-ink:none]">
+                  {t.hero.titleHl2}
+                </span>
+              </span>
             </h1>
             <div className="w-full max-w-lg pb-12 pt-2 lg:hidden">
               <HeroDemo />
             </div>
-            <p className="max-w-xl text-base leading-relaxed text-body md:text-lg">{t.hero.body}</p>
+            <p className="max-w-xl text-base leading-relaxed text-body">{t.hero.body}</p>
             <div className="mt-2 flex flex-wrap justify-center gap-4 lg:justify-start">
               <PrimaryButton href={wa(waMessages.hero)} variant="primary">
                 {t.hero.ctaPrimary}
@@ -723,6 +746,45 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
               </span>
               <h3 className="font-display text-[19px] font-bold text-white">{t.results.caseTitle}</h3>
               <p className="text-sm leading-relaxed text-slate-300">{t.results.caseBody}</p>
+            </div>
+          </ScrollSlideItem>
+
+          <ScrollSlideItem
+            index={4}
+            className="mx-auto mt-6 grid max-w-4xl grid-cols-1 items-center gap-8 rounded-[18px] border border-white/10 bg-white/5 p-8 md:grid-cols-[1.3fr_1fr]"
+          >
+            <div className="overflow-hidden rounded-2xl bg-white p-2">
+              <Image
+                src="/notes/sri-tanduk-search-console.webp"
+                alt={t.results.smeImageAlt}
+                width={1946}
+                height={650}
+                sizes="(min-width: 768px) 500px, 100vw"
+                className="h-auto w-full"
+              />
+            </div>
+
+            <div className="flex flex-col gap-3.5">
+              <span className="inline-flex w-fit rounded-full bg-amber-500 px-3.5 py-1.5 text-xs font-bold tracking-wide text-navy">
+                {t.results.smeBadge}
+              </span>
+              <h3 className="font-display text-[19px] font-bold text-white">{t.results.smeTitle}</h3>
+              <p className="text-sm leading-relaxed text-slate-300">{t.results.smeBody}</p>
+              <div className="grid grid-cols-3 gap-3">
+                {t.results.smeStats.map((s) => (
+                  <div key={s.label} className="flex flex-col gap-1">
+                    <span className="text-[22px] font-extrabold leading-none text-white">{s.value}</span>
+                    <span className="text-[12px] text-slate-400">{s.label}</span>
+                  </div>
+                ))}
+              </div>
+              <Link
+                href={locale === "ms" ? "/ms/notes/sri-tanduk" : `/notes/${postSlug(posts.find((p) => p.title.startsWith("The kuih maker")) ?? posts[0])}`}
+                className="inline-flex w-fit items-center gap-2 text-sm font-bold text-amber-400 hover:text-amber-300"
+              >
+                {t.results.smeLink}
+                <ArrowRightIcon className="h-4 w-4" />
+              </Link>
             </div>
           </ScrollSlideItem>
         </div>

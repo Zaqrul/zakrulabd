@@ -4,7 +4,8 @@ import { ArrowRightIcon, PlusIcon } from "@/components/icons";
 import { PostArt } from "@/components/post-art";
 import { content as t } from "@/lib/content";
 import { contentMs } from "@/lib/content-ms";
-import { postSlug, type Post } from "@/lib/posts";
+import { type Post } from "@/lib/posts";
+import { postPaths } from "@/lib/posts-ms";
 
 /* Built like the client logo tiles: a white card with the artwork sitting in
    its own square panel on top, then the text underneath. The tile lifts on
@@ -12,7 +13,7 @@ import { postSlug, type Post } from "@/lib/posts";
 export function NoteCard({ post, locale = "en" }: { post: Post; locale?: "en" | "ms" }) {
   return (
     <Link
-      href={locale === "ms" ? "/ms/notes/sri-tanduk" : `/notes/${postSlug(post)}`}
+      href={locale === "ms" ? postPaths(post).ms : postPaths(post).en}
       className="group flex flex-col overflow-hidden rounded-2xl border border-border bg-white transition duration-200 hover:-translate-y-1 hover:border-amber-400/70 hover:shadow-lg hover:shadow-black/5"
     >
       <div className="flex aspect-[4/3] items-center justify-center border-b border-border bg-bg p-6">

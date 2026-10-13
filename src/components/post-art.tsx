@@ -1,4 +1,4 @@
-import { SvgBusinessChat, SvgBusinessShop, SvgChef } from "iblis-react-undraw";
+import { SvgBusinessChat, SvgBusinessShop, SvgChef, SvgSecurityOn } from "iblis-react-undraw";
 import type { Post } from "@/lib/posts";
 
 /* The drawings live here rather than in posts.ts so that file stays plain data.
@@ -8,6 +8,7 @@ const art = {
   chef: SvgChef,
   shop: SvgBusinessShop,
   chat: SvgBusinessChat,
+  security: SvgSecurityOn,
 };
 
 export function PostArt({ art: key, height, className = "" }: { art: Post["art"]; height: number; className?: string }) {

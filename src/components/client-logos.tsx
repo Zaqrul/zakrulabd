@@ -26,6 +26,12 @@ const clientAssets: Record<string, { url: string; logo: string; width: number; h
     width: 643,
     height: 283,
   },
+  "Law Practice of Junny Erfisyahry": {
+    url: "https://lpje.my/",
+    logo: "/clients/lpje.png",
+    width: 900,
+    height: 465,
+  },
 };
 
 export function ClientLogos({ copy = content }: { copy?: typeof content | typeof contentMs }) {
@@ -73,9 +79,10 @@ export function ClientLogos({ copy = content }: { copy?: typeof content | typeof
         </a>
 
         {/* The grid is capped rather than spread across the full 1200px shell:
-            four 150px tiles stretched over that width read as four stray marks
-            with holes between them. Capping it keeps them a group. */}
-        <div className="mx-auto grid max-w-[340px] grid-cols-2 justify-items-center gap-3 sm:max-w-[420px] sm:gap-4 lg:max-w-3xl lg:grid-cols-4">
+            150px tiles stretched over that width read as stray marks with
+            holes between them. Capping it keeps them a group. Five slots (four
+            clients and the invitation) sit in one row on wide screens. */}
+        <div className="mx-auto grid max-w-[340px] grid-cols-2 justify-items-center gap-3 sm:max-w-[500px] sm:grid-cols-3 sm:gap-4 lg:max-w-[830px] lg:grid-cols-5">
           {t.clients.items.map((client) => {
             const asset = clientAssets[client.name];
             if (!asset) return null;
@@ -100,7 +107,7 @@ export function ClientLogos({ copy = content }: { copy?: typeof content | typeof
             );
           })}
 
-          {/* Fills the fourth slot in the row: an open invitation rather than a
+          {/* Fills the last slot in the row: an open invitation rather than a
               client, so it is dashed, carries no logo, and scrolls to contact. */}
           <a
             href="#contact"
