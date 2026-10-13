@@ -1,7 +1,8 @@
 "use client";
 
 import { useState } from "react";
-import { CheckIcon, ChevronDownIcon, ExternalLinkIcon } from "@/components/icons";
+import Link from "next/link";
+import { ArrowRightIcon, CheckIcon, ChevronDownIcon } from "@/components/icons";
 import { TechMarks } from "@/components/tech-marks";
 import { tech, type TechKey } from "@/lib/tech";
 import { content } from "@/lib/content";
@@ -142,25 +143,23 @@ export function WhatCanBuild({ copy = content }: { copy?: typeof content | typeo
             </div>
 
             {/* The one capability on this list that is not a description: the
-                store is built and running, so it links to itself. */}
+                demo store is a working page, so it links to itself. */}
             {/* The address carries the marker rather than the sentence: .hl is
                 the site's emphasis, and the destination is the part worth
                 emphasising. It replaces the brackets it would otherwise sit
                 inside — a marker and a pair of parentheses do the same job, and
                 two of them is one too many. */}
             {current.pill === t.build.storeLink.pill && (
-              <a
+              <Link
                 href={t.build.storeLink.href}
-                target="_blank"
-                rel="noopener noreferrer"
                 className="group mt-1 inline-flex w-fit flex-wrap items-center gap-x-1.5 gap-y-1 text-[12.5px] font-semibold leading-relaxed text-ink"
               >
                 {t.build.storeLink.label}
                 <span className="hl transition-colors group-hover:bg-amber-500">
                   {t.build.storeLink.note}
                 </span>
-                <ExternalLinkIcon className="h-3.5 w-3.5 flex-shrink-0 text-muted transition-colors group-hover:text-navy" />
-              </a>
+                <ArrowRightIcon className="h-3.5 w-3.5 flex-shrink-0 text-muted transition-colors group-hover:text-navy" />
+              </Link>
             )}
           </div>
 
