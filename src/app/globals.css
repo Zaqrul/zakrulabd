@@ -358,6 +358,98 @@ p:has(.hl) {
   animation: product-out 200ms ease-in both;
 }
 
+/* Store showcase: checkout steps slide in from the side they came from. */
+@keyframes step-in-right {
+  from { opacity: 0; transform: translateX(40px); }
+}
+
+@keyframes step-in-left {
+  from { opacity: 0; transform: translateX(-40px); }
+}
+
+/* Store showcase: a coupon that applies. */
+@keyframes coupon-in {
+  from { opacity: 0; transform: scale(0.85); }
+}
+
+@keyframes coupon-shine {
+  0% { opacity: 1; transform: translateX(0) skewX(-12deg); }
+  100% { opacity: 1; transform: translateX(450%) skewX(-12deg); }
+}
+
+@keyframes confetti-burst {
+  0% { opacity: 1; transform: rotate(var(--a)) translateY(0) rotate(0); }
+  100% { opacity: 0; transform: rotate(var(--a)) translateY(calc(var(--d) * -1)) rotate(260deg); }
+}
+
+/* Store showcase: scroll-linked motion. Hero tiles drift at different
+   speeds, the header tightens and gains a shadow once the page moves, and
+   the trust-strip icons act out their line as they come into view. All of
+   it needs scroll-driven animation support and no reduced-motion setting;
+   without either, everything simply sits still. */
+@keyframes store-parallax {
+  to { transform: translateY(calc(var(--speed) * -1)); }
+}
+
+@keyframes store-header-shadow {
+  to { box-shadow: 0 8px 24px -16px rgb(0 0 0 / 0.35); }
+}
+
+@keyframes store-header-tighten {
+  to { padding-block: 0.5rem; }
+}
+
+@keyframes store-drive {
+  from { transform: translateX(-28px); opacity: 0; }
+  70% { transform: translateX(4px); opacity: 1; }
+  to { transform: translateX(0); }
+}
+
+@keyframes store-shield {
+  from { transform: scale(0.4) rotate(-20deg); opacity: 0; }
+  70% { transform: scale(1.15) rotate(6deg); opacity: 1; }
+  to { transform: scale(1) rotate(0); }
+}
+
+@keyframes store-return {
+  from { transform: rotate(0); opacity: 0.2; }
+  to { transform: rotate(-360deg); opacity: 1; }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  @supports (animation-timeline: scroll()) {
+    .store-parallax {
+      animation: store-parallax linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 100vh;
+    }
+
+    .store-header {
+      animation: store-header-shadow linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 120px;
+    }
+
+    .store-header-bar {
+      animation: store-header-tighten linear both;
+      animation-timeline: scroll(root);
+      animation-range: 0 120px;
+    }
+
+    .store-drive,
+    .store-shield,
+    .store-return {
+      animation: linear both;
+      animation-timeline: view();
+      animation-range: entry 30% cover 45%;
+    }
+
+    .store-drive { animation-name: store-drive; }
+    .store-shield { animation-name: store-shield; }
+    .store-return { animation-name: store-return; }
+  }
+}
+
 @keyframes grow-bar {
   from {
     transform: scaleY(0.55);

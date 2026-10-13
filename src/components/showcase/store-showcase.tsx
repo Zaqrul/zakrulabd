@@ -118,6 +118,55 @@ const round2 = (n: number) => Math.round(n * 100) / 100;
 
 const rm = (n: number) => `RM ${n.toFixed(2)}`;
 
+/* Counts from the old figure to the new one, so totals roll rather than jump
+   when the cart, coupon or delivery changes. */
+function RollingAmount({ value, format }: { value: number; format: (n: number) => string }) {
+  const [shown, setShown] = useState(value);
+  const from = useRef(value);
+
+  useEffect(() => {
+    const start = from.current;
+    if (start === value) return;
+    /* Reduced motion still goes through one frame, just with no duration. */
+    const duration = window.matchMedia("(prefers-reduced-motion: reduce)").matches ? 0 : 450;
+    const t0 = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const k = duration ? Math.min(1, (now - t0) / duration) : 1;
+      const eased = 1 - Math.pow(1 - k, 3);
+      const n = start + (value - start) * eased;
+      from.current = n;
+      setShown(n);
+      if (k < 1) raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [value]);
+
+  return <span className="tabular-nums">{format(shown)}</span>;
+}
+
+/* Tilts a product tile towards the mouse and moves a soft glare with it.
+   Mouse only: touch has no hover, and reduced motion opts out. */
+function tilt(e: React.PointerEvent<HTMLDivElement>) {
+  if (e.pointerType !== "mouse" || window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const el = e.currentTarget;
+  const r = el.getBoundingClientRect();
+  const x = (e.clientX - r.left) / r.width;
+  const y = (e.clientY - r.top) / r.height;
+  el.style.setProperty("--ry", `${(x - 0.5) * 12}deg`);
+  el.style.setProperty("--rx", `${(0.5 - y) * 12}deg`);
+  el.style.setProperty("--gx", `${x * 100}%`);
+  el.style.setProperty("--gy", `${y * 100}%`);
+}
+
+function untilt(e: React.PointerEvent<HTMLDivElement>) {
+  e.currentTarget.style.setProperty("--rx", "0deg");
+  e.currentTarget.style.setProperty("--ry", "0deg");
+}
+
+const confettiColors = ["bg-[#c8643b]", "bg-[#d79a2b]", "bg-[#2f6b4f]", "bg-[#5a4a8a]"];
+
 type Flyer = { key: number; product: Product; x: number; y: number; dx: number; dy: number };
 
 const FLYER_SIZE = 72;
@@ -169,7 +218,13 @@ export function StoreShowcase() {
   const [cart, setCart] = useState<Record<string, number>>({ "kopi-ipoh": 1 });
   const [liked, setLiked] = useState<Set<string>>(new Set());
   const [open, setOpen] = useState(false);
-  const [step, setStep] = useState<"cart" | "checkout" | "done">("cart");
+  const [step, setStepNow] = useState<"cart" | "checkout" | "done">("cart");
+  /* Which way the drawer's content slides when the step changes. */
+  const [stepDir, setStepDir] = useState<"none" | "forward" | "back">("none");
+  const setStep = (next: "cart" | "checkout" | "done", dir: "none" | "forward" | "back" = "none") => {
+    setStepDir(dir);
+    setStepNow(next);
+  };
   const [shipping, setShipping] = useState<(typeof delivery)[number]["id"]>("standard");
   const [payment, setPayment] = useState<(typeof payments)[number]["id"]>("fpx");
   const [toast, setToast] = useState<string | null>(null);
@@ -359,8 +414,8 @@ export function StoreShowcase() {
         Free standard delivery on orders above RM {FREE_DELIVERY_FROM} in Peninsular Malaysia
       </div>
 
-      <header className="sticky top-0 z-30 border-b border-[#e8dfd0] bg-[#faf6ef]/90 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center gap-4 px-4 py-3.5 md:gap-8">
+      <header className="store-header sticky top-0 z-30 border-b border-[#e8dfd0] bg-[#faf6ef]/90 backdrop-blur">
+        <div className="store-header-bar mx-auto flex max-w-6xl items-center gap-4 px-4 py-3.5 md:gap-8">
           <span className="font-[family-name:var(--font-store-serif)] text-[22px] font-semibold tracking-tight text-[#1f3a2e]">Serambi</span>
           <nav className="hidden gap-6 text-[14px] font-medium text-[#5a5248] md:flex">
             {categories.slice(1).map((c) => (
@@ -423,7 +478,8 @@ export function StoreShowcase() {
             {[products[0], products[6], products[2], products[7]].map((p, i) => (
               <div
                 key={p.id}
-                className={`flex aspect-square items-center justify-center rounded-3xl ${p.tint} ${i % 2 ? "translate-y-6" : ""}`}
+                style={{ "--speed": `${[40, 90, 70, 120][i]}px` } as CSSProperties}
+                className={`store-parallax flex aspect-square items-center justify-center rounded-3xl ${p.tint} ${i % 2 ? "translate-y-6" : ""}`}
               >
                 <p.Icon aria-hidden className="h-2/5 w-2/5" />
               </div>
@@ -435,12 +491,12 @@ export function StoreShowcase() {
         <section className="border-y border-[#e8dfd0] bg-white/60">
           <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 text-[13.5px] sm:grid-cols-3">
             {[
-              { Icon: PiTruckDuotone, title: "Delivered in 2 to 4 days", body: "Same-day in the Klang Valley" },
-              { Icon: PiShieldCheckDuotone, title: "Secure checkout", body: "FPX, DuitNow QR and cards" },
-              { Icon: PiArrowCounterClockwiseDuotone, title: "Easy returns", body: "Within 14 days of delivery" },
-            ].map(({ Icon, title, body }) => (
+              { Icon: PiTruckDuotone, title: "Delivered in 2 to 4 days", body: "Same-day in the Klang Valley", anim: "store-drive" },
+              { Icon: PiShieldCheckDuotone, title: "Secure checkout", body: "FPX, DuitNow QR and cards", anim: "store-shield" },
+              { Icon: PiArrowCounterClockwiseDuotone, title: "Easy returns", body: "Within 14 days of delivery", anim: "store-return" },
+            ].map(({ Icon, title, body, anim }) => (
               <div key={title} className="flex items-center gap-3">
-                <Icon aria-hidden className="h-7 w-7 flex-shrink-0 text-[#1f3a2e]" />
+                <Icon aria-hidden className={`h-7 w-7 flex-shrink-0 text-[#1f3a2e] ${anim}`} />
                 <div>
                   <p className="font-semibold text-[#2a2620]">{title}</p>
                   <p className="text-[#7a6f60]">{body}</p>
@@ -493,7 +549,15 @@ export function StoreShowcase() {
               {shown.map((p) => (
                 <ViewTransition key={p.id} name={`product-${p.id}`} enter="product-in" exit="product-out">
                   <article className="store-reveal group flex flex-col">
-                    <div className={`relative flex aspect-[4/5] items-center justify-center overflow-hidden rounded-2xl ${p.tint}`}>
+                    <div
+                      onPointerMove={tilt}
+                      onPointerLeave={untilt}
+                      className={`relative flex aspect-[4/5] items-center justify-center overflow-hidden rounded-2xl transition-transform duration-200 ease-out [transform:perspective(800px)_rotateX(var(--rx,0deg))_rotateY(var(--ry,0deg))] ${p.tint}`}
+                    >
+                      <span
+                        aria-hidden
+                        className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_var(--gx,50%)_var(--gy,50%),rgba(255,255,255,0.45),transparent_55%)] opacity-0 transition-opacity duration-200 group-hover:opacity-100"
+                      />
                       <p.Icon aria-hidden className={`h-2/5 w-2/5 ${iconMotion[p.motion]}`} />
                       {p.motion === "steam" && (
                         <span aria-hidden className="pointer-events-none absolute left-[44%] top-[22%] flex -translate-x-1/2 gap-1.5">
@@ -672,114 +736,141 @@ export function StoreShowcase() {
             </div>
           ) : (
             <>
-              <div className="flex-1 overflow-y-auto px-5 py-4">
-                {step === "cart" ? (
-                  <>
-                    {subtotal < FREE_DELIVERY_FROM ? (
-                      <div className="mb-4 rounded-xl bg-white p-3 text-[13px] text-[#5a5248]">
-                        Add {rm(FREE_DELIVERY_FROM - subtotal)} more for free standard delivery.
-                        <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#ece3d3]">
-                          <div className="h-full rounded-full bg-[#2f6b4f] transition-all" style={{ width: `${(subtotal / FREE_DELIVERY_FROM) * 100}%` }} />
-                        </div>
-                      </div>
-                    ) : (
-                      <p className="mb-4 rounded-xl bg-[#e1eedb] p-3 text-[13px] font-medium text-[#2f5d46]">You get free standard delivery.</p>
-                    )}
-                    <ul className="divide-y divide-[#e8dfd0]">
-                      {lines.map((l) => (
-                        <li
-                          key={l.id}
-                          className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
-                            removing[l.id] === "gone" ? "grid-rows-[0fr] border-transparent opacity-0" : "grid-rows-[1fr]"
-                          }`}
-                        >
-                          <div className={`min-h-0 ${removing[l.id] === "gone" ? "overflow-hidden" : ""}`}>
-                            <div className="relative">
-                              {removing[l.id] === "split" || removing[l.id] === "gone" ? (
-                                /* Split along the cut: two copies of the row, each clipped to
-                                   one half, drift apart and fade. */
-                                <>
-                                  <div inert className="animate-[cut-top_420ms_cubic-bezier(0.4,0,0.2,1)_forwards] [clip-path:inset(0_0_50%_0)]">
-                                    {cartRow(l)}
-                                  </div>
-                                  <div inert className="absolute inset-0 animate-[cut-bottom_420ms_cubic-bezier(0.4,0,0.2,1)_forwards] [clip-path:inset(50%_0_0_0)]">
-                                    {cartRow(l)}
-                                  </div>
-                                </>
-                              ) : (
-                                <div inert={!!removing[l.id]} className={`transition-opacity duration-300 ${removing[l.id] ? "opacity-70" : ""}`}>
-                                  {cartRow(l)}
-                                </div>
-                              )}
-                              {removing[l.id] === "cut" && (
-                                /* A dashed cutting line drawn by scissors that snip across the row. */
-                                <div aria-hidden className="pointer-events-none absolute inset-x-0 top-1/2 z-10">
-                                  <span className="absolute left-0 top-0 h-[2px] w-full origin-left -translate-y-1/2 animate-[cut-line_450ms_ease-in-out_forwards] bg-[repeating-linear-gradient(90deg,#c8643b_0_6px,transparent_6px_10px)]" />
-                                  <span className="absolute top-0 -translate-x-1/2 -translate-y-1/2 animate-[scissor-run_450ms_ease-in-out_forwards] rounded-full bg-[#faf6ef] p-0.5">
-                                    <PiScissorsFill className="h-5 w-5 rotate-180 animate-[snip_150ms_ease-in-out_3] text-[#c8643b]" />
-                                  </span>
-                                </div>
-                              )}
-                            </div>
+              <div className="flex-1 overflow-y-auto overflow-x-hidden px-5 py-4">
+                <div
+                  key={step}
+                  className={
+                    stepDir === "forward"
+                      ? "motion-safe:animate-[step-in-right_320ms_cubic-bezier(0.2,0,0,1)]"
+                      : stepDir === "back"
+                        ? "motion-safe:animate-[step-in-left_320ms_cubic-bezier(0.2,0,0,1)]"
+                        : ""
+                  }
+                >
+                  {step === "cart" ? (
+                    <>
+                      {subtotal < FREE_DELIVERY_FROM ? (
+                        <div className="mb-4 rounded-xl bg-white p-3 text-[13px] text-[#5a5248]">
+                          Add {rm(FREE_DELIVERY_FROM - subtotal)} more for free standard delivery.
+                          <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-[#ece3d3]">
+                            <div className="h-full rounded-full bg-[#2f6b4f] transition-all" style={{ width: `${(subtotal / FREE_DELIVERY_FROM) * 100}%` }} />
                           </div>
-                        </li>
-                      ))}
-                    </ul>
-                  </>
-                ) : (
-                  <div className="space-y-6">
-                    <fieldset>
-                      <legend className="mb-2 text-[13px] font-bold uppercase tracking-wide text-[#8a7f70]">Delivery</legend>
-                      <div className="space-y-2">
-                        {delivery.map((d) => (
-                          <label
-                            key={d.id}
-                            className={`flex cursor-pointer items-center gap-3 rounded-xl border bg-white p-3.5 ${shipping === d.id ? "border-[#1f3a2e]" : "border-[#e2d7c5]"}`}
+                        </div>
+                      ) : (
+                        <p className="mb-4 rounded-xl bg-[#e1eedb] p-3 text-[13px] font-medium text-[#2f5d46]">You get free standard delivery.</p>
+                      )}
+                      <ul className="divide-y divide-[#e8dfd0]">
+                        {lines.map((l) => (
+                          <li
+                            key={l.id}
+                            className={`grid transition-[grid-template-rows,opacity] duration-300 ease-out ${
+                              removing[l.id] === "gone" ? "grid-rows-[0fr] border-transparent opacity-0" : "grid-rows-[1fr]"
+                            }`}
                           >
-                            <input type="radio" name="shipping" checked={shipping === d.id} onChange={() => setShipping(d.id)} className="accent-[#1f3a2e]" />
-                            <span className="flex-1">
-                              <span className="block text-[14px] font-semibold">{d.label}</span>
-                              <span className="block text-[12.5px] text-[#8a7f70]">{d.note}</span>
-                            </span>
-                            <span className="text-[13.5px] font-semibold">
-                              {d.id === "standard" && subtotal >= FREE_DELIVERY_FROM ? "Free" : rm(d.price)}
-                            </span>
-                          </label>
+                            <div className={`min-h-0 ${removing[l.id] === "gone" ? "overflow-hidden" : ""}`}>
+                              <div className="relative">
+                                {removing[l.id] === "split" || removing[l.id] === "gone" ? (
+                                  /* Split along the cut: two copies of the row, each clipped to
+                                     one half, drift apart and fade. */
+                                  <>
+                                    <div inert className="animate-[cut-top_420ms_cubic-bezier(0.4,0,0.2,1)_forwards] [clip-path:inset(0_0_50%_0)]">
+                                      {cartRow(l)}
+                                    </div>
+                                    <div inert className="absolute inset-0 animate-[cut-bottom_420ms_cubic-bezier(0.4,0,0.2,1)_forwards] [clip-path:inset(50%_0_0_0)]">
+                                      {cartRow(l)}
+                                    </div>
+                                  </>
+                                ) : (
+                                  <div inert={!!removing[l.id]} className={`transition-opacity duration-300 ${removing[l.id] ? "opacity-70" : ""}`}>
+                                    {cartRow(l)}
+                                  </div>
+                                )}
+                                {removing[l.id] === "cut" && (
+                                  /* A dashed cutting line drawn by scissors that snip across the row. */
+                                  <div aria-hidden className="pointer-events-none absolute inset-x-0 top-1/2 z-10">
+                                    <span className="absolute left-0 top-0 h-[2px] w-full origin-left -translate-y-1/2 animate-[cut-line_450ms_ease-in-out_forwards] bg-[repeating-linear-gradient(90deg,#c8643b_0_6px,transparent_6px_10px)]" />
+                                    <span className="absolute top-0 -translate-x-1/2 -translate-y-1/2 animate-[scissor-run_450ms_ease-in-out_forwards] rounded-full bg-[#faf6ef] p-0.5">
+                                      <PiScissorsFill className="h-5 w-5 rotate-180 animate-[snip_150ms_ease-in-out_3] text-[#c8643b]" />
+                                    </span>
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          </li>
                         ))}
-                      </div>
-                    </fieldset>
-                    <fieldset>
-                      <legend className="mb-2 text-[13px] font-bold uppercase tracking-wide text-[#8a7f70]">Payment</legend>
-                      <div className="space-y-2">
-                        {payments.map(({ id, label, Icon }) => (
-                          <label
-                            key={id}
-                            className={`flex cursor-pointer items-center gap-3 rounded-xl border bg-white p-3.5 ${payment === id ? "border-[#1f3a2e]" : "border-[#e2d7c5]"}`}
-                          >
-                            <input type="radio" name="payment" checked={payment === id} onChange={() => setPayment(id)} className="accent-[#1f3a2e]" />
-                            <Icon aria-hidden className="h-5 w-5 text-[#1f3a2e]" />
-                            <span className="text-[14px] font-semibold">{label}</span>
-                          </label>
-                        ))}
-                      </div>
-                    </fieldset>
-                    <p className="rounded-xl bg-[#f3eadb] px-4 py-3 text-[12.5px] leading-relaxed text-[#7a5a24]">
-                      Demo checkout: there are no address or card fields, and nothing is charged.
-                    </p>
-                  </div>
-                )}
+                      </ul>
+                    </>
+                  ) : (
+                    <div className="space-y-6">
+                      <fieldset>
+                        <legend className="mb-2 text-[13px] font-bold uppercase tracking-wide text-[#8a7f70]">Delivery</legend>
+                        <div className="space-y-2">
+                          {delivery.map((d) => (
+                            <label
+                              key={d.id}
+                              className={`flex cursor-pointer items-center gap-3 rounded-xl border bg-white p-3.5 ${shipping === d.id ? "border-[#1f3a2e]" : "border-[#e2d7c5]"}`}
+                            >
+                              <input type="radio" name="shipping" checked={shipping === d.id} onChange={() => setShipping(d.id)} className="accent-[#1f3a2e]" />
+                              <span className="flex-1">
+                                <span className="block text-[14px] font-semibold">{d.label}</span>
+                                <span className="block text-[12.5px] text-[#8a7f70]">{d.note}</span>
+                              </span>
+                              <span className="text-[13.5px] font-semibold">
+                                {d.id === "standard" && subtotal >= FREE_DELIVERY_FROM ? "Free" : rm(d.price)}
+                              </span>
+                            </label>
+                          ))}
+                        </div>
+                      </fieldset>
+                      <fieldset>
+                        <legend className="mb-2 text-[13px] font-bold uppercase tracking-wide text-[#8a7f70]">Payment</legend>
+                        <div className="space-y-2">
+                          {payments.map(({ id, label, Icon }) => (
+                            <label
+                              key={id}
+                              className={`flex cursor-pointer items-center gap-3 rounded-xl border bg-white p-3.5 ${payment === id ? "border-[#1f3a2e]" : "border-[#e2d7c5]"}`}
+                            >
+                              <input type="radio" name="payment" checked={payment === id} onChange={() => setPayment(id)} className="accent-[#1f3a2e]" />
+                              <Icon aria-hidden className="h-5 w-5 text-[#1f3a2e]" />
+                              <span className="text-[14px] font-semibold">{label}</span>
+                            </label>
+                          ))}
+                        </div>
+                      </fieldset>
+                      <p className="rounded-xl bg-[#f3eadb] px-4 py-3 text-[12.5px] leading-relaxed text-[#7a5a24]">
+                        Demo checkout: there are no address or card fields, and nothing is charged.
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
 
               <div className="border-t border-[#e8dfd0] bg-white px-5 py-4">
                 {step === "cart" && (
                   <div className="mb-4">
                     {appliedCode ? (
-                      <div className="flex items-center justify-between gap-3 rounded-xl bg-[#e1eedb] px-3.5 py-2.5 text-[13px] text-[#2f5d46]">
-                        <span>
+                      <div
+                        key={appliedCode}
+                        className="relative flex items-center justify-between gap-3 overflow-visible rounded-xl bg-[#e1eedb] px-3.5 py-2.5 text-[13px] text-[#2f5d46] motion-safe:animate-[coupon-in_380ms_cubic-bezier(0.17,0.89,0.32,1.3)]"
+                      >
+                        {/* A shine passes over the chip once, and confetti bursts from it. */}
+                        <span aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden rounded-xl">
+                          <span className="absolute inset-y-0 -left-1/3 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/70 to-transparent opacity-0 motion-safe:animate-[coupon-shine_900ms_ease-out_200ms]" />
+                        </span>
+                        <span aria-hidden className="pointer-events-none absolute left-1/2 top-1/2">
+                          {Array.from({ length: 14 }, (_, i) => (
+                            <span
+                              key={i}
+                              style={{ "--a": `${i * (360 / 14)}deg`, "--d": `${34 + (i % 3) * 12}px` } as CSSProperties}
+                              className={`absolute left-0 top-0 h-2 w-1 rounded-[1px] opacity-0 motion-safe:animate-[confetti-burst_750ms_cubic-bezier(0.2,0.7,0.4,1)] ${confettiColors[i % confettiColors.length]}`}
+                            />
+                          ))}
+                        </span>
+                        <span className="relative">
                           <span className="font-bold">{appliedCode}</span> applied: {coupon!.label}
                           {couponShort && <span className="block text-[#a2553a]">Add {rm(coupon!.min! - subtotal)} more to use this code.</span>}
                         </span>
-                        <button type="button" onClick={() => setAppliedCode(null)} className="font-semibold underline underline-offset-2">
+                        <button type="button" onClick={() => setAppliedCode(null)} className="relative font-semibold underline underline-offset-2">
                           Remove
                         </button>
                       </div>
@@ -819,17 +910,17 @@ export function StoreShowcase() {
                 <dl className="space-y-1.5 text-[14px]">
                   <div className="flex justify-between text-[#5a5248]">
                     <dt>Subtotal</dt>
-                    <dd>{rm(subtotal)}</dd>
+                    <dd><RollingAmount value={subtotal} format={rm} /></dd>
                   </div>
                   {discount > 0 && (
                     <div className="flex justify-between text-[#2f6b4f]">
                       <dt>Promo ({appliedCode})</dt>
-                      <dd>-{rm(discount)}</dd>
+                      <dd>-<RollingAmount value={discount} format={rm} /></dd>
                     </div>
                   )}
                   <div className="flex justify-between text-[#5a5248]">
                     <dt>SST (10%)</dt>
-                    <dd>{rm(sst)}</dd>
+                    <dd><RollingAmount value={sst} format={rm} /></dd>
                   </div>
                   <div className="flex justify-between text-[#5a5248]">
                     <dt>Delivery</dt>
@@ -837,16 +928,16 @@ export function StoreShowcase() {
                   </div>
                   <div className="flex justify-between pt-1.5 text-[16px] font-bold text-[#2a2620]">
                     <dt>Total</dt>
-                    <dd>{rm(total)}</dd>
+                    <dd><RollingAmount value={total} format={rm} /></dd>
                   </div>
                 </dl>
                 {step === "cart" ? (
-                  <button type="button" onClick={() => setStep("checkout")} className="mt-4 w-full rounded-full bg-[#c8643b] py-3.5 text-[15px] font-semibold text-white hover:bg-[#b3552f]">
+                  <button type="button" onClick={() => setStep("checkout", "forward")} className="mt-4 w-full rounded-full bg-[#c8643b] py-3.5 text-[15px] font-semibold text-white hover:bg-[#b3552f]">
                     Checkout
                   </button>
                 ) : (
                   <div className="mt-4 flex gap-2">
-                    <button type="button" onClick={() => setStep("cart")} className="rounded-full border border-[#e2d7c5] px-5 py-3.5 text-[14px] font-semibold">
+                    <button type="button" onClick={() => setStep("cart", "back")} className="rounded-full border border-[#e2d7c5] px-5 py-3.5 text-[14px] font-semibold">
                       Back
                     </button>
                     <button type="button" onClick={() => setStep("done")} className="flex-1 rounded-full bg-[#c8643b] py-3.5 text-[15px] font-semibold text-white hover:bg-[#b3552f]">
