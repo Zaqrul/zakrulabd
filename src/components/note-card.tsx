@@ -45,19 +45,16 @@ export function NoteCard({ post, locale = "en" }: { post: Post; locale?: "en" | 
             would otherwise push its card taller than the three beside it. */}
         <p className="line-clamp-4 text-[14px] leading-relaxed text-body">{post.excerpt}</p>
 
-        {/* Byline with the site mark: these are first-hand accounts of my own
-            projects, and the card should say so before anyone opens it. */}
+        {/* The site mark signs the card: these are first-hand accounts of my
+            own projects. */}
         <div className="mt-auto flex items-center justify-between gap-3 border-t border-border pt-4">
-          <span className="flex items-center gap-2">
-            <Image
-              src="/logo-ghost-outline.webp"
-              alt=""
-              width={512}
-              height={512}
-              className="h-6 w-6 flex-shrink-0 object-contain"
-            />
-            <span className="text-[12.5px] font-bold text-navy">{post.author}</span>
-          </span>
+          <Image
+            src="/logo-ghost-outline.webp"
+            alt=""
+            width={512}
+            height={512}
+            className="h-6 w-6 flex-shrink-0 object-contain"
+          />
 
           <span className="inline-flex items-center gap-1.5 text-[13px] font-bold text-navy">
             {locale === "ms" ? contentMs.notes.read : t.notes.read}

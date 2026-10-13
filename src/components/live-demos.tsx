@@ -117,7 +117,7 @@ export function HeroDemo() {
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-teal-400 opacity-75" />
             <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-teal-600 sm:h-2.5 sm:w-2.5" />
           </span>
-          <span className="text-[9px] font-bold tracking-tight text-ink sm:text-[11px]">Live traffic</span>
+          <span className="text-[9px] font-bold tracking-tight text-ink sm:text-[11px]">Google Search</span>
         </div>
         <div className="mb-1 flex h-5 items-end justify-between gap-0.5 px-0.5 sm:mb-2.5 sm:h-10 sm:gap-1.5">
           {heroBarHeights.map((h, i) => (
@@ -129,8 +129,10 @@ export function HeroDemo() {
           ))}
         </div>
         <div className="flex items-baseline gap-1 pt-0.5 sm:gap-1.5">
-          <span className="text-xs font-extrabold tracking-tight text-navy sm:text-lg">+18%</span>
-          <span className="text-[8.5px] font-semibold text-muted sm:text-[11px]">traffic</span>
+          {/* Sri Tanduk's real Search Console total, Jul to Sep 2026, the same
+              figure the case study shows. */}
+          <span className="text-xs font-extrabold tracking-tight text-navy sm:text-lg">3.2K</span>
+          <span className="text-[8.5px] font-semibold text-muted sm:text-[11px]">impressions</span>
         </div>
       </div>
     </div>

@@ -1,3 +1,5 @@
+import { PiCoffeeBeanDuotone, PiCoffeeDuotone, PiTShirtDuotone, PiToteDuotone } from "react-icons/pi";
+
 function BrowserChrome({ url }: { url: string }) {
   return (
     <div className="flex flex-shrink-0 items-center gap-1.5 border-b border-border bg-bg px-3 py-2">
@@ -29,11 +31,13 @@ function Sidebar({ items, active }: { items: string[]; active: string }) {
   );
 }
 
+/* Each tile gets its own product drawing and tint, so the mock shop reads as
+   a stocked catalogue rather than four empty image slots. */
 const products = [
-  { name: "Batik Shirt", price: "RM 89" },
-  { name: "Linen Tote", price: "RM 45" },
-  { name: "Kopi Beans", price: "RM 32" },
-  { name: "Ceramic Mug", price: "RM 28" },
+  { name: "Batik Shirt", price: "RM 89", Icon: PiTShirtDuotone, tint: "bg-amber-50 text-amber-600" },
+  { name: "Linen Tote", price: "RM 45", Icon: PiToteDuotone, tint: "bg-teal-50 text-teal-600" },
+  { name: "Kopi Beans", price: "RM 32", Icon: PiCoffeeBeanDuotone, tint: "bg-orange-50 text-orange-700" },
+  { name: "Ceramic Mug", price: "RM 28", Icon: PiCoffeeDuotone, tint: "bg-sky-50 text-sky-600" },
 ];
 
 export function StoreDemo() {
@@ -59,7 +63,9 @@ export function StoreDemo() {
         <div className="grid flex-1 grid-cols-4 gap-3">
           {products.map((p) => (
             <div key={p.name} className="flex flex-col overflow-hidden rounded-md border border-border">
-              <div className="flex-1 bg-gradient-to-br from-primary-50 to-teal-50" />
+              <div className={`flex flex-1 items-center justify-center ${p.tint}`}>
+                <p.Icon aria-hidden className="h-1/2 max-h-14 w-auto" />
+              </div>
               <div className="px-2 py-1.5">
                 <div className="truncate text-[10px] font-semibold text-ink">{p.name}</div>
                 <div className="text-[10px] font-bold text-amber-600">{p.price}</div>
