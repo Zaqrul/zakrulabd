@@ -5,6 +5,7 @@ import { MailIcon, MapPinIcon, PhoneIcon } from "@/components/icons";
 import { content } from "@/lib/content";
 import { contentMs } from "@/lib/content-ms";
 import { WHATSAPP_NUMBER, wa, waMessages } from "@/lib/contact";
+import { RevealText } from "@/components/reveal-text";
 
 /* The handle is zakrulabd everywhere except GitHub, which predates it. rel="me"
    states that each link is another profile of the same person, so the markup
@@ -32,7 +33,7 @@ export function SiteFooter({ locale = "en", alternatePath }: { locale?: "en" | "
               </div>
               <span className="font-display text-base font-bold text-white">Zakrul</span>
             </div>
-            <p className="text-[13.5px] leading-relaxed">{t.footer.blurb}</p>
+            <p className="text-[13.5px] leading-relaxed"><RevealText text>{t.footer.blurb}</RevealText></p>
             <a href="mailto:zakrulabd@gmail.com" className="flex items-center gap-2 text-[13px] hover:text-white">
               <MailIcon className="h-[15px] w-[15px]" />
               <span>zakrulabd@gmail.com</span>
@@ -68,7 +69,7 @@ export function SiteFooter({ locale = "en", alternatePath }: { locale?: "en" | "
             </div>
           </div>
           <div className="flex flex-col gap-3">
-            <span className="text-[12.5px] font-bold tracking-wide text-slate-200">{t.footer.services}</span>
+            <span className="text-[12.5px] font-bold tracking-wide text-slate-200"><RevealText text>{t.footer.services}</RevealText></span>
             {t.footer.servicesLinks.map((l) => (
               <Link key={l} href={`${root}/#services`} className="text-[13.5px] hover:text-white">
                 {l}
@@ -76,7 +77,7 @@ export function SiteFooter({ locale = "en", alternatePath }: { locale?: "en" | "
             ))}
           </div>
           <div className="flex flex-col gap-3">
-            <span className="text-[12.5px] font-bold tracking-wide text-slate-200">{t.footer.howIWork}</span>
+            <span className="text-[12.5px] font-bold tracking-wide text-slate-200"><RevealText text>{t.footer.howIWork}</RevealText></span>
             {t.footer.howIWorkLinks.map((l, i) => (
               <Link
                 key={l}
@@ -88,7 +89,7 @@ export function SiteFooter({ locale = "en", alternatePath }: { locale?: "en" | "
             ))}
           </div>
           <div className="flex flex-col gap-3">
-            <span className="text-[12.5px] font-bold tracking-wide text-slate-200">{t.footer.getStarted}</span>
+            <span className="text-[12.5px] font-bold tracking-wide text-slate-200"><RevealText text>{t.footer.getStarted}</RevealText></span>
             <a
               href={wa(waMessages.quote)}
               target="_blank"

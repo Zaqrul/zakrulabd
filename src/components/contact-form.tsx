@@ -248,7 +248,7 @@ export function ContactForm({ locale = "en" }: { locale?: "en" | "ms" }) {
         </span>
 
         <h2 className="font-display text-2xl font-bold text-navy md:text-3xl"><RevealText>{c.successTitle}</RevealText></h2>
-        <p className="max-w-lg text-[15px] leading-relaxed text-body">{c.successBody}</p>
+        <p className="max-w-lg text-[15px] leading-relaxed text-body"><RevealText text>{c.successBody}</RevealText></p>
 
         <div className="flex items-center gap-3 rounded-full border border-border bg-bg py-2 pl-2 pr-5">
           <CountdownRing left={Math.max(left, 0)} total={REDIRECT_SECONDS} />

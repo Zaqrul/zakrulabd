@@ -57,9 +57,9 @@ export function WhatCanBuild({ copy = content }: { copy?: typeof content | typeo
             {current.headingAfter}
           </RevealText></h2>
           <div className="flex flex-col gap-4 lg:pt-2">
-            <p className="text-base leading-relaxed text-body md:text-lg">{current.description}</p>
+            <p className="text-base leading-relaxed text-body md:text-lg"><RevealText key={active} text>{current.description}</RevealText></p>
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] font-bold uppercase tracking-wider text-muted">{t.build.builtWith}</span>
+              <span className="text-[11px] font-bold uppercase tracking-wider text-muted"><RevealText text>{t.build.builtWith}</RevealText></span>
               {currentStack.map((key) => {
                 const { name, Icon, color } = tech[key];
                 return (
@@ -126,8 +126,8 @@ export function WhatCanBuild({ copy = content }: { copy?: typeof content | typeo
 
         <div className="mt-8 grid grid-cols-1 items-stretch gap-5 md:grid-cols-[minmax(0,3fr)_minmax(0,7fr)]">
           <div className="flex flex-col gap-3 rounded-2xl border border-border bg-white p-5 shadow-sm">
-            <span className="text-[10px] font-bold uppercase tracking-wider text-muted">{t.build.client}</span>
-            <p className="rounded-xl bg-amber-50 px-3 py-2.5 text-[12.5px] leading-snug text-ink">{current.brief}</p>
+            <span className="text-[10px] font-bold uppercase tracking-wider text-muted"><RevealText text>{t.build.client}</RevealText></span>
+            <p className="rounded-xl bg-amber-50 px-3 py-2.5 text-[12.5px] leading-snug text-ink"><RevealText key={active} text>{current.brief}</RevealText></p>
 
             <span className="mt-1 text-[10px] font-bold uppercase tracking-wider text-muted">Zakrul</span>
             <div className="rounded-xl bg-bg p-3">

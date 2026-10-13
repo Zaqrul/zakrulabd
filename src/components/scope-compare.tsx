@@ -101,7 +101,7 @@ export function ScopeCompareTable({ locale = "en" }: { locale?: "en" | "ms" }) {
         <div className="sticky top-[69px] z-30 grid grid-cols-3 border-y border-border bg-bg">
           {c.columns.map((col, i) => (
             <div key={col} className="flex flex-col items-center gap-1.5 px-1 py-3">
-              <span className="text-center font-display text-[13px] font-bold text-navy">{col}</span>
+              <span className="text-center font-display text-[13px] font-bold text-navy"><RevealText text>{col}</RevealText></span>
               <TierCta index={i} c={c} />
             </div>
           ))}
@@ -114,8 +114,8 @@ export function ScopeCompareTable({ locale = "en" }: { locale?: "en" | "ms" }) {
             </div>
             {group.rows.map((row) => (
               <div key={row.what} className="border-b border-border py-4">
-                <span className="block text-[14px] font-medium text-ink">{row.what}</span>
-                <span className="block text-[12.5px] leading-snug text-muted">{row.note}</span>
+                <span className="block text-[14px] font-medium text-ink"><RevealText text>{row.what}</RevealText></span>
+                <span className="block text-[12.5px] leading-snug text-muted"><RevealText text>{row.note}</RevealText></span>
                 <div className="mt-3 grid grid-cols-3">
                   {row.marks.map((mark, i) => (
                     <div key={c.columns[i]} className="flex justify-center">
@@ -128,7 +128,7 @@ export function ScopeCompareTable({ locale = "en" }: { locale?: "en" | "ms" }) {
           </div>
         ))}
 
-        {groups.length === 0 && <p className="py-12 text-center text-[13.5px] text-muted">{c.searchEmpty}</p>}
+        {groups.length === 0 && <p className="py-12 text-center text-[13.5px] text-muted"><RevealText text>{c.searchEmpty}</RevealText></p>}
       </div>
 
       {/* DESKTOP: one grid, with the tier row pinned so a mark far down the table
@@ -143,7 +143,7 @@ export function ScopeCompareTable({ locale = "en" }: { locale?: "en" | "ms" }) {
                   key={col}
                   className="sticky top-[69px] z-30 w-[132px] bg-bg px-3 py-3 text-center align-middle shadow-[inset_0_-1px_0_var(--color-border)]"
                 >
-                  <span className="block font-display text-[14px] font-bold text-navy">{col}</span>
+                  <span className="block font-display text-[14px] font-bold text-navy"><RevealText text>{col}</RevealText></span>
                   <TierCta index={i} c={c} className="mt-2" />
                 </th>
               ))}
@@ -161,8 +161,8 @@ export function ScopeCompareTable({ locale = "en" }: { locale?: "en" | "ms" }) {
                 {group.rows.map((row) => (
                   <tr key={row.what} className="border-t border-border hover:bg-white/60">
                     <td className="py-4 pr-6 align-middle">
-                      <span className="block text-[14px] font-medium text-ink">{row.what}</span>
-                      <span className="block text-[12.5px] leading-snug text-muted">{row.note}</span>
+                      <span className="block text-[14px] font-medium text-ink"><RevealText text>{row.what}</RevealText></span>
+                      <span className="block text-[12.5px] leading-snug text-muted"><RevealText text>{row.note}</RevealText></span>
                     </td>
                     {row.marks.map((mark, i) => (
                       <td key={c.columns[i]} className="px-3 py-4 align-middle">

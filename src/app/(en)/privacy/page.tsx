@@ -81,9 +81,9 @@ export default function PrivacyPage({ locale = "en" }: { locale?: "en" | "ms" })
             <span>{policy.lastUpdated}</span>
           </div>
 
-          <p className="mt-5 text-base leading-relaxed text-body md:text-lg">
+          <p className="mt-5 text-base leading-relaxed text-body md:text-lg"><RevealText text immediate>
             {policy.intro}
-          </p>
+          </RevealText></p>
         </div>
 
         {/* Policy Sections */}
@@ -98,9 +98,9 @@ export default function PrivacyPage({ locale = "en" }: { locale?: "en" | "ms" })
               </RevealText></h2>
               <div className="mt-4 flex flex-col gap-3">
                 {section.content.map((paragraph, pIdx) => (
-                  <p key={pIdx} className="text-sm leading-relaxed text-body">
+                  <p key={pIdx} className="text-sm leading-relaxed text-body"><RevealText text>
                     {paragraph}
-                  </p>
+                  </RevealText></p>
                 ))}
               </div>
             </section>
@@ -111,9 +111,9 @@ export default function PrivacyPage({ locale = "en" }: { locale?: "en" | "ms" })
         <div className="mt-12 rounded-2xl border border-border bg-amber-300/15 p-6 md:p-8 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-5">
           <div>
             <h3 className="font-display text-lg font-bold text-navy"><RevealText>{locale === "ms" ? "Ada soalan tentang data anda?" : "Questions about your data?"}</RevealText></h3>
-            <p className="text-sm text-body mt-1">
+            <p className="text-sm text-body mt-1"><RevealText text>
               {locale === "ms" ? "Hubungi saya jika ada perkara yang kurang jelas dalam dasar ini, atau jika anda mahu melihat, membetulkan atau bertanya tentang pemadaman data yang saya simpan tentang anda." : "Get in touch if anything in this policy is unclear, or if you’d like to see, correct, or delete the data I hold about you."}
-            </p>
+            </RevealText></p>
           </div>
           <a
             href="mailto:zakrulabd@gmail.com"

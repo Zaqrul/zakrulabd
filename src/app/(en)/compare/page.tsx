@@ -83,7 +83,7 @@ export default function ComparePage({ locale = "en" }: { locale?: "en" | "ms" })
             {c.titleA}
             <span className="hl">{c.titleHl}</span>
           </RevealText></h1>
-          <p className="max-w-2xl text-base leading-relaxed text-slate-300 md:text-lg">{c.sub}</p>
+          <p className="max-w-2xl text-base leading-relaxed text-slate-300 md:text-lg"><RevealText text immediate>{c.sub}</RevealText></p>
         </div>
       </section>
 
@@ -97,14 +97,14 @@ export default function ComparePage({ locale = "en" }: { locale?: "en" | "ms" })
           <div className="grid gap-4 md:grid-cols-2">
             {c.divides.map((d) => (
               <div key={d.step} className="flex flex-col gap-3 border-t border-border pt-5">
-                <span className="text-[11px] font-bold uppercase tracking-wide text-muted">{d.step}</span>
-                <p className="font-display text-[15px] font-bold leading-snug text-navy md:text-base">{d.claim}</p>
+                <span className="text-[11px] font-bold uppercase tracking-wide text-muted"><RevealText text>{d.step}</RevealText></span>
+                <p className="font-display text-[15px] font-bold leading-snug text-navy md:text-base"><RevealText text>{d.claim}</RevealText></p>
                 <ul className="flex flex-col gap-2">
                   {d.points.map((p) => (
-                    <li key={p} className="flex items-start gap-2.5 text-[13.5px] text-body">
+                    <li key={p} className="flex items-start gap-2.5 text-[13.5px] text-body"><RevealText text>
                       <CheckIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-teal-600" />
                       {p}
-                    </li>
+                    </RevealText></li>
                   ))}
                 </ul>
               </div>
@@ -122,7 +122,7 @@ export default function ComparePage({ locale = "en" }: { locale?: "en" | "ms" })
               {t.faq.titleA}
               <span className="hl">{t.faq.titleHl}</span>
             </RevealText></h2>
-            <p className="max-w-xl text-sm leading-relaxed text-body md:text-base">{t.faq.sub}</p>
+            <p className="max-w-xl text-sm leading-relaxed text-body md:text-base"><RevealText text>{t.faq.sub}</RevealText></p>
           </div>
           <Faq locale={locale} />
         </section>
@@ -131,7 +131,7 @@ export default function ComparePage({ locale = "en" }: { locale?: "en" | "ms" })
         <div className="mt-12 flex flex-col items-start justify-between gap-5 bg-amber-300/20 p-6 sm:flex-row sm:items-center md:p-8">
           <div>
             <h2 className="font-display text-lg font-bold text-navy"><RevealText>{c.closeTitle}</RevealText></h2>
-            <p className="mt-1 max-w-xl text-sm leading-relaxed text-body">{c.closeBody}</p>
+            <p className="mt-1 max-w-xl text-sm leading-relaxed text-body"><RevealText text>{c.closeBody}</RevealText></p>
           </div>
           <div className="flex flex-shrink-0 flex-wrap gap-3">
             <Link

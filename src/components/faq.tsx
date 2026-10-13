@@ -23,7 +23,7 @@ export function Faq({ locale = "en" }: { locale?: "en" | "ms" }) {
       {/* Category switch: a dropdown on phones, where four pills would either wrap
           or hide off-screen, and a segmented control from tablet up. */}
       <label className="flex flex-col gap-2 md:hidden">
-        <span className="text-[11px] font-bold uppercase tracking-wide text-muted">{faq.selectLabel}</span>
+        <span className="text-[11px] font-bold uppercase tracking-wide text-muted"><RevealText text>{faq.selectLabel}</RevealText></span>
         <div className="relative">
           <select
             value={activeCategory}
@@ -85,7 +85,7 @@ export function Faq({ locale = "en" }: { locale?: "en" | "ms" }) {
                 }`}
               >
                 <div className="overflow-hidden">
-                  <p className="max-w-3xl pb-5 pr-10 text-[14px] leading-relaxed text-body">{item.a}</p>
+                  <p className="max-w-3xl pb-5 pr-10 text-[14px] leading-relaxed text-body"><RevealText text>{item.a}</RevealText></p>
                 </div>
               </div>
             </div>

@@ -210,7 +210,7 @@ function MilestoneSteps({ steps }: { steps: readonly { title: string; body: stri
               ><RevealText>
                 {s.title}
               </RevealText></h3>
-              <p className="text-sm leading-relaxed text-body">{s.body}</p>
+              <p className="text-sm leading-relaxed text-body"><RevealText text>{s.body}</RevealText></p>
             </div>
           </div>
         );
@@ -337,23 +337,23 @@ function PricingCardItem({
           className={`mt-0.5 text-[12.5px] font-semibold ${
             meta.highlighted ? "text-amber-300" : "text-primary-600"
           }`}
-        >
+        ><RevealText text>
           {tier.tagline}
-        </p>
+        </RevealText></p>
         <p
           className={`mt-3 font-display text-[26px] font-extrabold leading-none ${
             meta.highlighted ? "text-white" : "text-navy"
           }`}
-        >
+        ><RevealText text>
           {tier.price}
-        </p>
+        </RevealText></p>
         <p
           className={`mt-1.5 line-clamp-3 min-h-[60px] text-[13.5px] leading-normal ${
             meta.highlighted ? "text-slate-400" : "text-muted"
           }`}
-        >
+        ><RevealText text>
           {tier.description}
-        </p>
+        </RevealText></p>
       </div>
       <PrimaryButton
         href={wa(tierWaMessages[index])}
@@ -370,9 +370,9 @@ function PricingCardItem({
             <p
               key={f}
               className={`text-[13px] font-semibold ${meta.highlighted ? "text-amber-300" : "text-primary-600"}`}
-            >
+            ><RevealText text>
               {f}
-            </p>
+            </RevealText></p>
           ) : (
           <div key={f} className="flex items-start gap-2.5">
             <CheckIcon
@@ -389,9 +389,9 @@ function PricingCardItem({
       </div>
       {/* Pushed to the card's foot so it reads as small print, not a feature. */}
       {tier.priceNote && (
-        <p className={`mt-auto pt-2 text-[11.5px] ${meta.highlighted ? "text-slate-400" : "text-muted"}`}>
+        <p className={`mt-auto pt-2 text-[11.5px] ${meta.highlighted ? "text-slate-400" : "text-muted"}`}><RevealText text>
           {tier.priceNote}
-        </p>
+        </RevealText></p>
       )}
     </div>
   );
@@ -579,7 +579,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
             <div className="w-full max-w-lg pb-12 pt-2 lg:hidden">
               <HeroDemo />
             </div>
-            <p className="max-w-xl text-base leading-relaxed text-body">{t.hero.body}</p>
+            <p className="max-w-xl text-base leading-relaxed text-body"><RevealText text immediate>{t.hero.body}</RevealText></p>
             <div className="mt-2 flex flex-wrap justify-center gap-4 lg:justify-start">
               <PrimaryButton href={wa(waMessages.hero)} variant="primary">
                 {t.hero.ctaPrimary}
@@ -613,7 +613,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
         <div className="mx-auto max-w-shell">
           <div className="mx-auto mb-12 flex max-w-xl flex-col items-center gap-3 text-center">
             <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl"><RevealText>{t.services.heading}</RevealText></h2>
-            <p className="text-base text-body">{t.services.sub}</p>
+            <p className="text-base text-body"><RevealText text>{t.services.sub}</RevealText></p>
           </div>
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-4">
             {t.services.items.map((service, i) => {
@@ -628,7 +628,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
                     <Demo />
                   </div>
                   <h3 className="font-display text-[17px] font-bold text-navy"><RevealText>{service.title}</RevealText></h3>
-                  <p className="text-sm leading-relaxed text-body">{service.description}</p>
+                  <p className="text-sm leading-relaxed text-body"><RevealText text>{service.description}</RevealText></p>
                   <div className="mt-auto flex flex-wrap gap-1.5 pt-1">
                     {service.bullets.map((b) => (
                       <span
@@ -656,7 +656,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
         <div className="mx-auto max-w-shell">
           <div className="mx-auto mb-12 flex max-w-xl flex-col items-center gap-3 text-center">
             <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl"><RevealText>{t.process.heading}</RevealText></h2>
-            <p className="text-base text-body">{t.process.sub}</p>
+            <p className="text-base text-body"><RevealText text>{t.process.sub}</RevealText></p>
           </div>
           <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-4">
             {t.process.items.map((p, i) => {
@@ -670,7 +670,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
                     </div>
                   </div>
                   <h3 className="font-display text-base font-bold text-navy"><RevealText>{p.title}</RevealText></h3>
-                  <p className="text-sm leading-relaxed text-body">{p.description}</p>
+                  <p className="text-sm leading-relaxed text-body"><RevealText text>{p.description}</RevealText></p>
                 </ScrollSlideItem>
               );
             })}
@@ -687,10 +687,10 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
               <span className="hl">{t.pricing.headingHl}</span>
               {t.pricing.headingB}
             </RevealText></h2>
-            <p className="text-base text-body">{t.pricing.sub}</p>
+            <p className="text-base text-body"><RevealText text>{t.pricing.sub}</RevealText></p>
           </div>
           <PricingCards tiers={t.pricing.tiers} badge={t.pricing.badge} />
-          <p className="mt-8 flex flex-col items-center gap-3 text-center text-[13.5px] text-muted lg:block">
+          <p className="mt-8 flex flex-col items-center gap-3 text-center text-[13.5px] text-muted lg:block"><RevealText text>
             {t.pricing.compare.footnote}{" "}
             <Link
               href={`${root}/compare`}
@@ -698,7 +698,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
             >
               {t.pricing.compare.link}
             </Link>
-          </p>
+          </RevealText></p>
         </div>
       </section>
 
@@ -711,7 +711,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
               <span className="hl">{t.results.headingHl}</span>
               {t.results.headingB}
             </RevealText></h2>
-            <p className="text-base text-slate-400">{t.results.sub}</p>
+            <p className="text-base text-slate-400"><RevealText text>{t.results.sub}</RevealText></p>
           </div>
 
           <div className="mb-8 grid grid-cols-1 gap-5 sm:grid-cols-3">
@@ -726,9 +726,9 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
                 </div>
                 <div className="flex items-center gap-2">
                   <s.icon className={`h-5 w-5 flex-shrink-0 ${s.iconColor}`} />
-                  <span className="text-[30px] font-extrabold leading-none text-white">{s.value}</span>
+                  <span className="text-[30px] font-extrabold leading-none text-white"><RevealText text>{s.value}</RevealText></span>
                 </div>
-                <span className="text-[13.5px] text-slate-400">{t.results.stats[i]}</span>
+                <span className="text-[13.5px] text-slate-400"><RevealText text>{t.results.stats[i]}</RevealText></span>
               </ScrollSlideItem>
             ))}
           </div>
@@ -746,7 +746,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
                 {t.results.caseBadge}
               </span>
               <h3 className="font-display text-[19px] font-bold text-white"><RevealText>{t.results.caseTitle}</RevealText></h3>
-              <p className="text-sm leading-relaxed text-slate-300">{t.results.caseBody}</p>
+              <p className="text-sm leading-relaxed text-slate-300"><RevealText text>{t.results.caseBody}</RevealText></p>
             </div>
           </ScrollSlideItem>
 
@@ -770,12 +770,12 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
                 {t.results.smeBadge}
               </span>
               <h3 className="font-display text-[19px] font-bold text-white"><RevealText>{t.results.smeTitle}</RevealText></h3>
-              <p className="text-sm leading-relaxed text-slate-300">{t.results.smeBody}</p>
+              <p className="text-sm leading-relaxed text-slate-300"><RevealText text>{t.results.smeBody}</RevealText></p>
               <div className="grid grid-cols-3 gap-3">
                 {t.results.smeStats.map((s) => (
                   <div key={s.label} className="flex flex-col gap-1">
-                    <span className="text-[22px] font-extrabold leading-none text-white">{s.value}</span>
-                    <span className="text-[12px] text-slate-400">{s.label}</span>
+                    <span className="text-[22px] font-extrabold leading-none text-white"><RevealText text>{s.value}</RevealText></span>
+                    <span className="text-[12px] text-slate-400"><RevealText text>{s.label}</RevealText></span>
                   </div>
                 ))}
               </div>
@@ -794,7 +794,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
       {/* TECH STACK */}
       <section className="border-b border-border bg-bg py-11">
         <div className="mx-auto flex max-w-shell flex-col items-center px-6">
-          <span className="text-base font-bold tracking-[0.08em] text-muted">{t.tech.heading}</span>
+          <span className="text-base font-bold tracking-[0.08em] text-muted"><RevealText text>{t.tech.heading}</RevealText></span>
         </div>
         <div className="marquee-fade mt-6 overflow-hidden">
           <div className="marquee-track flex w-max items-center gap-6">
@@ -813,7 +813,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
                         style={{ color }}
                         aria-hidden="true"
                       />
-                      <span className="text-center font-mono text-sm leading-tight text-muted">{name}</span>
+                      <span className="text-center font-mono text-sm leading-tight text-muted"><RevealText text>{name}</RevealText></span>
                     </div>
                   );
                 })}
@@ -828,7 +828,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
         <div className="mx-auto max-w-shell">
           <div className="mx-auto mb-11 flex max-w-xl flex-col items-center gap-3 text-center">
             <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl"><RevealText>{t.testimonials.heading}</RevealText></h2>
-            <p className="text-base text-body">{t.testimonials.sub}</p>
+            <p className="text-base text-body"><RevealText text>{t.testimonials.sub}</RevealText></p>
           </div>
           {/* Mobile Auto-Slide (< md) */}
           <div className="md:hidden">
@@ -845,13 +845,13 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
                           <StarIcon key={s} className="h-5 w-5 text-amber-400" />
                         ))}
                       </div>
-                      <p className="text-base font-bold leading-relaxed text-navy">
+                      <p className="text-base font-bold leading-relaxed text-navy"><RevealText text>
                         &ldquo;{item.before}
                         <Mark>{item.highlight}</Mark>
                         {item.after}&rdquo;
-                      </p>
+                      </RevealText></p>
                       <div className="mt-auto border-t border-border pt-5">
-                        <div className="text-sm font-semibold text-navy">{item.name}</div>
+                        <div className="text-sm font-semibold text-navy"><RevealText text>{item.name}</RevealText></div>
                         <a
                           href={item.url}
                           target="_blank"
@@ -896,13 +896,13 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
                     <StarIcon key={s} className="h-5 w-5 text-amber-400" />
                   ))}
                 </div>
-                <p className="text-base font-bold leading-relaxed text-navy">
+                <p className="text-base font-bold leading-relaxed text-navy"><RevealText text>
                   &ldquo;{item.before}
                   <Mark>{item.highlight}</Mark>
                   {item.after}&rdquo;
-                </p>
+                </RevealText></p>
                 <div className="mt-auto border-t border-border pt-5">
-                  <div className="text-sm font-semibold text-navy">{item.name}</div>
+                  <div className="text-sm font-semibold text-navy"><RevealText text>{item.name}</RevealText></div>
                   <a
                     href={item.url}
                     target="_blank"
@@ -926,12 +926,12 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
       <section id="notes" className="border-t border-border px-6 py-24">
         <div className="mx-auto max-w-shell">
           <div className="mx-auto mb-11 flex max-w-xl flex-col items-center gap-3 text-center">
-            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted">{t.notes.badge}</span>
+            <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-muted"><RevealText text>{t.notes.badge}</RevealText></span>
             <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl"><RevealText>
               {t.notes.headingA}
               <span className="hl">{t.notes.headingHl}</span>
             </RevealText></h2>
-            <p className="text-base text-body">{t.notes.sub}</p>
+            <p className="text-base text-body"><RevealText text>{t.notes.sub}</RevealText></p>
           </div>
 
           {/* Four across, laid out like the client grid: the notes fill the
@@ -969,7 +969,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
             </div>
 
             <div className="flex flex-col gap-6">
-              <p className="text-base leading-relaxed text-body md:text-lg">{t.started.intro}</p>
+              <p className="text-base leading-relaxed text-body md:text-lg"><RevealText text>{t.started.intro}</RevealText></p>
 
               <div className="flex flex-wrap gap-3">
                 <PrimaryButton href={wa(waMessages.intro)} variant="primary">
@@ -988,14 +988,14 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
                 {t.started.expect.map((e) => (
                   <div key={e} className="flex items-start gap-2.5">
                     <CheckIcon className="mt-0.5 h-[18px] w-[18px] flex-shrink-0 text-teal-600" />
-                    <span className="text-sm text-ink">{e}</span>
+                    <span className="text-sm text-ink"><RevealText text>{e}</RevealText></span>
                   </div>
                 ))}
               </div>
 
               <div className="flex flex-col gap-3 rounded-2xl border border-border bg-bg p-6">
-                <span className="text-[11px] font-bold uppercase tracking-wide text-muted">{t.started.readyTitle}</span>
-                <p className="text-sm leading-relaxed text-body">{t.started.readyBody}</p>
+                <span className="text-[11px] font-bold uppercase tracking-wide text-muted"><RevealText text>{t.started.readyTitle}</RevealText></span>
+                <p className="text-sm leading-relaxed text-body"><RevealText text>{t.started.readyBody}</RevealText></p>
               </div>
             </div>
           </div>
@@ -1037,7 +1037,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
             <span className="hl">{t.finalCta.headingHl}</span>
             {t.finalCta.headingB}
           </RevealText></h2>
-          <p className="text-base leading-relaxed text-slate-300">{t.finalCta.sub}</p>
+          <p className="text-base leading-relaxed text-slate-300"><RevealText text>{t.finalCta.sub}</RevealText></p>
           {/* The one place the site asks for a written brief rather than a
               chat, so it goes to the form. WhatsApp is still offered below. */}
           <Link

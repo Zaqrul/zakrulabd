@@ -75,9 +75,9 @@ function Blocks({ blocks }: { blocks: Block[] }) {
             <blockquote
               key={i}
               className="my-8 border-l-[3px] border-amber-400 pl-5 font-display text-xl font-bold leading-snug text-navy md:text-2xl"
-            >
+            ><RevealText text>
               {block.text}
-            </blockquote>
+            </RevealText></blockquote>
           );
         }
         if (block.type === "ul") {
@@ -88,7 +88,7 @@ function Blocks({ blocks }: { blocks: Block[] }) {
                    its brand colour; everything else keeps the amber dot. */
                 const Icon = item.tech ? tech[item.tech].Icon : null;
                 return (
-                  <li key={item.text} className="flex gap-3 text-[16px] leading-relaxed text-body">
+                  <li key={item.text} className="flex gap-3 text-[16px] leading-relaxed text-body"><RevealText text>
                     {Icon ? (
                       <Icon
                         aria-hidden="true"
@@ -99,7 +99,7 @@ function Blocks({ blocks }: { blocks: Block[] }) {
                       <span aria-hidden className="mt-2.5 h-1.5 w-1.5 flex-shrink-0 rounded-full bg-amber-500" />
                     )}
                     <span>{item.text}</span>
-                  </li>
+                  </RevealText></li>
                 );
               })}
             </ul>
@@ -121,14 +121,14 @@ function Blocks({ blocks }: { blocks: Block[] }) {
                 sizes="(max-width: 768px) 100vw, 768px"
                 className="h-auto w-full border border-border"
               />
-              <figcaption className="text-[13px] text-muted">{block.caption}</figcaption>
+              <figcaption className="text-[13px] text-muted"><RevealText text>{block.caption}</RevealText></figcaption>
             </figure>
           );
         }
         return (
-          <p key={i} className="mt-5 text-[16px] leading-relaxed text-body md:text-[17px]">
+          <p key={i} className="mt-5 text-[16px] leading-relaxed text-body md:text-[17px]"><RevealText text>
             {block.text}
-          </p>
+          </RevealText></p>
         );
       })}
     </>
@@ -187,7 +187,7 @@ export default async function PostPage({ params, locale = "en" }: { params: Prom
         </ViewTransition>
 
         <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold uppercase tracking-wide text-muted">
-          <span className="text-navy">{post.tag}</span>
+          <span className="text-navy"><RevealText text immediate>{post.tag}</RevealText></span>
           <time dateTime={post.date}>
             {new Date(post.date).toLocaleDateString(locale === "ms" ? "ms-MY" : "en-GB", { day: "numeric", month: "long", year: "numeric" })}
           </time>
@@ -198,9 +198,9 @@ export default async function PostPage({ params, locale = "en" }: { params: Prom
           {post.title}
         </RevealText></h1>
 
-        <p className="mt-4 border-b border-border pb-8 text-[17px] leading-relaxed text-body md:text-lg">
+        <p className="mt-4 border-b border-border pb-8 text-[17px] leading-relaxed text-body md:text-lg"><RevealText text immediate>
           {post.excerpt}
-        </p>
+        </RevealText></p>
 
         <article id="article-body">
           <Blocks blocks={post.body} />
@@ -235,7 +235,7 @@ export default async function PostPage({ params, locale = "en" }: { params: Prom
               <SvgCelebration primarycolor="#f7c325" height={160} className="mx-auto h-auto w-full" />
             </div>
             <h2 className="font-display text-xl font-bold text-navy md:text-2xl"><RevealText>{t.notes.readDoneTitle}</RevealText></h2>
-            <p className="max-w-lg text-[14.5px] leading-relaxed text-body">{t.notes.readDoneBody}</p>
+            <p className="max-w-lg text-[14.5px] leading-relaxed text-body"><RevealText text>{t.notes.readDoneBody}</RevealText></p>
             <div className="mt-1 flex flex-wrap items-center justify-center gap-3">
               <Link
                 href={`${root}/notes`}
@@ -249,9 +249,9 @@ export default async function PostPage({ params, locale = "en" }: { params: Prom
 
         <div className="mt-8 flex flex-col gap-4 bg-amber-300/20 p-6 md:p-8">
           <h2 className="font-display text-lg font-bold text-navy"><RevealText>{post.cta?.title ?? (locale === "ms" ? "Perniagaan anda menghadapi keadaan yang sama?" : "Got a business in the same spot?")}</RevealText></h2>
-          <p className="max-w-2xl text-sm leading-relaxed text-body">
+          <p className="max-w-2xl text-sm leading-relaxed text-body"><RevealText text>
             {post.cta?.body ?? (locale === "ms" ? "Jika anda sibuk menghasilkan produk hingga pemasaran sering tertangguh, ceritakan apa dan di mana anda menjualnya. Saya akan berterus terang sama ada laman web sesuai untuk anda." : "If you are making the product and the marketing keeps getting pushed to tomorrow, tell me what you sell and where you sell it. I will tell you straight whether a website is what you need.")}
-          </p>
+          </RevealText></p>
           <div className="flex flex-wrap gap-3">
             <a
               href={wa(waMessages.quote)}

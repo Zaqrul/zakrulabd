@@ -5,6 +5,7 @@ import { AutoRecover } from "@/components/auto-recover";
 import { StatusPage, statusButton } from "@/components/status-page";
 import { UnderlineLink } from "@/components/underline-link";
 import { content as t } from "@/lib/content";
+import { RevealText } from "@/components/reveal-text";
 
 /* A 404 must never be indexed, and it must not inherit the homepage canonical
    either — that would tell Google a missing page is the homepage. */
@@ -44,7 +45,7 @@ export default function NotFound() {
       <AutoRecover />
 
       <div className="mt-6 flex flex-col items-center gap-3 border-t border-border pt-6">
-        <span className="text-[11px] font-bold uppercase tracking-wide text-muted">{c.linksLabel}</span>
+        <span className="text-[11px] font-bold uppercase tracking-wide text-muted"><RevealText text>{c.linksLabel}</RevealText></span>
         <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2">
           {c.links.map((label, i) => (
             <UnderlineLink key={label} href={jumpLinks[i]} className="text-[13.5px] font-semibold text-navy">

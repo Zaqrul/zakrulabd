@@ -50,14 +50,14 @@ export function StatusPage({
         <div className="flex w-full max-w-xl flex-col items-center gap-5 text-center">
           <div className="w-full max-w-[300px]">{illustration}</div>
 
-          <span className="font-mono text-[13px] font-bold tracking-[0.2em] text-muted">{code}</span>
+          <span className="font-mono text-[13px] font-bold tracking-[0.2em] text-muted"><RevealText text immediate>{code}</RevealText></span>
 
           <h1 className="font-display text-[30px] font-extrabold leading-tight tracking-tight text-navy md:text-5xl"><RevealText immediate>
             {titleA}
             <span className="hl">{titleHl}</span>
           </RevealText></h1>
 
-          <p className="max-w-lg text-[15px] leading-relaxed text-body md:text-base">{body}</p>
+          <p className="max-w-lg text-[15px] leading-relaxed text-body md:text-base"><RevealText text immediate>{body}</RevealText></p>
 
           <div className="mt-2 flex flex-wrap items-center justify-center gap-3">{actions}</div>
 

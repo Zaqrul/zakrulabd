@@ -28,7 +28,7 @@ export function NoteCard({ post, locale = "en" }: { post: Post; locale?: "en" | 
 
       <div className="flex flex-1 flex-col gap-3 p-6">
         <div className="flex flex-wrap items-center gap-3 text-[11px] font-bold uppercase tracking-wide text-muted">
-          <span className="text-navy">{post.tag}</span>
+          <span className="text-navy"><RevealText text>{post.tag}</RevealText></span>
           <span>{post.readingTime}</span>
         </div>
 
@@ -44,7 +44,7 @@ export function NoteCard({ post, locale = "en" }: { post: Post; locale?: "en" | 
 
         {/* Clamped: four across leaves a narrow column, and one long excerpt
             would otherwise push its card taller than the three beside it. */}
-        <p className="line-clamp-4 text-[14px] leading-relaxed text-body">{post.excerpt}</p>
+        <p className="line-clamp-4 text-[14px] leading-relaxed text-body"><RevealText text>{post.excerpt}</RevealText></p>
 
         {/* The site mark signs the card: these are first-hand accounts of my
             own projects. */}

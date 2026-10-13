@@ -82,9 +82,9 @@ export default function TermsPage({ locale = "en" }: { locale?: "en" | "ms" }) {
             <span>{terms.lastUpdated}</span>
           </div>
 
-          <p className="mt-5 text-base leading-relaxed text-body md:text-lg">
+          <p className="mt-5 text-base leading-relaxed text-body md:text-lg"><RevealText text immediate>
             {terms.intro}
-          </p>
+          </RevealText></p>
         </div>
 
         {/* Terms Sections */}
@@ -99,9 +99,9 @@ export default function TermsPage({ locale = "en" }: { locale?: "en" | "ms" }) {
               </RevealText></h2>
               <div className="mt-4 flex flex-col gap-3">
                 {section.content.map((paragraph, pIdx) => (
-                  <p key={pIdx} className="text-sm leading-relaxed text-body">
+                  <p key={pIdx} className="text-sm leading-relaxed text-body"><RevealText text>
                     {paragraph}
-                  </p>
+                  </RevealText></p>
                 ))}
               </div>
             </section>
@@ -114,9 +114,9 @@ export default function TermsPage({ locale = "en" }: { locale?: "en" | "ms" }) {
             <h3 className="font-display text-lg font-bold text-navy"><RevealText>
               {locale === "ms" ? "Bersedia memulakan projek?" : "Ready to start your project?"}
             </RevealText></h3>
-            <p className="text-sm text-body mt-1">
+            <p className="text-sm text-body mt-1"><RevealText text>
               {locale === "ms" ? "Hubungi saya untuk membincangkan keperluan, menyetujui peringkat kerja dan mendapatkan sebut harga tetap." : "Message me to talk through your requirements, agree on milestones, and get a fixed quote."}
-            </p>
+            </RevealText></p>
           </div>
           <a
             href={`https://wa.me/${WHATSAPP_NUMBER}`}

@@ -36,7 +36,7 @@ type Props = { className?: string; style?: CSSProperties; children?: ReactNode }
    so CSS can stagger them left to right. Elements inside (the .hl marker, a
    line break) are kept, with their own words split the same way; a marker
    also learns when its first word arrives, so it grows after it. */
-function split(node: ReactNode, count: { n: number }): ReactNode {
+function split(node: ReactNode, count: { n: number; step: number }): ReactNode {
   return Children.map(node, (child) => {
     if (typeof child === "string" || typeof child === "number") {
       return String(child)
@@ -59,19 +59,29 @@ function split(node: ReactNode, count: { n: number }): ReactNode {
     const kids = split(el.props.children, count);
     return cloneElement(
       el,
-      marker ? { className: `${el.props.className} hl-grow`, style: { ...el.props.style, "--hl-delay": `${first * STEP + 260}ms` } as CSSProperties } : {},
+      marker ? { className: `${el.props.className} hl-grow`, style: { ...el.props.style, "--hl-delay": `${first * count.step + 260}ms` } as CSSProperties } : {},
       kids,
     );
   });
 }
 
-/* Heading text that arrives word by word, from the left, out of a blur. Put
-   it inside the heading so the heading itself stays a server element. */
-export function RevealText({ children, immediate = false }: { children: ReactNode; immediate?: boolean }) {
+/* How long a paragraph's sweep takes, end to end, however long it is. */
+const TEXT_SWEEP = 700;
+
+/* Text that arrives word by word, from the left, out of a blur. Put it inside
+   the heading or paragraph so that element stays a server element.
+   Headings step a word at a time. Body text (`text`) sweeps across in about
+   the same time whatever its length, so a long paragraph is never kept
+   waiting, and with a lighter blur. */
+export function RevealText({ children, immediate = false, text = false }: { children: ReactNode; immediate?: boolean; text?: boolean }) {
   const [ref, inView] = useInView<HTMLSpanElement>(immediate);
+  /* Count the words first, then split again with the step that fits. */
+  const probe = { n: 0, step: STEP };
+  split(children, probe);
+  const step = text ? Math.max(4, Math.min(28, Math.round(TEXT_SWEEP / Math.max(probe.n, 1)))) : STEP;
   return (
-    <span ref={ref} className="rt" data-in={inView ? "" : undefined}>
-      {split(children, { n: 0 })}
+    <span ref={ref} className={text ? "rt rt-text" : "rt"} style={{ "--step": `${step}ms` } as CSSProperties} data-in={inView ? "" : undefined}>
+      {split(children, { n: 0, step })}
     </span>
   );
 }

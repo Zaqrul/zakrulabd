@@ -46,7 +46,7 @@ export function ClientLogos({ copy = content }: { copy?: typeof content | typeof
             <span className="hl">{t.clients.headingHl}</span>
             {t.clients.headingB}
           </RevealText></h2>
-          <p className="text-base text-slate-400">{t.clients.sub}</p>
+          <p className="text-base text-slate-400"><RevealText text>{t.clients.sub}</RevealText></p>
         </div>
 
         {/* One line, the way a credit line reads: a mark, who it was for, and

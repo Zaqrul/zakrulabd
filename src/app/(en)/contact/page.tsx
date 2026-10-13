@@ -36,12 +36,12 @@ export default function ContactPage({ locale = "en" }: { locale?: "en" | "ms" })
 
       <section className="bg-navy px-5 py-14 md:px-6 md:py-16">
         <div className="mx-auto flex w-full max-w-shell flex-col gap-4">
-          <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-400">{c.badge}</span>
+          <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-amber-400"><RevealText text immediate>{c.badge}</RevealText></span>
           <h1 className="font-display text-[30px] font-extrabold tracking-tight text-white md:text-5xl"><RevealText immediate>
             {c.titleA}
             <span className="hl">{c.titleHl}</span>
           </RevealText></h1>
-          <p className="max-w-2xl text-base leading-relaxed text-slate-300 md:text-lg">{c.sub}</p>
+          <p className="max-w-2xl text-base leading-relaxed text-slate-300 md:text-lg"><RevealText text immediate>{c.sub}</RevealText></p>
         </div>
       </section>
 
@@ -66,10 +66,10 @@ export default function ContactPage({ locale = "en" }: { locale?: "en" | "ms" })
                   one band above the form, where stacked they would push the
                   first field off a phone screen. */}
               <blockquote className="min-w-0 border-l-2 border-amber-400 pl-3">
-                <p className="font-display text-[11.5px] font-bold leading-snug text-navy">{c.quote}</p>
+                <p className="font-display text-[11.5px] font-bold leading-snug text-navy"><RevealText text immediate>{c.quote}</RevealText></p>
                 <footer className="mt-1.5 flex items-center gap-1 text-[10.5px] text-muted">
                   <span>{c.quoteByLabel}</span>
-                  <span className="font-bold text-navy">{c.quoteBy}</span>
+                  <span className="font-bold text-navy"><RevealText text immediate>{c.quoteBy}</RevealText></span>
                   <Image
                     src="/logo-ghost-outline.webp"
                     alt=""
@@ -93,10 +93,10 @@ export default function ContactPage({ locale = "en" }: { locale?: "en" | "ms" })
 
             <ul className="flex w-full flex-col gap-3 border-t border-border pt-6">
               {c.assurances.map((line) => (
-                <li key={line} className="flex items-start gap-2.5 text-[14px] leading-relaxed text-body">
+                <li key={line} className="flex items-start gap-2.5 text-[14px] leading-relaxed text-body"><RevealText text immediate>
                   <CheckIcon className="mt-0.5 h-4 w-4 flex-shrink-0 text-teal-600" />
                   {line}
-                </li>
+                </RevealText></li>
               ))}
             </ul>
 
@@ -109,12 +109,12 @@ export default function ContactPage({ locale = "en" }: { locale?: "en" | "ms" })
               {/* How I work, in one sentence, where someone deciding whether to
                   write to me is already looking. */}
               <blockquote className="border-l-[3px] border-amber-400 pl-4">
-                <p className="font-display text-[15px] font-bold leading-snug text-navy">{c.quote}</p>
+                <p className="font-display text-[15px] font-bold leading-snug text-navy"><RevealText text immediate>{c.quote}</RevealText></p>
                 {/* Same mark and byline shape the note cards use, so a
                     signature on this site always looks like one. */}
                 <footer className="mt-2.5 flex items-center gap-1.5 text-[12.5px] text-muted">
                   <span>{c.quoteByLabel}</span>
-                  <span className="font-bold text-navy">{c.quoteBy}</span>
+                  <span className="font-bold text-navy"><RevealText text immediate>{c.quoteBy}</RevealText></span>
                   <Image
                     src="/logo-ghost-outline.webp"
                     alt=""
