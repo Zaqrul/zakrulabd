@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { startTransition, useCallback, useEffect, useMemo, useRef, useState, ViewTransition, type CSSProperties } from "react";
 import Link from "next/link";
 import { Fraunces } from "next/font/google";
 import type { IconType } from "react-icons";
@@ -8,7 +8,6 @@ import {
   PiArrowLeft,
   PiArrowRight,
   PiBankDuotone,
-  PiCheckCircleFill,
   PiCoffeeBeanDuotone,
   PiCoffeeDuotone,
   PiCookieDuotone,
@@ -57,23 +56,37 @@ type Product = {
   reviews: number;
   Icon: IconType;
   tint: string;
+  motion: Motion;
+};
+
+/* How each drawing moves while its tile is hovered, picked to suit the object:
+   a lamp swings from its cord, a plant sways from its pot, a cup steams. */
+type Motion = "wiggle" | "float" | "swing" | "sway" | "hop" | "steam";
+
+const iconMotion: Record<Motion, string> = {
+  wiggle: "motion-safe:group-hover:animate-[icon-wiggle_0.9s_ease-in-out_infinite]",
+  float: "motion-safe:group-hover:animate-[icon-float_1.6s_ease-in-out_infinite]",
+  swing: "origin-top motion-safe:group-hover:animate-[icon-swing_1.6s_ease-in-out_infinite]",
+  sway: "origin-bottom motion-safe:group-hover:animate-[icon-sway_1.8s_ease-in-out_infinite]",
+  hop: "motion-safe:group-hover:animate-[icon-hop_0.9s_ease-in-out_infinite]",
+  steam: "",
 };
 
 /* Fictional products. Drawings stand in for photography so the page carries
    no stock images and no real brand. */
 const products: Product[] = [
-  { id: "batik-shirt", name: "Batik Lepas Shirt", maker: "Kelantan", category: "Apparel", price: 89, badge: "Best seller", rating: 4.8, reviews: 214, Icon: PiTShirtDuotone, tint: "bg-[#f6e7d3] text-[#b5652f]" },
-  { id: "kurta-dress", name: "Batik Kurta Dress", maker: "Terengganu", category: "Apparel", price: 129, badge: "New", rating: 4.7, reviews: 38, Icon: PiDressDuotone, tint: "bg-[#e3ece4] text-[#2f5d46]" },
-  { id: "kopi-ipoh", name: "Kopi Ipoh Beans, 250g", maker: "Ipoh, Perak", category: "Pantry", price: 32, badge: "Best seller", rating: 4.9, reviews: 502, Icon: PiCoffeeBeanDuotone, tint: "bg-[#eadfd6] text-[#6b3f26]" },
-  { id: "teh-tarik", name: "Teh Tarik Blend", maker: "Cameron Highlands", category: "Pantry", price: 24, rating: 4.6, reviews: 167, Icon: PiTeaBagDuotone, tint: "bg-[#f1e9d2] text-[#8a6a1f]" },
-  { id: "kaya-jar", name: "Pandan Kaya, 300g", maker: "Melaka", category: "Pantry", price: 18, was: 21, rating: 4.8, reviews: 289, Icon: PiJarDuotone, tint: "bg-[#e1eedb] text-[#4e7a3a]" },
-  { id: "kuih-bangkit", name: "Kuih Bangkit Tin", maker: "Penang", category: "Pantry", price: 22, rating: 4.7, reviews: 96, Icon: PiCookieDuotone, tint: "bg-[#f4e4dc] text-[#a2553a]" },
-  { id: "clay-cups", name: "Clay Kopi Cups, set of 2", maker: "Sayong, Perak", category: "Home", price: 58, rating: 4.9, reviews: 73, Icon: PiCoffeeDuotone, tint: "bg-[#ecdccf] text-[#8c4a2f]" },
-  { id: "rattan-lamp", name: "Rattan Pendant Lamp", maker: "Sarawak", category: "Home", price: 149, badge: "New", rating: 4.8, reviews: 21, Icon: PiLampDuotone, tint: "bg-[#efe6d4] text-[#7a5a24]" },
-  { id: "monstera", name: "Terracotta Planter", maker: "Johor", category: "Home", price: 65, was: 79, rating: 4.6, reviews: 58, Icon: PiPottedPlantDuotone, tint: "bg-[#dfeae3] text-[#2f6b4f]" },
-  { id: "linen-tote", name: "Mengkuang Tote", maker: "Pahang", category: "Gifts", price: 45, rating: 4.7, reviews: 132, Icon: PiToteDuotone, tint: "bg-[#ece7d8] text-[#6f6a3a]" },
-  { id: "raya-box", name: "Raya Gift Box", maker: "Curated set", category: "Gifts", price: 119, badge: "Best seller", rating: 4.9, reviews: 147, Icon: PiGiftDuotone, tint: "bg-[#f5e0d8] text-[#b0493a]" },
-  { id: "bag-set", name: "Songket Pouch", maker: "Terengganu", category: "Gifts", price: 39, rating: 4.5, reviews: 44, Icon: PiShoppingBagDuotone, tint: "bg-[#e6e1ef] text-[#5a4a8a]" },
+  { id: "batik-shirt", name: "Batik Lepas Shirt", maker: "Kelantan", category: "Apparel", price: 89, badge: "Best seller", rating: 4.8, reviews: 214, Icon: PiTShirtDuotone, tint: "bg-[#f6e7d3] text-[#b5652f]", motion: "wiggle" },
+  { id: "kurta-dress", name: "Batik Kurta Dress", maker: "Terengganu", category: "Apparel", price: 129, badge: "New", rating: 4.7, reviews: 38, Icon: PiDressDuotone, tint: "bg-[#e3ece4] text-[#2f5d46]", motion: "wiggle" },
+  { id: "kopi-ipoh", name: "Kopi Ipoh Beans, 250g", maker: "Ipoh, Perak", category: "Pantry", price: 32, badge: "Best seller", rating: 4.9, reviews: 502, Icon: PiCoffeeBeanDuotone, tint: "bg-[#eadfd6] text-[#6b3f26]", motion: "float" },
+  { id: "teh-tarik", name: "Teh Tarik Blend", maker: "Cameron Highlands", category: "Pantry", price: 24, rating: 4.6, reviews: 167, Icon: PiTeaBagDuotone, tint: "bg-[#f1e9d2] text-[#8a6a1f]", motion: "swing" },
+  { id: "kaya-jar", name: "Pandan Kaya, 300g", maker: "Melaka", category: "Pantry", price: 18, was: 21, rating: 4.8, reviews: 289, Icon: PiJarDuotone, tint: "bg-[#e1eedb] text-[#4e7a3a]", motion: "hop" },
+  { id: "kuih-bangkit", name: "Kuih Bangkit Tin", maker: "Penang", category: "Pantry", price: 22, rating: 4.7, reviews: 96, Icon: PiCookieDuotone, tint: "bg-[#f4e4dc] text-[#a2553a]", motion: "hop" },
+  { id: "clay-cups", name: "Clay Kopi Cups, set of 2", maker: "Sayong, Perak", category: "Home", price: 58, rating: 4.9, reviews: 73, Icon: PiCoffeeDuotone, tint: "bg-[#ecdccf] text-[#8c4a2f]", motion: "steam" },
+  { id: "rattan-lamp", name: "Rattan Pendant Lamp", maker: "Sarawak", category: "Home", price: 149, badge: "New", rating: 4.8, reviews: 21, Icon: PiLampDuotone, tint: "bg-[#efe6d4] text-[#7a5a24]", motion: "swing" },
+  { id: "monstera", name: "Terracotta Planter", maker: "Johor", category: "Home", price: 65, was: 79, rating: 4.6, reviews: 58, Icon: PiPottedPlantDuotone, tint: "bg-[#dfeae3] text-[#2f6b4f]", motion: "sway" },
+  { id: "linen-tote", name: "Mengkuang Tote", maker: "Pahang", category: "Gifts", price: 45, rating: 4.7, reviews: 132, Icon: PiToteDuotone, tint: "bg-[#ece7d8] text-[#6f6a3a]", motion: "swing" },
+  { id: "raya-box", name: "Raya Gift Box", maker: "Curated set", category: "Gifts", price: 119, badge: "Best seller", rating: 4.9, reviews: 147, Icon: PiGiftDuotone, tint: "bg-[#f5e0d8] text-[#b0493a]", motion: "hop" },
+  { id: "bag-set", name: "Songket Pouch", maker: "Terengganu", category: "Gifts", price: 39, rating: 4.5, reviews: 44, Icon: PiShoppingBagDuotone, tint: "bg-[#e6e1ef] text-[#5a4a8a]", motion: "hop" },
 ];
 
 const categories: ("All" | Category)[] = ["All", "Apparel", "Home", "Pantry", "Gifts"];
@@ -144,8 +157,14 @@ function FlyToCart({ flyer, onLanded }: { flyer: Flyer; onLanded: (key: number) 
 }
 
 export function StoreShowcase() {
-  const [category, setCategory] = useState<(typeof categories)[number]>("All");
-  const [sort, setSort] = useState<"featured" | "low" | "high">("featured");
+  const [category, setCategoryNow] = useState<(typeof categories)[number]>("All");
+  const [sort, setSortNow] = useState<"featured" | "low" | "high">("featured");
+
+  /* Filtering and sorting run as transitions, so the product cards'
+     ViewTransitions animate: leavers shrink out, arrivals rise in, and the
+     ones that stay slide to their new place. */
+  const setCategory = (c: (typeof categories)[number]) => startTransition(() => setCategoryNow(c));
+  const setSort = (v: "featured" | "low" | "high") => startTransition(() => setSortNow(v));
   const [query, setQuery] = useState("");
   const [cart, setCart] = useState<Record<string, number>>({ "kopi-ipoh": 1 });
   const [liked, setLiked] = useState<Set<string>>(new Set());
@@ -472,45 +491,76 @@ export function StoreShowcase() {
           ) : (
             <div className="mt-8 grid grid-cols-2 gap-x-4 gap-y-8 md:grid-cols-3 lg:grid-cols-4">
               {shown.map((p) => (
-                <article key={p.id} className="group flex flex-col">
-                  <div className={`relative flex aspect-[4/5] items-center justify-center overflow-hidden rounded-2xl ${p.tint}`}>
-                    <p.Icon aria-hidden className="h-2/5 w-2/5 transition duration-300 group-hover:scale-110" />
-                    {p.badge && (
-                      <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-[#1f3a2e]">{p.badge}</span>
-                    )}
-                    {p.was && (
-                      <span className="absolute left-3 top-3 rounded-full bg-[#c8643b] px-2.5 py-1 text-[11px] font-bold text-white">
-                        -{Math.round((1 - p.price / p.was) * 100)}%
-                      </span>
-                    )}
-                    <button
-                      type="button"
-                      onClick={() => toggleLike(p.id)}
-                      aria-label={liked.has(p.id) ? `Remove ${p.name} from wishlist` : `Save ${p.name} to wishlist`}
-                      aria-pressed={liked.has(p.id)}
-                      className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#2a2620] hover:text-[#c8643b]"
-                    >
-                      {liked.has(p.id) ? <PiHeartFill className="h-4 w-4 text-[#c8643b]" /> : <PiHeart className="h-4 w-4" />}
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => add(p, e.currentTarget.parentElement)}
-                      className="absolute inset-x-3 bottom-3 translate-y-2 rounded-full bg-[#1f3a2e] py-2.5 text-[13px] font-semibold text-white opacity-0 transition duration-200 hover:bg-[#2a4d3d] focus:translate-y-0 focus:opacity-100 group-hover:translate-y-0 group-hover:opacity-100 max-md:translate-y-0 max-md:opacity-100"
-                    >
-                      Add to cart
-                    </button>
-                  </div>
-                  <p className="mt-3 text-[11.5px] font-medium uppercase tracking-wide text-[#8a7f70]">{p.maker}</p>
-                  <h3 className="mt-1 text-[15px] font-semibold leading-snug text-[#2a2620]">{p.name}</h3>
-                  <div className="mt-1 flex items-center gap-1 text-[12.5px] text-[#7a6f60]">
-                    <PiStarFill aria-hidden className="h-3.5 w-3.5 text-[#d79a2b]" />
-                    {p.rating} <span>({p.reviews})</span>
-                  </div>
-                  <p className="mt-1.5 text-[15px] font-bold text-[#c8643b]">
-                    {rm(p.price)}
-                    {p.was && <span className="ml-2 text-[13px] font-medium text-[#a69b8b] line-through">{rm(p.was)}</span>}
-                  </p>
-                </article>
+                <ViewTransition key={p.id} name={`product-${p.id}`} enter="product-in" exit="product-out">
+                  <article className="store-reveal group flex flex-col">
+                    <div className={`relative flex aspect-[4/5] items-center justify-center overflow-hidden rounded-2xl ${p.tint}`}>
+                      <p.Icon aria-hidden className={`h-2/5 w-2/5 ${iconMotion[p.motion]}`} />
+                      {p.motion === "steam" && (
+                        <span aria-hidden className="pointer-events-none absolute left-[44%] top-[22%] flex -translate-x-1/2 gap-1.5">
+                          {[0, 1, 2].map((i) => (
+                            <span
+                              key={i}
+                              style={{ animationDelay: `${i * 0.35}s` }}
+                              className="h-5 w-1 rounded-full bg-current opacity-0 motion-safe:group-hover:animate-[steam_1.6s_ease-out_infinite]"
+                            />
+                          ))}
+                        </span>
+                      )}
+                      {p.badge && (
+                        <span className="absolute left-3 top-3 rounded-full bg-white/90 px-2.5 py-1 text-[11px] font-bold text-[#1f3a2e]">{p.badge}</span>
+                      )}
+                      {p.was && (
+                        <span className="absolute left-3 top-3 rounded-full bg-[#c8643b] px-2.5 py-1 text-[11px] font-bold text-white">
+                          -{Math.round((1 - p.price / p.was) * 100)}%
+                        </span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => toggleLike(p.id)}
+                        aria-label={liked.has(p.id) ? `Remove ${p.name} from wishlist` : `Save ${p.name} to wishlist`}
+                        aria-pressed={liked.has(p.id)}
+                        className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full bg-white/90 text-[#2a2620] hover:text-[#c8643b]"
+                      >
+                        {liked.has(p.id) ? (
+                          <>
+                            <PiHeartFill className="h-4 w-4 text-[#c8643b] motion-safe:animate-[heart-pop_450ms_cubic-bezier(0.17,0.89,0.32,1.49)]" />
+                            {/* A ring of dots bursts out once when the heart is filled. */}
+                            <span aria-hidden className="pointer-events-none absolute inset-0">
+                              {Array.from({ length: 8 }, (_, i) => (
+                                <span
+                                  key={i}
+                                  style={{ "--a": `${i * 45}deg` } as CSSProperties}
+                                  className={`absolute left-1/2 top-1/2 h-1.5 w-1.5 rounded-full opacity-0 motion-safe:animate-[heart-burst_550ms_ease-out] ${
+                                    i % 2 ? "bg-[#d79a2b]" : "bg-[#c8643b]"
+                                  }`}
+                                />
+                              ))}
+                            </span>
+                          </>
+                        ) : (
+                          <PiHeart className="h-4 w-4" />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => add(p, e.currentTarget.parentElement)}
+                        className="absolute inset-x-3 bottom-3 translate-y-2 rounded-full bg-[#1f3a2e] py-2.5 text-[13px] font-semibold text-white opacity-0 transition duration-200 hover:bg-[#2a4d3d] focus:translate-y-0 focus:opacity-100 group-hover:translate-y-0 group-hover:opacity-100 max-md:translate-y-0 max-md:opacity-100"
+                      >
+                        Add to cart
+                      </button>
+                    </div>
+                    <p className="mt-3 text-[11.5px] font-medium uppercase tracking-wide text-[#8a7f70]">{p.maker}</p>
+                    <h3 className="mt-1 text-[15px] font-semibold leading-snug text-[#2a2620]">{p.name}</h3>
+                    <div className="mt-1 flex items-center gap-1 text-[12.5px] text-[#7a6f60]">
+                      <PiStarFill aria-hidden className="h-3.5 w-3.5 text-[#d79a2b]" />
+                      {p.rating} <span>({p.reviews})</span>
+                    </div>
+                    <p className="mt-1.5 text-[15px] font-bold text-[#c8643b]">
+                      {rm(p.price)}
+                      {p.was && <span className="ml-2 text-[13px] font-medium text-[#a69b8b] line-through">{rm(p.was)}</span>}
+                    </p>
+                  </article>
+                </ViewTransition>
               ))}
             </div>
           )}
@@ -572,7 +622,25 @@ export function StoreShowcase() {
 
           {step === "done" ? (
             <div className="flex flex-1 flex-col items-center justify-center px-8 text-center">
-              <PiCheckCircleFill aria-hidden className="h-14 w-14 text-[#2f6b4f]" />
+              {/* The tick draws itself inside a circle that pops in, with a ring
+                  spreading out behind it. */}
+              <div aria-hidden className="relative flex h-16 w-16 items-center justify-center">
+                <span className="absolute inset-0 rounded-full bg-[#2f6b4f]/30 opacity-0 motion-safe:animate-[done-ring_900ms_ease-out_250ms]" />
+                <svg viewBox="0 0 52 52" className="relative h-16 w-16">
+                  <circle cx="26" cy="26" r="24" fill="#2f6b4f" className="origin-center [transform-box:fill-box] motion-safe:animate-[done-pop_400ms_cubic-bezier(0.17,0.89,0.32,1.3)_both]" />
+                  <path
+                    d="M15 27 l7 7 l15 -16"
+                    fill="none"
+                    stroke="#fff"
+                    strokeWidth="4"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    pathLength={1}
+                    strokeDasharray="1"
+                    className="motion-safe:animate-[done-check_400ms_ease-out_300ms_both]"
+                  />
+                </svg>
+              </div>
               <p className="mt-4 font-[family-name:var(--font-store-serif)] text-[24px] font-semibold text-[#1f3a2e]">Terima kasih!</p>
               <p className="mt-2 text-[14.5px] leading-relaxed text-[#5a5248]">
                 Order #SRB-1042 is confirmed. In a real store, this is where the customer gets an email and a WhatsApp update.
