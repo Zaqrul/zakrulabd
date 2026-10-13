@@ -415,7 +415,7 @@ export function StoreShowcase() {
       </div>
 
       <header className="store-header sticky top-0 z-30 border-b border-[#e8dfd0] bg-[#faf6ef]/90 backdrop-blur">
-        <div className="store-header-bar mx-auto flex max-w-6xl items-center gap-4 px-4 py-3.5 md:gap-8">
+        <div className="store-header-bar mx-auto flex max-w-6xl flex-wrap items-center gap-x-4 gap-y-2.5 px-4 py-3.5 sm:flex-nowrap md:gap-x-8">
           <span className="font-[family-name:var(--font-store-serif)] text-[22px] font-semibold tracking-tight text-[#1f3a2e]">Serambi</span>
           <nav className="hidden gap-6 text-[14px] font-medium text-[#5a5248] md:flex">
             {categories.slice(1).map((c) => (
@@ -424,7 +424,7 @@ export function StoreShowcase() {
               </button>
             ))}
           </nav>
-          <label className="ml-auto flex min-w-0 max-w-[260px] flex-1 items-center gap-2 rounded-full border border-[#e2d7c5] bg-white px-3.5 py-2 text-[13.5px] focus-within:border-[#1f3a2e]">
+          <label className="order-last flex min-w-0 flex-1 basis-full items-center gap-2 rounded-full sm:order-none sm:ml-auto sm:max-w-[260px] sm:basis-auto border border-[#e2d7c5] bg-white px-3.5 py-2 text-[13.5px] focus-within:border-[#1f3a2e]">
             <PiMagnifyingGlass aria-hidden className="h-4 w-4 flex-shrink-0 text-[#8a7f70]" />
             <span className="sr-only">Search products</span>
             <input
@@ -438,7 +438,7 @@ export function StoreShowcase() {
             type="button"
             ref={cartButton}
             onClick={openCart}
-            className="relative inline-flex flex-shrink-0 items-center gap-2 rounded-full bg-[#1f3a2e] px-4 py-2 text-[13.5px] font-semibold text-white hover:bg-[#2a4d3d]"
+            className="relative ml-auto inline-flex flex-shrink-0 items-center gap-2 rounded-full bg-[#1f3a2e] px-4 py-2 sm:ml-0 text-[13.5px] font-semibold text-white hover:bg-[#2a4d3d]"
           >
             <PiShoppingBagDuotone aria-hidden className="h-4 w-4" />
             <span className="hidden sm:inline">Cart</span>
@@ -464,22 +464,22 @@ export function StoreShowcase() {
             <p className="mt-5 max-w-md text-[16px] leading-relaxed text-[#5a5248]">
               Batik, clay cups, rattan and pantry items from small producers. We pack orders in Ipoh and ship across Peninsular Malaysia.
             </p>
-            <div className="mt-8 flex flex-wrap gap-3">
-              <a href="#shop" className="inline-flex items-center gap-2 rounded-full bg-[#c8643b] px-6 py-3 text-[14.5px] font-semibold text-white hover:bg-[#b3552f]">
+            <div className="mt-8 flex flex-wrap gap-2.5 sm:gap-3">
+              <a href="#shop" className="inline-flex items-center gap-2 rounded-full bg-[#c8643b] px-5 py-3 text-[14px] sm:px-6 sm:text-[14.5px] font-semibold text-white hover:bg-[#b3552f]">
                 Shop all products <PiArrowRight aria-hidden className="h-4 w-4" />
               </a>
-              <button type="button" onClick={() => setCategory("Gifts")} className="rounded-full border border-[#1f3a2e]/25 px-6 py-3 text-[14.5px] font-semibold text-[#1f3a2e] hover:border-[#1f3a2e]">
+              <button type="button" onClick={() => setCategory("Gifts")} className="rounded-full border border-[#1f3a2e]/25 px-5 py-3 text-[14px] sm:px-6 sm:text-[14.5px] font-semibold text-[#1f3a2e] hover:border-[#1f3a2e]">
                 Raya gifts
               </button>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-4 gap-2.5 sm:gap-4 md:grid-cols-2">
             {[products[0], products[6], products[2], products[7]].map((p, i) => (
               <div
                 key={p.id}
                 style={{ "--speed": `${[40, 90, 70, 120][i]}px` } as CSSProperties}
-                className={`store-parallax flex aspect-square items-center justify-center rounded-3xl ${p.tint} ${i % 2 ? "translate-y-6" : ""}`}
+                className={`store-parallax flex aspect-square items-center justify-center rounded-2xl md:rounded-3xl ${p.tint} ${i % 2 ? "translate-y-3 md:translate-y-6" : ""}`}
               >
                 <p.Icon aria-hidden className="h-2/5 w-2/5" />
               </div>
@@ -526,14 +526,14 @@ export function StoreShowcase() {
             </label>
           </div>
 
-          <div className="mt-6 flex flex-wrap gap-2">
+          <div className="-mx-4 mt-6 flex gap-2 overflow-x-auto px-4 [scrollbar-width:none] sm:mx-0 sm:flex-wrap sm:overflow-visible sm:px-0">
             {categories.map((c) => (
               <button
                 key={c}
                 type="button"
                 onClick={() => setCategory(c)}
                 aria-pressed={category === c}
-                className={`rounded-full px-4 py-1.5 text-[13.5px] font-medium transition ${
+                className={`flex-shrink-0 whitespace-nowrap rounded-full px-4 py-1.5 text-[13.5px] font-medium transition ${
                   category === c ? "bg-[#1f3a2e] text-white" : "border border-[#e2d7c5] bg-white text-[#5a5248] hover:border-[#1f3a2e]"
                 }`}
               >
@@ -605,10 +605,20 @@ export function StoreShowcase() {
                           <PiHeart className="h-4 w-4" />
                         )}
                       </button>
+                      {/* Phones have no hover, so a small round button stays visible
+                          and leaves the drawing uncovered. */}
                       <button
                         type="button"
                         onClick={(e) => add(p, e.currentTarget.parentElement)}
-                        className="absolute inset-x-3 bottom-3 translate-y-2 rounded-full bg-[#1f3a2e] py-2.5 text-[13px] font-semibold text-white opacity-0 transition duration-200 hover:bg-[#2a4d3d] focus:translate-y-0 focus:opacity-100 group-hover:translate-y-0 group-hover:opacity-100 max-md:translate-y-0 max-md:opacity-100"
+                        aria-label={`Add ${p.name} to cart`}
+                        className="absolute bottom-2.5 right-2.5 flex h-10 w-10 items-center justify-center rounded-full bg-[#1f3a2e] text-white shadow-md active:scale-95 md:hidden"
+                      >
+                        <PiPlus className="h-4 w-4" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => add(p, e.currentTarget.parentElement)}
+                        className="absolute inset-x-3 bottom-3 hidden translate-y-2 rounded-full bg-[#1f3a2e] py-2.5 text-[13px] font-semibold text-white opacity-0 transition duration-200 hover:bg-[#2a4d3d] focus:translate-y-0 focus:opacity-100 group-hover:translate-y-0 group-hover:opacity-100 md:block"
                       >
                         Add to cart
                       </button>
