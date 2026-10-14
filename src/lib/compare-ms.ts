@@ -20,7 +20,8 @@ const groups = [
     ["Aliran kerja sebut harga atau kelulusan", "Borang yang mengagihkan, memaklumkan dan merekodkan kelulusan"],
   ] },
   { label: "Perkara berkaitan laman web", rows: [
-    ["Hosting dan domain sendiri", "Vercel, Railway, ServerFreak, Exabyte atau penyedia lain"],
+    ["Hosting", "Vercel, Railway, ServerFreak, Exabyte atau penyedia lain"],
+    ["Domain sendiri", "perniagaananda.com, didaftarkan atas nama anda"],
     ["Analitik dan penjejakan penukaran", "GA4, events dan matlamat yang mudah difahami"],
     ["Live chat pada laman web", "Pemasangan widget, agihan pertanyaan dan automasi"],
     ["SEO teknikal dan data berstruktur", "SEO on-page asas, schema dan pengindeksan"],
