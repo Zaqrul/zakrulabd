@@ -202,14 +202,14 @@ export const content = {
     headingA: "Straightforward ",
     headingHl: "Packages",
     headingB: "",
-    sub: "Starter is RM800. Professional starts from RM1,500, and the final price depends on scope. Pick the package closest to what you need and message me for a fixed quote.",
+    sub: "Starter is RM800. Professional starts from RM1,500, and the final price depends on scope. Hosting and custom domain fees are paid separately. Pick the package closest to what you need and message me for a fixed quote.",
     badge: "RECOMMENDED",
     tiers: [
       {
         name: "Starter Website",
         tagline: "For getting online quickly",
         price: "RM800*",
-        priceNote: "*Final price depends on where your website is hosted.",
+        priceNote: "*Excludes hosting, custom domain, Google Analytics 4, and Google Search Console.",
         priceAmount: 800,
         description:
           "Suited to personal brands, freelancers, and portfolios that need a clean, credible presence online without a long build.",
@@ -219,7 +219,6 @@ export const content = {
           "Mobile and tablet responsive",
           "WhatsApp or contact button",
           "Essential on-page SEO",
-          "Domain and hosting setup",
           "Launch and basic edit guide",
           "2 weeks free support and 3 revisions",
         ],
@@ -227,7 +226,8 @@ export const content = {
       {
         name: "Professional Website",
         tagline: "For established businesses",
-        price: "From RM1,500",
+        price: "From RM1,500*",
+        priceNote: "*Excludes hosting and custom domain.",
         priceAmount: 1500,
         description:
           "Suited to SMEs, service businesses, and consultants who need a site customers can trust, understand, and enquire through.",
@@ -237,6 +237,7 @@ export const content = {
           "Multi-page site with content planning",
           "Enquiry forms with email notifications",
           "Metadata, sitemap, and Google Business setup",
+          "Google Search Console setup",
           "Google Analytics 4 and conversion tracking",
           "Page speed and Core Web Vitals tuning",
           "Handover walkthrough and training video",
@@ -363,9 +364,9 @@ export const content = {
           label: "Everything around the site",
           rows: [
             {
-              what: "Domain, hosting, and going live",
+              what: "Hosting and custom domain",
               note: "Vercel, Railway, ServerFreak, Exabyte, or others",
-              marks: ["full", "full", "full"],
+              marks: ["none", "none", "full"],
             },
             {
               what: "Analytics and conversion tracking",
@@ -540,7 +541,7 @@ export const content = {
         items: [
           {
             q: "How much does a website cost?",
-            a: "Starter is RM800, depending on where the site is hosted. Professional starts from RM1,500. Advanced systems are quoted per project. You get a fixed price before work starts.",
+            a: "Starter is RM800, not including hosting, a custom domain, Google Analytics 4, or Google Search Console. Professional starts from RM1,500, not including hosting or a custom domain. Advanced systems are quoted per project. You get a fixed price before work starts.",
           },
           {
             q: "How do I get a quote?",
@@ -552,7 +553,7 @@ export const content = {
           },
           {
             q: "Are hosting and domain included in the quote?",
-            a: "The setup work is included. Domain and hosting fees are paid to the provider, registered in your name. I recommend your own custom domain (for example, yourbusiness.com) rather than a free subdomain. You need it to set up Google Search Console, Google Analytics, and Google Business properly.",
+            a: "No. Starter and Professional do not include hosting or a custom domain. Those fees are paid to the provider, registered in your name. I recommend your own custom domain (for example, yourbusiness.com) rather than a free subdomain. You need it to set up Google Search Console, Google Analytics, and Google Business properly.",
           },
           {
             q: "Where will my website be hosted?",
