@@ -202,15 +202,15 @@ export const content = {
     headingA: "Straightforward ",
     headingHl: "Packages",
     headingB: "",
-    sub: "Starter is RM500. Professional starts from RM1,000, and the final price depends on scope. Pick the package closest to what you need and message me for a fixed quote.",
+    sub: "Starter is RM800. Professional starts from RM1,500, and the final price depends on scope. Pick the package closest to what you need and message me for a fixed quote.",
     badge: "RECOMMENDED",
     tiers: [
       {
         name: "Starter Website",
         tagline: "For getting online quickly",
-        price: "RM500*",
+        price: "RM800*",
         priceNote: "*Final price depends on where your website is hosted.",
-        priceAmount: 500,
+        priceAmount: 800,
         description:
           "Suited to personal brands, freelancers, and portfolios that need a clean, credible presence online without a long build.",
         cta: "Ask About Starter",
@@ -227,8 +227,8 @@ export const content = {
       {
         name: "Professional Website",
         tagline: "For established businesses",
-        price: "From RM1,000",
-        priceAmount: 1000,
+        price: "From RM1,500",
+        priceAmount: 1500,
         description:
           "Suited to SMEs, service businesses, and consultants who need a site customers can trust, understand, and enquire through.",
         cta: "Ask About Professional",
@@ -540,7 +540,7 @@ export const content = {
         items: [
           {
             q: "How much does a website cost?",
-            a: "Starter is RM500, depending on where the site is hosted. Professional starts from RM1,000. Advanced systems are quoted per project. You get a fixed price before work starts.",
+            a: "Starter is RM800, depending on where the site is hosted. Professional starts from RM1,500. Advanced systems are quoted per project. You get a fixed price before work starts.",
           },
           {
             q: "How do I get a quote?",
