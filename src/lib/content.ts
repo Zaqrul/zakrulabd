@@ -202,14 +202,14 @@ export const content = {
     headingA: "Straightforward ",
     headingHl: "Packages",
     headingB: "",
-    sub: "Starter is RM800 and Professional starts from RM1,500. The final price depends on scope, and hosting is paid separately. Pick the package closest to what you need and message me for a fixed quote.",
+    sub: "Starter is RM800 and Professional starts from RM1,500. The final price depends on scope, and hosting is paid separately. Pick the package closest to what you need and message me to confirm the scope and get a fixed quote.",
     badge: "RECOMMENDED",
     tiers: [
       {
         name: "Starter Website",
         tagline: "For getting online quickly",
         price: "RM800*",
-        priceNote: "*Hosting, custom domain, Google Analytics 4, and Google Search Console are not included.",
+        priceNote: "*Hosting and custom domain not included.",
         priceAmount: 800,
         description:
           "Suited to personal brands, freelancers, and portfolios that need a clean, credible presence online without a long build.",
@@ -235,13 +235,12 @@ export const content = {
         features: [
           "Everything in Starter, plus:",
           "Multi-page site with content planning",
-          "Custom domain included",
+          "Custom domain (first year)",
           "Enquiry forms with email notifications",
           "Metadata, sitemap, and Google Business setup",
           "Google Search Console setup",
           "Google Analytics 4 and conversion tracking",
-          "Page speed and Core Web Vitals tuning",
-          "Handover walkthrough and training video",
+          "Handover walkthrough",
           "30 days support and 5 revisions",
         ],
       },
@@ -259,9 +258,9 @@ export const content = {
           "Integrations (payments, CRM, ERP, WhatsApp)",
           "Live chat and automated lead routing",
           "Workflow automation and webhooks",
-          "Advanced technical SEO and structured data",
+          "Advanced technical SEO, structured data, and Core Web Vitals",
           "Security hardening",
-          "60 to 90 days support and 20 revisions",
+          "60 to 90 days support and 10 revisions",
         ],
       },
     ],
@@ -270,7 +269,7 @@ export const content = {
       link: "Compare what each package builds",
       titleA: "What Each Package ",
       titleHl: "Builds",
-      sub: "Each package includes everything in the one before it. Scope only — every project is still quoted individually.",
+      sub: "Each package includes everything in the one before it. Starter is a fixed price; Professional and Advanced are quoted on scope.",
       badge: "SCOPE COMPARISON",
       back: "Back to Packages",
       closeTitle: "Compared everything and ready to start?",
@@ -547,7 +546,7 @@ export const content = {
         items: [
           {
             q: "How much does a website cost?",
-            a: "Starter is RM800, without hosting, a custom domain, Google Analytics 4, or Google Search Console. Professional starts from RM1,500 and includes a custom domain, but not hosting. Advanced systems are quoted per project. You get a fixed price before work starts.",
+            a: "Starter is RM800, without hosting, a custom domain, Google Analytics 4, or Google Search Console. Professional starts from RM1,500 and includes a custom domain for the first year, but not hosting. Advanced systems are quoted per project. You get a fixed price before work starts.",
           },
           {
             q: "How do I get a quote?",
@@ -559,7 +558,7 @@ export const content = {
           },
           {
             q: "Are hosting and domain included in the quote?",
-            a: "Hosting is not included in Starter or Professional. You pay it directly to the provider, and the account is in your name. Professional includes a custom domain (for example, yourbusiness.com). With Starter, I still recommend buying your own domain rather than using a free subdomain, because you need one to set up Google Search Console, Google Analytics, and Google Business properly.",
+            a: "Hosting is not included in Starter or Professional. You pay it directly to the provider, and the account is in your name. Professional includes a custom domain (for example, yourbusiness.com) for the first year. After that, you pay the yearly renewal, usually RM50 to RM100. With Starter, I still recommend buying your own domain rather than using a free subdomain, because you need one to set up Google Search Console, Google Analytics, and Google Business properly.",
           },
           {
             q: "Where will my website be hosted?",
@@ -584,7 +583,7 @@ export const content = {
           },
           {
             q: "How many rounds of changes do I get?",
-            a: "Starter: 3 revisions. Professional: 5 revisions. Advanced: 20 revisions. Extra revisions and new features outside the scope are quoted separately before I do them.",
+            a: "Starter: 3 revisions. Professional: 5 revisions. Advanced: 10 revisions. Extra revisions and new features outside the scope are quoted separately before I do them.",
           },
           {
             q: "Am I dealing with you or with a team?",
@@ -813,7 +812,7 @@ export const content = {
       {
         title: "5. Warranty, Handover & Support",
         content: [
-          "Each package includes post-launch support covering bugs and functional defects within the original scope: 2 weeks for Starter, 30 days for Professional, and 60 to 90 days for Advanced, as stated in the quote. Included revisions are 3, 5, and 20 rounds respectively.",
+          "Each package includes post-launch support covering bugs and functional defects within the original scope: 2 weeks for Starter, 30 days for Professional, and 60 to 90 days for Advanced, as stated in the quote. Included revisions are 3, 5, and 10 rounds respectively.",
           "Ongoing server management, major third-party API changes, and content updates after the warranty period are available under a flexible maintenance arrangement.",
         ],
       },

@@ -53,7 +53,7 @@ export const termsMs = {
       "Saya berhak memaparkan projek yang telah siap dalam portfolio dan kajian kes, kecuali terdapat perjanjian kerahsiaan bertulis yang menyatakan sebaliknya.",
     ] },
     { title: "5. Jaminan, Serahan dan Sokongan", content: [
-      "Setiap pakej termasuk sokongan selepas pelancaran bagi pepijat dan kerosakan fungsi dalam skop asal, iaitu 2 minggu untuk Laman Permulaan, 30 hari untuk Laman Profesional, dan 60 hingga 90 hari untuk Sistem Web Lanjutan, seperti yang dinyatakan dalam sebut harga. Jumlah pindaan yang termasuk ialah 3, 5 dan 20 kali mengikut pakej.",
+      "Setiap pakej termasuk sokongan selepas pelancaran bagi pepijat dan kerosakan fungsi dalam skop asal, iaitu 2 minggu untuk Laman Permulaan, 30 hari untuk Laman Profesional, dan 60 hingga 90 hari untuk Sistem Web Lanjutan, seperti yang dinyatakan dalam sebut harga. Jumlah pindaan yang termasuk ialah 3, 5 dan 10 kali mengikut pakej.",
       "Pengurusan server berterusan, perubahan besar pada API pihak ketiga dan kemas kini kandungan selepas tempoh sokongan boleh diuruskan melalui perjanjian penyelenggaraan yang fleksibel.",
     ] },
     { title: "6. Liabiliti dan Undang-Undang yang Terpakai", content: [

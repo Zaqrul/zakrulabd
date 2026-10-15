@@ -7,12 +7,12 @@
 - **Role:** Dedicated Solo Freelance Web Developer & Technical Marketer (No agency / No team wording).
 - **Communication Tone:** First-person direct and plain ("Let’s Discuss", "How I Work"). Avoid marketing filler and stacked em dashes in site copy.
 - **WhatsApp:** Pre-filled `wa.me` messages stay in Malay and address the owner as "Zakrul".
-- **Pricing:** Tier cards list scope only. No prices are shown on the site; every project is quoted individually.
+- **Pricing:** Starter is a fixed RM800 (no hosting or custom domain). Professional is "From RM1,500" (custom domain for the first year, no hosting). Advanced is quoted per project. Keep prices in sync across `content.ts`, `content-ms.ts`, `faq-ms.ts`, `legal-ms.ts`, and `compare-ms.ts`.
 
 ## Architecture & Code Standards
 - **Framework:** Next.js (App Router, Turbopack, standalone static generation)
 - **Proxy Convention:** Use `src/proxy.ts` (named export `export function proxy(request: NextRequest)`) instead of deprecated middleware.
-- **Language:** English only. All site copy lives in `src/lib/content.ts` (exported as `content`); there is no language switcher and no `ms` dictionary.
+- **Language:** English copy lives in `src/lib/content.ts` (exported as `content`). Malay copy lives in `src/lib/content-ms.ts` (plus `faq-ms.ts`, `legal-ms.ts`, `compare-ms.ts`) and is served under `/ms`. Change both languages together.
 
 ## UI & Design System
 - **Palette:** High-contrast neutral base (navy `#171717`, background `#f5f5f5`, white `#ffffff`) with amber/yellow accent (`#fbcf33` / `#f7c325`).

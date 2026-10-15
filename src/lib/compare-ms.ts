@@ -33,7 +33,7 @@ export const compareMs = {
   ...base,
   footnote: "Belum pasti pakej mana yang sesuai?", link: "Bandingkan skop setiap pakej",
   titleA: "Apa yang Dibina dalam ", titleHl: "Setiap Pakej",
-  sub: "Setiap pakej merangkumi semua yang ada dalam pakej sebelumnya. Perbandingan ini hanya menunjukkan skop; setiap projek tetap diberi sebut harga tersendiri.",
+  sub: "Setiap pakej merangkumi semua yang ada dalam pakej sebelumnya. Laman Permulaan berharga tetap; Laman Profesional dan Sistem Web Lanjutan diberi sebut harga mengikut skop.",
   badge: "PERBANDINGAN SKOP", back: "Kembali ke Pakej",
   closeTitle: "Sudah membuat perbandingan dan bersedia untuk bermula?",
   closeBody: "Ceritakan apa yang anda rancang, atau pilih pakej yang paling hampir dengan keperluan anda. Jika ada soalan khusus tentang projek anda, saya akan berikan jawapan yang jelas dan jujur.",
