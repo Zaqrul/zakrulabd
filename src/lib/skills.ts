@@ -1,7 +1,8 @@
 import type { TechKey } from "@/lib/tech";
 
 /* Self-rated proficiency for the About page, out of 5. Each entry points at
-   the shared tech registry so the name, icon, and brand colour stay in one place. */
+   the shared tech registry so the name, icon, and brand colour stay in one place.
+   Level 1 shows a "Still learning" label instead of stars. */
 export type SkillGroup = { label: { en: string; ms: string }; skills: { key: TechKey; level: 1 | 2 | 3 | 4 | 5 }[] };
 
 export const SKILL_MAX = 5;

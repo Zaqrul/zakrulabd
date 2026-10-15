@@ -79,6 +79,9 @@ export default function AboutPage({ locale = "en" }: { locale?: "en" | "ms" }) {
                     <li key={key} className="flex items-center gap-3">
                       <Icon aria-hidden="true" style={{ color, width: 18, height: 18 }} className="flex-shrink-0" />
                       <span className="min-w-0 flex-1 truncate text-sm font-semibold text-navy">{name}</span>
+                      {level === 1 ? (
+                        <span className="flex-shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-navy">{locale === "ms" ? "Masih belajar" : "Still learning"}</span>
+                      ) : (
                       <span role="img" aria-label={locale === "ms" ? `${level} daripada ${SKILL_MAX} bintang` : `${level} out of ${SKILL_MAX} stars`} className="flex flex-shrink-0 gap-0.5">
                         {Array.from({ length: SKILL_MAX }, (_, i) => (
                           <svg key={i} viewBox="0 0 20 20" aria-hidden="true" className={`h-4 w-4 ${i < level ? "text-amber-500" : "text-navy/15"}`}>
@@ -86,6 +89,7 @@ export default function AboutPage({ locale = "en" }: { locale?: "en" | "ms" }) {
                           </svg>
                         ))}
                       </span>
+                      )}
                     </li>
                   );
                 })}
