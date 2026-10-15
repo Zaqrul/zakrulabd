@@ -68,4 +68,20 @@ export const skillGroups: SkillGroup[] = [
       { key: "figma", level: 2 },
     ],
   },
+  {
+    label: { en: "Editors and IDEs", ms: "Editor dan IDE" },
+    skills: [
+      { key: "vscode", level: 4 },
+      { key: "antigravity", level: 3 },
+    ],
+  },
+  {
+    label: { en: "AI tools", ms: "Alatan AI" },
+    skills: [
+      { key: "claudeCode", level: 4 },
+      { key: "codex", level: 3 },
+      { key: "gemini", level: 3 },
+      { key: "lmStudio", level: 2 },
+    ],
+  },
 ];

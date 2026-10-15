@@ -1,8 +1,9 @@
 import type { ComponentType, CSSProperties } from "react";
 import { DiMsqlServer } from "react-icons/di";
-import { TbBrandReactNative } from "react-icons/tb";
+import { TbBrandOpenai, TbBrandReactNative, TbBrandVscode, TbCode } from "react-icons/tb";
 import {
   SiAstro,
+  SiClaude,
   SiCloudflare,
   SiCodeigniter,
   SiCplusplus,
@@ -13,9 +14,11 @@ import {
   SiGit,
   SiGithub,
   SiGoogleanalytics,
+  SiGooglegemini,
   SiGooglesearchconsole,
   SiJavascript,
   SiLaravel,
+  SiLmstudio,
   SiMysql,
   SiN8N,
   SiNextdotjs,
@@ -72,6 +75,12 @@ export const tech = {
   stripe: { name: "Stripe", Icon: SiStripe, color: "#635BFF" },
   git: { name: "Git", Icon: SiGit, color: "#F05032" },
   github: { name: "GitHub", Icon: SiGithub, color: "#181717" },
+  vscode: { name: "VS Code", Icon: TbBrandVscode, color: "#007ACC" },
+  antigravity: { name: "Antigravity", Icon: TbCode, color: "#4285F4" },
+  claudeCode: { name: "Claude Code", Icon: SiClaude, color: "#D97757" },
+  codex: { name: "ChatGPT Codex", Icon: TbBrandOpenai, color: "#000000" },
+  gemini: { name: "Gemini", Icon: SiGooglegemini, color: "#8E75B2" },
+  lmStudio: { name: "LM Studio", Icon: SiLmstudio, color: "#4338CA" },
 } satisfies Record<string, { name: string; Icon: TechIcon; color: string }>;
 
 export type TechKey = keyof typeof tech;

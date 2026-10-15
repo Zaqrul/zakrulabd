@@ -37,6 +37,12 @@ const aliases: Record<TechKey, string[]> = {
   stripe: ["Stripe"],
   git: ["Git"],
   github: ["GitHub"],
+  vscode: ["VS Code", "Visual Studio Code"],
+  antigravity: ["Antigravity"],
+  claudeCode: ["Claude Code"],
+  codex: ["Codex", "ChatGPT"],
+  gemini: ["Gemini"],
+  lmStudio: ["LM Studio"],
 };
 
 /* Longest alias first so "Google Analytics 4" is not claimed by "Google
