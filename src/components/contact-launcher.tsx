@@ -2,7 +2,9 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { SiWhatsapp } from "react-icons/si";
-import { TbMail, TbMessageCircle, TbPlus, TbUsers, TbX } from "react-icons/tb";
+import { TbDeviceGamepad2, TbMail, TbMessageCircle, TbPlus, TbUsers, TbX } from "react-icons/tb";
+import { loadBest } from "@/components/games/shared";
+import { GAME_ORDER, MiniGames, bestText, gameIcons, type GameId } from "@/components/mini-games";
 import { SectionSummary } from "@/components/section-summary";
 import { openTawkChat, subscribeTawkUnread, tawkEnabled } from "@/components/tawk-widget";
 import { wa, waMessages } from "@/lib/contact";
@@ -25,6 +27,8 @@ const copy = {
     dismiss: "Dismiss",
     nudge: "Questions? Tap here to reach me",
     summaries: "Section summaries",
+    games: "Games",
+    playOffline: "Play while you wait",
   },
   ms: {
     title: "Hubungi saya melalui",
@@ -40,10 +44,17 @@ const copy = {
     dismiss: "Tutup",
     nudge: "Ada soalan? Tekan di sini untuk hubungi saya",
     summaries: "Ringkasan seksyen",
+    games: "Permainan",
+    playOffline: "Main sementara menunggu",
   },
 };
 
 const DISMISSED_KEY = "announcement-dismissed";
+/* How long the pill takes to shrink away: a touch more than its 500ms transition,
+   which is the same half second every panel takes to appear. */
+const COLLAPSE_MS = 520;
+/* A beat between the pill being empty and growing again. */
+const SWAP_PAUSE_MS = 90;
 const NUDGE_KEY = "contact-nudge-seen";
 
 /* A dock fixed to the bottom centre. It rests as a single plus button; opening
@@ -64,6 +75,15 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
   const [noteDismissed, setNoteDismissed] = useState(true);
   const [nudge, setNudge] = useState(false);
   const [summariesOff, setOff] = useState(false);
+  /* The dock shows either the contact icons or, after the games icon is pressed,
+     an icon for each game. The game panel above it plays whichever is lit. */
+  const [mode, setMode] = useState<"contact" | "games">("contact");
+  const [game, setGame] = useState<GameId | null>(null);
+  const [bests, setBests] = useState<Record<GameId, number>>({ runner: 0, flap: 0, match: 0, trap: 0 });
+  const deckInner = useRef<HTMLDivElement>(null);
+  const [deckWidth, setDeckWidth] = useState(0);
+  const swapTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const closeGame = useCallback(() => setGame(null), []);
   const root = useRef<HTMLDivElement>(null);
   const hideNudge = useCallback(() => setNudge(false), []);
 
@@ -154,13 +174,48 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
     return () => clearTimeout(timer);
   }, []);
 
+  /* The pill shrinks to a circle, and only then are its contents swapped and it
+     grows again, so the change of icons happens while nothing is on show. */
+  const closeAll = useCallback(() => {
+    clearTimeout(swapTimer.current);
+    setOpen(false);
+    setGame(null);
+    swapTimer.current = setTimeout(() => setMode("contact"), COLLAPSE_MS);
+  }, []);
+
+  const openGames = useCallback((first: GameId | null) => {
+    clearTimeout(swapTimer.current);
+    setGame(null);
+    setOpen(false);
+    swapTimer.current = setTimeout(() => {
+      setBests({ runner: loadBest("runner"), flap: loadBest("flap"), match: loadBest("match"), trap: loadBest("trap") });
+      setMode("games");
+      swapTimer.current = setTimeout(() => {
+        setGame(first);
+        setOpen(true);
+      }, SWAP_PAUSE_MS);
+    }, COLLAPSE_MS);
+  }, []);
+
+  useEffect(() => () => clearTimeout(swapTimer.current), []);
+
+  useEffect(() => {
+    const el = deckInner.current;
+    if (!el) return;
+    const measure = () => setDeckWidth(el.offsetWidth);
+    measure();
+    const ro = new ResizeObserver(measure);
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+
   useEffect(() => {
     if (!open) return;
     function onKey(e: KeyboardEvent) {
-      if (e.key === "Escape") setOpen(false);
+      if (e.key === "Escape") closeAll();
     }
     function onPointer(e: PointerEvent) {
-      if (root.current && !root.current.contains(e.target as Node)) setOpen(false);
+      if (root.current && !root.current.contains(e.target as Node)) closeAll();
     }
     document.addEventListener("keydown", onKey);
     document.addEventListener("pointerdown", onPointer);
@@ -168,7 +223,7 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("pointerdown", onPointer);
     };
-  }, [open]);
+  }, [open, closeAll]);
 
   function dismissAnnouncement() {
     setNoteDismissed(true);
@@ -201,7 +256,9 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
 
   return (
     <div ref={root} className="pointer-events-none fixed inset-x-0 bottom-4 z-40 flex flex-col items-end gap-2 px-4 sm:items-center">
-      <SectionSummary lang={lang} suspended={open} onShow={hideNudge} />
+      <SectionSummary lang={lang} suspended={open || game !== null} onShow={hideNudge} />
+
+      {game && <MiniGames lang={lang} game={game} onClose={closeGame} />}
 
       {nudge && !open && (
         <div className="rise-in pointer-events-auto relative flex items-center gap-1 rounded-2xl bg-navy py-1 pl-3.5 pr-1 shadow-lg">
@@ -232,11 +289,12 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
         </div>
       )}
 
-      {open && (
+      {open && mode === "contact" && (
         <div
           role="region"
           aria-label={lang === "ms" ? "Notifikasi" : "Notifications"}
-          className="pointer-events-auto flex w-fit max-w-sm flex-col gap-2 liquid-glass rounded-3xl p-2"
+          style={{ animationDelay: "150ms" }}
+          className="rise-in pointer-events-auto flex w-fit max-w-sm flex-col gap-2 liquid-glass rounded-3xl p-2"
         >
           {online !== null && (
             <p className="flex items-center gap-2 px-2.5 py-1 text-[13px] font-bold text-navy">
@@ -256,9 +314,16 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
           )}
 
           {offline && (
-            <p role="alert" className={row}>
+            <div role="alert" className={row}>
               <span className="flex-1">{t.offline}</span>
-            </p>
+              <button
+                type="button"
+                className="shrink-0 rounded-full bg-amber-400 px-2.5 py-1 text-[11.5px] font-bold hover:bg-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy"
+                onClick={() => openGames("runner")}
+              >
+                {t.playOffline}
+              </button>
+            </div>
           )}
 
           {showNote && announcement && (
@@ -324,10 +389,14 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
         <div
           id="contact-deck"
           inert={!open}
-          className={`flex items-center gap-2 transition-[max-width,opacity,margin] duration-300 ease-out ${
-            open ? "mx-1 mr-2 max-w-64 opacity-100" : "mx-0 max-w-0 opacity-0"
+          style={{ maxWidth: open ? deckWidth : 0 }}
+          className={`transition-[max-width,opacity,margin] duration-500 ease-in-out ${
+            open ? "mx-1 mr-2 opacity-100" : "mx-0 opacity-0"
           }`}
         >
+          <div ref={deckInner} className="flex w-max items-center gap-2">
+          {mode === "contact" ? (
+            <>
           <a
             href={wa(waMessages.hero)}
             target="_blank"
@@ -358,7 +427,41 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
               <span aria-hidden="true" className={tip}>{t.chat}</span>
             </button>
           )}
+          <button
+            type="button"
+            aria-label={t.games}
+            className={`${item} ${onGreen}`}
+            onClick={() => openGames(null)}
+          >
+            <TbDeviceGamepad2 aria-hidden="true" className={`${iconGreen} text-[#8b5cf6]`} />
+            <span aria-hidden="true" className={tip}>{t.games}</span>
+          </button>
+            </>
+          ) : (
+            GAME_ORDER.map((id) => {
+              const Icon = gameIcons[id];
+              const label = bestText(lang, id, bests[id]);
+              const active = game === id;
+              return (
+                <button
+                  key={id}
+                  type="button"
+                  aria-label={label}
+                  aria-pressed={active}
+                  className={`${item} ${active ? "bg-amber-400" : onGreen}`}
+                  onClick={() => setGame(active ? null : id)}
+                >
+                  <Icon
+                    aria-hidden="true"
+                    className={`h-6 w-6 transition-colors duration-150 group-hover:text-navy group-focus-visible:text-navy ${active ? "text-navy" : "text-[#8b5cf6]"}`}
+                  />
+                  <span aria-hidden="true" className={tip}>{label}</span>
+                </button>
+              );
+            })
+          )}
           <span aria-hidden="true" className="h-7 w-px bg-navy/15" />
+          </div>
         </div>
         <button
           type="button"
@@ -367,11 +470,17 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
           aria-controls="contact-deck"
           onClick={() => {
             setNudge(false);
-            setOpen((v) => !v);
+            if (open) {
+              closeAll();
+            } else {
+              clearTimeout(swapTimer.current);
+              setMode("contact");
+              setOpen(true);
+            }
           }}
           className="relative flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-amber-400 text-navy transition-colors hover:bg-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy focus-visible:ring-offset-2"
         >
-          <TbPlus aria-hidden="true" className={`h-6 w-6 transition-transform duration-200 ${open ? "rotate-45" : ""}`} />
+          <TbPlus aria-hidden="true" className={`h-6 w-6 transition-transform duration-500 ease-in-out ${open ? "rotate-45" : ""}`} />
           {!open && attention > 0 && <span aria-hidden="true" className={dot} />}
         </button>
       </div>
