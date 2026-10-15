@@ -6,6 +6,8 @@ import { ID, breadcrumb } from "@/lib/structured-data";
 import { url } from "@/lib/site";
 import { Mark, RevealText } from "@/components/reveal-text";
 import { AsciiRipple } from "@/components/ascii-ripple";
+import { tech } from "@/lib/tech";
+import { SKILL_MAX, skillGroups } from "@/lib/skills";
 
 export const metadata: Metadata = {
   title: "About Muhamad Zaqrul",
@@ -61,6 +63,36 @@ export default function AboutPage({ locale = "en" }: { locale?: "en" | "ms" }) {
         <p className="mt-4 leading-relaxed text-body"><RevealText text>
           {locale === "ms" ? "Kerja saya merangkumi aplikasi React dan Laravel, laman WordPress, SEO teknikal, Google Analytics 4 serta automasi pertanyaan. Skop bergantung pada masalah perniagaan: laman tempatan yang kecil mungkin hanya memerlukan tawaran yang jelas dan aliran pesanan WhatsApp; operasi lebih besar mungkin memerlukan sistem serta laporan tersuai." : "My work covers React and Laravel applications, WordPress websites, technical SEO, Google Analytics 4 and enquiry automation. The scope depends on the business problem: a small local site may need a clear offer and a WhatsApp order flow; a larger operation may need a custom system and reporting."}
         </RevealText></p>
+
+        <h2 className="mt-12 font-display text-2xl font-bold text-navy"><RevealText>{locale === "ms" ? "Kemahiran dan " : "Skills and "}<Mark>{locale === "ms" ? "framework" : "frameworks"}</Mark></RevealText></h2>
+        <p className="mt-4 leading-relaxed text-body"><RevealText text>
+          {locale === "ms" ? "Penilaian sendiri daripada lima bintang, berdasarkan kekerapan saya menggunakan setiap alat dalam projek sebenar." : "A self-rating out of five stars, based on how often I use each tool on real projects."}
+        </RevealText></p>
+        <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {skillGroups.map((group) => (
+            <section key={group.label.en} className="rounded-xl border border-navy/10 bg-white p-5">
+              <h3 className="font-display text-sm font-bold uppercase tracking-[0.12em] text-muted">{group.label[locale]}</h3>
+              <ul className="mt-3 space-y-2.5">
+                {group.skills.map(({ key, level }) => {
+                  const { name, Icon, color } = tech[key];
+                  return (
+                    <li key={key} className="flex items-center gap-3">
+                      <Icon aria-hidden="true" style={{ color, width: 18, height: 18 }} className="flex-shrink-0" />
+                      <span className="min-w-0 flex-1 truncate text-sm font-semibold text-navy">{name}</span>
+                      <span role="img" aria-label={locale === "ms" ? `${level} daripada ${SKILL_MAX} bintang` : `${level} out of ${SKILL_MAX} stars`} className="flex flex-shrink-0 gap-0.5">
+                        {Array.from({ length: SKILL_MAX }, (_, i) => (
+                          <svg key={i} viewBox="0 0 20 20" aria-hidden="true" className={`h-4 w-4 ${i < level ? "text-amber-500" : "text-navy/15"}`}>
+                            <path fill="currentColor" d="M10 1.5l2.6 5.3 5.9.9-4.3 4.1 1 5.8L10 14.9l-5.2 2.7 1-5.8L1.5 7.7l5.9-.9z" />
+                          </svg>
+                        ))}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
+        </div>
 
         <h2 className="mt-12 font-display text-2xl font-bold text-navy"><RevealText>{locale === "ms" ? "Hasil kerja yang boleh " : "Work you can "}<Mark>{locale === "ms" ? "anda lihat" : "inspect"}</Mark></RevealText></h2>
         <p className="mt-4 leading-relaxed text-body"><RevealText text>
