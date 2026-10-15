@@ -52,7 +52,9 @@ const copy = {
 const DISMISSED_KEY = "announcement-dismissed";
 /* How long the pill takes to shrink away: a touch more than its 500ms transition,
    which is the same half second every panel takes to appear. */
-const COLLAPSE_MS = 520;
+/* The half second everything takes to open, close or appear. */
+const DOCK_MS = 500;
+const COLLAPSE_MS = DOCK_MS + 20;
 /* A beat between the pill being empty and growing again. */
 const SWAP_PAUSE_MS = 90;
 const NUDGE_KEY = "contact-nudge-seen";
@@ -79,7 +81,7 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
      an icon for each game. The game panel above it plays whichever is lit. */
   const [mode, setMode] = useState<"contact" | "games">("contact");
   const [game, setGame] = useState<GameId | null>(null);
-  const [bests, setBests] = useState<Record<GameId, number>>({ runner: 0, flap: 0, match: 0, trap: 0 });
+  const [bests, setBests] = useState<Record<GameId, number>>({ runner: 0, flap: 0, match: 0, trap: 0, space: 0 });
   const deckInner = useRef<HTMLDivElement>(null);
   const [deckWidth, setDeckWidth] = useState(0);
   const swapTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -188,7 +190,7 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
     setGame(null);
     setOpen(false);
     swapTimer.current = setTimeout(() => {
-      setBests({ runner: loadBest("runner"), flap: loadBest("flap"), match: loadBest("match"), trap: loadBest("trap") });
+      setBests({ runner: loadBest("runner"), flap: loadBest("flap"), match: loadBest("match"), trap: loadBest("trap"), space: loadBest("space") });
       setMode("games");
       swapTimer.current = setTimeout(() => {
         setGame(first);
@@ -215,6 +217,7 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
       if (e.key === "Escape") closeAll();
     }
     function onPointer(e: PointerEvent) {
+      if (game !== null) return;
       if (root.current && !root.current.contains(e.target as Node)) closeAll();
     }
     document.addEventListener("keydown", onKey);
@@ -223,7 +226,7 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("pointerdown", onPointer);
     };
-  }, [open, closeAll]);
+  }, [open, closeAll, game]);
 
   function dismissAnnouncement() {
     setNoteDismissed(true);
@@ -389,10 +392,18 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
         <div
           id="contact-deck"
           inert={!open}
-          style={{ maxWidth: open ? deckWidth : 0 }}
-          className={`transition-[max-width,opacity,margin] duration-500 ease-in-out ${
-            open ? "mx-1 mr-2 opacity-100" : "mx-0 opacity-0"
-          }`}
+          /* The icons are wider than the pill while it is still growing or
+             shrinking, and with nothing clipping them they were drawn outside
+             it. They are clipped to the pill's own width the whole time it
+             moves; only the room above and below is left open, for the
+             tooltips. Once it has finished opening the sides are freed too,
+             so a tooltip wider than its icon is not cut off. */
+          style={{
+            maxWidth: open ? deckWidth : 0,
+            clipPath: open ? "inset(-64px -90px -12px -90px)" : "inset(-64px 0px -12px 0px)",
+            transition: `max-width ${DOCK_MS}ms ease-in-out, opacity ${DOCK_MS}ms ease-in-out, margin ${DOCK_MS}ms ease-in-out, clip-path 0s linear ${open ? DOCK_MS : 0}ms`,
+          }}
+          className={open ? "mx-1 mr-2 opacity-100" : "mx-0 opacity-0"}
         >
           <div ref={deckInner} className="flex w-max items-center gap-2">
           {mode === "contact" ? (
@@ -448,8 +459,8 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
                   type="button"
                   aria-label={label}
                   aria-pressed={active}
-                  className={`${item} ${active ? "bg-amber-400" : onGreen}`}
-                  onClick={() => setGame(active ? null : id)}
+                  className={`${item} h-10! w-10! ${active ? "bg-amber-400" : onGreen}`}
+                  onClick={() => setGame(id)}
                 >
                   <Icon
                     aria-hidden="true"

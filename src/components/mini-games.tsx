@@ -4,7 +4,7 @@ import dynamic from "next/dynamic";
 import { useEffect } from "react";
 import type { IconType } from "react-icons";
 import type { Cause } from "@/components/games/trap-logic";
-import { TbCandy, TbFeather, TbRun, TbSkull, TbX } from "react-icons/tb";
+import { TbCandy, TbFeather, TbRocket, TbRun, TbSkull, TbX } from "react-icons/tb";
 
 const Loading = () => <div className="h-48 animate-pulse rounded-xl bg-neutral-100" aria-hidden="true" />;
 
@@ -14,20 +14,21 @@ const Runner = dynamic(() => import("@/components/games/runner"), { ssr: false, 
 const Flap = dynamic(() => import("@/components/games/flap"), { ssr: false, loading: Loading });
 const Match = dynamic(() => import("@/components/games/match"), { ssr: false, loading: Loading });
 const Trap = dynamic(() => import("@/components/games/trap"), { ssr: false, loading: Loading });
+const Space = dynamic(() => import("@/components/games/space"), { ssr: false, loading: Loading });
 
-export type GameId = "runner" | "flap" | "match" | "trap";
+export type GameId = "runner" | "flap" | "match" | "trap" | "space";
 
 /* What the dock needs to show a game as an icon of its own. */
-export const GAME_ORDER: GameId[] = ["runner", "flap", "match", "trap"];
-export const gameIcons: Record<GameId, IconType> = { runner: TbRun, flap: TbFeather, match: TbCandy, trap: TbSkull };
+export const GAME_ORDER: GameId[] = ["runner", "flap", "match", "trap", "space"];
+export const gameIcons: Record<GameId, IconType> = { runner: TbRun, flap: TbFeather, match: TbCandy, trap: TbSkull, space: TbRocket };
 export const gameCopy = {
   en: {
-    names: { runner: "Runner", flap: "Flap", match: "Match", trap: "Trap" } as Record<GameId, string>,
+    names: { runner: "Runner", flap: "Flap", match: "Match", trap: "Trap", space: "Space" } as Record<GameId, string>,
     best: "Best",
     deaths: "deaths",
   },
   ms: {
-    names: { runner: "Lari", flap: "Terbang", match: "Padan", trap: "Perangkap" } as Record<GameId, string>,
+    names: { runner: "Lari", flap: "Terbang", match: "Padan", trap: "Perangkap", space: "Angkasa" } as Record<GameId, string>,
     best: "Terbaik",
     deaths: "kematian",
   },
@@ -69,6 +70,17 @@ const copy = {
       flag: "A flag! Just not that one.",
       enemy: "A mushroom bumped you. It won.",
     } as Record<Cause, string>,
+    tapSpace: "Tap, or press Space, to launch",
+    bomb: "Bomb",
+    spaceHint: "Drag to fly; the ship fires by itself. Shoot ? pods for guns, and collect gold + hearts to level up. Keys: arrows to fly, B for a bomb.",
+    spaceGuns: { machine: "MACHINE GUN", spread: "SPREAD", laser: "LASER", rocket: "ROCKETS" },
+    spaceCallouts: { shield: "Shield down!", armor: "Armour down!", overload: "OVERLOAD!", levelup: "Ship upgraded!" },
+    chapterName: (n: number) => ["Chapter 1: Asteroid Belt", "Chapter 2: Violet Nebula", "Chapter 3: The Fortress"][n - 1],
+    chapterClear: (n: number) => `Chapter ${n} clear`,
+    nextChapter: "Next chapter",
+    shipLost: "Ship lost",
+    retryChapter: "Retry chapter",
+    spaceWon: "You saved the galaxy",
   },
   ms: {
     title: "Permainan mini",
@@ -97,6 +109,17 @@ const copy = {
       flag: "Bendera! Tapi bukan yang itu.",
       enemy: "Cendawan melanggar anda. Ia menang.",
     } as Record<Cause, string>,
+    tapSpace: "Ketik, atau tekan Space, untuk berlepas",
+    bomb: "Bom",
+    spaceHint: "Seret untuk terbang; kapal menembak sendiri. Tembak pod ? untuk senjata, dan kutip hati emas + untuk naik tahap. Papan kekunci: anak panah untuk terbang, B untuk bom.",
+    spaceGuns: { machine: "GATLING", spread: "SERAKAN", laser: "LASER", rocket: "ROKET" },
+    spaceCallouts: { shield: "Perisai musnah!", armor: "Perisai besi musnah!", overload: "LEBIH BEBAN!", levelup: "Kapal dinaik taraf!" },
+    chapterName: (n: number) => ["Bab 1: Lingkaran Asteroid", "Bab 2: Nebula Ungu", "Bab 3: Kubu Musuh"][n - 1],
+    chapterClear: (n: number) => `Bab ${n} selesai`,
+    nextChapter: "Bab seterusnya",
+    shipLost: "Kapal musnah",
+    retryChapter: "Cuba bab ini semula",
+    spaceWon: "Anda menyelamatkan galaksi",
   },
 };
 
@@ -141,6 +164,27 @@ export function MiniGames({ lang, game, onClose }: { lang: "en" | "ms"; game: Ga
         )}
         {game === "flap" && (
           <Flap key="flap" labels={{ tap: t.tapFlap, over: t.over, again: t.again, score: t.score, best }} />
+        )}
+        {game === "space" && (
+          <Space
+            key="space"
+            labels={{
+              tap: t.tapSpace,
+              score: t.score,
+              best,
+              bomb: t.bomb,
+              hint: t.spaceHint,
+              chapterName: t.chapterName,
+              clear: t.chapterClear,
+              next: t.nextChapter,
+              lost: t.shipLost,
+              retry: t.retryChapter,
+              won: t.spaceWon,
+              again: t.again,
+              guns: t.spaceGuns,
+              callouts: t.spaceCallouts,
+            }}
+          />
         )}
         {game === "trap" && (
           <Trap

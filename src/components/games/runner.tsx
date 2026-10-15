@@ -213,6 +213,7 @@ export default function Runner({ labels }: { labels: RunnerLabels }) {
       </div>
       <button
         type="button"
+        autoFocus
         onPointerDown={(e) => {
           e.preventDefault();
           jump();

@@ -219,6 +219,7 @@ export default function Flap({ labels }: { labels: FlapLabels }) {
       </div>
       <button
         type="button"
+        autoFocus
         onPointerDown={(e) => {
           e.preventDefault();
           flap();

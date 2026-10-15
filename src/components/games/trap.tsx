@@ -164,7 +164,8 @@ export default function Trap({ labels }: { labels: TrapLabels }) {
   const press = useCallback(
     (name: "left" | "right" | "jump", down: boolean) => {
       touch.current[name] = down;
-      if (down && name === "jump" && modeRef.current !== "play") start();
+      if (down && modeRef.current === "ready") start();
+      else if (down && name === "jump" && modeRef.current !== "play") start();
     },
     [start],
   );
@@ -184,7 +185,14 @@ export default function Trap({ labels }: { labels: TrapLabels }) {
 
         {mode === "ready" && (
           <div className="absolute inset-0 flex items-center justify-center bg-white/60">
-            <span className="rounded-full bg-amber-400 px-4 py-1.5 text-[12px] font-bold text-navy">{labels.tap}</span>
+            <button
+              type="button"
+              autoFocus
+              onClick={start}
+              className="rounded-full bg-amber-400 px-4 py-1.5 text-[12px] font-bold text-navy hover:bg-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy"
+            >
+              {labels.tap}
+            </button>
           </div>
         )}
         {mode === "play" && message && (
