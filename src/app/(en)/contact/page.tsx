@@ -50,7 +50,7 @@ export default function ContactPage({ locale = "en" }: { locale?: "en" | "ms" })
             the full shell, because a 1200px text field looks like a search bar
             rather than somewhere to write a few paragraphs, and the drawing
             fills the space that leaves instead of a stretch of empty grey. */}
-        <div className="grid items-start gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] lg:gap-16">
+        <div id="contact-form" className="grid items-start gap-12 lg:grid-cols-[minmax(0,1fr)_minmax(0,420px)] lg:gap-16">
           <div className="max-w-2xl">
             {/* Phones lose the whole side column, so the form opened on a bare
                 field with nothing of the site around it. One drawing above it,

@@ -40,7 +40,7 @@ export default function BlogIndex({ locale = "en" }: { locale?: "en" | "ms" }) {
       <main id="main" className="mx-auto w-full max-w-shell flex-1 px-5 py-14 md:px-6 md:py-16">
         {/* Same tiles and the same four-wide grid as the homepage section, so
             arriving here from the site or from search looks identical. */}
-        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+        <div id="notes-list" className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
           {(locale === "ms" ? postsMs : posts).map((post) => (
             <NoteCard key={post.title} post={post} locale={locale} />
           ))}

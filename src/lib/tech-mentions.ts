@@ -27,6 +27,8 @@ const aliases: Record<TechKey, string[]> = {
   firebase: ["Firebase"],
   tawkto: ["Tawk.to", "Tawk"],
   n8n: ["n8n"],
+  brevo: ["Brevo"],
+  geo: ["Generative Engine Optimization", "GEO"],
   vercel: ["Vercel"],
   railway: ["Railway"],
   cloudflare: ["Cloudflare"],

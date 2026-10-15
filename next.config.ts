@@ -73,6 +73,11 @@ securityHeaders.push({ key: "Content-Security-Policy-Report-Only", value: csp })
 
 const nextConfig: NextConfig = {
   poweredByHeader: false,
+  /* Two root layouts, (en) and ms, mean an unknown address has no layout to
+     render a 404 in; app/global-not-found.tsx is served for those instead. */
+  experimental: {
+    globalNotFound: true,
+  },
   /* The booking showcase uses Unsplash photos as stand-ins for a client's
      portfolio. They go through the image optimiser, so the browser only ever
      loads them from this origin. */

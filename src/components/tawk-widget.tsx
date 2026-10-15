@@ -14,8 +14,44 @@ type TawkApi = {
   onLoad?: () => void;
   onChatStarted?: () => void;
   onOfflineSubmit?: () => void;
+  onChatMinimized?: () => void;
+  onChatHidden?: () => void;
+  onUnreadCountChanged?: (count: number) => void;
   setAttributes?: (attrs: Record<string, string>, cb?: (err?: unknown) => void) => void;
+  hideWidget?: () => void;
+  showWidget?: () => void;
+  maximize?: () => void;
 };
+
+/* The default Tawk bubble is hidden: the contact launcher is the only entry
+   point, and "Live chat" there calls openTawkChat. A click that lands before the
+   lazy embed has loaded is remembered and replayed from onLoad. */
+let openWhenReady = false;
+
+export const tawkEnabled = Boolean(propertyId);
+
+/* Unread replies in the chat, for the contact deck's badge. The widget itself is
+   hidden, so without this a reply would arrive with nothing on screen to show it. */
+let unreadCount = 0;
+const unreadListeners = new Set<(count: number) => void>();
+
+export function subscribeTawkUnread(listener: (count: number) => void) {
+  unreadListeners.add(listener);
+  listener(unreadCount);
+  return () => {
+    unreadListeners.delete(listener);
+  };
+}
+
+export function openTawkChat() {
+  const api = window.Tawk_API;
+  if (api?.maximize) {
+    api.showWidget?.();
+    api.maximize();
+  } else {
+    openWhenReady = true;
+  }
+}
 
 declare global {
   interface Window {
@@ -32,7 +68,22 @@ function installTawkApi() {
   const api: TawkApi = (window.Tawk_API = window.Tawk_API || {});
   window.Tawk_LoadStart = new Date();
 
+  api.onChatMinimized = () => api.hideWidget?.();
+  api.onChatHidden = () => api.hideWidget?.();
+  api.onUnreadCountChanged = (count) => {
+    unreadCount = count;
+    unreadListeners.forEach((listener) => listener(count));
+  };
+
   api.onLoad = () => {
+    if (openWhenReady) {
+      openWhenReady = false;
+      api.showWidget?.();
+      api.maximize?.();
+    } else {
+      api.hideWidget?.();
+    }
+
     /* Which page the visitor was reading when they opened the chat, so a
        question about "the Professional package" reaches me knowing the person
        was standing on the packages section, not a blog note. Not named `page`:

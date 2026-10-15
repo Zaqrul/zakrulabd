@@ -1,6 +1,7 @@
 import { Inter, JetBrains_Mono } from "next/font/google";
 import { Analytics } from "@vercel/analytics/next";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { ContactLauncher } from "@/components/contact-launcher";
 import { ConversionTracking } from "@/components/conversion-tracking";
 import { GoogleAnalytics } from "@/components/google-analytics";
 import { TawkWidget } from "@/components/tawk-widget";
@@ -31,6 +32,7 @@ export function SiteDocument({ children, lang }: { children: React.ReactNode; la
         </a>
         {children}
         <TawkWidget />
+        <ContactLauncher lang={lang} />
         <Analytics />
         <SpeedInsights />
         <GoogleAnalytics />

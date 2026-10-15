@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { DeckNav } from "@/components/deck-nav";
 import { url } from "@/lib/site";
 
 /* Metadata merges down the tree and unset fields are inherited, so without this
@@ -16,12 +17,11 @@ export const metadata: Metadata = {
 };
 
 import Link from "next/link";
-import Image from "next/image";
 import { content } from "@/lib/content";
 import { contentMs } from "@/lib/content-ms";
 import { breadcrumb } from "@/lib/structured-data";
 import { WHATSAPP_NUMBER } from "@/lib/contact";
-import { ArrowRightIcon, MapPinIcon, PhoneIcon } from "@/components/icons";
+import { MapPinIcon, PhoneIcon } from "@/components/icons";
 import { Mark, RevealText } from "@/components/reveal-text";
 
 export default function TermsPage({ locale = "en" }: { locale?: "en" | "ms" }) {
@@ -36,33 +36,7 @@ export default function TermsPage({ locale = "en" }: { locale?: "en" | "ms" }) {
         dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumb(locale === "ms" ? "Terma dan Syarat" : "Terms & Conditions", `${root}/terms`)) }}
       />
       {/* HEADER */}
-      <header className="sticky top-0 z-50 border-b border-border bg-bg/90 backdrop-blur">
-        <div className="mx-auto flex max-w-shell items-center justify-between gap-4 px-6 py-4">
-          <Link href={root || "/"} className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center">
-              <Image
-                src="/logo-ghost-outline.webp"
-                alt="Zakrul logo"
-                width={512}
-                height={512}
-                className="h-8 w-8 object-contain"
-              />
-            </div>
-            <span className="font-display text-lg font-bold text-navy">Zakrul</span>
-          </Link>
-
-          <div className="flex items-center gap-3">
-            <Link href={locale === "ms" ? "/terms" : "/ms/terms"} hrefLang={locale === "ms" ? "en-MY" : "ms-MY"} lang={locale === "ms" ? "en" : "ms"} className="text-sm font-bold text-primary-900 hover:underline">{locale === "ms" ? "EN" : "MS"}</Link>
-            <Link
-              href={root || "/"}
-              className="inline-flex items-center gap-1.5 rounded-lg border border-navy/20 bg-white px-3.5 py-2 text-xs font-bold text-navy transition hover:border-navy hover:bg-navy hover:text-white"
-            >
-              <span>{t.footer.backToHome}</span>
-              <ArrowRightIcon className="h-3.5 w-3.5" />
-            </Link>
-          </div>
-        </div>
-      </header>
+      <DeckNav locale={locale} alternatePath={locale === "ms" ? "/terms" : "/ms/terms"} back={{ href: root || "/", label: t.footer.backToHome }} />
 
       {/* CONTENT */}
       <main id="main" className="mx-auto max-w-shell px-6 py-16 flex-1 w-full">
@@ -92,6 +66,7 @@ export default function TermsPage({ locale = "en" }: { locale?: "en" | "ms" }) {
           {terms.sections.map((section, idx) => (
             <section
               key={idx}
+              id={`terms-${idx + 1}`}
               className="rounded-2xl border border-border bg-white p-7 shadow-xs transition duration-200 hover:shadow-sm"
             >
               <h2 className="font-display text-xl font-bold text-navy"><RevealText>

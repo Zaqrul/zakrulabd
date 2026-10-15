@@ -52,9 +52,11 @@ export const skillGroups: SkillGroup[] = [
   {
     label: { en: "Marketing and automation", ms: "Pemasaran dan automasi" },
     skills: [
-      { key: "ga4", level: 4 },
-      { key: "searchConsole", level: 4 },
+      { key: "ga4", level: 3 },
+      { key: "searchConsole", level: 3 },
+      { key: "geo", level: 2 },
       { key: "tawkto", level: 3 },
+      { key: "brevo", level: 3 },
       { key: "n8n", level: 2 },
     ],
   },

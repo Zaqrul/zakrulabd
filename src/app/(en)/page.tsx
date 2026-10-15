@@ -6,7 +6,6 @@ import Link from "next/link";
 import {
   ArrowRightIcon,
   ChartIcon,
-  ChatIcon,
   CheckIcon,
   ExternalLinkIcon,
   SearchIcon,
@@ -28,7 +27,7 @@ import {
   SvgGrowthAnalytics,
   SvgLaunching,
   SvgMedicalCare,
-  SvgMessaging,
+  SvgAnalytics,
   SvgPrototypingProcess,
   SvgResearching,
   SvgSearchEngines,
@@ -75,9 +74,9 @@ const mobilePromptPills = [
 ];
 
 const statMeta = [
-  { Illustration: SvgGrowthAnalytics, icon: ChartIcon, iconColor: "text-teal-600", value: "+18%" },
-  { Illustration: SvgMessaging, icon: ChatIcon, iconColor: "text-amber-500", value: "+15%" },
-  { Illustration: SvgSearchEngines, icon: SearchIcon, iconColor: "text-white", value: "50+" },
+  { Illustration: SvgGrowthAnalytics, icon: ChartIcon, iconColor: "text-teal-600", value: "12.1 → 8.7" },
+  { Illustration: SvgSearchEngines, icon: SearchIcon, iconColor: "text-amber-500", value: "+13%" },
+  { Illustration: SvgAnalytics, icon: ChartIcon, iconColor: "text-white", value: "90K" },
 ];
 
 const testimonials = [
@@ -458,6 +457,12 @@ function useActiveSection(navRef: React.RefObject<HTMLElement | null>, navItems:
   return activeId;
 }
 
+/* Hover on a nav link: a circle the height of the link appears behind the text
+   and stretches out to the link's full width, ending as a pill. */
+const navLink = "group relative rounded-full px-3.5 py-1.5 text-sm font-semibold transition-colors duration-200";
+const navLinkHover =
+  "absolute left-1/2 top-0 h-full w-8 -translate-x-1/2 scale-50 rounded-full bg-amber-400 opacity-0 transition-[width,opacity,transform] duration-300 ease-out group-hover:w-full group-hover:scale-100 group-hover:opacity-100 group-focus-visible:w-full group-focus-visible:scale-100 group-focus-visible:opacity-100 motion-reduce:transition-none";
+
 export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
   const t = locale === "ms" ? contentMs : content;
   const root = locale === "ms" ? "/ms" : "";
@@ -476,8 +481,9 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
   return (
     <div className="w-full">
       {/* NAV */}
-      <nav ref={navRef} className="sticky top-0 z-50 border-b border-border bg-bg/95 backdrop-blur-md">
-        <div className="mx-auto flex max-w-shell items-center justify-between gap-3 px-4 py-3.5 sm:px-6 sm:py-4">
+      <nav ref={navRef} className="sticky top-0 z-50 px-3 pt-2 sm:px-4 lg:pt-3">
+        <div className="liquid-glass liquid-glass-calm mx-auto max-w-shell overflow-hidden rounded-3xl lg:rounded-full">
+        <div className="flex items-center justify-between gap-3 px-3 py-2 sm:px-4 lg:pl-4 lg:pr-2.5">
           <a href="#" className="flex items-center gap-2.5">
             <div className="flex h-9 w-9 flex-shrink-0 items-center justify-center">
               <Image
@@ -492,20 +498,24 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
           </a>
 
           {/* Desktop Nav Links */}
-          <div className="hidden items-center gap-8 lg:flex">
-            {navItems.map((item) => (
-              <a
-                key={item.id}
-                href={`#${item.id}`}
-                className="group relative py-1 text-sm font-semibold text-ink transition-colors hover:text-navy"
-              >
-                {item.label}
-                <span className="absolute bottom-0 left-0 h-[2.5px] w-0 rounded-full bg-amber-400 transition-all duration-200 ease-out group-hover:w-full" />
-              </a>
-            ))}
-            <Link href={`${root}/about`} className="group relative py-1 text-sm font-semibold text-ink transition-colors hover:text-navy">
-              {locale === "ms" ? "Tentang Saya" : "About Me"}
-              <span className="absolute bottom-0 left-0 h-[2.5px] w-0 rounded-full bg-amber-400 transition-all duration-200 ease-out group-hover:w-full" />
+          <div className="hidden items-center gap-1 lg:flex">
+            {navItems.map((item) => {
+              const isActive = item.id === activeSection;
+              return (
+                <a
+                  key={item.id}
+                  href={`#${item.id}`}
+                  aria-current={isActive ? "true" : undefined}
+                  className={`${navLink} ${isActive ? "bg-amber-400 text-navy" : "text-ink hover:text-navy"}`}
+                >
+                  {!isActive && <span aria-hidden="true" className={navLinkHover} />}
+                  <span className="relative">{item.label}</span>
+                </a>
+              );
+            })}
+            <Link href={`${root}/about`} className={`${navLink} text-ink hover:text-navy`}>
+              <span aria-hidden="true" className={navLinkHover} />
+              <span className="relative">{locale === "ms" ? "Tentang Saya" : "About Me"}</span>
             </Link>
           </div>
 
@@ -517,7 +527,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
               href={wa(waMessages.quote)}
               target="_blank"
               rel="noopener noreferrer"
-              className="btn-primary whitespace-nowrap rounded-lg bg-amber-500 px-3.5 py-2 text-xs font-bold text-navy hover:bg-amber-600 sm:px-5 sm:py-2.5 sm:text-sm sm:font-semibold"
+              className="btn-primary whitespace-nowrap rounded-full bg-amber-500 px-3.5 py-2 text-xs font-bold text-navy hover:bg-amber-600 sm:px-5 sm:py-2.5 sm:text-sm sm:font-semibold"
             >
               {t.nav.cta}
             </a>
@@ -525,7 +535,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
         </div>
 
         {/* Mobile subnav strip: marks the section the reader has scrolled into. */}
-        <div className="flex items-center justify-around border-t border-border/70 bg-white/85 px-2 py-2 text-xs font-semibold text-ink backdrop-blur-sm lg:hidden">
+        <div className="flex items-center justify-around border-t border-navy/10 px-2 py-2 text-xs font-semibold text-ink lg:hidden">
           {navItems.map((item) => {
             const isActive = item.id === activeSection;
             return (
@@ -549,6 +559,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
           <Link href={`${root}/about`} className="px-2.5 py-1 text-center text-ink hover:text-navy">
             {locale === "ms" ? "Tentang" : "About"}
           </Link>
+        </div>
         </div>
       </nav>
 
@@ -762,15 +773,27 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
             index={4}
             className="mx-auto mt-6 grid max-w-4xl grid-cols-1 items-center gap-8 rounded-[18px] border border-white/10 bg-white/5 p-8 md:grid-cols-[1.3fr_1fr]"
           >
-            <div className="overflow-hidden rounded-2xl bg-white p-2">
-              <Image
-                src="/notes/sri-tanduk-search-console.webp"
-                alt={t.results.smeImageAlt}
-                width={1946}
-                height={650}
-                sizes="(min-width: 768px) 500px, 100vw"
-                className="h-auto w-full"
-              />
+            <div className="flex flex-col gap-3">
+              <div className="overflow-hidden rounded-2xl bg-white p-2">
+                <Image
+                  src="/notes/sri-tanduk-search-console.webp"
+                  alt={t.results.smeImageAlt}
+                  width={1946}
+                  height={650}
+                  sizes="(min-width: 768px) 500px, 100vw"
+                  className="h-auto w-full"
+                />
+              </div>
+              <div className="overflow-hidden rounded-2xl bg-white p-2">
+                <Image
+                  src="/notes/sri-tanduk-ai-impressions.webp"
+                  alt={t.results.smeAiImageAlt}
+                  width={1422}
+                  height={539}
+                  sizes="(min-width: 768px) 500px, 100vw"
+                  className="h-auto w-full"
+                />
+              </div>
             </div>
 
             <div className="flex flex-col gap-3.5">
@@ -800,7 +823,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
       </section>
 
       {/* TECH STACK */}
-      <section className="border-b border-border bg-bg py-11">
+      <section id="stack" className="border-b border-border bg-bg py-11">
         <div className="mx-auto flex max-w-shell flex-col items-center px-6">
           <span className="text-base font-bold tracking-[0.08em] text-muted"><RevealText text>{t.tech.heading}</RevealText></span>
         </div>
@@ -832,7 +855,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
       </section>
 
       {/* TESTIMONIALS */}
-      <section className="px-6 py-24">
+      <section id="reviews" className="px-6 py-24">
         <div className="mx-auto max-w-shell">
           <div className="mx-auto mb-11 flex max-w-xl flex-col items-center gap-3 text-center">
             <h2 className="font-display text-[30px] font-bold text-navy md:text-5xl"><RevealText>{t.testimonials.heading}</RevealText></h2>
@@ -964,7 +987,7 @@ export default function Home({ locale = "en" }: { locale?: "en" | "ms" }) {
       </section>
 
       {/* GET STARTED */}
-      <section className="border-y border-border bg-white px-6 py-24">
+      <section id="start" className="border-y border-border bg-white px-6 py-24">
         <div className="mx-auto max-w-shell">
           <div className="grid grid-cols-1 gap-12 lg:grid-cols-2">
             <div>

@@ -17,6 +17,8 @@ export const privacyMs = {
       "Hosting dan infrastruktur: Vercel dan Railway untuk hosting awan.",
       "Komunikasi: WhatsApp dan Google Workspace untuk berurusan dengan pelanggan.",
       "Analitik: Google Analytics 4 untuk memahami penggunaan dan prestasi laman web.",
+      "Kiraan pelawat langsung: Supabase Realtime, untuk menunjukkan berapa ramai orang di laman ini sekarang. Pelayar anda menghantar pengecam rawak yang dijana sendiri, dan ia hilang apabila anda menutup tab. Jumlah keseluruhan pelawat juga disimpan sebagai satu nombor, dengan penanda kecil dalam pelayar anda supaya anda dikira sekali sahaja. Tiada data peribadi disimpan.",
+      "Live chat: Tawk.to, apabila anda memilih untuk memulakan perbualan.",
       "Pembayaran: bagi projek e-dagang, transaksi dikendalikan oleh penyedia pembayaran seperti Stripe, ToyyibPay atau gerbang FPX. Butiran kad tidak disimpan di server laman web ini.",
     ] },
     { title: "4. Keselamatan dan Tempoh Penyimpanan Data", content: [

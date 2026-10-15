@@ -1,8 +1,9 @@
 import type { ComponentType, CSSProperties } from "react";
 import { DiMsqlServer } from "react-icons/di";
-import { TbBrandOpenai, TbBrandReactNative, TbBrandVscode, TbCode } from "react-icons/tb";
+import { TbBrandOpenai, TbBrandReactNative, TbBrandVscode, TbCode, TbSparkles } from "react-icons/tb";
 import {
   SiAstro,
+  SiBrevo,
   SiClaude,
   SiCloudflare,
   SiCodeigniter,
@@ -65,6 +66,8 @@ export const tech = {
   firebase: { name: "Firebase", Icon: SiFirebase, color: "#FFCA28" },
   tawkto: { name: "Tawk.to", Icon: TawkToIcon, color: "#03A84E" },
   n8n: { name: "n8n", Icon: SiN8N, color: "#EA4B71" },
+  brevo: { name: "Brevo", Icon: SiBrevo, color: "#0B996E" },
+  geo: { name: "GEO", Icon: TbSparkles, color: "#7C3AED" },
   vercel: { name: "Vercel", Icon: SiVercel, color: "#000000" },
   cloudflare: { name: "Cloudflare", Icon: SiCloudflare, color: "#F38020" },
   ga4: { name: "Google Analytics 4", Icon: SiGoogleanalytics, color: "#E37400" },
