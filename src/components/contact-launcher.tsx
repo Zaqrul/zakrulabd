@@ -1,12 +1,16 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import { SiWhatsapp } from "react-icons/si";
-import { TbDeviceGamepad2, TbMail, TbMessageCircle, TbPlus, TbUsers, TbX } from "react-icons/tb";
+import { TbDeviceGamepad2, TbMail, TbMessageCircle, TbPlus, TbUser, TbUsers, TbX } from "react-icons/tb";
+import { AccountPanel } from "@/components/account-panel";
+import { Arcade } from "@/components/arcade";
 import { loadBest } from "@/components/games/shared";
 import { GAME_ORDER, MiniGames, bestText, gameIcons, type GameId } from "@/components/mini-games";
 import { SectionSummary } from "@/components/section-summary";
 import { openTawkChat, subscribeTawkUnread, tawkEnabled } from "@/components/tawk-widget";
+import { SCORES_EVENT, accountsEnabled, hasAccountHint, watchAccount } from "@/lib/account";
 import { wa, waMessages } from "@/lib/contact";
 import { announcement, dismissNotice, subscribeNotices, type Notice } from "@/lib/notices";
 import { loadTotalVisitors, presenceEnabled, watchOnlineCount } from "@/lib/presence";
@@ -29,6 +33,8 @@ const copy = {
     summaries: "Section summaries",
     games: "Games",
     playOffline: "Play while you wait",
+    account: "Sign in to save scores",
+    accountAs: (name: string) => `@${name}`,
   },
   ms: {
     title: "Hubungi saya melalui",
@@ -46,6 +52,8 @@ const copy = {
     summaries: "Ringkasan seksyen",
     games: "Permainan",
     playOffline: "Main sementara menunggu",
+    account: "Log masuk untuk simpan skor",
+    accountAs: (name: string) => `@${name}`,
   },
 };
 
@@ -81,16 +89,50 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
      an icon for each game. The game panel above it plays whichever is lit. */
   const [mode, setMode] = useState<"contact" | "games">("contact");
   const [game, setGame] = useState<GameId | null>(null);
+  /* The account panel takes the game panel's place above the dock. */
+  const [accountOpen, setAccountOpen] = useState(false);
+  const [username, setUsername] = useState<string | null>(null);
+  /* Where the ball sat when the arcade grew out of it; null while the arcade is shut. */
+  const [arcade, setArcade] = useState<{ x: number; y: number } | null>(null);
+  const plusRef = useRef<HTMLButtonElement>(null);
+  const prevUser = useRef<string | null>(null);
   const [bests, setBests] = useState<Record<GameId, number>>({ runner: 0, flap: 0, match: 0, trap: 0, space: 0 });
   const deckInner = useRef<HTMLDivElement>(null);
   const [deckWidth, setDeckWidth] = useState(0);
   const swapTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const closeGame = useCallback(() => setGame(null), []);
+  const closeAccount = useCallback(() => setAccountOpen(false), []);
+  /* A game that wants an account (Space, past Chapter 1) hands the panel over to it. */
+  const openAccount = useCallback(() => {
+    setGame(null);
+    setAccountOpen(true);
+  }, []);
   const root = useRef<HTMLDivElement>(null);
   const hideNudge = useCallback(() => setNudge(false), []);
 
   useEffect(() => subscribeTawkUnread(setUnread), []);
   useEffect(() => subscribeNotices(setNotices), []);
+
+  /* Someone who signed in before is recognised on arrival; everyone else only
+     starts listening once they open the games, so the auth client stays out of
+     the way of visitors who never play. */
+  const [watching, setWatching] = useState(false);
+  useEffect(() => {
+    if (!accountsEnabled) return;
+    if (hasAccountHint()) {
+      const timer = setTimeout(() => setWatching(true), 2500);
+      return () => clearTimeout(timer);
+    }
+  }, []);
+  useEffect(() => (watching ? watchAccount(setUsername) : undefined), [watching]);
+
+  /* A sign-in merges saved scores into this browser's; the icons' tooltips follow. */
+  useEffect(() => {
+    const refresh = () =>
+      setBests({ runner: loadBest("runner"), flap: loadBest("flap"), match: loadBest("match"), trap: loadBest("trap"), space: loadBest("space") });
+    window.addEventListener(SCORES_EVENT, refresh);
+    return () => window.removeEventListener(SCORES_EVENT, refresh);
+  }, []);
 
   /* Read after mount so server and client markup match; then follow changes made
      from a summary's own "Turn off" link. */
@@ -182,13 +224,16 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
     clearTimeout(swapTimer.current);
     setOpen(false);
     setGame(null);
+    setAccountOpen(false);
     swapTimer.current = setTimeout(() => setMode("contact"), COLLAPSE_MS);
   }, []);
 
   const openGames = useCallback((first: GameId | null) => {
     clearTimeout(swapTimer.current);
     setGame(null);
+    setAccountOpen(false);
     setOpen(false);
+    setWatching(true);
     swapTimer.current = setTimeout(() => {
       setBests({ runner: loadBest("runner"), flap: loadBest("flap"), match: loadBest("match"), trap: loadBest("trap"), space: loadBest("space") });
       setMode("games");
@@ -198,6 +243,35 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
       }, SWAP_PAUSE_MS);
     }, COLLAPSE_MS);
   }, []);
+
+  /* Signed-in players get a screen of their own for games. The pill shrinks to
+     a ball, and the arcade grows out of the ball's exact spot. Already shut, there
+     is nothing to shrink, so it starts at once. */
+  const enterArcade = useCallback(() => {
+    clearTimeout(swapTimer.current);
+    setNudge(false);
+    setGame(null);
+    setAccountOpen(false);
+    const wait = open ? COLLAPSE_MS : 0;
+    setOpen(false);
+    swapTimer.current = setTimeout(() => {
+      const box = plusRef.current?.getBoundingClientRect();
+      setArcade({ x: box ? box.left + box.width / 2 : window.innerWidth / 2, y: box ? box.top + box.height / 2 : window.innerHeight - 40 });
+      setMode("contact");
+    }, wait);
+  }, [open]);
+
+  const leaveArcade = useCallback(() => {
+    setArcade(null);
+    plusRef.current?.focus();
+  }, []);
+
+  /* Signing in from the account panel is what opens it; a session that merely
+     turns up on arrival (a returning player) does not. */
+  useEffect(() => {
+    if (username && prevUser.current === null && accountOpen) enterArcade();
+    prevUser.current = username;
+  }, [username, accountOpen, enterArcade]);
 
   useEffect(() => () => clearTimeout(swapTimer.current), []);
 
@@ -217,7 +291,7 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
       if (e.key === "Escape") closeAll();
     }
     function onPointer(e: PointerEvent) {
-      if (game !== null) return;
+      if (game !== null || accountOpen) return;
       if (root.current && !root.current.contains(e.target as Node)) closeAll();
     }
     document.addEventListener("keydown", onKey);
@@ -226,7 +300,7 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
       document.removeEventListener("keydown", onKey);
       document.removeEventListener("pointerdown", onPointer);
     };
-  }, [open, closeAll, game]);
+  }, [open, closeAll, game, accountOpen]);
 
   function dismissAnnouncement() {
     setNoteDismissed(true);
@@ -258,10 +332,13 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
     "flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-neutral-500 transition-colors hover:bg-navy hover:text-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy";
 
   return (
-    <div ref={root} className="pointer-events-none fixed inset-x-0 bottom-4 z-40 flex flex-col items-end gap-2 px-4 sm:items-center">
-      <SectionSummary lang={lang} suspended={open || game !== null} onShow={hideNudge} />
+    <div ref={root} inert={arcade !== null} className={`pointer-events-none fixed inset-x-0 bottom-4 flex flex-col items-end gap-2 px-4 sm:items-center ${game ? "z-[60]" : "z-40"}`}>
+      <SectionSummary lang={lang} suspended={open || game !== null || accountOpen} onShow={hideNudge} />
 
-      {game && <MiniGames lang={lang} game={game} onClose={closeGame} />}
+      {game && <MiniGames lang={lang} game={game} username={username} onClose={closeGame} onAccount={openAccount} />}
+      {accountOpen && <AccountPanel lang={lang} username={username} onClose={closeAccount} />}
+      {arcade &&
+        createPortal(<Arcade lang={lang} username={username} online={online} origin={arcade} onExit={leaveArcade} />, document.body)}
 
       {nudge && !open && (
         <div className="rise-in pointer-events-auto relative flex items-center gap-1 rounded-2xl bg-navy py-1 pl-3.5 pr-1 shadow-lg">
@@ -442,7 +519,7 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
             type="button"
             aria-label={t.games}
             className={`${item} ${onGreen}`}
-            onClick={() => openGames(null)}
+            onClick={() => (username ? enterArcade() : openGames(null))}
           >
             <TbDeviceGamepad2 aria-hidden="true" className={`${iconGreen} text-[#8b5cf6]`} />
             <span aria-hidden="true" className={tip}>{t.games}</span>
@@ -460,7 +537,10 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
                   aria-label={label}
                   aria-pressed={active}
                   className={`${item} h-10! w-10! ${active ? "bg-amber-400" : onGreen}`}
-                  onClick={() => setGame(id)}
+                  onClick={() => {
+                    setAccountOpen(false);
+                    setGame(id);
+                  }}
                 >
                   <Icon
                     aria-hidden="true"
@@ -471,10 +551,33 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
               );
             })
           )}
+          {mode === "games" && accountsEnabled && (
+            <>
+              <span aria-hidden="true" className="h-7 w-px bg-navy/15" />
+              <button
+                type="button"
+                aria-label={username ? t.accountAs(username) : t.account}
+                aria-pressed={accountOpen}
+                className={`${item} h-10! w-10! ${accountOpen ? "bg-amber-400" : onBlack}`}
+                onClick={() => {
+                  setGame(null);
+                  setAccountOpen((v) => !v);
+                }}
+              >
+                <TbUser
+                  aria-hidden="true"
+                  className={`h-6 w-6 transition-colors duration-150 ${accountOpen ? "text-navy" : "text-navy group-hover:text-amber-400 group-focus-visible:text-amber-400"}`}
+                />
+                {username && <span aria-hidden="true" className="absolute right-0 top-0 h-3 w-3 rounded-full border-2 border-white bg-[#25D366]" />}
+                <span aria-hidden="true" className={tip}>{username ? t.accountAs(username) : t.account}</span>
+              </button>
+            </>
+          )}
           <span aria-hidden="true" className="h-7 w-px bg-navy/15" />
           </div>
         </div>
         <button
+          ref={plusRef}
           type="button"
           aria-label={open ? t.close : attention > 0 ? `${t.open} (${attention})` : t.open}
           aria-expanded={open}

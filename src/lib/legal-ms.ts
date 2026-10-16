@@ -5,6 +5,7 @@ export const privacyMs = {
     { title: "1. Maklumat yang Dikumpul", content: [
       "Maklumat hubungan. Apabila anda menghubungi saya melalui WhatsApp, e-mel atau borang hubungan, saya menerima nama, nama perniagaan, nombor telefon, alamat e-mel dan butiran projek yang anda kongsikan.",
       "Data analitik dan penggunaan. Data teknikal seperti jenis pelayar, peranti, halaman yang dilawati dan tempoh lawatan dikumpul melalui Google Analytics 4 untuk memahami prestasi laman web.",
+      "Akaun pemain. Jika anda memilih untuk mendaftar bagi menyimpan skor dan kemajuan permainan mini, saya menyimpan nama pengguna, alamat e-mel, skor terbaik dan sejauh mana anda sampai dalam permainan Space. Kata laluan anda dikendalikan oleh Supabase Auth dan hanya disimpan dalam bentuk hash; saya tidak dapat melihatnya. Akaun adalah pilihan dan setiap permainan boleh dimain tanpanya, kecuali bab-bab selepas yang pertama dalam permainan Space yang memerlukan akaun untuk dimain dan disimpan.",
       "Kuki. Kuki yang diperlukan membantu laman web berfungsi dengan betul, manakala kuki analitik digunakan untuk mengukur trafik.",
     ] },
     { title: "2. Cara Maklumat Digunakan", content: [
@@ -18,6 +19,7 @@ export const privacyMs = {
       "Komunikasi: WhatsApp dan Google Workspace untuk berurusan dengan pelanggan.",
       "Analitik: Google Analytics 4 untuk memahami penggunaan dan prestasi laman web.",
       "Kiraan pelawat langsung: Supabase Realtime, untuk menunjukkan berapa ramai orang di laman ini sekarang. Pelayar anda menghantar pengecam rawak yang dijana sendiri, dan ia hilang apabila anda menutup tab. Jumlah keseluruhan pelawat juga disimpan sebagai satu nombor, dengan penanda kecil dalam pelayar anda supaya anda dikira sekali sahaja. Tiada data peribadi disimpan.",
+      "Akaun pemain: Supabase Auth dan pangkalan data, untuk log masuk dan menyimpan skor serta kemajuan permainan. Sesi log masuk disimpan dalam storan pelayar anda sehingga anda log keluar. Untuk memadam akaun dan skor anda, e-mel saya dan saya akan memadamnya.",
       "Live chat: Tawk.to, apabila anda memilih untuk memulakan perbualan.",
       "Pembayaran: bagi projek e-dagang, transaksi dikendalikan oleh penyedia pembayaran seperti Stripe, ToyyibPay atau gerbang FPX. Butiran kad tidak disimpan di server laman web ini.",
     ] },

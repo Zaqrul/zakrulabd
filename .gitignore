@@ -52,3 +52,6 @@ dev.log
 /*.jpeg
 /*.webp
 /*.gif
+
+# Supabase CLI link state (local only)
+supabase/.temp/

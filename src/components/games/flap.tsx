@@ -224,7 +224,8 @@ export default function Flap({ labels }: { labels: FlapLabels }) {
           e.preventDefault();
           flap();
         }}
-        className="relative mx-auto block w-full max-w-[288px] touch-none select-none overflow-hidden rounded-xl border border-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy"
+        className="relative mx-auto block touch-none select-none overflow-hidden rounded-xl border border-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy"
+        style={{ width: "min(100%, 288px, calc((100dvh - 204px) * 0.75))" }}
         aria-label={phase === "playing" ? "Flap" : phase === "over" ? labels.again : labels.tap}
       >
         <canvas ref={canvas} className="block h-auto w-full" style={{ aspectRatio: `${W} / ${H}` }} />

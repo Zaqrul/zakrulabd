@@ -14,6 +14,9 @@ export function saveBest(key: string, value: number) {
   } catch {
     /* Storage blocked: the best score lasts until the panel is closed. */
   }
+  /* Signed-in players also keep it on their account. Imported on demand so the
+     account code never loads for anyone who just plays. */
+  void import("@/lib/account").then((m) => m.pushScore(key, value));
 }
 
 /* Keys pressed while typing in a form are not the game's. */

@@ -1,22 +1,6 @@
-import type { SupabaseClient } from "@supabase/supabase-js";
+import { getSupabase as getClient, supabaseEnabled } from "@/lib/supabase-client";
 
-const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
-
-export const presenceEnabled = Boolean(url && key);
-
-/* The client is imported on demand so the visitor who never looks at the deck
-   still pays nothing for it, and shared so presence and the total count ride
-   the same connection. */
-let clientPromise: Promise<SupabaseClient> | null = null;
-
-function getClient() {
-  if (!url || !key) return null;
-  clientPromise ??= import("@supabase/supabase-js").then(({ createClient }) =>
-    createClient(url, key, { auth: { persistSession: false, autoRefreshToken: false } }),
-  );
-  return clientPromise;
-}
+export const presenceEnabled = supabaseEnabled;
 
 /* Counts open tabs on the site right now through a Supabase Realtime Presence
    channel. Nothing is stored: presence lives in memory on the Realtime server

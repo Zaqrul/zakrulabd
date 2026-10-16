@@ -13,6 +13,7 @@ import {
   createState,
   respawn,
   respawnReady,
+  sectionAt,
   step,
   type Cause,
   type Input,
@@ -22,6 +23,11 @@ import {
 
 export type TrapLabels = {
   tap: string;
+  intro: string;
+  progress: string;
+  checkpoint: string;
+  areas: string[];
+  hint: string;
   deaths: string;
   best: string;
   won: string;
@@ -45,6 +51,8 @@ export default function Trap({ labels }: { labels: TrapLabels }) {
   const [deaths, setDeaths] = useState(0);
   const [message, setMessage] = useState("");
   const [best, setBest] = useState(0);
+  const [progress, setProgress] = useState(0);
+  const [area, setArea] = useState(0);
   const world = useRef<State>(createState());
   const modeRef = useRef<Mode>("ready");
   const keys = useRef({ left: false, right: false, jump: false });
@@ -70,6 +78,8 @@ export default function Trap({ labels }: { labels: TrapLabels }) {
     setMode("play");
     setDeaths(0);
     setMessage("");
+    setProgress(0);
+    setArea(0);
   }, []);
 
   useEffect(() => {
@@ -80,6 +90,10 @@ export default function Trap({ labels }: { labels: TrapLabels }) {
     let last = performance.now();
     let acc = 0;
     let shownPhase: State["phase"] = "playing";
+    let shownProgress = -1;
+    let shownCheckpoint = 24;
+    let messageUntil = 0;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
     const input = (): Input => ({
       left: keys.current.left || touch.current.left,
@@ -92,7 +106,7 @@ export default function Trap({ labels }: { labels: TrapLabels }) {
       last = now;
       const s = world.current;
 
-      if (modeRef.current === "play") {
+      if (modeRef.current === "play" && !document.hidden) {
         while (acc >= 1) {
           acc -= 1;
           step(s, input());
@@ -103,8 +117,7 @@ export default function Trap({ labels }: { labels: TrapLabels }) {
           if (s.phase === "dying" && s.cause) {
             setDeaths(s.deaths);
             setMessage(labelsRef.current.messages[s.cause]);
-          } else if (s.phase === "playing") {
-            setMessage("");
+            messageUntil = s.frame + 150;
           } else if (s.phase === "won") {
             modeRef.current = "won";
             setMode("won");
@@ -117,18 +130,35 @@ export default function Trap({ labels }: { labels: TrapLabels }) {
             });
           }
         }
+        if (shownCheckpoint !== s.checkpointX) {
+          if (s.checkpointX > shownCheckpoint) {
+            setMessage(labelsRef.current.checkpoint);
+            messageUntil = s.frame + 130;
+          }
+          shownCheckpoint = s.checkpointX;
+        }
+        const nextProgress = Math.min(100, Math.floor((s.furthestX / WORLD) * 100));
+        if (nextProgress !== shownProgress) {
+          shownProgress = nextProgress;
+          setProgress(nextProgress);
+          setArea(sectionAt(s.furthestX));
+        }
+        if (messageUntil > 0 && s.frame >= messageUntil) {
+          setMessage("");
+          messageUntil = 0;
+        }
       } else {
         acc = 0;
       }
 
-      draw(ctx, s);
+      draw(ctx, s, reduceMotion);
       raf = requestAnimationFrame(frame);
     }
     raf = requestAnimationFrame(frame);
 
     const ro = new ResizeObserver(() => {
       ctx = fitCanvas(el, VIEW_W, VIEW_H);
-      draw(ctx, world.current);
+      draw(ctx, world.current, reduceMotion);
     });
     ro.observe(el);
 
@@ -152,12 +182,21 @@ export default function Trap({ labels }: { labels: TrapLabels }) {
     }
     const down = (e: KeyboardEvent) => set(e, true);
     const up = (e: KeyboardEvent) => set(e, false);
+    const release = () => {
+      keys.current = { left: false, right: false, jump: false };
+      touch.current = { left: false, right: false, jump: false };
+    };
+    const onVisibility = () => { if (document.hidden) release(); };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
+    window.addEventListener("blur", release);
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
-      keys.current = { left: false, right: false, jump: false };
+      window.removeEventListener("blur", release);
+      document.removeEventListener("visibilitychange", onVisibility);
+      release();
     };
   }, [start]);
 
@@ -174,17 +213,22 @@ export default function Trap({ labels }: { labels: TrapLabels }) {
     "flex h-12 flex-1 touch-none select-none items-center justify-center rounded-2xl bg-navy/90 text-amber-400 transition-colors active:bg-amber-400 active:text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy";
 
   return (
-    <div className="flex flex-col gap-2">
+    <div className="flex flex-col gap-2 [@media(max-height:500px)]:gap-1">
       <div className="flex items-center justify-between text-[12px] font-bold text-navy">
         <span>{labels.deaths}: {deaths}</span>
+        <span className="text-[11px] text-neutral-500">{area + 1}/3 · {labels.areas[area]}</span>
         <span>{best > 0 ? `${labels.best}: ${best - 1}` : ""}</span>
       </div>
+      <div role="progressbar" aria-label={labels.progress} aria-valuenow={progress} aria-valuemin={0} aria-valuemax={100} className="h-1 overflow-hidden rounded-full bg-neutral-100">
+        <div className="h-full rounded-full bg-amber-400 transition-[width] duration-150 motion-reduce:transition-none" style={{ width: `${progress}%` }} />
+      </div>
 
-      <div className="relative overflow-hidden rounded-xl border border-neutral-200" onPointerDown={() => mode === "ready" && start()}>
+      <div className="relative mx-auto w-full overflow-hidden rounded-xl border border-neutral-200" style={{ maxWidth: "max(192px, calc((100dvh - 264px) * 2))" }} onPointerDown={() => mode === "ready" && start()}>
         <canvas ref={canvas} className="block h-auto w-full" style={{ aspectRatio: `${VIEW_W} / ${VIEW_H}` }} />
 
         {mode === "ready" && (
-          <div className="absolute inset-0 flex items-center justify-center bg-white/60">
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-3 bg-white/75 px-4 text-center">
+            <p className="text-[12px] font-bold text-navy">{labels.intro}</p>
             <button
               type="button"
               autoFocus
@@ -195,14 +239,9 @@ export default function Trap({ labels }: { labels: TrapLabels }) {
             </button>
           </div>
         )}
-        {mode === "play" && message && (
-          <div role="status" className="absolute inset-x-0 top-3 flex justify-center px-3">
-            <span className="rounded-full bg-navy px-3 py-1.5 text-center text-[12px] font-bold text-amber-400">{message}</span>
-          </div>
-        )}
         {mode === "won" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/75 text-navy">
-            <span className="px-4 text-center text-base font-extrabold">{labels.won}</span>
+          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-white/75 text-navy [@media(max-height:500px)]:gap-1">
+            <span className="px-4 text-center text-base font-extrabold [@media(max-height:500px)]:text-xs">{labels.won}</span>
             <span className="text-sm font-bold">{labels.deaths}: {deaths}</span>
             <button
               type="button"
@@ -213,7 +252,12 @@ export default function Trap({ labels }: { labels: TrapLabels }) {
             </button>
           </div>
         )}
+        {mode === "play" && message && (
+          <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 hidden bg-white/90 px-1 py-0.5 text-center text-[10px] font-semibold text-navy [@media(max-height:500px)]:block">{message}</div>
+        )}
       </div>
+
+      <p role="status" aria-live="polite" className="min-h-8 text-center text-[11.5px] font-semibold leading-4 text-neutral-500 [@media(max-height:500px)]:sr-only">{message}</p>
 
       <div className="flex gap-2">
         <Pad name="left" label={labels.left} className={pad} onPress={press}>
@@ -226,6 +270,7 @@ export default function Trap({ labels }: { labels: TrapLabels }) {
           <TbArrowBigUp aria-hidden="true" className="h-6 w-6" />
         </Pad>
       </div>
+      <p className="text-center text-[11px] leading-4 text-neutral-500 [@media(max-height:500px)]:hidden">{labels.hint}</p>
     </div>
   );
 }
@@ -266,26 +311,37 @@ function Pad({
 
 /* Drawing. */
 
-function draw(ctx: CanvasRenderingContext2D, s: State) {
+function draw(ctx: CanvasRenderingContext2D, s: State, reduceMotion: boolean) {
   const cam = Math.min(Math.max(s.p.x - 150, 0), WORLD - VIEW_W);
+  const area = sectionAt(s.p.x);
+  const palette = [
+    { top: "#bce6ff", bottom: "#f1fbff", hills: "#bedc9a" },
+    { top: "#15243b", bottom: "#36516c", hills: "#253c50" },
+    { top: "#33244d", bottom: "#765b83", hills: "#4a375e" },
+  ][area];
 
   const sky = ctx.createLinearGradient(0, 0, 0, VIEW_H);
-  sky.addColorStop(0, "#9fd8ff");
-  sky.addColorStop(1, "#e6f5ff");
+  sky.addColorStop(0, palette.top);
+  sky.addColorStop(1, palette.bottom);
   ctx.fillStyle = sky;
   ctx.fillRect(0, 0, VIEW_W, VIEW_H);
 
   /* Hills and clouds drift slower than the ground. */
-  ctx.fillStyle = "#b7e08f";
+  ctx.fillStyle = palette.hills;
   for (let i = -1; i < 8; i++) {
     const x = i * 140 - ((cam * 0.35) % 140);
     ctx.beginPath();
     ctx.ellipse(x + 70, GROUND, 74, 46, 0, Math.PI, 0);
     ctx.fill();
   }
-  ctx.fillStyle = "#fff";
+  ctx.fillStyle = area === 0 ? "#fff" : "#b9c9dd";
   for (let i = -1; i < 6; i++) {
     const x = i * 180 - ((cam * 0.2) % 180);
+    if (area > 0) {
+      ctx.fillRect(x + 40, 24 + ((i * i * 17) % 70), 2, 2);
+      ctx.fillRect(x + 90, 16 + ((i * i * 29) % 56), 1, 1);
+      continue;
+    }
     ctx.beginPath();
     ctx.ellipse(x + 40, 34 + (i % 2) * 18, 22, 8, 0, 0, Math.PI * 2);
     ctx.ellipse(x + 56, 30 + (i % 2) * 18, 16, 9, 0, 0, Math.PI * 2);
@@ -293,11 +349,25 @@ function draw(ctx: CanvasRenderingContext2D, s: State) {
   }
 
   ctx.save();
+  if (s.phase === "dying" && s.dyingFor < 12 && !reduceMotion) {
+    const shake = (12 - s.dyingFor) / 4;
+    ctx.translate(Math.sin(s.frame * 2) * shake, Math.cos(s.frame * 3) * shake);
+  }
   ctx.translate(-Math.round(cam), 0);
 
   for (const t of s.things) {
-    if (!t.visible || t.x + t.w < cam - 10 || t.x > cam + VIEW_W + 10) continue;
-    drawThing(ctx, t);
+    if (t.x + t.w < cam - 10 || t.x > cam + VIEW_W + 10) continue;
+    if (!t.visible) {
+      if (t.warning) {
+        ctx.fillStyle = s.frame % 6 < 3 ? "#fb923c" : "#ef4444";
+        for (let i = 0; i < 3; i++) ctx.fillRect(t.x + i * 7, GROUND - 3, 3, 2);
+      }
+      continue;
+    }
+    ctx.save();
+    if (t.warning && !reduceMotion) ctx.translate(Math.sin(s.frame * 3) * 1.5, 0);
+    drawThing(ctx, t, s);
+    ctx.restore();
   }
 
   for (const w of s.walkers) {
@@ -317,23 +387,52 @@ function draw(ctx: CanvasRenderingContext2D, s: State) {
     ctx.fillRect(w.x + 9, w.y + 4, 1, 2);
   }
 
+  if (s.lastDeath) {
+    ctx.strokeStyle = "#ef4444";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo(s.lastDeath.x + 2, GROUND - 5);
+    ctx.lineTo(s.lastDeath.x + 8, GROUND - 11);
+    ctx.moveTo(s.lastDeath.x + 8, GROUND - 5);
+    ctx.lineTo(s.lastDeath.x + 2, GROUND - 11);
+    ctx.stroke();
+    if (s.phase === "dying" && s.dyingFor < 22 && !reduceMotion) {
+      ctx.fillStyle = AMBER;
+      for (let i = 0; i < 8; i++) {
+        const angle = (i * Math.PI) / 4;
+        const radius = s.dyingFor * 1.6;
+        ctx.fillRect(s.lastDeath.x + PW / 2 + Math.cos(angle) * radius, s.lastDeath.y + PH / 2 + Math.sin(angle) * radius + s.dyingFor * s.dyingFor * 0.05, 3, 3);
+      }
+    }
+  }
   drawPlayer(ctx, s);
   ctx.restore();
 }
 
-function drawThing(ctx: CanvasRenderingContext2D, t: Thing) {
+function drawThing(ctx: CanvasRenderingContext2D, t: Thing, s: State) {
   switch (t.kind) {
     case "ground":
     case "fake": {
-      ctx.fillStyle = "#b9772e";
+      const underground = sectionAt(t.x) > 0;
+      ctx.fillStyle = underground ? "#475569" : "#b9772e";
       ctx.fillRect(t.x, t.y, t.w, t.h);
-      ctx.fillStyle = "#9a5f22";
+      ctx.fillStyle = underground ? "#334155" : "#9a5f22";
       for (let x = t.x; x < t.x + t.w; x += 16) ctx.fillRect(x, t.y + 14, 1, t.h - 14);
       ctx.fillRect(t.x, t.y + 22, t.w, 1);
-      ctx.fillStyle = "#6cc04a";
+      ctx.fillStyle = underground ? "#94a3b8" : "#6cc04a";
       ctx.fillRect(t.x, t.y, t.w, 6);
-      ctx.fillStyle = "#4f9d34";
+      ctx.fillStyle = underground ? "#64748b" : "#4f9d34";
       ctx.fillRect(t.x, t.y + 6, t.w, 2);
+      if (t.kind === "fake" && s.f.bridge > 0) {
+        ctx.strokeStyle = "#fbbf24";
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(t.x + 7, t.y + 2);
+        ctx.lineTo(t.x + 19, t.y + 9);
+        ctx.lineTo(t.x + 13, t.y + 15);
+        ctx.lineTo(t.x + 32, t.y + 24);
+        ctx.stroke();
+      }
       break;
     }
     case "brick":
@@ -356,17 +455,29 @@ function drawThing(ctx: CanvasRenderingContext2D, t: Thing) {
       break;
     }
     case "spike": {
-      ctx.fillStyle = "#d9dde2";
-      ctx.strokeStyle = NAVY;
+      ctx.fillStyle = "#fb7185";
+      ctx.strokeStyle = "#881337";
       ctx.lineWidth = 1.5;
+      if (t.cause === "dart") {
+        ctx.beginPath();
+        ctx.moveTo(t.x, t.y + t.h / 2);
+        ctx.lineTo(t.x + t.w, t.y);
+        ctx.lineTo(t.x + t.w - 4, t.y + t.h / 2);
+        ctx.lineTo(t.x + t.w, t.y + t.h);
+        ctx.closePath();
+        ctx.fill();
+        ctx.stroke();
+        break;
+      }
       const n = Math.max(1, Math.round(t.w / 8));
       for (let i = 0; i < n; i++) {
         const x = t.x + (i * t.w) / n;
         const w = t.w / n;
         ctx.beginPath();
-        ctx.moveTo(x, t.y + t.h);
-        ctx.lineTo(x + w / 2, t.y);
-        ctx.lineTo(x + w, t.y + t.h);
+        const down = t.cause === "ceiling" || t.cause === "rain" || t.cause === "block";
+        ctx.moveTo(x, down ? t.y : t.y + t.h);
+        ctx.lineTo(x + w / 2, down ? t.y + t.h : t.y);
+        ctx.lineTo(x + w, down ? t.y : t.y + t.h);
         ctx.closePath();
         ctx.fill();
         ctx.stroke();
@@ -396,7 +507,8 @@ function drawThing(ctx: CanvasRenderingContext2D, t: Thing) {
       const cp = t.kind === "checkpoint";
       ctx.fillStyle = NAVY;
       ctx.fillRect(t.x, t.y, t.w, t.h);
-      ctx.fillStyle = cp ? "#38bdf8" : AMBER;
+      const activated = cp && s.checkpointX >= t.x + 14;
+      ctx.fillStyle = cp ? activated ? AMBER : "#38bdf8" : AMBER;
       ctx.strokeStyle = NAVY;
       ctx.lineWidth = 1.5;
       ctx.beginPath();
@@ -406,6 +518,11 @@ function drawThing(ctx: CanvasRenderingContext2D, t: Thing) {
       ctx.closePath();
       ctx.fill();
       ctx.stroke();
+      if (activated) {
+        ctx.fillStyle = "#fef3c7";
+        ctx.fillRect(t.x - 3, t.y - 5, 3, 3);
+        ctx.fillRect(t.x + 13, t.y - 2, 2, 2);
+      }
       if (!cp) {
         ctx.fillStyle = AMBER;
         ctx.beginPath();

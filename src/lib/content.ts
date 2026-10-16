@@ -739,6 +739,7 @@ export const content = {
         content: [
           "Contact details. When you reach out by WhatsApp, email, or a contact form, I receive your name, business name, phone number, email address, and whatever project details you choose to share.",
           "Analytics and usage data. Anonymised technical data such as browser type, device, pages viewed, and time on site is collected through Google Analytics 4 to understand how the site performs.",
+          "Player accounts. If you choose to sign up to save your mini game scores and progress, I store your username, email address, best scores, and how far you got in the Space game. Your password is handled by Supabase Auth and kept only as a hash; I cannot see it. Creating an account is optional and every game works without one, except that the Space game's chapters after the first need an account to play and save.",
           "Cookies. Standard functional cookies keep the site working correctly, and analytics cookies measure traffic.",
         ],
       },
@@ -758,6 +759,7 @@ export const content = {
           "Communication: the official WhatsApp Business API and Google Workspace, for client correspondence.",
           "Analytics: Google Analytics 4, configured with IP anonymisation.",
           "Live visitor count: Supabase Realtime, to show how many people are on the site right now. Your browser sends a random identifier it generates itself, which disappears when you close the tab. A running total of visitors is also kept as a single number, with a small flag saved in your browser so you are counted once. No personal data is stored.",
+          "Player accounts: Supabase Auth and database, to sign you in and save your game scores and progress. Your sign-in is kept in your browser's storage until you sign out. To delete your account and scores, email me and I will remove them.",
           "Live chat: Tawk.to, when you choose to start a chat.",
           "Payments: on e-commerce projects, transactions are handled directly by PCI-DSS compliant providers such as Stripe, ToyyibPay, and FPX gateways. Card details are never stored on this server.",
         ],

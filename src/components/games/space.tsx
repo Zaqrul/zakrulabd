@@ -1,74 +1,227 @@
-"use client";
+﻿"use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { AMBER, NAVY, fitCanvas, isTyping, loadBest, saveBest } from "./shared";
+import type { IconType } from "react-icons";
 import {
+  TbChevronsRight,
+  TbHeadset,
+  TbHelmet,
+  TbPlayerPauseFilled,
+  TbPlayerPlayFilled,
+  TbRobot,
+  TbShieldHalf,
+  TbSkull,
+  TbSwords,
+} from "react-icons/tb";
+import { AMBER, fitCanvas, isTyping, loadBest, saveBest } from "./shared";
+import { furthest, loadSaved, parseProgress, saveSaved, stashGuest, type Progress } from "./space-progress";
+import { pullProgress, pushProgress } from "@/lib/account";
+import {
+  drawBackdrop,
+  drawHangar,
+  drawHazard,
+  drawLaunchOverlay,
+  drawPlayer,
+  drawSmoke,
+  type LaunchLabels,
+} from "./space-art";
+import {
+  BOSS_PHASES,
   CHAPTERS,
+  CLEAR,
+  FINAL_PHASE_AT,
+  FORM_HP,
   H,
   LEVEL_AT,
   MAX_LEVEL,
-  PLAYER_H,
-  PLAYER_W,
+  NUKE,
   W,
+  bossCheckpoint,
+  chapterProgress,
   createState,
   isBoss,
-  maxHpFor,
+  maxLife,
+  maxShield,
   nextChapter,
   retryChapter,
   step,
+  warpPower,
   type Callout,
-  type Enemy,
+  type ChapterResult,
   type Gun,
-  type PickupKind,
   type State,
 } from "./space-logic";
+import { SPEAKERS, STORY, type SceneKey, type Speaker } from "./space-story";
+import { drawSpaceEnemy } from "./space-actor-art";
+import { drawBeam, drawBullet, drawBursts, drawPickup } from "./space-fx-art";
+import { drawBossBullet, drawBossHazard, drawChill, drawZone } from "./space-boss-fx-art";
+import { drawHQ, drawMorph, drawNuke, drawRepair, drawShieldFlash } from "./space-ship-forms-art";
+import { drawBossShield, drawSlash, drawTimedBombs, drawWarheads, drawWarp, drawWeaponBullet } from "./space-weapons-art";
+import { clearEnvironmentCache } from "./space-environment";
 
 export type SpaceLabels = {
   tap: string;
   score: string;
   best: string;
   bomb: string;
+  nuke: string;
   hint: string;
+  help: string;
+  guide: string;
   chapterName: (n: number) => string;
   clear: (n: number) => string;
   next: string;
   lost: string;
   retry: string;
+  retryBoss: string;
   won: string;
   again: string;
+  continueRun: string;
+  newGame: string;
+  /* Without an account only Chapter 1 can be flown: what the start screen and the end of
+     the chapter say about it, the button that opens the account, and replaying the chapter. */
+  guestNote: string;
+  guestClear: string;
+  account: string;
+  replay: string;
+  pause: string;
+  paused: string;
+  resume: string;
+  talkNext: string;
+  launch: LaunchLabels;
   guns: Record<Exclude<Gun, "blaster">, string>;
   callouts: Record<Callout, string>;
+  results: { enemies: string; hits: string; bossTime: string; killBonus: string; noHitBonus: string; speedBonus: string };
+  bossNames: string[];
+  /* What each chapter boss's own attack is called, shown as it winds up. */
+  attackNames: Record<string, string>;
 };
 
-type Mode = "ready" | "play" | "clear" | "dead" | "won";
+type Mode = "ready" | "talk" | "play" | "paused" | "clear" | "dead" | "won";
 
-/* The kind of space game once played on a phone with a keypad: the ship holds
-   the left of the screen and fires on its own, and the job is to fly through
-   three chapters of enemies, each ending in a boss. Arrow keys or W A S D to
-   fly, B for a bomb; or drag a finger or the mouse across the screen, with the
-   button underneath for a bomb. */
-export default function Space({ labels }: { labels: SpaceLabels }) {
+/* What comes after a scene: the launch that was waiting for its opening, the
+   game stopped by a boss, or the end of the chapter. */
+type Scene = { key: SceneKey; index: number; after: "launch" | "resume" | "clear" };
+
+/* The colour of each stretch of the upgrade bar: that of the upgrade its level brought. */
+const LEVEL_COLOR: Record<number, string> = { 2: "#a3e635", 3: "#cbd5e1", 4: "#f87171", 5: "#7dd3fc" };
+const levelColor = (level: number) => LEVEL_COLOR[level] ?? "#fbbf24";
+
+const SPEAKER_ICON: Record<Speaker, IconType> = {
+  nova: TbHelmet,
+  mika: TbHeadset,
+  rin: TbShieldHalf,
+  arc: TbRobot,
+  vex: TbSwords,
+  kroll: TbSkull,
+};
+
+/* Milliseconds a character takes to appear. A line has to finish before the
+   next one will come, and there is no way past that. */
+const TYPE_MS = 22;
+
+/* Seconds as m:ss. */
+function clock(seconds: number) {
+  const s = Math.max(0, Math.round(seconds));
+  return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
+}
+
+/* The kind of space game once played on a phone with a keypad, as a series: the
+   ship is launched from a hangar, holds the left of the screen and fires on its
+   own, and the job is to fly through eight chapters of enemies and obstacles,
+   each ending in a boss, with a story told in between that cannot be skipped.
+   Arrow keys or W A S D to fly, B for a bomb, P to pause; or drag a finger or the
+   mouse across the screen, with the buttons underneath for a bomb and a pause.
+   Progress is kept after every chapter, and a ship lost at a boss can go again
+   from the boss. */
+export default function Space({
+  labels,
+  lang,
+  username = null,
+  gated = false,
+  onAccount,
+}: {
+  labels: SpaceLabels;
+  lang: "en" | "ms";
+  /* Who is signed in. With `gated` (accounts exist on this site) a guest can fly Chapter 1
+     only and nothing is saved; `onAccount` opens the account panel. */
+  username?: string | null;
+  gated?: boolean;
+  onAccount?: () => void;
+}) {
   const canvas = useRef<HTMLCanvasElement>(null);
+  const preview = useRef<HTMLCanvasElement>(null);
   const [mode, setMode] = useState<Mode>("ready");
   const [chapter, setChapter] = useState(1);
   const [score, setScore] = useState(0);
   const [bombs, setBombs] = useState(2);
+  const [nukes, setNukes] = useState(NUKE.count);
   const [best, setBest] = useState(0);
+  const [saved, setSaved] = useState<Progress | null>(null);
+  const [result, setResult] = useState<ChapterResult | null>(null);
+  const [atBoss, setAtBoss] = useState(false);
+  const [scene, setScene] = useState<Scene | null>(null);
+  const [typing, setTyping] = useState({ id: "", n: 0 });
   const world = useRef<State>(createState());
   const modeRef = useRef<Mode>("ready");
-  const keys = useRef({ up: false, down: false, left: false, right: false, bomb: false });
+  const sceneRef = useRef<Scene | null>(null);
+  const savedRef = useRef<Progress | null>(null);
+  const atBossRef = useRef(false);
+  const doneRef = useRef(false);
+  const seen = useRef(new Set<string>());
+  const outroStarted = useRef(false);
+  const keys = useRef({ up: false, down: false, left: false, right: false, bomb: false, nuke: false });
   const drag = useRef<{ x: number; y: number; id: number } | null>(null);
   const pending = useRef({ x: 0, y: 0 });
   const bombQueued = useRef(false);
+  const nukeQueued = useRef(false);
   const labelsRef = useRef(labels);
+  const langRef = useRef(lang);
+  /* Where this player's run is kept: under their name, under nothing at all where there are
+     no accounts, and nowhere for a guest, who can only fly Chapter 1. */
+  const slot = username ?? (gated ? null : "");
+  const locked = slot === null;
+  const slotRef = useRef(slot);
+  const onAccountRef = useRef(onAccount);
 
   useEffect(() => {
     labelsRef.current = labels;
-  }, [labels]);
+    langRef.current = lang;
+    slotRef.current = slot;
+    onAccountRef.current = onAccount;
+  }, [labels, lang, slot, onAccount]);
 
   useEffect(() => {
-    const first = setTimeout(() => setBest(loadBest("space")), 0);
-    return () => clearTimeout(first);
+    let stop = false;
+    const first = setTimeout(() => {
+      setBest(loadBest("space"));
+      const p = slot === null ? null : loadSaved(slot);
+      savedRef.current = p;
+      setSaved(p);
+      /* Signed in: the account may hold a run from another device, and the further one wins. */
+      if (!username) return;
+      void pullProgress("space").then((raw) => {
+        if (stop) return;
+        const remote = parseProgress(raw);
+        const local = savedRef.current;
+        const winner = furthest(local, remote);
+        if (winner && winner !== local) {
+          saveSaved(username, winner);
+          savedRef.current = winner;
+          setSaved(winner);
+        }
+        if (winner && winner !== remote) void pushProgress("space", winner);
+      });
+    }, 0);
+    return () => {
+      stop = true;
+      clearTimeout(first);
+    };
+  }, [slot, username]);
+
+  const goTo = useCallback((next: Mode) => {
+    modeRef.current = next;
+    setMode(next);
   }, []);
 
   const remember = useCallback((value: number) => {
@@ -81,23 +234,166 @@ export default function Space({ labels }: { labels: SpaceLabels }) {
     });
   }, []);
 
-  const begin = useCallback((s: State) => {
-    world.current = s;
-    modeRef.current = "play";
-    setMode("play");
-    setChapter(s.chapter);
-    setScore(s.score);
-    setBombs(s.p.bombs);
+  const keep = useCallback((p: Progress | null) => {
+    savedRef.current = p;
+    setSaved(p);
+    const who = slotRef.current;
+    if (who === null) return;
+    saveSaved(who, p);
+    if (who) void pushProgress("space", p);
   }, []);
 
-  const start = useCallback(() => begin(createState()), [begin]);
+  /* Lets go of every key and drag, so nothing stays held through a pause. */
+  const release = useCallback(() => {
+    keys.current = { up: false, down: false, left: false, right: false, bomb: false, nuke: false };
+    drag.current = null;
+    pending.current = { x: 0, y: 0 };
+    bombQueued.current = false;
+    nukeQueued.current = false;
+  }, []);
 
+  const pause = useCallback(() => {
+    if (modeRef.current !== "play") return;
+    release();
+    goTo("paused");
+  }, [goTo, release]);
+
+  const resume = useCallback(() => {
+    if (modeRef.current === "paused") goTo("play");
+  }, [goTo]);
+
+  const startScene = useCallback(
+    (key: SceneKey, after: Scene["after"]) => {
+      seen.current.add(key);
+      const next = { key, index: 0, after };
+      sceneRef.current = next;
+      doneRef.current = false;
+      goTo("talk");
+      setScene(next);
+    },
+    [goTo],
+  );
+
+  /* A scene is over: carry on with whatever it was holding up. */
+  const endScene = useCallback(
+    (after: Scene["after"]) => {
+      sceneRef.current = null;
+      setScene(null);
+      const s = world.current;
+      if (after === "clear") {
+        remember(s.score);
+        setResult(s.result);
+        if (s.chapter < CHAPTERS) {
+          const run = { chapter: s.chapter + 1, score: s.score, weapon: s.p.weapon, level: s.p.level, extra: s.p.extra };
+          /* A guest saves nothing; the clear is only noted, for the sign-in to pick up. */
+          if (slotRef.current === null) stashGuest(run);
+          else keep(run);
+          goTo("clear");
+        } else {
+          s.phase = "won";
+          keep(null);
+          goTo("won");
+        }
+        return;
+      }
+      if (after === "resume") s.talk = null;
+      goTo("play");
+    },
+    [goTo, keep, remember],
+  );
+
+  /* Moves the story on, but only once the line on screen has been read out in
+     full. Nothing else moves it: not a longer press, not Escape. */
+  const advance = useCallback(() => {
+    const sc = sceneRef.current;
+    if (!sc || !doneRef.current) return;
+    const lines = STORY[langRef.current][sc.key];
+    if (sc.index + 1 < lines.length) {
+      const next = { ...sc, index: sc.index + 1 };
+      sceneRef.current = next;
+      doneRef.current = false;
+      setScene(next);
+      return;
+    }
+    endScene(sc.after);
+  }, [endScene]);
+
+  const begin = useCallback(
+    (s: State) => {
+      world.current = s;
+      outroStarted.current = false;
+      setChapter(s.chapter);
+      setScore(s.score);
+      setBombs(s.p.bombs);
+      setNukes(s.p.nukes);
+      setResult(null);
+      /* A chapter's opening is told the first time it is reached; after losing
+         the ship, the same chapter goes straight back to the hangar, or to the
+         boss. */
+      const key = `c${s.chapter}-intro` as SceneKey;
+      if (!seen.current.has(key)) startScene(key, "launch");
+      else goTo("play");
+    },
+    [goTo, startScene],
+  );
+
+  const newGame = useCallback(() => {
+    seen.current.clear();
+    begin(createState());
+  }, [begin]);
+
+  const continueGame = useCallback(() => {
+    const p = savedRef.current;
+    if (!p) {
+      newGame();
+      return;
+    }
+    seen.current.clear();
+    begin(createState(p.chapter, p.score, p.weapon, p.level, p.extra));
+  }, [begin, newGame]);
+
+  const retry = useCallback(() => begin(retryChapter(world.current)), [begin]);
+  const retryBoss = useCallback(() => begin(bossCheckpoint(world.current)), [begin]);
+  const next = useCallback(() => begin(nextChapter(world.current)), [begin]);
+
+  /* Space or Enter: whatever the screen's main button does. */
   const act = useCallback(() => {
-    const s = world.current;
-    if (modeRef.current === "ready" || modeRef.current === "won") start();
-    else if (modeRef.current === "clear") begin(nextChapter(s));
-    else if (modeRef.current === "dead") begin(retryChapter(s));
-  }, [begin, start]);
+    const m = modeRef.current;
+    if (m === "talk") advance();
+    else if (m === "ready") continueGame();
+    else if (m === "won") newGame();
+    else if (m === "clear") {
+      if (slotRef.current === null) onAccountRef.current?.();
+      else next();
+    }
+    else if (m === "dead") {
+      if (atBossRef.current) retryBoss();
+      else retry();
+    } else if (m === "paused") resume();
+  }, [advance, continueGame, newGame, next, resume, retry, retryBoss]);
+
+  const line = scene ? STORY[lang][scene.key][scene.index] : null;
+  const lineId = scene ? `${scene.key}:${scene.index}:${lang}` : "";
+  const shown = line && typing.id === lineId ? typing.n : 0;
+  const done = Boolean(line) && shown >= (line?.text.length ?? 0);
+
+  useEffect(() => {
+    doneRef.current = done;
+  }, [done]);
+
+  /* The line appears a character at a time. */
+  useEffect(() => {
+    if (!line) return;
+    const id = lineId;
+    const len = line.text.length;
+    let n = 0;
+    const timer = setInterval(() => {
+      n += 1;
+      setTyping({ id, n });
+      if (n >= len) clearInterval(timer);
+    }, TYPE_MS);
+    return () => clearInterval(timer);
+  }, [line, lineId]);
 
   useEffect(() => {
     const el = canvas.current;
@@ -108,30 +404,44 @@ export default function Space({ labels }: { labels: SpaceLabels }) {
     let acc = 0;
     let shownScore = -1;
     let shownBombs = -1;
+    let shownNukes = -1;
     let deadFor = 0;
+    const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    /* The page's own typeface, so the readouts match the rest of the site. */
+    const hud: Hud = { font: getComputedStyle(el).fontFamily || "sans-serif", trail: 1, bossId: 0, frame: -1 };
+    const previewWorld = createState();
+    previewWorld.phase = "play";
+    previewWorld.p.x = 0;
+    previewWorld.p.y = 0;
 
     function frame(now: number) {
       acc = Math.min(acc + (now - last) / 16.667, 4);
       last = now;
       const s = world.current;
 
-      if (modeRef.current === "play") {
+      if (modeRef.current === "play" && !document.hidden) {
         while (acc >= 1) {
           acc -= 1;
           const k = keys.current;
-          let mx = ((k.right ? 1 : 0) - (k.left ? 1 : 0)) * 2.7;
-          let my = ((k.down ? 1 : 0) - (k.up ? 1 : 0)) * 2.7;
+          const flying = s.phase !== "launch";
+          let mx = flying ? ((k.right ? 1 : 0) - (k.left ? 1 : 0)) * 2.7 : 0;
+          let my = flying ? ((k.down ? 1 : 0) - (k.up ? 1 : 0)) * 2.7 : 0;
           /* A finger or mouse drag is spent a few pixels a frame, so the ship
              glides to where it was pulled instead of jumping there. */
           const px = Math.max(-6, Math.min(6, pending.current.x));
           const py = Math.max(-6, Math.min(6, pending.current.y));
           pending.current.x -= px;
           pending.current.y -= py;
-          mx += px;
-          my += py;
-          const bomb = k.bomb || bombQueued.current;
+          if (flying) {
+            mx += px;
+            my += py;
+          }
+          const bomb = flying && (k.bomb || bombQueued.current);
+          const nuke = flying && (k.nuke || nukeQueued.current);
           bombQueued.current = false;
-          step(s, { mx, my, bomb });
+          nukeQueued.current = false;
+          step(s, { mx, my, bomb, nuke });
+          if (s.talk) break;
         }
         if (s.score !== shownScore) {
           shownScore = s.score;
@@ -141,43 +451,64 @@ export default function Space({ labels }: { labels: SpaceLabels }) {
           shownBombs = s.p.bombs;
           setBombs(s.p.bombs);
         }
-        if (s.phase === "dead") {
+        if (s.p.nukes !== shownNukes) {
+          shownNukes = s.p.nukes;
+          setNukes(s.p.nukes);
+        }
+        if (s.talk === "boss") {
+          const key = `c${s.chapter}-boss` as SceneKey;
+          if (seen.current.has(key)) s.talk = null;
+          else startScene(key, "resume");
+        } else if (s.phase === "dead") {
           deadFor += 1;
           if (deadFor > 60) {
             deadFor = 0;
-            modeRef.current = "dead";
-            setMode("dead");
+            /* Lost at the boss: offer to go again from the boss. */
+            const boss = s.bossId !== 0;
+            atBossRef.current = boss;
+            setAtBoss(boss);
+            goTo("dead");
             remember(s.score);
           }
-        } else if (s.phase === "clear" && s.clearFor > 120 && s.chapter < CHAPTERS) {
-          modeRef.current = "clear";
-          setMode("clear");
-          remember(s.score);
-        } else if (s.phase === "won") {
-          modeRef.current = "won";
-          setMode("won");
-          remember(s.score);
+        } else if (s.phase === "clear" && s.clearFor > CLEAR.talk && !outroStarted.current) {
+          outroStarted.current = true;
+          startScene(`c${s.chapter}-outro` as SceneKey, "clear");
         }
       } else {
         acc = 0;
+        /* Held still for the story, but the lamps and the engine keep going. */
+        if (modeRef.current === "talk" && !document.hidden) s.frame += 1;
       }
 
-      draw(ctx, s, labelsRef.current, modeRef.current);
+      draw(ctx, s, labelsRef.current, modeRef.current, reduceMotion, hud);
+      if (modeRef.current === "ready" && preview.current) {
+        const paint = preview.current.getContext("2d");
+        if (paint) {
+          previewWorld.frame = reduceMotion ? 0 : Math.floor(now / 16.667);
+          paint.clearRect(0, 0, 384, 216);
+          paint.save();
+          paint.translate(115, 92);
+          paint.scale(7, 7);
+          drawPlayer(paint, previewWorld, reduceMotion);
+          paint.restore();
+        }
+      }
       raf = requestAnimationFrame(frame);
     }
     raf = requestAnimationFrame(frame);
 
     const ro = new ResizeObserver(() => {
       ctx = fitCanvas(el, W, H);
-      draw(ctx, world.current, labelsRef.current, modeRef.current);
+      draw(ctx, world.current, labelsRef.current, modeRef.current, reduceMotion, hud);
     });
     ro.observe(el);
 
     return () => {
       cancelAnimationFrame(raf);
       ro.disconnect();
+      clearEnvironmentCache();
     };
-  }, [remember]);
+  }, [goTo, remember, startScene]);
 
   useEffect(() => {
     function set(e: KeyboardEvent, down: boolean) {
@@ -206,9 +537,20 @@ export default function Space({ labels }: { labels: SpaceLabels }) {
         case "ShiftRight":
           k.bomb = down;
           break;
+        case "KeyN":
+          k.nuke = down;
+          break;
+        case "KeyP":
+          if (down && !e.repeat) {
+            if (modeRef.current === "play") pause();
+            else if (modeRef.current === "paused") resume();
+          }
+          break;
         case "Space":
         case "Enter":
-          if (down && modeRef.current !== "play") act();
+          /* A button picked on the overlay answers for itself. */
+          if (e.target instanceof Element && e.target.closest("[data-space-overlay]")) return;
+          if (down && !e.repeat && modeRef.current !== "play") act();
           break;
         default:
           return;
@@ -217,28 +559,48 @@ export default function Space({ labels }: { labels: SpaceLabels }) {
     }
     const down = (e: KeyboardEvent) => set(e, true);
     const up = (e: KeyboardEvent) => set(e, false);
+    /* Looking away pauses the game, so nothing is lost while the tab is hidden. */
+    const away = () => {
+      release();
+      pause();
+    };
+    const onVisibility = () => {
+      if (document.hidden) away();
+    };
     window.addEventListener("keydown", down);
     window.addEventListener("keyup", up);
+    window.addEventListener("blur", away);
+    document.addEventListener("visibilitychange", onVisibility);
     return () => {
       window.removeEventListener("keydown", down);
       window.removeEventListener("keyup", up);
-      keys.current = { up: false, down: false, left: false, right: false, bomb: false };
+      window.removeEventListener("blur", away);
+      document.removeEventListener("visibilitychange", onVisibility);
+      release();
     };
-  }, [act]);
+  }, [act, pause, release, resume]);
 
-  const overlayButton =
-    "rounded-full bg-amber-400 px-4 py-1.5 text-[12px] font-bold text-navy hover:bg-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy";
+  const primary =
+    "rounded-full bg-amber-400 px-4 py-1.5 text-[12px] font-bold text-navy hover:bg-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white";
+  const secondary =
+    "rounded-full border border-white/35 px-4 py-1.5 text-[12px] font-bold text-white hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white";
+  const who = line ? SPEAKERS[line.who] : null;
+  const SpeakerIcon = line ? SPEAKER_ICON[line.who] : null;
+  const canPause = mode === "play" || mode === "paused";
+  /* Before a run starts, the header shows where Continue would pick up. */
+  const offer = mode === "ready" ? saved : null;
 
   return (
     <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between text-[12px] font-bold text-navy">
-        <span>{labels.score}: {score}</span>
-        <span>{labels.chapterName(chapter)}</span>
-        <span>{labels.best}: {best}</span>
+      <div className="flex items-center justify-between gap-2 text-[12px] font-bold text-navy">
+        <span className="shrink-0 tabular-nums">{labels.score}: {offer ? offer.score : score}</span>
+        <span className="min-w-0 truncate text-center">{labels.chapterName(offer ? offer.chapter : chapter)}</span>
+        <span className="shrink-0 tabular-nums">{labels.best}: {best}</span>
       </div>
 
       <div
-        className="relative touch-none select-none overflow-hidden rounded-xl border border-neutral-200 bg-[#0b1330]"
+        className="relative mx-auto w-full touch-none select-none overflow-hidden rounded-xl border border-neutral-200 bg-[#0b1330]"
+        style={{ maxWidth: "max(200px, calc((100dvh - 240px) * 16 / 9))" }}
         onPointerDown={(e) => {
           if (modeRef.current !== "play") return;
           drag.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
@@ -262,821 +624,476 @@ export default function Space({ labels }: { labels: SpaceLabels }) {
       >
         <canvas ref={canvas} className="block h-auto w-full" style={{ aspectRatio: `${W} / ${H}` }} />
 
-        {mode !== "play" && (
-          <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-[#0b1330]/75 px-4 text-center text-white">
-            {mode === "ready" && <span className="text-sm font-extrabold">{labels.chapterName(1)}</span>}
-            {mode === "clear" && <span className="text-base font-extrabold">{labels.clear(chapter)}</span>}
-            {mode === "dead" && <span className="text-base font-extrabold">{labels.lost}</span>}
-            {mode === "won" && <span className="text-base font-extrabold">{labels.won}</span>}
-            {mode !== "ready" && <span className="text-[12px] font-bold text-amber-400">{labels.score}: {score}</span>}
-            <button type="button" autoFocus onClick={act} className={overlayButton}>
-              {mode === "ready" ? labels.tap : mode === "clear" ? labels.next : mode === "dead" ? labels.retry : labels.again}
-            </button>
+        {mode === "talk" && line && who && SpeakerIcon && (
+          <div className="absolute inset-x-0 bottom-0 cursor-pointer p-1.5 sm:p-2" onPointerDown={advance}>
+            <div className="flex items-start gap-2 rounded-xl border border-white/15 bg-[#070c1f]/90 p-2 text-white shadow-lg backdrop-blur-sm sm:gap-2.5 sm:p-2.5">
+              <span
+                aria-hidden="true"
+                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full sm:h-9 sm:w-9"
+                style={{ background: `${who.color}2e`, color: who.color }}
+              >
+                <SpeakerIcon className="h-4.5 w-4.5" />
+              </span>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10.5px] font-extrabold uppercase tracking-wider sm:text-[11px]" style={{ color: who.color }}>
+                  {who.name}
+                </p>
+                {/* The whole line is laid out invisibly, so the box does not grow
+                    as the words arrive. */}
+                <p className="relative text-[12px] leading-snug sm:text-[13px]">
+                  <span className="invisible">{line.text}</span>
+                  <span aria-hidden="true" className="absolute inset-0">{line.text.slice(0, shown)}</span>
+                </p>
+                <span className="sr-only" role="status">{who.name}: {line.text}</span>
+              </div>
+              <span className="mt-auto flex h-5 w-5 shrink-0 items-center justify-center text-amber-400" aria-hidden={!done}>
+                {done && <TbChevronsRight className="h-4 w-4 animate-pulse" />}
+              </span>
+            </div>
+            <p className="mt-1 text-center text-[10.5px] font-semibold text-white/70" aria-hidden="true">{done ? labels.talkNext : " "}</p>
+          </div>
+        )}
+
+        {mode !== "play" && mode !== "talk" && (
+          <div data-space-overlay className="absolute inset-0 flex overflow-y-auto bg-[#0b1330]/80 px-4 py-3 text-center text-white">
+            {/* m-auto centres the panel, and still lets it scroll from the top
+                when a short screen cannot fit it. */}
+            <div className="m-auto flex w-full flex-col items-center gap-2">
+              {mode === "ready" && (
+                <>
+                  <canvas ref={preview} width={384} height={216} aria-hidden="true" className="h-16 w-auto sm:h-24 [@media(max-height:500px)]:h-10" />
+                  <span className="text-[12px] font-bold text-slate-100">Endymion FRS Mk III</span>
+                  {locked && <span className="max-w-xs text-[11px] font-semibold leading-snug text-white/75">{labels.guestNote}</span>}
+                  {saved && (
+                    <span className="text-[11px] font-semibold text-white/70">
+                      {labels.chapterName(saved.chapter)} · {labels.score} {saved.score}
+                    </span>
+                  )}
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <button type="button" autoFocus onClick={continueGame} className={primary}>
+                      {saved ? labels.continueRun : labels.tap}
+                    </button>
+                    {saved && (
+                      <button type="button" onClick={newGame} className={secondary}>
+                        {labels.newGame}
+                      </button>
+                    )}
+                    {locked && onAccount && (
+                      <button type="button" onClick={onAccount} className={secondary}>
+                        {labels.account}
+                      </button>
+                    )}
+                  </div>
+                </>
+              )}
+
+              {mode === "paused" && (
+                <>
+                  <span className="text-base font-extrabold">{labels.paused}</span>
+                  <span className="text-[11px] font-semibold text-white/70">{labels.chapterName(chapter)}</span>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    <button type="button" autoFocus onClick={resume} className={primary}>
+                      {labels.resume}
+                    </button>
+                    <button type="button" onClick={retry} className={secondary}>
+                      {labels.retry}
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {mode === "clear" && (
+                <>
+                  <span className="text-base font-extrabold">{labels.clear(chapter)}</span>
+                  {result && <Results r={result} labels={labels.results} />}
+                  <span className="text-[12px] font-bold tabular-nums text-amber-400">{labels.score}: {score}</span>
+                  {locked ? (
+                    <>
+                      <span className="max-w-xs text-[12px] font-semibold leading-snug text-white/85">{labels.guestClear}</span>
+                      <div className="flex flex-wrap justify-center gap-2">
+                        {onAccount && (
+                          <button type="button" autoFocus onClick={onAccount} className={primary}>
+                            {labels.account}
+                          </button>
+                        )}
+                        <button type="button" autoFocus={!onAccount} onClick={retry} className={onAccount ? secondary : primary}>
+                          {labels.replay}
+                        </button>
+                      </div>
+                    </>
+                  ) : (
+                    <button type="button" autoFocus onClick={next} className={primary}>
+                      {labels.next}
+                    </button>
+                  )}
+                </>
+              )}
+
+              {mode === "dead" && (
+                <>
+                  <span className="text-base font-extrabold">{labels.lost}</span>
+                  <span className="text-[12px] font-bold tabular-nums text-amber-400">{labels.score}: {score}</span>
+                  <div className="flex flex-wrap justify-center gap-2">
+                    {atBoss && (
+                      <button type="button" autoFocus onClick={retryBoss} className={primary}>
+                        {labels.retryBoss}
+                      </button>
+                    )}
+                    <button type="button" autoFocus={!atBoss} onClick={retry} className={atBoss ? secondary : primary}>
+                      {labels.retry}
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {mode === "won" && (
+                <>
+                  <span className="text-base font-extrabold">{labels.won}</span>
+                  <span className="text-[12px] font-bold tabular-nums text-amber-400">{labels.score}: {score}</span>
+                  <button type="button" autoFocus onClick={newGame} className={primary}>
+                    {labels.again}
+                  </button>
+                </>
+              )}
+            </div>
           </div>
         )}
       </div>
 
-      <div className="flex items-center gap-2">
-        <button
-          type="button"
-          onPointerDown={(e) => {
-            e.preventDefault();
-            if (modeRef.current === "play") bombQueued.current = true;
-          }}
-          disabled={mode !== "play" || bombs <= 0}
-          className="flex h-11 shrink-0 touch-none select-none items-center justify-center rounded-full bg-navy px-5 text-[12px] font-bold text-amber-400 transition-colors active:bg-amber-400 active:text-navy disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy"
-        >
-          {labels.bomb} × {bombs}
-        </button>
-        <p className="flex-1 text-[11.5px] font-semibold leading-snug text-neutral-500">{labels.hint}</p>
+      <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1">
+        <div className="row-span-2 flex gap-2 self-start">
+          <button
+            type="button"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              if (modeRef.current === "play") bombQueued.current = true;
+            }}
+            disabled={mode !== "play" || bombs <= 0}
+            className="flex h-11 touch-none select-none items-center justify-center rounded-full bg-navy px-5 text-[12px] font-bold text-amber-400 transition-colors active:bg-amber-400 active:text-navy disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy"
+          >
+            {labels.bomb} × {bombs}
+          </button>
+          <button
+            type="button"
+            onPointerDown={(e) => {
+              e.preventDefault();
+              if (modeRef.current === "play") nukeQueued.current = true;
+            }}
+            disabled={mode !== "play" || nukes <= 0}
+            className="flex h-11 touch-none select-none items-center justify-center rounded-full bg-red-600 px-4 text-[12px] font-bold text-white transition-colors active:bg-amber-400 active:text-navy disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy"
+          >
+            {labels.nuke} × {nukes}
+          </button>
+          <button
+            type="button"
+            onClick={() => (mode === "paused" ? resume() : pause())}
+            disabled={!canPause}
+            aria-label={mode === "paused" ? labels.resume : labels.pause}
+            title={mode === "paused" ? labels.resume : labels.pause}
+            className="flex h-11 w-11 items-center justify-center rounded-full border border-neutral-300 bg-white text-navy transition-colors hover:bg-neutral-100 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy"
+          >
+            {mode === "paused" ? <TbPlayerPlayFilled className="h-4.5 w-4.5" /> : <TbPlayerPauseFilled className="h-4.5 w-4.5" />}
+          </button>
+        </div>
+        <p className="text-[12px] font-semibold leading-snug text-neutral-500">{labels.hint}</p>
+        <details className="col-start-2 text-[12px] leading-relaxed text-neutral-600">
+          <summary className="w-fit cursor-pointer rounded-md py-0.5 font-bold text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy">{labels.help}</summary>
+          <p className="pt-2">{labels.guide}</p>
+        </details>
       </div>
     </div>
   );
 }
 
+/* How the chapter went: what was destroyed, how often the ship was hit, how long
+   the boss took, and the bonus each of those earned. */
+function Results({ r, labels }: { r: ChapterResult; labels: SpaceLabels["results"] }) {
+  const cells: { label: string; value: string; bonus?: boolean }[] = [
+    { label: labels.enemies, value: r.killRate === null ? "–" : `${r.kills}/${r.spawned} · ${Math.round(r.killRate * 100)}%` },
+    { label: labels.hits, value: String(r.hits) },
+    { label: labels.bossTime, value: clock(r.bossSeconds) },
+    { label: labels.killBonus, value: `+${r.killBonus}`, bonus: true },
+    { label: labels.noHitBonus, value: `+${r.noHitBonus}`, bonus: true },
+    { label: labels.speedBonus, value: `+${r.speedBonus}`, bonus: true },
+  ];
+  return (
+    <dl className="grid w-full max-w-sm grid-cols-3 gap-x-3 gap-y-1.5">
+      {cells.map((c) => (
+        <div key={c.label} className="min-w-0">
+          <dt className="text-[10px] font-semibold leading-tight text-white/65">{c.label}</dt>
+          <dd
+            className={`text-[12.5px] font-extrabold tabular-nums ${c.bonus ? (c.value === "+0" ? "text-white/40" : "text-amber-300") : "text-white"}`}
+          >
+            {c.value}
+          </dd>
+        </div>
+      ))}
+    </dl>
+  );
+}
+
 /* Drawing. */
 
-const GUN_COLOR: Record<Exclude<Gun, "blaster">, string> = { machine: "#fb923c", spread: "#a3e635", laser: "#22d3ee", rocket: "#f87171" };
-const GUN_FULL: Record<Exclude<Gun, "blaster">, number> = { machine: 170, spread: 48, laser: 150, rocket: 18 };
-const PICKUP_COLOR: Record<PickupKind, string> = {
-  P: AMBER, H: "#4ade80", B: "#60a5fa", M: "#fb923c", S: "#a3e635", L: "#22d3ee", R: "#f87171", E: "#fbbf24",
-};
+/* What the readouts remember between frames: the typeface, and the pale strip
+   on the boss's bar that trails behind the damage just done. */
+type Hud = { font: string; trail: number; bossId: number; frame: number };
 
-const rng = (seed: number) => {
-  let t = seed + 0x6d2b79f5;
-  t = Math.imul(t ^ (t >>> 15), t | 1);
-  t ^= t + Math.imul(t ^ (t >>> 7), t | 61);
-  return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-};
+const GUN_COLOR: Record<Exclude<Gun, "blaster">, string> = { machine: "#fb923c", spread: "#a3e635", laser: "#22d3ee", torpedo: "#f87171", icebomb: "#7dd3fc", flame: "#f97316", katana: "#e2e8f0" };
+const HUD_H = 24;
 
-function draw(ctx: CanvasRenderingContext2D, s: State, labels: SpaceLabels, mode: Mode) {
+function draw(ctx: CanvasRenderingContext2D, s: State, labels: SpaceLabels, mode: Mode, reduceMotion: boolean, hud: Hud) {
   const f = s.frame;
+  const font = hud.font;
+  const launching = s.phase === "launch";
   ctx.save();
-  if (s.shake > 0) ctx.translate((Math.random() - 0.5) * Math.min(7, s.shake / 4), (Math.random() - 0.5) * Math.min(7, s.shake / 4));
+  if (s.shake > 0 && !reduceMotion) ctx.translate((Math.random() - 0.5) * Math.min(7, s.shake / 4), (Math.random() - 0.5) * Math.min(7, s.shake / 4));
 
-  /* The backdrop changes with the chapter: deep blue, violet nebula, red fortress. */
-  const tint =
-    s.chapter === 1 ? ["#0b1330", "#1f2f66"] : s.chapter === 2 ? ["#170a2b", "#4a1d6b"] : ["#170808", "#451616"];
-  const bg = ctx.createLinearGradient(0, 0, 0, H);
-  bg.addColorStop(0, tint[0]);
-  bg.addColorStop(1, tint[1]);
-  ctx.fillStyle = bg;
-  ctx.fillRect(0, 0, W, H);
-
-  if (s.chapter === 2) {
-    for (let i = 0; i < 4; i++) {
-      const g = ctx.createRadialGradient(80 + i * 90, 40 + ((i * 53) % 130), 4, 80 + i * 90, 40 + ((i * 53) % 130), 70);
-      g.addColorStop(0, "rgb(190 100 255 / 0.22)");
-      g.addColorStop(1, "rgb(190 100 255 / 0)");
-      ctx.fillStyle = g;
-      ctx.fillRect(0, 0, W, H);
-    }
-  }
-  if (s.chapter === 3) {
-    ctx.strokeStyle = "rgb(255 90 70 / 0.08)";
-    ctx.lineWidth = 1;
-    const off = (f * 1.2) % 24;
-    for (let x = -off; x < W; x += 24) {
-      ctx.beginPath();
-      ctx.moveTo(x, 0);
-      ctx.lineTo(x, H);
-      ctx.stroke();
-    }
-    for (let y = 12; y < H; y += 24) {
-      ctx.beginPath();
-      ctx.moveTo(0, y);
-      ctx.lineTo(W, y);
-      ctx.stroke();
-    }
-  }
-
-  /* Three layers of stars sliding past at different speeds. */
-  for (let layer = 0; layer < 3; layer++) {
-    const speed = 0.35 + layer * 0.55;
-    ctx.fillStyle = `rgb(255 255 255 / ${0.3 + layer * 0.25})`;
-    for (let i = 0; i < 26; i++) {
-      const x = (((rng(i * 7 + layer * 131) * W - f * speed) % W) + W) % W;
-      const y = rng(i * 13 + layer * 71 + 5) * H;
-      ctx.fillRect(x, y, layer === 2 ? 2 : 1, 1);
-    }
-  }
-
-  for (const bm of s.beams) drawBeam(ctx, bm, f);
+  drawBackdrop(ctx, s, reduceMotion);
+  if (launching) drawHangar(ctx, s);
+  drawHQ(ctx, s, reduceMotion);
+  for (const h of s.hazards) if (!drawBossHazard(ctx, h, reduceMotion)) drawHazard(ctx, h, s, reduceMotion);
+  for (const bm of s.beams) drawBeam(ctx, bm, f, reduceMotion);
+  for (const c of s.charges) drawZone(ctx, c, reduceMotion);
   for (const k of s.pickups) drawPickup(ctx, k.x, k.y, k.kind, k.t);
-  for (const e of s.enemies) drawEnemy(ctx, e, s);
-  for (const b of s.bullets) drawBullet(ctx, b);
-  drawPlayer(ctx, s);
-
-  for (const b of s.bursts) {
-    const t = b.t / 24;
-    ctx.globalAlpha = 1 - t;
-    ctx.fillStyle = t < 0.4 ? "#fff3b0" : "#ff8a3d";
-    ctx.beginPath();
-    ctx.arc(b.x, b.y, (b.big ? 8 : 4) + t * (b.big ? 22 : 12), 0, Math.PI * 2);
-    ctx.fill();
-    ctx.globalAlpha = 1;
+  drawWarp(ctx, s, warpPower(s), reduceMotion);
+  for (const e of s.enemies) {
+    drawSpaceEnemy(ctx, e, s, reduceMotion);
+    drawBossShield(ctx, e, reduceMotion);
   }
+  drawTimedBombs(ctx, s, reduceMotion);
+  for (const b of s.bullets) if (!drawBossBullet(ctx, b) && !drawWeaponBullet(ctx, b, reduceMotion)) drawBullet(ctx, b);
+  drawSmoke(ctx, s);
+  drawPlayer(ctx, s, reduceMotion);
+  drawRepair(ctx, s, reduceMotion);
+  drawChill(ctx, s, reduceMotion);
+  drawShieldFlash(ctx, s, reduceMotion);
+  drawMorph(ctx, s, reduceMotion);
+  drawSlash(ctx, s, reduceMotion);
+  if (launching) drawLaunchOverlay(ctx, s, labels.launch, reduceMotion);
 
-  if (s.bombFlash > 0) {
+  drawBursts(ctx, s.bursts);
+  drawWarheads(ctx, s, reduceMotion);
+  drawNuke(ctx, s, reduceMotion);
+
+  if (s.bombFlash > 0 && !reduceMotion) {
     ctx.fillStyle = `rgb(255 255 255 / ${(s.bombFlash / 14) * 0.7})`;
     ctx.fillRect(0, 0, W, H);
   }
   ctx.restore();
 
-  drawHud(ctx, s, labels);
+  if (!launching) drawHud(ctx, s, labels, hud);
 
-  if (s.callout) {
+  ctx.save();
+  ctx.textAlign = "center";
+  /* Words in the scene stay out from under the overlays' own. */
+  if (s.callout && (mode === "play" || mode === "talk")) {
     const c = s.callout;
     const a = Math.min(1, c.t / 25, (150 - c.t) / 10);
+    const loud = c.kind === "overload" || c.kind === "warning" || c.kind === "c4";
     ctx.globalAlpha = Math.max(0, a);
-    ctx.textAlign = "center";
-    ctx.font = c.kind === "overload" ? "bold 26px sans-serif" : "bold 19px sans-serif";
+    ctx.font = loud ? `800 24px ${font}` : `800 18px ${font}`;
     ctx.fillStyle = "rgb(0 0 0 / 0.55)";
     ctx.fillText(labels.callouts[c.kind], W / 2 + 1.5, 72 + 1.5);
-    ctx.fillStyle = c.kind === "overload" ? (f % 10 < 5 ? "#ff4d4d" : "#ffd24d") : c.kind === "levelup" ? "#fde047" : "#7dd3fc";
+    ctx.fillStyle = loud ? (f % 10 < 5 ? "#ff4d4d" : "#ffd24d") : ["levelup", "hypersonic", "mechshield", "launcher", "repair", "hq"].includes(c.kind) ? "#fde047" : c.kind === "phase" ? "#fdba74" : c.kind === "downgrade" ? "#fb7185" : "#7dd3fc";
     ctx.fillText(labels.callouts[c.kind], W / 2, 72);
+    /* The boss's name under its warning. */
+    if (c.kind === "warning" && s.bossId !== 0) {
+      const name = labels.bossNames[s.chapter - 1] ?? "";
+      ctx.font = `800 10px ${font}`;
+      ctx.fillStyle = "rgb(0 0 0 / 0.55)";
+      ctx.fillText(name.toUpperCase(), W / 2 + 1, 89 + 1);
+      ctx.fillStyle = "#fecdd3";
+      ctx.fillText(name.toUpperCase(), W / 2, 89);
+    }
     ctx.globalAlpha = 1;
   }
 
+  /* A chapter boss's own attack names itself as it winds up. */
+  const boss = s.enemies.find((e) => isBoss(e.type));
+  const move = boss?.attack;
+  if (boss && move && move.t < move.warn && mode === "play") {
+    const name = labels.attackNames[move.kind];
+    if (name) {
+      const text = name.toUpperCase();
+      ctx.globalAlpha = Math.max(0, Math.min(1, move.t / 8, (move.warn - move.t) / 10));
+      ctx.font = `800 9px ${font}`;
+      const w = ctx.measureText(text).width + 16;
+      ctx.fillStyle = "rgb(7 12 28 / 0.8)";
+      ctx.fillRect(W / 2 - w / 2, 33, w, 15);
+      ctx.fillStyle = AMBER;
+      ctx.fillRect(W / 2 - w / 2, 33, 2, 15);
+      ctx.fillStyle = "#fecdd3";
+      ctx.fillText(text, W / 2 + 1, 43.8);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  /* The chapter's card as the ship arrives: a band across the screen with the
+     chapter's number over its name. */
   if (s.banner > 0 && mode === "play") {
-    const a = Math.min(1, s.banner / 30, (150 - s.banner) / 20);
-    ctx.globalAlpha = Math.max(0, a);
+    const a = Math.max(0, Math.min(1, s.banner / 30, (150 - s.banner) / 20));
+    const name = labels.chapterName(s.chapter);
+    const cut = name.indexOf(": ");
+    const kicker = cut > 0 ? name.slice(0, cut) : "";
+    const title = cut > 0 ? name.slice(cut + 2) : name;
+    const top = H / 2 - 52;
+    ctx.globalAlpha = a;
+    ctx.fillStyle = "rgb(7 12 28 / 0.74)";
+    ctx.fillRect(0, top, W, 38);
+    ctx.fillStyle = AMBER;
+    ctx.fillRect(0, top, W, 1);
+    ctx.fillRect(0, top + 37, W, 1);
+    ctx.font = `800 8px ${font}`;
+    ctx.fillText(kicker.toUpperCase(), W / 2, top + 12);
     ctx.fillStyle = "#fff";
-    ctx.font = "bold 17px sans-serif";
-    ctx.textAlign = "center";
-    ctx.fillText(labels.chapterName(s.chapter), W / 2, H / 2 - 30);
+    ctx.font = `800 16px ${font}`;
+    ctx.fillText(title, W / 2, top + 30);
     ctx.globalAlpha = 1;
   }
+  ctx.restore();
 }
 
-function drawHud(ctx: CanvasRenderingContext2D, s: State, labels: SpaceLabels) {
-  const maxHp = maxHpFor(s.p.level);
-  for (let i = 0; i < maxHp; i++) {
-    ctx.fillStyle = i < s.p.hp ? "#ff4d6d" : "rgb(255 255 255 / 0.18)";
-    const x = 8 + i * 12;
-    ctx.beginPath();
-    ctx.moveTo(x + 4.5, 17);
-    ctx.bezierCurveTo(x - 2, 11, x + 1, 5, x + 4.5, 9);
-    ctx.bezierCurveTo(x + 8, 5, x + 11, 11, x + 4.5, 17);
-    ctx.fill();
+/* Two health bars and a small shield. On top is the upgrade bar, with a stretch for every
+   level above the first, in the colour of the upgrade that level brought; when a stretch
+   runs out the ship loses that level. Under it is the ship's own health bar, ticked every
+   twenty points, and under that the small shield bar. Returns how wide the bars are. */
+function drawLife(ctx: CanvasRenderingContext2D, s: State, font: string) {
+  const p = s.p;
+  const max = maxLife(p);
+  const length = Math.round(max * 0.7);
+  const x0 = 7;
+  const stretches = p.level - 1;
+  const gap = stretches > 0 ? Math.min(9, 60 / stretches) : 0;
+  if (stretches === 0) {
+    ctx.fillStyle = "rgb(255 255 255 / 0.07)";
+    ctx.fillRect(x0, 3.2, 26, 3.2);
   }
+  for (let i = 0; i < stretches; i++) {
+    const left = Math.max(0, Math.min(FORM_HP, p.form - i * FORM_HP));
+    ctx.fillStyle = "rgb(255 255 255 / 0.14)";
+    ctx.fillRect(x0 + i * gap, 3.2, gap - 0.8, 3.2);
+    ctx.fillStyle = levelColor(i + 2);
+    ctx.fillRect(x0 + i * gap, 3.2, (gap - 0.8) * (left / FORM_HP), 3.2);
+  }
+  ctx.fillStyle = "rgb(255 255 255 / 0.14)";
+  ctx.fillRect(x0, 7.6, length, 6);
+  ctx.fillStyle = p.hp / max < 0.3 && Math.floor(s.frame / 8) % 2 === 0 ? "#fb7185" : "#ff4d6d";
+  ctx.fillRect(x0, 7.6, length * Math.max(0, p.hp / max), 6);
+  ctx.fillStyle = "rgb(7 12 28 / 0.85)";
+  for (let v = 20; v < max; v += 20) ctx.fillRect(x0 + (length * v) / max - 0.4, 7.6, 0.8, 6);
+  ctx.font = `800 6px ${font}`;
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.strokeStyle = "rgb(7 12 28 / 0.9)";
+  ctx.lineWidth = 1.6;
+  ctx.strokeText(String(Math.ceil(p.hp)), x0 + 2, 10.9);
+  ctx.fillStyle = "#fff";
+  ctx.fillText(String(Math.ceil(p.hp)), x0 + 2, 10.9);
+  const shield = Math.round(maxShield(p) * 1.6);
+  ctx.fillStyle = "rgb(255 255 255 / 0.14)";
+  ctx.fillRect(x0, 15.4, shield, 2.4);
+  ctx.fillStyle = p.shieldFlash > 0 && Math.floor(p.shieldFlash / 3) % 2 === 0 ? "#e0f2fe" : "#38bdf8";
+  ctx.fillRect(x0, 15.4, shield * Math.min(1, p.shield / maxShield(p)), 2.4);
+  return Math.max(length, stretches * gap);
+}
+
+/* The strip along the top: health, ship level, the special gun
+   and its ammunition on the left; how far through the chapter the run is on the
+   right, or the boss's health once it has arrived. */
+function drawHud(ctx: CanvasRenderingContext2D, s: State, labels: SpaceLabels, hud: Hud) {
+  const font = hud.font;
+  ctx.save();
+  ctx.fillStyle = "rgb(7 12 28 / 0.84)";
+  ctx.fillRect(0, 0, W, HUD_H);
+  ctx.fillStyle = "rgb(251 207 51 / 0.28)";
+  ctx.fillRect(0, HUD_H, W, 1);
+
+  const length = drawLife(ctx, s, font);
 
   /* The ship's level, and how far the gold hearts have got toward the next. */
-  const lx = 8 + maxHp * 12 + 6;
+  let x = 7 + length + 5;
   ctx.fillStyle = "#fde047";
-  ctx.font = "bold 9px sans-serif";
-  ctx.textAlign = "left";
-  ctx.fillText(`LV ${s.p.level}`, lx, 15);
+  ctx.fillRect(x, 4, 26, 11);
+  ctx.fillStyle = "#171717";
+  ctx.font = `800 7.5px ${font}`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "middle";
+  ctx.fillText(`LV ${s.p.level}`, x + 13, 9.8);
   const from = LEVEL_AT[s.p.level - 1];
   const to = s.p.level < MAX_LEVEL ? LEVEL_AT[s.p.level] : from + 1;
-  ctx.fillStyle = "rgb(255 255 255 / 0.2)";
-  ctx.fillRect(lx, 18, 30, 3);
+  ctx.fillStyle = "rgb(255 255 255 / 0.14)";
+  ctx.fillRect(x, 18, 26, 2.5);
   ctx.fillStyle = "#fbbf24";
-  ctx.fillRect(lx, 18, s.p.level >= MAX_LEVEL ? 30 : Math.min(30, (30 * (s.p.extra - from)) / (to - from)), 3);
+  ctx.fillRect(x, 18, s.p.level >= MAX_LEVEL ? 26 : Math.min(26, (26 * (s.p.extra - from)) / (to - from)), 2.5);
 
-  ctx.fillStyle = AMBER;
-  for (let i = 0; i < s.p.weapon; i++) ctx.fillRect(8 + i * 8, 22, 6, 3);
+  /* The special gun, while it has ammunition. */
+  x += 33;
   if (s.p.gun !== "blaster") {
-    ctx.fillStyle = GUN_COLOR[s.p.gun];
-    ctx.font = "bold 9px sans-serif";
+    const color = GUN_COLOR[s.p.gun];
     ctx.textAlign = "left";
-    ctx.fillText(`${labels.guns[s.p.gun]} ${s.p.ammo}`, 8, 36);
-    ctx.fillStyle = "rgb(255 255 255 / 0.2)";
-    ctx.fillRect(8, 39, 56, 2);
-    ctx.fillStyle = GUN_COLOR[s.p.gun];
-    ctx.fillRect(8, 39, Math.min(56, (56 * s.p.ammo) / GUN_FULL[s.p.gun]), 2);
+    ctx.fillStyle = color;
+    ctx.fillText(labels.guns[s.p.gun], x, 9.8);
+    ctx.textAlign = "right";
+    ctx.fillStyle = "#fff";
+    ctx.fillText(String(s.p.ammo), x + 60, 9.8);
   }
 
   const boss = s.enemies.find((e) => isBoss(e.type));
   if (boss) {
     const w = 150;
-    const x = (W - w) / 2;
-    ctx.fillStyle = "rgb(0 0 0 / 0.5)";
-    ctx.fillRect(x - 2, 6, w + 4, 8);
+    const bx = W - w - 8;
+    const share = Math.max(0, boss.hp) / boss.maxHp;
+    if (hud.bossId !== boss.id) {
+      hud.bossId = boss.id;
+      hud.trail = share;
+    }
+    if (hud.frame !== s.frame) {
+      hud.frame = s.frame;
+      hud.trail = Math.max(share, hud.trail - 0.004);
+    }
+    ctx.textAlign = "left";
+    ctx.fillStyle = "#fecdd3";
+    ctx.fillText((labels.bossNames[s.chapter - 1] ?? "").toUpperCase(), bx, 8.5);
+    ctx.fillStyle = "rgb(255 255 255 / 0.14)";
+    ctx.fillRect(bx, 14, w, 5);
+    ctx.fillStyle = "rgb(255 255 255 / 0.55)";
+    ctx.fillRect(bx, 14, w * hud.trail, 5);
     ctx.fillStyle = "#ff4d6d";
-    ctx.fillRect(x, 8, (w * Math.max(0, boss.hp)) / boss.maxHp, 4);
-  }
-}
-
-function drawBeam(ctx: CanvasRenderingContext2D, bm: State["beams"][number], f: number) {
-  if (bm.t < bm.warn) {
-    /* A thin flashing line first: this is where it is about to fire. */
-    ctx.strokeStyle = f % 8 < 4 ? "rgb(255 80 80 / 0.9)" : "rgb(255 80 80 / 0.35)";
-    ctx.lineWidth = 1.5;
-    ctx.setLineDash([6, 5]);
+    ctx.fillRect(bx, 14, w * share, 5);
+    /* The last boss's shield, a thin pale strip under its health. */
+    if (boss.maxShield !== undefined && boss.shield !== undefined) {
+      ctx.fillStyle = "rgb(255 255 255 / 0.14)";
+      ctx.fillRect(bx, 20.5, w, 2.2);
+      ctx.fillStyle = "#7dd3fc";
+      ctx.fillRect(bx, 20.5, (w * Math.max(0, boss.shield)) / boss.maxShield, 2.2);
+    }
+    /* A notch where each phase ends. */
+    const marks = boss.type === "boss8" ? FINAL_PHASE_AT : (BOSS_PHASES[boss.type] ?? 1) > 1 ? [0.66, 0.33] : [];
+    ctx.fillStyle = "rgb(7 12 28 / 0.9)";
+    for (const m of marks) ctx.fillRect(bx + w * m - 0.5, 13, 1, 7);
+  } else if (s.phase === "play") {
+    /* The chapter so far, with the boss waiting at the end. */
+    const w = 120;
+    const px = W - w - 16;
+    const y = 11;
+    const u = chapterProgress(s);
+    ctx.fillStyle = "rgb(255 255 255 / 0.14)";
+    ctx.fillRect(px, y, w, 3);
+    ctx.fillStyle = AMBER;
+    ctx.fillRect(px, y, w * u, 3);
+    ctx.fillStyle = "#ff4d6d";
     ctx.beginPath();
-    ctx.moveTo(0, bm.y);
-    ctx.lineTo(bm.x0, bm.y);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    return;
-  }
-  const g = ctx.createLinearGradient(0, bm.y - bm.h / 2, 0, bm.y + bm.h / 2);
-  g.addColorStop(0, "rgb(255 60 60 / 0.5)");
-  g.addColorStop(0.5, "rgb(255 255 255 / 1)");
-  g.addColorStop(1, "rgb(255 60 60 / 0.5)");
-  ctx.fillStyle = g;
-  ctx.fillRect(0, bm.y - bm.h / 2, bm.x0, bm.h);
-}
-
-function drawPickup(ctx: CanvasRenderingContext2D, x: number, y: number, kind: PickupKind, t: number) {
-  const by = y + Math.sin(t / 10) * 2;
-  ctx.fillStyle = PICKUP_COLOR[kind];
-  ctx.strokeStyle = NAVY;
-  ctx.lineWidth = 1.5;
-  ctx.beginPath();
-  ctx.arc(x, by, 6, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = NAVY;
-  ctx.font = "bold 8px sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText(kind === "E" ? "+" : kind, x, by + 3);
-}
-
-function drawBullet(ctx: CanvasRenderingContext2D, b: State["bullets"][number]) {
-  if (b.own === "p") {
-    switch (b.kind) {
-      case "mg":
-        ctx.fillStyle = "#fde047";
-        ctx.fillRect(b.x - 3, b.y - 1, 6, 2);
-        return;
-      case "spread":
-        ctx.fillStyle = "#a3e635";
-        ctx.beginPath();
-        ctx.arc(b.x, b.y, 2.4, 0, Math.PI * 2);
-        ctx.fill();
-        ctx.fillStyle = "#ecfccb";
-        ctx.fillRect(b.x - 0.6, b.y - 0.6, 1.2, 1.2);
-        return;
-      case "laser":
-        ctx.fillStyle = "rgb(34 211 238 / 0.35)";
-        ctx.fillRect(b.x - 26, b.y - 2.4, 30, 4.8);
-        ctx.fillStyle = "#67e8f9";
-        ctx.fillRect(b.x - 24, b.y - 1.2, 28, 2.4);
-        ctx.fillStyle = "#fff";
-        ctx.fillRect(b.x - 22, b.y - 0.5, 26, 1);
-        return;
-      case "rocket": {
-        const a = Math.atan2(b.vy, b.vx);
-        ctx.save();
-        ctx.translate(b.x, b.y);
-        ctx.rotate(a);
-        ctx.fillStyle = "#fb923c";
-        ctx.beginPath();
-        ctx.moveTo(-5, 0);
-        ctx.lineTo(-11 - (b.life ?? 0) % 3, -2);
-        ctx.lineTo(-11 - (b.life ?? 0) % 3, 2);
-        ctx.fill();
-        ctx.fillStyle = "#cbd5e1";
-        ctx.fillRect(-6, -2, 10, 4);
-        ctx.fillStyle = "#ef4444";
-        ctx.beginPath();
-        ctx.moveTo(4, -2);
-        ctx.lineTo(8, 0);
-        ctx.lineTo(4, 2);
-        ctx.fill();
-        ctx.restore();
-        return;
-      }
-      default:
-        ctx.fillStyle = AMBER;
-        ctx.fillRect(b.x - 4, b.y - 1.5, 8, 3);
-        ctx.fillStyle = "#fff8c9";
-        ctx.fillRect(b.x - 1, b.y - 0.5, 5, 1);
-        return;
-    }
-  }
-  if (b.kind === "needle") {
-    const a = Math.atan2(b.vy, b.vx);
-    ctx.strokeStyle = "#ffb347";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(b.x - Math.cos(a) * 5, b.y - Math.sin(a) * 5);
-    ctx.lineTo(b.x + Math.cos(a) * 5, b.y + Math.sin(a) * 5);
-    ctx.stroke();
-    return;
-  }
-  ctx.fillStyle = b.kind === "spiral" ? "#c084fc" : "#ff5d8f";
-  ctx.beginPath();
-  ctx.arc(b.x, b.y, b.r, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = "#fff";
-  ctx.beginPath();
-  ctx.arc(b.x, b.y, b.r * 0.4, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-function drawPlayer(ctx: CanvasRenderingContext2D, s: State) {
-  const p = s.p;
-  if (s.phase === "dead") return;
-  if (p.inv > 0 && s.frame % 6 < 3) return;
-  const k = 1 + 0.2 * (p.level - 1);
-  ctx.save();
-  ctx.translate(p.x, p.y);
-  ctx.scale(k, k);
-  const x = 0;
-  const y = 0;
-  /* Launchers: one hanging under the hull from level two, another on top at three. */
-  if (p.level >= 2) {
-    ctx.fillStyle = "#64748b";
-    ctx.strokeStyle = NAVY;
-    ctx.lineWidth = 1.2;
-    ctx.fillRect(x + 6, y + PLAYER_H, 8, 3);
-    ctx.strokeRect(x + 6, y + PLAYER_H, 8, 3);
-    ctx.fillStyle = p.launchCd < 8 ? "#f87171" : "#334155";
-    ctx.fillRect(x + 12, y + PLAYER_H + 0.5, 3, 2);
-  }
-  if (p.level >= 3) {
-    ctx.fillStyle = "#64748b";
-    ctx.strokeStyle = NAVY;
-    ctx.lineWidth = 1.2;
-    ctx.fillRect(x + 6, y - 3, 8, 3);
-    ctx.strokeRect(x + 6, y - 3, 8, 3);
-    ctx.fillStyle = p.launchCd < 8 ? "#f87171" : "#334155";
-    ctx.fillRect(x + 12, y - 2.5, 3, 2);
-  }
-  /* Engine flame. */
-  ctx.fillStyle = s.frame % 4 < 2 ? "#ff9d3d" : "#ffd24d";
-  ctx.beginPath();
-  ctx.moveTo(x, y + PLAYER_H / 2 - 2);
-  ctx.lineTo(x - 6 - (s.frame % 3) - p.level, y + PLAYER_H / 2);
-  ctx.lineTo(x, y + PLAYER_H / 2 + 2);
-  ctx.fill();
-  ctx.fillStyle = p.level >= 3 ? "#fde047" : AMBER;
-  ctx.strokeStyle = NAVY;
-  ctx.lineWidth = 1.6 / k;
-  ctx.beginPath();
-  ctx.moveTo(x + PLAYER_W, y + PLAYER_H / 2);
-  ctx.lineTo(x + 6, y);
-  ctx.lineTo(x + 1, y + 1);
-  ctx.lineTo(x + 4, y + PLAYER_H / 2);
-  ctx.lineTo(x + 1, y + PLAYER_H - 1);
-  ctx.lineTo(x + 6, y + PLAYER_H);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  if (p.level >= 2) {
-    ctx.fillStyle = "#fb923c";
-    ctx.fillRect(x + 9, y + 2, 3, 1.4);
-    ctx.fillRect(x + 9, y + PLAYER_H - 3.4, 3, 1.4);
-  }
-  ctx.fillStyle = "#7dd3fc";
-  ctx.beginPath();
-  ctx.ellipse(x + 10, y + PLAYER_H / 2, 3.2, 2, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-}
-
-function body(ctx: CanvasRenderingContext2D, e: Enemy, fill: string) {
-  ctx.fillStyle = e.flash > 0 ? "#ffffff" : fill;
-  ctx.strokeStyle = NAVY;
-  ctx.lineWidth = 1.5;
-}
-
-function drawEnemy(ctx: CanvasRenderingContext2D, e: Enemy, s: State) {
-  const { x, y, w, h } = e;
-  const cx = x + w / 2;
-  const cy = y + h / 2;
-  switch (e.type) {
-    case "scout": {
-      body(ctx, e, "#ef4444");
-      ctx.beginPath();
-      ctx.moveTo(x, cy);
-      ctx.lineTo(x + w, y);
-      ctx.lineTo(x + w - 4, cy);
-      ctx.lineTo(x + w, y + h);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = "#fff";
-      ctx.fillRect(x + 5, cy - 1.5, 3, 3);
-      break;
-    }
-    case "wave": {
-      body(ctx, e, "#8b5cf6");
-      ctx.beginPath();
-      ctx.ellipse(cx, cy + 2, w / 2, h / 3.2, 0, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = e.flash > 0 ? "#fff" : "#67e8f9";
-      ctx.beginPath();
-      ctx.ellipse(cx, cy - 2, w / 4, h / 3.4, 0, Math.PI, 0);
-      ctx.fill();
-      ctx.fillStyle = AMBER;
-      for (let i = -1; i <= 1; i++) ctx.fillRect(cx + i * 5 - 1, cy + 3, 2, 2);
-      break;
-    }
-    case "rock":
-    case "smallrock": {
-      body(ctx, e, "#8b8f98");
-      const n = 9;
-      ctx.beginPath();
-      for (let i = 0; i < n; i++) {
-        const a = (i / n) * Math.PI * 2 + e.t * 0.012;
-        const r = (0.72 + rng(e.id * 17 + i) * 0.3) * (w / 2);
-        const px = cx + Math.cos(a) * r;
-        const py = cy + Math.sin(a) * r * (h / w);
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      if (e.type === "rock") {
-        ctx.fillStyle = "rgb(0 0 0 / 0.22)";
-        ctx.beginPath();
-        ctx.arc(cx - 4, cy - 3, 3, 0, Math.PI * 2);
-        ctx.arc(cx + 5, cy + 4, 2.4, 0, Math.PI * 2);
-        ctx.fill();
-      }
-      break;
-    }
-    case "diver": {
-      body(ctx, e, "#fb923c");
-      ctx.beginPath();
-      ctx.moveTo(x, cy);
-      ctx.lineTo(x + w * 0.6, y + 2);
-      ctx.lineTo(x + w, y - 2);
-      ctx.lineTo(x + w * 0.74, cy);
-      ctx.lineTo(x + w, y + h + 2);
-      ctx.lineTo(x + w * 0.6, y + h - 2);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      break;
-    }
-    case "gunner": {
-      body(ctx, e, "#14b8a6");
-      ctx.beginPath();
-      ctx.roundRect(x + 4, y + 2, w - 4, h - 4, 4);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = e.flash > 0 ? "#fff" : "#334155";
-      ctx.fillRect(x - 3, cy - 2, 9, 4);
-      ctx.strokeRect(x - 3, cy - 2, 9, 4);
-      ctx.fillStyle = "#fde68a";
-      ctx.fillRect(x + 12, cy - 4, 6, 8);
-      break;
-    }
-    case "mine": {
-      ctx.strokeStyle = "#475569";
-      ctx.lineWidth = 2;
-      for (let i = 0; i < 8; i++) {
-        const a = (i / 8) * Math.PI * 2 + e.t * 0.02;
-        ctx.beginPath();
-        ctx.moveTo(cx + Math.cos(a) * 6, cy + Math.sin(a) * 6);
-        ctx.lineTo(cx + Math.cos(a) * 10, cy + Math.sin(a) * 10);
-        ctx.stroke();
-      }
-      body(ctx, e, "#1e293b");
-      ctx.beginPath();
-      ctx.arc(cx, cy, 6.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = e.t % 30 < 15 ? "#ff3b3b" : "#7f1d1d";
-      ctx.beginPath();
-      ctx.arc(cx, cy, 2.4, 0, Math.PI * 2);
-      ctx.fill();
-      break;
-    }
-    case "drone": {
-      body(ctx, e, "#4ade80");
-      ctx.beginPath();
-      ctx.arc(cx, cy, 4.5, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      ctx.strokeStyle = "#fff";
-      ctx.lineWidth = 1;
-      const a = e.t * 0.6;
-      ctx.beginPath();
-      ctx.moveTo(cx - Math.cos(a) * 7, cy - 5 - Math.sin(a));
-      ctx.lineTo(cx + Math.cos(a) * 7, cy - 5 + Math.sin(a));
-      ctx.stroke();
-      break;
-    }
-    case "turret": {
-      const top = e.a === 0;
-      ctx.fillStyle = "#475569";
-      ctx.fillRect(x - 6, top ? y - 8 : y + h - 2, w + 12, 10);
-      body(ctx, e, "#94a3b8");
-      ctx.beginPath();
-      ctx.arc(cx, top ? y + 4 : y + h - 4, 7, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-      const ang = Math.atan2(s.p.y + PLAYER_H / 2 - cy, s.p.x - cx);
-      ctx.strokeStyle = e.flash > 0 ? "#fff" : "#1e293b";
-      ctx.lineWidth = 4;
-      ctx.beginPath();
-      ctx.moveTo(cx, top ? y + 4 : y + h - 4);
-      ctx.lineTo(cx + Math.cos(ang) * 12, (top ? y + 4 : y + h - 4) + Math.sin(ang) * 12);
-      ctx.stroke();
-      break;
-    }
-    case "zigzag": {
-      body(ctx, e, "#a3e635");
-      ctx.beginPath();
-      ctx.moveTo(x, cy);
-      ctx.lineTo(x + 5, y);
-      ctx.lineTo(x + 8, cy - 1);
-      ctx.lineTo(x + 14, y + 1);
-      ctx.lineTo(x + w, cy);
-      ctx.lineTo(x + 10, y + h);
-      ctx.lineTo(x + 7, cy + 1);
-      ctx.lineTo(x + 3, y + h - 1);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      break;
-    }
-    case "armor": {
-      body(ctx, e, "#64748b");
-      ctx.beginPath();
-      for (let i = 0; i < 6; i++) {
-        const a = (i / 6) * Math.PI * 2 + Math.PI / 6;
-        const px = cx + Math.cos(a) * (w / 2);
-        const py = cy + Math.sin(a) * (h / 2);
-        if (i === 0) ctx.moveTo(px, py);
-        else ctx.lineTo(px, py);
-      }
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      ctx.strokeStyle = "#f97316";
-      ctx.lineWidth = 2;
-      ctx.strokeRect(cx - 7, cy - 7, 14, 14);
-      ctx.fillStyle = NAVY;
-      for (const dy of [-8, 0, 8]) ctx.fillRect(x - 3, cy + dy - 1.5, 6, 3);
-      break;
-    }
-    case "seeker": {
-      body(ctx, e, "#f87171");
-      const a = Math.atan2(e.vy, e.vx);
-      ctx.save();
-      ctx.translate(cx, cy);
-      ctx.rotate(a + Math.PI);
-      ctx.beginPath();
-      ctx.moveTo(-w / 2 - 2, 0);
-      ctx.lineTo(-2, -3.5);
-      ctx.lineTo(w / 2, -3.5);
-      ctx.lineTo(w / 2, 3.5);
-      ctx.lineTo(-2, 3.5);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = "#facc15";
-      ctx.beginPath();
-      ctx.moveTo(w / 2, 0);
-      ctx.lineTo(w / 2 + 5 + (e.t % 3), -2);
-      ctx.lineTo(w / 2 + 5 + (e.t % 3), 2);
-      ctx.fill();
-      ctx.restore();
-      break;
-    }
-    case "pod": {
-      body(ctx, e, "#0d9488");
-      ctx.beginPath();
-      ctx.roundRect(x, y + 2, w, h - 2, 3);
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = "rgb(255 255 255 / 0.25)";
-      ctx.fillRect(x + 2, y + 4, w - 4, 2);
-      ctx.fillStyle = "#fff";
-      ctx.font = "bold 9px sans-serif";
-      ctx.textAlign = "center";
-      ctx.fillText("?", cx, cy + 4);
-      ctx.strokeStyle = NAVY;
-      ctx.lineWidth = 1.2;
-      ctx.beginPath();
-      ctx.moveTo(cx, y + 2);
-      ctx.lineTo(cx, y - 3);
-      ctx.stroke();
-      ctx.fillStyle = e.t % 24 < 12 ? "#fde047" : "#f97316";
-      ctx.beginPath();
-      ctx.arc(cx, y - 4, 2, 0, Math.PI * 2);
-      ctx.fill();
-      break;
-    }
-    case "boss1":
-      drawCrab(ctx, e);
-      break;
-    case "boss2":
-      drawJelly(ctx, e);
-      break;
-    case "boss3":
-      drawWarship(ctx, e);
-      break;
-  }
-}
-
-/* The crab: a round red body, eyes on stalks, and two long claws that open and
-   close. */
-function drawCrab(ctx: CanvasRenderingContext2D, e: Enemy) {
-  const cx = e.x + e.w / 2 + 6;
-  const cy = e.y + e.h / 2;
-  const open = Math.sin(e.t / 9) * 0.35 + 0.35;
-  body(ctx, e, "#dc2626");
-  for (const side of [-1, 1]) {
-    /* Arm, then a claw with its two halves. */
-    const ax = e.x + 4;
-    const ay = cy + side * 22;
-    ctx.beginPath();
-    ctx.moveTo(cx - 10, cy + side * 12);
-    ctx.lineTo(ax + 14, ay);
-    ctx.lineWidth = 7;
-    ctx.strokeStyle = e.flash > 0 ? "#fff" : "#b91c1c";
-    ctx.stroke();
-    ctx.lineWidth = 1.5;
-    ctx.strokeStyle = NAVY;
-    for (const half of [-1, 1]) {
-      ctx.save();
-      ctx.translate(ax + 8, ay);
-      ctx.rotate(Math.PI + half * open);
-      ctx.fillStyle = e.flash > 0 ? "#fff" : "#ef4444";
-      ctx.beginPath();
-      ctx.moveTo(0, 0);
-      ctx.quadraticCurveTo(14, half * 5, 22, 0);
-      ctx.quadraticCurveTo(12, half * 1.5, 0, half * -1);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      ctx.restore();
-    }
-  }
-  body(ctx, e, "#dc2626");
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, 30, 28, 0, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = "rgb(0 0 0 / 0.18)";
-  for (let i = -1; i <= 1; i++) ctx.fillRect(cx - 8, cy + i * 9 - 1, 24, 2);
-  for (const side of [-1, 1]) {
-    ctx.strokeStyle = NAVY;
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.moveTo(cx - 14, cy + side * 14);
-    ctx.lineTo(cx - 20, cy + side * 24);
-    ctx.stroke();
+    ctx.moveTo(px + w + 6, y - 2.5);
+    ctx.lineTo(px + w + 9.5, y + 1.5);
+    ctx.lineTo(px + w + 6, y + 5.5);
+    ctx.lineTo(px + w + 2.5, y + 1.5);
+    ctx.fill();
     ctx.fillStyle = "#fff";
     ctx.beginPath();
-    ctx.arc(cx - 20, cy + side * 25, 4.2, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = NAVY;
-    ctx.beginPath();
-    ctx.arc(cx - 21.5, cy + side * 25, 1.8, 0, Math.PI * 2);
+    ctx.moveTo(px + w * u + 3, y + 1.5);
+    ctx.lineTo(px + w * u - 2.5, y - 2);
+    ctx.lineTo(px + w * u - 2.5, y + 5);
     ctx.fill();
   }
-  /* The legs along the back. */
-  ctx.strokeStyle = "#7f1d1d";
-  ctx.lineWidth = 2.5;
-  for (let i = -2; i <= 2; i++) {
-    const wig = Math.sin(e.t / 8 + i) * 3;
-    ctx.beginPath();
-    ctx.moveTo(cx + 18, cy + i * 9);
-    ctx.lineTo(cx + 30 + wig, cy + i * 11);
-    ctx.stroke();
-  }
-}
-
-/* The jellyfish: a glowing bell with a pulsing core, and tentacles that trail
-   behind it and sway. */
-function drawJelly(ctx: CanvasRenderingContext2D, e: Enemy) {
-  const cx = e.x + 26;
-  const cy = e.y + e.h / 2;
-  const pulse = 1 + Math.sin(e.t / 14) * 0.05;
-  ctx.lineWidth = 3;
-  for (let i = -3; i <= 3; i++) {
-    ctx.strokeStyle = e.flash > 0 ? "#fff" : `rgb(244 114 182 / ${0.85 - Math.abs(i) * 0.1})`;
-    ctx.beginPath();
-    ctx.moveTo(cx + 12, cy + i * 9);
-    for (let k = 1; k <= 6; k++) ctx.lineTo(cx + 12 + k * 8, cy + i * 9 + Math.sin(e.t / 9 + k * 0.9 + i) * 5);
-    ctx.stroke();
-  }
-  const glow = ctx.createRadialGradient(cx, cy, 6, cx, cy, 44);
-  glow.addColorStop(0, "rgb(244 114 182 / 0.5)");
-  glow.addColorStop(1, "rgb(244 114 182 / 0)");
-  ctx.fillStyle = glow;
-  ctx.fillRect(cx - 46, cy - 46, 92, 92);
-  body(ctx, e, "#c026d3");
-  ctx.beginPath();
-  ctx.ellipse(cx, cy, 30 * pulse, 36 * pulse, 0, Math.PI / 2, Math.PI * 1.5, false);
-  ctx.ellipse(cx, cy, 8, 36 * pulse, 0, Math.PI * 1.5, Math.PI / 2, false);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = "rgb(255 255 255 / 0.3)";
-  for (const [dx, dy, r] of [[-12, -14, 4], [-18, 6, 3], [-6, 16, 3.5]]) {
-    ctx.beginPath();
-    ctx.arc(cx + dx, cy + dy, r, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  ctx.fillStyle = e.t % 40 < 20 ? "#67e8f9" : "#22d3ee";
-  ctx.beginPath();
-  ctx.arc(cx - 6, cy, 8 * pulse, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = "#fff";
-  ctx.beginPath();
-  ctx.arc(cx - 8, cy - 2, 2.6, 0, Math.PI * 2);
-  ctx.fill();
-}
-
-/* The warship: a long plated hull with a glowing beam emitter at the nose, gun
-   turrets above and below, and engines at the back. */
-function drawWarship(ctx: CanvasRenderingContext2D, e: Enemy) {
-  const { x, y, w, h } = e;
-  const cy = y + h / 2;
-  const layer = e.a;
-  const hurt = layer === 0 ? 1 : layer === 1 ? 0.5 : layer === 2 ? 0.25 : 0.1;
-  /* Overloading: a red glow that throbs, and the hull shakes. */
-  if (layer === 3) {
-    const g = ctx.createRadialGradient(x + w / 2, cy, 10, x + w / 2, cy, 90);
-    g.addColorStop(0, `rgb(255 40 40 / ${0.35 + Math.sin(e.t / 5) * 0.15})`);
-    g.addColorStop(1, "rgb(255 40 40 / 0)");
-    ctx.fillStyle = g;
-    ctx.fillRect(x - 90, cy - 100, w + 180, 200);
-    ctx.save();
-    ctx.translate((Math.random() - 0.5) * 2.4, (Math.random() - 0.5) * 2.4);
-  }
-  body(ctx, e, layer === 3 ? "#7f1d1d" : "#334155");
-  ctx.beginPath();
-  ctx.moveTo(x, cy);
-  ctx.lineTo(x + 24, y + 8);
-  ctx.lineTo(x + w - 8, y);
-  ctx.lineTo(x + w, y + 14);
-  ctx.lineTo(x + w, y + h - 14);
-  ctx.lineTo(x + w - 8, y + h);
-  ctx.lineTo(x + 24, y + h - 8);
-  ctx.closePath();
-  ctx.fill();
-  ctx.stroke();
-  ctx.fillStyle = e.flash > 0 ? "#fff" : "#475569";
-  ctx.fillRect(x + 30, y + 14, w - 52, h - 28);
-  ctx.strokeRect(x + 30, y + 14, w - 52, h - 28);
-  ctx.fillStyle = "#fbbf24";
-  for (let i = 0; i < 5; i++) ctx.fillRect(x + 38 + i * 9, cy - 2, 5, 4);
-  for (const side of [-1, 1]) {
-    ctx.fillStyle = e.flash > 0 ? "#fff" : "#1e293b";
-    ctx.fillRect(x + 34, cy + side * (h / 2 - 8) - 3, 24, 6);
-    ctx.fillRect(x + 20, cy + side * (h / 2 - 8) - 2, 16, 4);
-  }
-  /* The emitter: it glows brighter the nearer the next beam is, and turns red as the ship takes damage. */
-  const charge = (e.b % 280) / 280;
-  ctx.fillStyle = hurt < 0.33 ? "#ff3b3b" : hurt < 0.66 ? "#fb923c" : "#38bdf8";
-  ctx.beginPath();
-  ctx.arc(x + 12, cy, 6 + charge * 3, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = "#fff";
-  ctx.beginPath();
-  ctx.arc(x + 12, cy, 2.6, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.fillStyle = e.t % 6 < 3 ? "#fb923c" : "#fde047";
-  for (const side of [-1, 1]) ctx.fillRect(x + w - 2, cy + side * 22 - 4, 8 + (e.t % 3), 8);
-
-  /* The layers. Armour plates sit over the hull until they are shot away. */
-  if (layer <= 1) {
-    ctx.fillStyle = e.flash > 0 ? "#fff" : "#94a3b8";
-    ctx.strokeStyle = NAVY;
-    ctx.lineWidth = 1.5;
-    for (const side of [-1, 1]) {
-      ctx.beginPath();
-      ctx.moveTo(x + 18, cy + side * 8);
-      ctx.lineTo(x + 40, cy + side * (h / 2 - 2));
-      ctx.lineTo(x + w - 14, cy + side * (h / 2 - 2));
-      ctx.lineTo(x + w - 20, cy + side * 12);
-      ctx.closePath();
-      ctx.fill();
-      ctx.stroke();
-      ctx.fillStyle = NAVY;
-      for (let i = 0; i < 4; i++) ctx.fillRect(x + 44 + i * 10, cy + side * (h / 2 - 8) - 1, 2, 2);
-      ctx.fillStyle = e.flash > 0 ? "#fff" : "#94a3b8";
-    }
-  }
-  if (layer === 0) {
-    /* The energy shield: a bubble around the whole ship. */
-    const flicker = e.flash > 0 ? 0.55 : 0.22 + Math.sin(e.t / 8) * 0.05;
-    ctx.fillStyle = `rgb(56 189 248 / ${flicker})`;
-    ctx.strokeStyle = "rgb(186 230 253 / 0.9)";
-    ctx.lineWidth = 2;
-    ctx.beginPath();
-    ctx.ellipse(x + w / 2 - 4, cy, w / 2 + 12, h / 2 + 12, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.stroke();
-  }
-  if (layer >= 2) {
-    /* Armour gone: the core shows through the hull. */
-    const glow = layer === 3 ? "#ff3b3b" : "#fb923c";
-    const g = ctx.createRadialGradient(x + w / 2, cy, 2, x + w / 2, cy, 22);
-    g.addColorStop(0, "#fff");
-    g.addColorStop(0.35, glow);
-    g.addColorStop(1, "rgb(255 80 40 / 0)");
-    ctx.fillStyle = g;
-    ctx.beginPath();
-    ctx.arc(x + w / 2, cy, 22 + Math.sin(e.t / (layer === 3 ? 3 : 7)) * 3, 0, Math.PI * 2);
-    ctx.fill();
-  }
-  if (e.stun > 0 && e.t % 6 < 3) {
-    ctx.fillStyle = "rgb(255 255 255 / 0.5)";
-    ctx.fillRect(x, y, w, h);
-  }
-  if (layer === 3) ctx.restore();
+  ctx.restore();
 }

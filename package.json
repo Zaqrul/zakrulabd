@@ -6,7 +6,9 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "test:trap": "node --experimental-strip-types --test tests/trap-logic.test.mjs",
+    "test:space": "node --experimental-strip-types --test tests/space-ship.test.mjs tests/space-combat.test.mjs tests/space-progress.test.mjs"
   },
   "dependencies": {
     "@next/third-parties": "^16.4.0",

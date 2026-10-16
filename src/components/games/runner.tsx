@@ -71,7 +71,14 @@ export default function Runner({ labels }: { labels: RunnerLabels }) {
   useEffect(() => {
     const el = canvas.current;
     if (!el) return;
-    let ctx = fitCanvas(el, W, H);
+    let viewWidth = W;
+    function fitView(target: HTMLCanvasElement) {
+      // Keep the original vertical scale; extra width reveals more of the track.
+      const scale = Math.max(1, target.getBoundingClientRect().height) / H;
+      viewWidth = target.clientWidth / scale;
+      return fitCanvas(target, viewWidth, H);
+    }
+    let ctx = fitView(el);
     const s = sim.current;
 
     function end() {
@@ -97,7 +104,7 @@ export default function Runner({ labels }: { labels: RunnerLabels }) {
       s.untilNext -= s.speed * dt;
       if (s.untilNext <= 0) {
         const h = 22 + Math.random() * 20;
-        s.obstacles.push({ x: W + 10, w: 12 + Math.random() * 10, h });
+        s.obstacles.push({ x: viewWidth + 10, w: 12 + Math.random() * 10, h });
         s.untilNext = (240 + Math.random() * 200) * (s.speed / 5);
       }
       for (const o of s.obstacles) o.x -= s.speed * dt;
@@ -123,14 +130,14 @@ export default function Runner({ labels }: { labels: RunnerLabels }) {
     }
 
     function draw() {
-      ctx.clearRect(0, 0, W, H);
+      ctx.clearRect(0, 0, viewWidth, H);
       ctx.fillStyle = "#fff";
-      ctx.fillRect(0, 0, W, H);
+      ctx.fillRect(0, 0, viewWidth, H);
 
       /* Slow clouds, then the ground and its moving dashes. */
       ctx.fillStyle = "#eceae4";
-      for (let i = 0; i < 3; i++) {
-        const x = ((((i * 190 - s.scroll * 0.2) % (W + 80)) + (W + 80)) % (W + 80)) - 40;
+      for (let i = 0; i < Math.ceil(viewWidth / 190); i++) {
+        const x = ((((i * 190 - s.scroll * 0.2) % (viewWidth + 80)) + (viewWidth + 80)) % (viewWidth + 80)) - 40;
         ctx.fillRect(x, 24 + i * 16, 44, 8);
         ctx.fillRect(x + 8, 18 + i * 16, 26, 8);
       }
@@ -138,11 +145,11 @@ export default function Runner({ labels }: { labels: RunnerLabels }) {
       ctx.lineWidth = 2;
       ctx.beginPath();
       ctx.moveTo(0, GROUND + 1);
-      ctx.lineTo(W, GROUND + 1);
+      ctx.lineTo(viewWidth, GROUND + 1);
       ctx.stroke();
       ctx.fillStyle = "#c9c6bd";
-      for (let i = 0; i < 12; i++) {
-        const x = (((i * 61 - s.scroll) % W) + W) % W;
+      for (let i = 0; i < Math.ceil(viewWidth / 61); i++) {
+        const x = (((i * 61 - s.scroll) % viewWidth) + viewWidth) % viewWidth;
         ctx.fillRect(x, GROUND + 8 + (i % 3) * 5, 12, 2);
       }
 
@@ -171,7 +178,7 @@ export default function Runner({ labels }: { labels: RunnerLabels }) {
     }
 
     const ro = new ResizeObserver(() => {
-      ctx = fitCanvas(el, W, H);
+      ctx = fitView(el);
       draw();
     });
     ro.observe(el);
@@ -221,7 +228,8 @@ export default function Runner({ labels }: { labels: RunnerLabels }) {
         className="relative block w-full touch-none select-none overflow-hidden rounded-xl border border-neutral-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy"
         aria-label={phase === "playing" ? "Jump" : phase === "over" ? labels.again : labels.tap}
       >
-        <canvas ref={canvas} className="block h-auto w-full" style={{ aspectRatio: `${W} / ${H}` }} />
+        {/* Match the former 384px panel's canvas height at each screen width. */}
+        <canvas ref={canvas} className="block w-full" style={{ height: "calc(min(100vw - 74px, 342px) / 3)" }} />
         {phase !== "playing" && (
           <span className="absolute inset-0 flex flex-col items-center justify-center gap-1 bg-white/70 text-navy">
             {phase === "over" && <span className="text-sm font-extrabold">{labels.over}</span>}

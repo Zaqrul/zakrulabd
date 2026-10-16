@@ -59,8 +59,9 @@ const csp = [
   "style-src 'self' 'unsafe-inline' https://*.tawk.to",
   "img-src 'self' data: blob: https://www.googletagmanager.com https://*.google-analytics.com https://*.tawk.to",
   "font-src 'self' data: https://*.tawk.to",
-  // GA4 beacons, Tawk's websocket for live messages, Vercel Speed Insights.
-  "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.tawk.to wss://*.tawk.to https://vitals.vercel-insights.com",
+  // GA4 beacons, Tawk's websocket for live messages, Vercel Speed Insights,
+  // Supabase (accounts, saved scores, live visitor count).
+  "connect-src 'self' https://*.google-analytics.com https://*.analytics.google.com https://*.googletagmanager.com https://*.tawk.to wss://*.tawk.to https://vitals.vercel-insights.com https://*.supabase.co wss://*.supabase.co",
   "frame-src 'self' https://*.tawk.to",
   "frame-ancestors 'self'",
   "base-uri 'self'",

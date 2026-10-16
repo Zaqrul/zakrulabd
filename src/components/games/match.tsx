@@ -214,7 +214,7 @@ export default function Match({ labels }: { labels: MatchLabels }) {
                 /* Pointer taps are handled on release; this is for the keyboard. */
                 if (e.detail === 0) tap(t);
               }}
-              className="absolute touch-none p-[5%] focus-visible:outline-none"
+              className="absolute touch-none p-[2%] focus-visible:outline-none"
               style={{
                 width: `${100 / COLS}%`,
                 height: `${100 / ROWS}%`,
