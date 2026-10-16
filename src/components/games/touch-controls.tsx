@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useSyncExternalStore } from "react";
+import { useEffect, useRef, useState, useSyncExternalStore } from "react";
 import { stickFrom } from "./joystick-math";
 
 function useMedia(query: string) {
@@ -15,12 +15,12 @@ function useMedia(query: string) {
   );
 }
 
-/* Whether the player is on a phone or a tablet, where a finger is the main pointer and the
+/* Whether the device has a touch screen (a phone or a tablet, or a laptop with one), where the
    joystick belongs, and whether it is held upright. Upright, the controls go under the game;
    on its side the game takes the whole screen and they sit over its corners. Anywhere with
-   a mouse or a trackpad this says no, and nothing is drawn. */
+   a mouse or a trackpad and no touch screen this says no, and nothing is drawn. */
 export function useTouchPad() {
-  const touch = useMedia("(pointer: coarse)");
+  const touch = useMedia("(any-pointer: coarse)");
   const portrait = useMedia("(orientation: portrait)");
   return { touch, portrait };
 }
@@ -32,18 +32,37 @@ export function Joystick({
   label,
   size = 124,
   glass = false,
+  disabled = false,
   onChange,
   className = "",
 }: {
   label: string;
   size?: number;
   glass?: boolean;
+  disabled?: boolean;
   onChange: (x: number, y: number) => void;
   className?: string;
 }) {
   const base = useRef<HTMLDivElement>(null);
   const finger = useRef<number | null>(null);
   const [knob, setKnob] = useState({ x: 0, y: 0 });
+  const change = useRef(onChange);
+  useEffect(() => { change.current = onChange; }, [onChange]);
+  useEffect(() => {
+    const reset = () => {
+      finger.current = null;
+      setKnob({ x: 0, y: 0 });
+      change.current(0, 0);
+    };
+    const hidden = () => { if (document.hidden) reset(); };
+    window.addEventListener("blur", reset);
+    document.addEventListener("visibilitychange", hidden);
+    return () => {
+      window.removeEventListener("blur", reset);
+      document.removeEventListener("visibilitychange", hidden);
+      change.current(0, 0);
+    };
+  }, []);
   const knobSize = Math.round(size * 0.42);
   const radius = (size - knobSize) / 2;
 
@@ -51,7 +70,7 @@ export function Joystick({
     const el = base.current;
     if (!el) return;
     const r = el.getBoundingClientRect();
-    const v = stickFrom(e.clientX - (r.left + r.width / 2), e.clientY - (r.top + r.height / 2), radius);
+    const v = stickFrom((e.clientX - (r.left + r.width / 2)) * size / r.width, (e.clientY - (r.top + r.height / 2)) * size / r.height, radius);
     setKnob({ x: v.kx, y: v.ky });
     onChange(v.x, v.y);
   }
@@ -67,6 +86,7 @@ export function Joystick({
       ref={base}
       role="group"
       aria-label={label}
+      aria-disabled={disabled}
       style={{ width: size, height: size }}
       className={`relative shrink-0 touch-none select-none rounded-full ${
         glass ? "bg-navy/35 ring-2 ring-white/40" : "bg-navy/90 ring-2 ring-amber-400/40"
@@ -74,7 +94,7 @@ export function Joystick({
       onPointerDown={(e) => {
         e.preventDefault();
         e.stopPropagation();
-        if (finger.current !== null) return;
+        if (disabled || e.button !== 0 || finger.current !== null) return;
         finger.current = e.pointerId;
         e.currentTarget.setPointerCapture?.(e.pointerId);
         follow(e);

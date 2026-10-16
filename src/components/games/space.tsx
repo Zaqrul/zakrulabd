@@ -181,6 +181,24 @@ export default function Space({
   const joy = useRef({ x: 0, y: 0 });
   const bombQueued = useRef(false);
   const nukeQueued = useRef(false);
+  const moveSurface = useRef<HTMLDivElement>(null);
+  const queueMove = useCallback((x: number, y: number) => {
+    pending.current.x = Math.max(-24, Math.min(24, pending.current.x + x));
+    pending.current.y = Math.max(-24, Math.min(24, pending.current.y + y));
+  }, []);
+  useEffect(() => {
+    const surface = moveSurface.current;
+    if (!surface) return;
+    const wheel = (e: WheelEvent) => {
+      if (modeRef.current !== "play" || world.current.phase === "launch" || e.ctrlKey || e.metaKey || e.target !== canvas.current) return;
+      e.preventDefault();
+      const rect = surface.getBoundingClientRect();
+      const unit = e.deltaMode === 1 ? 16 : e.deltaMode === 2 ? rect.height : 1;
+      queueMove(e.deltaX * unit * W / rect.width, e.deltaY * unit * H / rect.height);
+    };
+    surface.addEventListener("wheel", wheel, { passive: false });
+    return () => surface.removeEventListener("wheel", wheel);
+  }, [queueMove]);
   const labelsRef = useRef(labels);
   const langRef = useRef(lang);
   /* Where this player's run is kept: under their name, under nothing at all where there are
@@ -595,7 +613,7 @@ export default function Space({
   const SpeakerIcon = line ? SPEAKER_ICON[line.who] : null;
   const canPause = mode === "play" || mode === "paused";
   const onJoystick = (x: number, y: number) => {
-    joy.current = { x, y };
+    joy.current = modeRef.current === "play" ? { x, y } : { x: 0, y: 0 };
   };
   const onBomb = () => {
     if (modeRef.current === "play") bombQueued.current = true;
@@ -616,28 +634,35 @@ export default function Space({
       </div>
 
       <div
+        ref={moveSurface}
         className="relative mx-auto w-full touch-none select-none overflow-hidden rounded-xl border border-neutral-200 bg-[#0b1330]"
         style={{ maxWidth: touch && !portrait ? "max(200px, calc((100dvh - 150px) * 16 / 9))" : "max(200px, calc((100dvh - 240px) * 16 / 9))" }}
         onPointerDown={(e) => {
-          /* On a phone the joystick flies the ship; a touch on the game is not a drag. */
-          if (modeRef.current !== "play" || touch) return;
+          if (modeRef.current !== "play" || world.current.phase === "launch" || e.button !== 0 || drag.current || e.target !== canvas.current) return;
+          e.preventDefault();
           drag.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
           e.currentTarget.setPointerCapture?.(e.pointerId);
         }}
         onPointerMove={(e) => {
           const d = drag.current;
-          if (!d || d.id !== e.pointerId) return;
+          if (!d || d.id !== e.pointerId || modeRef.current !== "play") return;
           const scale = W / e.currentTarget.getBoundingClientRect().width;
-          pending.current.x += (e.clientX - d.x) * scale;
-          pending.current.y += (e.clientY - d.y) * scale;
+          queueMove((e.clientX - d.x) * scale, (e.clientY - d.y) * scale);
           d.x = e.clientX;
           d.y = e.clientY;
         }}
-        onPointerUp={() => {
-          drag.current = null;
+        onPointerUp={(e) => {
+          if (drag.current?.id === e.pointerId) drag.current = null;
         }}
-        onPointerCancel={() => {
+        onPointerCancel={(e) => {
+          if (drag.current?.id !== e.pointerId) return;
           drag.current = null;
+          pending.current = { x: 0, y: 0 };
+        }}
+        onLostPointerCapture={(e) => {
+          if (drag.current?.id !== e.pointerId) return;
+          drag.current = null;
+          pending.current = { x: 0, y: 0 };
         }}
       >
         <canvas ref={canvas} className="block h-auto w-full" style={{ aspectRatio: `${W} / ${H}` }} />
@@ -929,7 +954,7 @@ function TouchControls({
   if (over) {
     return (
       <>
-        <Joystick label={labels.joystick} size={96} glass onChange={onJoystick} className="absolute bottom-2 left-3" />
+        <Joystick key={mode} disabled={!playing} label={labels.joystick} size={96} glass onChange={onJoystick} className="absolute bottom-2 left-3" />
         <div className="absolute bottom-3 right-3 flex gap-2.5">{buttons}</div>
         <div className="absolute right-3 top-8">{pause}</div>
       </>
@@ -937,7 +962,7 @@ function TouchControls({
   }
   return (
     <div className="flex items-center justify-between gap-3 px-1 pb-1">
-      <Joystick label={labels.joystick} size={132} onChange={onJoystick} />
+      <Joystick key={mode} disabled={!playing} label={labels.joystick} size={132} onChange={onJoystick} />
       <div className="flex flex-col items-end gap-3">
         {pause}
         <div className="flex gap-3">{buttons}</div>
