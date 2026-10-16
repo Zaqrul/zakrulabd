@@ -3,6 +3,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { TbArrowBigLeft, TbArrowBigRight, TbArrowBigUp } from "react-icons/tb";
 import { AMBER, NAVY, fitCanvas, isTyping, loadBest, saveBest } from "./shared";
+import { runKeys } from "./joystick-math";
+import { Joystick, useTouchPad } from "./touch-controls";
 import {
   GROUND,
   PH,
@@ -28,6 +30,9 @@ export type TrapLabels = {
   checkpoint: string;
   areas: string[];
   hint: string;
+  /* What the hint says on a phone or a tablet, and what the joystick is called. */
+  touchHint: string;
+  joystick: string;
   deaths: string;
   best: string;
   won: string;
@@ -48,6 +53,7 @@ type Mode = "ready" | "play" | "won";
 export default function Trap({ labels }: { labels: TrapLabels }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const [mode, setMode] = useState<Mode>("ready");
+  const { touch: onTouch, portrait } = useTouchPad();
   const [deaths, setDeaths] = useState(0);
   const [message, setMessage] = useState("");
   const [best, setBest] = useState(0);
@@ -209,6 +215,19 @@ export default function Trap({ labels }: { labels: TrapLabels }) {
     [start],
   );
 
+  /* The joystick's sideways push is running left or right. */
+  const steer = useCallback(
+    (x: number) => {
+      const k = runKeys(x);
+      if ((k.left || k.right) && modeRef.current === "ready") start();
+      touch.current.left = k.left;
+      touch.current.right = k.right;
+    },
+    [start],
+  );
+
+  const round =
+    "flex touch-none select-none items-center justify-center rounded-full text-amber-400 shadow-md transition-colors active:bg-amber-400 active:text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy";
   const pad =
     "flex h-12 flex-1 touch-none select-none items-center justify-center rounded-2xl bg-navy/90 text-amber-400 transition-colors active:bg-amber-400 active:text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy";
 
@@ -223,7 +242,7 @@ export default function Trap({ labels }: { labels: TrapLabels }) {
         <div className="h-full rounded-full bg-amber-400 transition-[width] duration-150 motion-reduce:transition-none" style={{ width: `${progress}%` }} />
       </div>
 
-      <div className="relative mx-auto w-full overflow-hidden rounded-xl border border-neutral-200" style={{ maxWidth: "max(192px, calc((100dvh - 264px) * 2))" }} onPointerDown={() => mode === "ready" && start()}>
+      <div className="relative mx-auto w-full overflow-hidden rounded-xl border border-neutral-200" style={{ maxWidth: onTouch && !portrait ? "max(192px, calc((100dvh - 150px) * 2))" : "max(192px, calc((100dvh - 264px) * 2))" }} onPointerDown={() => mode === "ready" && start()}>
         <canvas ref={canvas} className="block h-auto w-full" style={{ aspectRatio: `${VIEW_W} / ${VIEW_H}` }} />
 
         {mode === "ready" && (
@@ -252,6 +271,14 @@ export default function Trap({ labels }: { labels: TrapLabels }) {
             </button>
           </div>
         )}
+        {onTouch && !portrait && (
+          <>
+            <Joystick label={labels.joystick} size={96} glass onChange={(x) => steer(x)} className="absolute bottom-2 left-3" />
+            <Pad name="jump" label={labels.jump} className={`${round} absolute bottom-3 right-3 h-14 w-14 bg-navy/80`} onPress={press}>
+              <TbArrowBigUp aria-hidden="true" className="h-7 w-7" />
+            </Pad>
+          </>
+        )}
         {mode === "play" && message && (
           <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 bottom-0 hidden bg-white/90 px-1 py-0.5 text-center text-[10px] font-semibold text-navy [@media(max-height:500px)]:block">{message}</div>
         )}
@@ -259,18 +286,28 @@ export default function Trap({ labels }: { labels: TrapLabels }) {
 
       <p role="status" aria-live="polite" className="min-h-8 text-center text-[11.5px] font-semibold leading-4 text-neutral-500 [@media(max-height:500px)]:sr-only">{message}</p>
 
-      <div className="flex gap-2">
-        <Pad name="left" label={labels.left} className={pad} onPress={press}>
-          <TbArrowBigLeft aria-hidden="true" className="h-6 w-6" />
-        </Pad>
-        <Pad name="right" label={labels.right} className={pad} onPress={press}>
-          <TbArrowBigRight aria-hidden="true" className="h-6 w-6" />
-        </Pad>
-        <Pad name="jump" label={labels.jump} className={`${pad} flex-[1.4]`} onPress={press}>
-          <TbArrowBigUp aria-hidden="true" className="h-6 w-6" />
-        </Pad>
-      </div>
-      <p className="text-center text-[11px] leading-4 text-neutral-500 [@media(max-height:500px)]:hidden">{labels.hint}</p>
+      {onTouch && portrait && (
+        <div className="flex items-center justify-between gap-3 px-1 pb-1">
+          <Joystick label={labels.joystick} size={124} onChange={(x) => steer(x)} />
+          <Pad name="jump" label={labels.jump} className={`${round} h-20 w-20 bg-navy`} onPress={press}>
+            <TbArrowBigUp aria-hidden="true" className="h-8 w-8" />
+          </Pad>
+        </div>
+      )}
+      {!onTouch && (
+        <div className="flex gap-2">
+          <Pad name="left" label={labels.left} className={pad} onPress={press}>
+            <TbArrowBigLeft aria-hidden="true" className="h-6 w-6" />
+          </Pad>
+          <Pad name="right" label={labels.right} className={pad} onPress={press}>
+            <TbArrowBigRight aria-hidden="true" className="h-6 w-6" />
+          </Pad>
+          <Pad name="jump" label={labels.jump} className={`${pad} flex-[1.4]`} onPress={press}>
+            <TbArrowBigUp aria-hidden="true" className="h-6 w-6" />
+          </Pad>
+        </div>
+      )}
+      <p className="text-center text-[11px] leading-4 text-neutral-500 [@media(max-height:500px)]:hidden">{onTouch ? labels.touchHint : labels.hint}</p>
     </div>
   );
 }

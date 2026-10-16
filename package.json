@@ -7,6 +7,7 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
+    "test:touch": "node --experimental-strip-types --test tests/joystick.test.mjs",
     "test:trap": "node --experimental-strip-types --test tests/trap-logic.test.mjs",
     "test:space": "node --experimental-strip-types --test tests/space-ship.test.mjs tests/space-combat.test.mjs tests/space-progress.test.mjs"
   },

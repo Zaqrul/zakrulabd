@@ -16,6 +16,7 @@ import {
 import { AMBER, fitCanvas, isTyping, loadBest, saveBest } from "./shared";
 import { furthest, loadSaved, parseProgress, saveSaved, stashGuest, type Progress } from "./space-progress";
 import { pullProgress, pushProgress } from "@/lib/account";
+import { Joystick, useTouchPad } from "./touch-controls";
 import {
   drawBackdrop,
   drawHangar,
@@ -65,6 +66,9 @@ export type SpaceLabels = {
   bomb: string;
   nuke: string;
   hint: string;
+  /* What the hint says on a phone or a tablet, and what the joystick is called. */
+  touchHint: string;
+  joystick: string;
   help: string;
   guide: string;
   chapterName: (n: number) => string;
@@ -151,6 +155,7 @@ export default function Space({
   const canvas = useRef<HTMLCanvasElement>(null);
   const preview = useRef<HTMLCanvasElement>(null);
   const [mode, setMode] = useState<Mode>("ready");
+  const { touch, portrait } = useTouchPad();
   const [chapter, setChapter] = useState(1);
   const [score, setScore] = useState(0);
   const [bombs, setBombs] = useState(2);
@@ -172,6 +177,8 @@ export default function Space({
   const keys = useRef({ up: false, down: false, left: false, right: false, bomb: false, nuke: false });
   const drag = useRef<{ x: number; y: number; id: number } | null>(null);
   const pending = useRef({ x: 0, y: 0 });
+  /* Where the joystick is pushed, each way from -1 to 1. */
+  const joy = useRef({ x: 0, y: 0 });
   const bombQueued = useRef(false);
   const nukeQueued = useRef(false);
   const labelsRef = useRef(labels);
@@ -247,6 +254,7 @@ export default function Space({
     keys.current = { up: false, down: false, left: false, right: false, bomb: false, nuke: false };
     drag.current = null;
     pending.current = { x: 0, y: 0 };
+    joy.current = { x: 0, y: 0 };
     bombQueued.current = false;
     nukeQueued.current = false;
   }, []);
@@ -432,8 +440,8 @@ export default function Space({
           pending.current.x -= px;
           pending.current.y -= py;
           if (flying) {
-            mx += px;
-            my += py;
+            mx += px + joy.current.x * 2.7;
+            my += py + joy.current.y * 2.7;
           }
           const bomb = flying && (k.bomb || bombQueued.current);
           const nuke = flying && (k.nuke || nukeQueued.current);
@@ -586,6 +594,16 @@ export default function Space({
   const who = line ? SPEAKERS[line.who] : null;
   const SpeakerIcon = line ? SPEAKER_ICON[line.who] : null;
   const canPause = mode === "play" || mode === "paused";
+  const onJoystick = (x: number, y: number) => {
+    joy.current = { x, y };
+  };
+  const onBomb = () => {
+    if (modeRef.current === "play") bombQueued.current = true;
+  };
+  const onNuke = () => {
+    if (modeRef.current === "play") nukeQueued.current = true;
+  };
+  const onPause = () => (mode === "paused" ? resume() : pause());
   /* Before a run starts, the header shows where Continue would pick up. */
   const offer = mode === "ready" ? saved : null;
 
@@ -599,9 +617,10 @@ export default function Space({
 
       <div
         className="relative mx-auto w-full touch-none select-none overflow-hidden rounded-xl border border-neutral-200 bg-[#0b1330]"
-        style={{ maxWidth: "max(200px, calc((100dvh - 240px) * 16 / 9))" }}
+        style={{ maxWidth: touch && !portrait ? "max(200px, calc((100dvh - 150px) * 16 / 9))" : "max(200px, calc((100dvh - 240px) * 16 / 9))" }}
         onPointerDown={(e) => {
-          if (modeRef.current !== "play") return;
+          /* On a phone the joystick flies the ship; a touch on the game is not a drag. */
+          if (modeRef.current !== "play" || touch) return;
           drag.current = { x: e.clientX, y: e.clientY, id: e.pointerId };
           e.currentTarget.setPointerCapture?.(e.pointerId);
         }}
@@ -622,6 +641,21 @@ export default function Space({
         }}
       >
         <canvas ref={canvas} className="block h-auto w-full" style={{ aspectRatio: `${W} / ${H}` }} />
+
+        {touch && !portrait && mode === "play" && (
+          <TouchControls
+            variant="over"
+            labels={labels}
+            bombs={bombs}
+            nukes={nukes}
+            mode={mode}
+            canPause={canPause}
+            onJoystick={onJoystick}
+            onBomb={onBomb}
+            onNuke={onNuke}
+            onPause={onPause}
+          />
+        )}
 
         {mode === "talk" && line && who && SpeakerIcon && (
           <div className="absolute inset-x-0 bottom-0 cursor-pointer p-1.5 sm:p-2" onPointerDown={advance}>
@@ -759,7 +793,23 @@ export default function Space({
         )}
       </div>
 
-      <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1">
+      {touch && portrait && (
+        <TouchControls
+          variant="below"
+          labels={labels}
+          bombs={bombs}
+          nukes={nukes}
+          mode={mode}
+          canPause={canPause}
+          onJoystick={onJoystick}
+          onBomb={onBomb}
+          onNuke={onNuke}
+          onPause={onPause}
+        />
+      )}
+
+      <div className={touch ? "flex flex-col gap-1" : "grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1"}>
+        {!touch && (
         <div className="row-span-2 flex gap-2 self-start">
           <button
             type="button"
@@ -794,11 +844,103 @@ export default function Space({
             {mode === "paused" ? <TbPlayerPlayFilled className="h-4.5 w-4.5" /> : <TbPlayerPauseFilled className="h-4.5 w-4.5" />}
           </button>
         </div>
-        <p className="text-[12px] font-semibold leading-snug text-neutral-500">{labels.hint}</p>
+        )}
+        <p className="text-[12px] font-semibold leading-snug text-neutral-500">{touch ? labels.touchHint : labels.hint}</p>
         <details className="col-start-2 text-[12px] leading-relaxed text-neutral-600">
           <summary className="w-fit cursor-pointer rounded-md py-0.5 font-bold text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy">{labels.help}</summary>
           <p className="pt-2">{labels.guide}</p>
         </details>
+      </div>
+    </div>
+  );
+}
+
+/* The joystick and the buttons for a phone or a tablet. Held upright they sit in a row under
+   the game; on its side the game fills the screen and they sit over its corners. */
+function TouchControls({
+  variant,
+  labels,
+  bombs,
+  nukes,
+  mode,
+  canPause,
+  onJoystick,
+  onBomb,
+  onNuke,
+  onPause,
+}: {
+  variant: "below" | "over";
+  labels: SpaceLabels;
+  bombs: number;
+  nukes: number;
+  mode: Mode;
+  canPause: boolean;
+  onJoystick: (x: number, y: number) => void;
+  onBomb: () => void;
+  onNuke: () => void;
+  onPause: () => void;
+}) {
+  const over = variant === "over";
+  const playing = mode === "play";
+  const round = `flex touch-none select-none flex-col items-center justify-center rounded-full text-[10px] font-extrabold leading-tight shadow-md transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy ${over ? "h-12 w-12" : "h-16 w-16"}`;
+  const press = (fn: () => void) => (e: React.PointerEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    fn();
+  };
+  const buttons = (
+    <>
+      <button
+        type="button"
+        aria-label={labels.bomb}
+        disabled={!playing || bombs <= 0}
+        onPointerDown={press(onBomb)}
+        className={`${round} ${over ? "bg-navy/80" : "bg-navy"} text-amber-400 active:bg-amber-400 active:text-navy`}
+      >
+        <span>{labels.bomb}</span>
+        <span className="tabular-nums">×{bombs}</span>
+      </button>
+      <button
+        type="button"
+        aria-label={labels.nuke}
+        disabled={!playing || nukes <= 0}
+        onPointerDown={press(onNuke)}
+        className={`${round} ${over ? "bg-red-600/85" : "bg-red-600"} text-white active:bg-amber-400 active:text-navy`}
+      >
+        <span>{labels.nuke}</span>
+        <span className="tabular-nums">×{nukes}</span>
+      </button>
+    </>
+  );
+  const pause = (
+    <button
+      type="button"
+      onClick={onPause}
+      disabled={!canPause}
+      aria-label={mode === "paused" ? labels.resume : labels.pause}
+      className={`flex items-center justify-center rounded-full border text-navy transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy ${
+        over ? "h-9 w-9 border-white/50 bg-white/60" : "h-10 w-10 border-neutral-300 bg-white"
+      }`}
+    >
+      {mode === "paused" ? <TbPlayerPlayFilled className="h-4.5 w-4.5" /> : <TbPlayerPauseFilled className="h-4.5 w-4.5" />}
+    </button>
+  );
+
+  if (over) {
+    return (
+      <>
+        <Joystick label={labels.joystick} size={96} glass onChange={onJoystick} className="absolute bottom-2 left-3" />
+        <div className="absolute bottom-3 right-3 flex gap-2.5">{buttons}</div>
+        <div className="absolute right-3 top-8">{pause}</div>
+      </>
+    );
+  }
+  return (
+    <div className="flex items-center justify-between gap-3 px-1 pb-1">
+      <Joystick label={labels.joystick} size={132} onChange={onJoystick} />
+      <div className="flex flex-col items-end gap-3">
+        {pause}
+        <div className="flex gap-3">{buttons}</div>
       </div>
     </div>
   );
