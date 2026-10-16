@@ -30,7 +30,6 @@ import {
   CHAPTERS,
   CLEAR,
   FINAL_PHASE_AT,
-  FORM_HP,
   H,
   LEVEL_AT,
   MAX_LEVEL,
@@ -894,7 +893,7 @@ function draw(ctx: CanvasRenderingContext2D, s: State, labels: SpaceLabels, mode
     ctx.font = loud ? `800 24px ${font}` : `800 18px ${font}`;
     ctx.fillStyle = "rgb(0 0 0 / 0.55)";
     ctx.fillText(labels.callouts[c.kind], W / 2 + 1.5, 72 + 1.5);
-    ctx.fillStyle = loud ? (f % 10 < 5 ? "#ff4d4d" : "#ffd24d") : ["levelup", "hypersonic", "mechshield", "launcher", "repair", "hq"].includes(c.kind) ? "#fde047" : c.kind === "phase" ? "#fdba74" : c.kind === "downgrade" ? "#fb7185" : "#7dd3fc";
+    ctx.fillStyle = loud ? (f % 10 < 5 ? "#ff4d4d" : "#ffd24d") : ["levelup", "hypersonic", "mechshield", "launcher", "repair", "hq"].includes(c.kind) ? "#fde047" : c.kind === "phase" ? "#fdba74" : "#7dd3fc";
     ctx.fillText(labels.callouts[c.kind], W / 2, 72);
     /* The boss's name under its warning. */
     if (c.kind === "warning" && s.bossId !== 0) {
@@ -953,10 +952,9 @@ function draw(ctx: CanvasRenderingContext2D, s: State, labels: SpaceLabels, mode
   ctx.restore();
 }
 
-/* Two health bars and a small shield. On top is the upgrade bar, with a stretch for every
-   level above the first, in the colour of the upgrade that level brought; when a stretch
-   runs out the ship loses that level. Under it is the ship's own health bar, ticked every
-   twenty points, and under that the small shield bar. Returns how wide the bars are. */
+/* The ship's health bar, ticked every twenty points, with the small shield bar under it and,
+   above it, a row of pips: one for each level above the first, in the colour of the upgrade
+   that level brought. Being hit never takes a pip away. Returns how wide the bars are. */
 function drawLife(ctx: CanvasRenderingContext2D, s: State, font: string) {
   const p = s.p;
   const max = maxLife(p);
@@ -969,11 +967,8 @@ function drawLife(ctx: CanvasRenderingContext2D, s: State, font: string) {
     ctx.fillRect(x0, 3.2, 26, 3.2);
   }
   for (let i = 0; i < stretches; i++) {
-    const left = Math.max(0, Math.min(FORM_HP, p.form - i * FORM_HP));
-    ctx.fillStyle = "rgb(255 255 255 / 0.14)";
-    ctx.fillRect(x0 + i * gap, 3.2, gap - 0.8, 3.2);
     ctx.fillStyle = levelColor(i + 2);
-    ctx.fillRect(x0 + i * gap, 3.2, (gap - 0.8) * (left / FORM_HP), 3.2);
+    ctx.fillRect(x0 + i * gap, 3.2, gap - 0.8, 3.2);
   }
   ctx.fillStyle = "rgb(255 255 255 / 0.14)";
   ctx.fillRect(x0, 7.6, length, 6);

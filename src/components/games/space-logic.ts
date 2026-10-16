@@ -49,19 +49,17 @@ export const UPGRADE_AT: Record<Upgrade, number> = { torpedo: 1, hypersonic: 2, 
 export const TWIN_AT = 4;
 
 /* Health. The ship has a small shield and, under it, its own health bar of MAX_HP
-   points (LIFE.perLevel more for each level). A hit takes LIFE.hit: from the shield
-   first, then from the upgrade bar, which has a stretch of FORM_HP for every level above
-   the first, and only then from the ship's own bar. When a stretch of the upgrade bar is
-   used up the ship loses a level, with the upgrade that level brought, and changes shape
-   back. Nothing mends the ship by itself until it has the self-repair upgrade (level 5):
-   then, once CALM frames (six seconds) have passed without a hit, all three bars mend a
-   little every frame, as in SHIELD and HEAL. Before that only a life crate (LIFE.heal), a
-   level gained, a new chapter or a retry puts the bars back. From level 4 the shield is
-   SHIELD.perLevel bigger for each level. */
+   points (LIFE.perLevel more for each level). A hit takes LIFE.hit: from the shield first
+   and then from the health bar, and from nothing else: a ship that is hit loses health and
+   never a level or an upgrade. Nothing mends the ship by itself until it has the
+   self-repair upgrade (level 5): then, once CALM frames (six seconds) have passed without a
+   hit, the shield and the health mend a little every frame, as in SHIELD and HEAL. Before
+   that only a life crate (LIFE.heal), a level gained, a new chapter or a retry puts them
+   back. From level 4 the shield is SHIELD.perLevel bigger for each level. */
 export const LIFE = { perLevel: 10, hit: 20, heal: 20 };
 export const SHIELD = { base: 20, perLevel: 5, regen: 0.15 };
 export const CALM = 360;
-export const HEAL = { life: 0.06, form: 0.06 };
+export const HEAL = { life: 0.06 };
 
 /* The upgrades. Torpedo: a launcher under the hull that never runs out of torpedoes;
    twin: a second one on top, firing faster and harder. Hypersonic: the ship flies faster
@@ -89,9 +87,6 @@ export const BLASTER = { speed: 4.8, cooldown: 12 };
 export const ARMOR = { reduction: 0.3, defense: 0.1 };
 /* Frames the ship's change of shape lasts, for the drawing. */
 export const MORPH = 48;
-
-/* How much of the upgrade bar each level above the first has. */
-export const FORM_HP = 30;
 
 /* The bombs: one throw is ten of them, fanned out ahead of the ship. Each comes to rest
    and goes off `fuse` frames after it was thrown (three seconds), hurting everything
@@ -135,8 +130,6 @@ export const hasUpgrade = (p: { level: number }, u: Upgrade) => p.level >= UPGRA
 export const maxLife = (p: Equipped) => Math.round(maxHpFor(p.level) * (hasUpgrade(p, "armor") ? 1 + ARMOR.defense : 1));
 export const maxShield = (p: Equipped) =>
   Math.round((SHIELD.base + SHIELD.perLevel * Math.max(0, p.level - 3)) * (hasUpgrade(p, "armor") ? 1 + ARMOR.defense : 1));
-/* The size of the upgrade bar: a stretch for every level above the first. */
-export const formMax = (p: Equipped) => FORM_HP * (p.level - 1);
 export const shipScale = (level: number) => 0.85 * (1 + 0.2 * (Math.min(level, 3) - 1));
 export const shipSize = (level: number) => ({
   w: PLAYER_W * shipScale(level),
@@ -277,7 +270,7 @@ export type Input = { mx: number; my: number; bomb: boolean; nuke?: boolean };
 
 export type Phase = "launch" | "play" | "clear" | "dead" | "won";
 
-export type Callout = "shield" | "armor" | "overload" | "levelup" | "phase" | "warning" | "c4" | "downgrade" | "hypersonic" | "mechshield" | "launcher" | "repair" | "hq";
+export type Callout = "shield" | "armor" | "overload" | "levelup" | "phase" | "warning" | "c4" | "hypersonic" | "mechshield" | "launcher" | "repair" | "hq";
 
 /* A C4 charge the last boss throws in its final phase. t counts from its launch
    (below zero it is still waiting in the bay); it flies from (sx, sy) to (tx, ty),
@@ -335,9 +328,8 @@ export type State = {
     shield: number;
     calm: number;
     shieldFlash: number;
-    /* What is left of the upgrade bar, the frames left of the ship changing shape, the
-       nuclear warheads still to use, and the frames left of a katana swing. */
-    form: number;
+    /* The frames left of the ship changing shape, the nuclear warheads still to use, and the
+       frames left of a katana swing. */
     morph: number;
     nukes: number;
     slashT: number;
@@ -717,7 +709,7 @@ export function createState(chapter = 1, score = 0, weapon = 1, level = 1, extra
     seed: 1234567 + chapter * 977,
     nextId: 1,
     planIdx: 0,
-    p: { x: pose.x, y: launchShipY(level), hp: 0, inv: 0, weapon, gun: "blaster", ammo: 0, bombs: 2, cd: 0, bombT: 0, level, extra, launchCd: 0, tilt: 0, swap: 0, chill: 0, shield: 0, calm: 0, shieldFlash: 0, form: 0, morph: 0, nukes: NUKE.count + (level >= MAX_LEVEL ? 1 : 0), slashT: 0 },
+    p: { x: pose.x, y: launchShipY(level), hp: 0, inv: 0, weapon, gun: "blaster", ammo: 0, bombs: 2, cd: 0, bombT: 0, level, extra, launchCd: 0, tilt: 0, swap: 0, chill: 0, shield: 0, calm: 0, shieldFlash: 0, morph: 0, nukes: NUKE.count + (level >= MAX_LEVEL ? 1 : 0), slashT: 0 },
     enemies: [],
     bullets: [],
     beams: [],
@@ -752,7 +744,6 @@ export function createState(chapter = 1, score = 0, weapon = 1, level = 1, extra
   };
   state.p.hp = maxLife(state.p);
   state.p.shield = maxShield(state.p);
-  state.p.form = formMax(state.p);
   return state;
 }
 
@@ -1046,7 +1037,6 @@ function addExtra(s: State) {
   p.extra += 1;
   while (p.level < MAX_LEVEL && p.extra >= LEVEL_AT[p.level]) {
     p.level += 1;
-    p.form += FORM_HP;
     p.hp = maxLife(p);
     p.shield = maxShield(p);
     if (p.level === MAX_LEVEL) p.nukes += 1;
@@ -1062,26 +1052,9 @@ function addExtra(s: State) {
   }
 }
 
-/* When a stretch of the upgrade bar is used up the ship loses a level, and with it the
-   upgrade that level brought: its shape changes back, the bars the armour had lengthened
-   shrink, and the gold hearts it had are gone, so the next level has to be earned again. */
-function downgrade(s: State) {
-  const p = s.p;
-  const before = p.level;
-  while (p.level > 1 && p.form <= FORM_HP * (p.level - 2)) p.level -= 1;
-  if (p.level === before) return;
-  p.extra = LEVEL_AT[p.level - 1];
-  p.form = Math.max(0, Math.min(p.form, formMax(p)));
-  p.hp = Math.min(p.hp, maxLife(p));
-  p.shield = Math.min(p.shield, maxShield(p));
-  p.morph = MORPH;
-  s.shake = 16;
-  setCallout(s, "downgrade");
-}
-
 /* Returns whether the ship was actually hurt (it is not while it is flashing). A hit
-   takes LIFE.hit, less with the armour; the shield takes it first, then the upgrade
-   bar, and then the ship's own health. */
+   takes LIFE.hit, less with the armour; the shield takes it first and then the ship's own
+   health, and nothing else is touched: no upgrade and no level is ever lost. */
 function hurtPlayer(s: State, amount = LIFE.hit): boolean {
   const p = s.p;
   if (p.inv > 0 || s.phase !== "play") return false;
@@ -1095,15 +1068,7 @@ function hurtPlayer(s: State, amount = LIFE.hit): boolean {
     p.shieldFlash = 24;
     dmg -= soaked;
   }
-  if (dmg > 0) {
-    if (p.level > 1) {
-      const taken = Math.min(p.form, dmg);
-      p.form -= taken;
-      dmg -= taken;
-      downgrade(s);
-    }
-    if (dmg > 0) p.hp -= dmg;
-  }
+  if (dmg > 0) p.hp -= dmg;
   burst(s, p.x + shipSize(p.level).w / 2, p.y + shipSize(p.level).h / 2, false);
   if (p.hp <= 0) {
     p.hp = 0;
@@ -1222,7 +1187,7 @@ function tickWarheads(s: State) {
 
 /* Whether the self-repair is mending something right now, for the drawing. */
 export function isRepairing(p: State["p"]) {
-  return hasUpgrade(p, "repair") && p.calm <= 0 && (p.hp < maxLife(p) || p.form < formMax(p) || p.shield < maxShield(p));
+  return hasUpgrade(p, "repair") && p.calm <= 0 && (p.hp < maxLife(p) || p.shield < maxShield(p));
 }
 
 /* The HQ slides in at level 9 and out if it is lost. Once it is in, each launcher fires in
@@ -2651,12 +2616,11 @@ export function step(s: State, input: Input) {
   if (s.banner > 0) s.banner -= 1;
   if (s.callout && --s.callout.t <= 0) s.callout = null;
   if (p.inv > 0) p.inv -= 1;
-  /* Self-repair (level 5): after CALM frames without a hit the shield, the upgrade bar and
-     the ship's own health mend together. */
+  /* Self-repair (level 5): after CALM frames without a hit the shield and the ship's own
+     health mend together. */
   if (p.calm > 0) p.calm -= 1;
   else if (hasUpgrade(p, "repair")) {
     if (p.shield < maxShield(p)) p.shield = Math.min(maxShield(p), p.shield + SHIELD.regen);
-    if (p.form < formMax(p)) p.form = Math.min(formMax(p), p.form + HEAL.form);
     if (p.hp < maxLife(p)) p.hp = Math.min(maxLife(p), p.hp + HEAL.life);
   }
   if (p.shieldFlash > 0) p.shieldFlash -= 1;
