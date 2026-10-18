@@ -19,6 +19,7 @@ export type Progress = { chapter: number; score: number; weapon: number; level: 
 /* The key before accounts, and the marker a guest leaves on clearing Chapter 1. */
 const LEGACY_KEY = "space-progress-v1";
 const GUEST_KEY = "space-guest-clear-v1";
+const guestKey = (campaign: number) => campaign === 2 ? "space2-guest-clear-v1" : GUEST_KEY;
 export const progressKey = (slot: string, campaign = 1) => (campaign === 2 ? `space2-progress-v1:${slot}` : `space-progress-v2:${slot}`);
 
 /* A run read back from storage or from the account, or null if it is not one. */
@@ -71,14 +72,13 @@ function write(key: string, p: Progress | null) {
    from before accounts, are taken in once: the furthest of them is kept under this name
    and the markers go. */
 export function loadSaved(slot: string, campaign = 1): Progress | null {
-  if (campaign === 2) return read(progressKey(slot, 2), 2);
-  const own = read(progressKey(slot));
-  const waiting = furthest(read(GUEST_KEY), read(LEGACY_KEY));
+  const own = read(progressKey(slot, campaign), campaign);
+  const waiting = furthest(read(guestKey(campaign), campaign), campaign === 1 ? read(LEGACY_KEY) : null);
   const best = furthest(own, waiting);
   if (waiting) {
-    if (best !== own) write(progressKey(slot), best);
-    write(GUEST_KEY, null);
-    write(LEGACY_KEY, null);
+    if (best !== own) write(progressKey(slot, campaign), best);
+    write(guestKey(campaign), null);
+    if (campaign === 1) write(LEGACY_KEY, null);
   }
   return best;
 }
@@ -88,6 +88,6 @@ export function saveSaved(slot: string, p: Progress | null, campaign = 1) {
 }
 
 /* A guest cleared Chapter 1: remembered only so that signing in carries it over. */
-export function stashGuest(p: Progress) {
-  write(GUEST_KEY, p);
+export function stashGuest(p: Progress, campaign = 1) {
+  write(guestKey(campaign), p);
 }

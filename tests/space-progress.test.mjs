@@ -72,6 +72,25 @@ test('what a guest cleared never replaces a run the account already has further 
   assert.deepEqual([...data.keys()], [progressKey('nova')], 'the marker is still cleared');
 });
 
+test('Space 2 trial completion is claimed only after sign-in and stays separate from Space 1', () => {
+  const data = freshStorage();
+  stashGuest(run(2, 700));
+  stashGuest(run(10, 900), 2);
+  assert.equal(data.has(progressKey('nova', 2)), false, 'the trial is not an account save');
+  assert.deepEqual(loadSaved('nova', 2), run(10, 900));
+  assert.equal(loadSaved('rin', 2), null, 'only the first account claims the trial');
+  assert.deepEqual(loadSaved('nova'), run(2, 700), 'Space 1 keeps its own trial');
+  assert.deepEqual([...data.keys()].sort(), [progressKey('nova'), progressKey('nova', 2)].sort());
+});
+
+test('Space 2 trial completion never overwrites a later account save', () => {
+  const data = freshStorage();
+  saveSaved('nova', run(13, 5000), 2);
+  stashGuest(run(10, 900), 2);
+  assert.deepEqual(loadSaved('nova', 2), run(13, 5000));
+  assert.deepEqual([...data.keys()], [progressKey('nova', 2)]);
+});
+
 test('the key from before accounts is taken in too, and the furthest of the old and the new wins', () => {
   const data = freshStorage();
   data.set('space-progress-v1', JSON.stringify(run(4, 2000)));

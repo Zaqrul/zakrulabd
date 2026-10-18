@@ -3,7 +3,6 @@
 import dynamic from "next/dynamic";
 import { useEffect } from "react";
 import type { IconType } from "react-icons";
-import { accountsEnabled } from "@/lib/account";
 import { SPACE2_CHAPTERS, SPACE2_COPY, space2ChapterName } from "@/components/games/space2-copy";
 import { TbPlanet, TbRocket, TbX } from "react-icons/tb";
 
@@ -217,14 +216,12 @@ export function GamePlayer({
   lang,
   game,
   username = null,
-  gated = false,
   onAccount,
 }: {
   lang: "en" | "ms";
   game: GameId;
-  /* Games mount only for a signed-in player; onAccount opens the login panel. */
+  /* Guests can try Chapter 1; onAccount opens registration/login to save or continue. */
   username?: string | null;
-  gated?: boolean;
   onAccount?: () => void;
 }) {
   const t = copy[lang];
@@ -254,7 +251,6 @@ export function GamePlayer({
           campaign={game === "space2" ? 2 : 1}
           lang={lang}
           username={username}
-          gated={gated}
           onAccount={onAccount}
           labels={{
             tap: t.tapSpace,
@@ -350,7 +346,7 @@ export function MiniGames({
       </div>
 
       <div className={`min-h-0 overflow-y-auto overscroll-contain rounded-2xl bg-white ${game === "space" ? "p-1.5" : "p-2.5"}`}>
-        <GamePlayer lang={lang} game={game} username={username} gated={accountsEnabled} onAccount={accountsEnabled ? onAccount : undefined} />
+        <GamePlayer lang={lang} game={game} username={username} onAccount={onAccount} />
       </div>
     </div>
   );

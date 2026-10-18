@@ -532,7 +532,7 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
           </button>
             </>
           ) : (
-            <div className="flex max-w-[calc(100vw-168px)] items-center gap-2 overflow-x-auto py-1 sm:max-w-[60vw]">
+            <div className="flex shrink-0 items-center gap-2 py-1">
             {DECK_GAMES.map((id) => {
               const Icon = gameIcons[id];
               const label = bestText(lang, id, bests[id]);

@@ -339,7 +339,7 @@ export function Arcade({
                       <h3 className="flex-1 truncate text-right font-display text-[17px] font-extrabold">{names[playing]}</h3>
                     </div>
                     <div className="mx-auto w-full max-w-2xl rounded-2xl bg-white p-1.5 text-navy">
-                      <GamePlayer key={playing} lang={lang} game={playing} username={username} gated />
+                      <GamePlayer key={playing} lang={lang} game={playing} username={username} />
                     </div>
                   </section>
                 )}

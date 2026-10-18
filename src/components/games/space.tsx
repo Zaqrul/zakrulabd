@@ -170,7 +170,6 @@ export default function Space({
   labels,
   lang,
   username = null,
-  gated = false,
   onAccount,
   campaign = 1,
 }: {
@@ -178,10 +177,9 @@ export default function Space({
   lang: "en" | "ms";
   /* 1 is Space, 2 is Space 2 (the engine's chapters 9 to 16, its own score and its own save). */
   campaign?: 1 | 2;
-  /* Who is signed in. With `gated` (accounts exist on this site) a guest can fly Chapter 1
-     only and nothing is saved; `onAccount` opens the account panel. */
+  /* Guests can fly Chapter 1 only; an account is required to save or continue.
+     `onAccount` opens registration/login. */
   username?: string | null;
-  gated?: boolean;
   onAccount?: () => void;
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
@@ -239,9 +237,8 @@ export default function Space({
   }, [queueMove]);
   const labelsRef = useRef(labels);
   const langRef = useRef(lang);
-  /* Where this player's run is kept: under their name, under nothing at all where there are
-     no accounts, and nowhere for a guest, who can only fly Chapter 1. */
-  const slot = username ?? (gated ? null : "");
+  /* Only a signed-in player can load or save a run. */
+  const slot = username;
   const locked = slot === null;
   const slotRef = useRef(slot);
   const onAccountRef = useRef(onAccount);
@@ -369,7 +366,7 @@ export default function Space({
           const run = { chapter: s.chapter + 1, score: s.score, weapon: s.p.weapon, level: s.p.level, extra: s.p.extra, chances: chancesRef.current };
           /* A guest saves nothing; the clear is only noted, for the sign-in to pick up. */
           if (slotRef.current === null) {
-            if (campaign === 1) stashGuest(run);
+            stashGuest(run, campaign);
           }
           else keep(run);
           goTo("clear");
