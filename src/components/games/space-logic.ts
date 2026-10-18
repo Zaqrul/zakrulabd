@@ -1,4 +1,4 @@
-﻿/* The rules, enemies and eight chapters of the side-scrolling space shooter, kept
+/* The rules, enemies and eight chapters of the side-scrolling space shooter, kept
    apart from the screen so they can be run by a script. Each chapter starts with
    the ship being launched from a hangar, then flies it through its own place:
    enemies come from the right, each kind moving and attacking in its own way,
@@ -7,6 +7,9 @@
    pods carry weapons with their own ammunition (a machine gun, a spread, a
    piercing laser and straight-running torpedoes); when the ammo runs out the ship goes back
    to its blaster. */
+import { SECOND_PLANS } from "./space2-plans.ts";
+import { PATTERN, SECOND_BOSS_TIMING, SECOND_MINI_TIMING, angleDifference, spacedPositions } from "./space2-attack-patterns.ts";
+
 export const W = 384;
 export const H = 216;
 export const PLAYER_W = 18;
@@ -24,7 +27,7 @@ export const WATER_Y = 178;
 const GROUND_UNITS: string[] = ["tank", "aagun", "bunker", "samsite"];
 const SHIPS: string[] = ["gunboat", "destroyer"];
 /* Big enough that ramming them is not how they die. */
-const HEAVY: string[] = ["cruiser", "destroyer", "bunker"];
+const HEAVY: string[] = ["cruiser", "destroyer", "bunker", "mini9", "mini10", "mini11", "mini12", "mini13", "mini14", "mini15", "mini16"];
 
 /* Gold hearts collect into levels, up to MAX_LEVEL, and slowly: only a gold heart counts
    (a life crate just mends health), the hearts are a matter of luck (see UPGRADE_LUCK), and
@@ -40,7 +43,7 @@ const HEAVY: string[] = ["cruiser", "destroyer", "bunker"];
    first three levels and stays that size after. */
 export const MAX_LEVEL = 10;
 export const LEVEL_AT = [0, 1, 3, 6, 10, 15, 21, 28, 36, 45];
-export const maxHpFor = (level: number) => MAX_HP + LIFE.perLevel * (level - 1);
+export const maxHpFor = () => MAX_HP;
 
 export type Upgrade = "torpedo" | "hypersonic" | "armor" | "repair" | "hq";
 export const UPGRADES: Upgrade[] = ["torpedo", "hypersonic", "armor", "repair", "hq"];
@@ -49,22 +52,27 @@ export const UPGRADE_AT: Record<Upgrade, number> = { torpedo: 1, hypersonic: 2, 
 export const TWIN_AT = 4;
 
 /* Health. The ship has a small shield and, under it, its own health bar of MAX_HP
-   points (LIFE.perLevel more for each level). A hit takes LIFE.hit: from the shield first
+   points, and it never grows: no level or upgrade makes it longer. A hit takes LIFE.hit: from the shield first
    and then from the health bar, and from nothing else: a ship that is hit loses health and
-   never a level or an upgrade. Nothing mends the ship by itself until it has the
-   self-repair upgrade (level 5): then, once CALM frames (six seconds) have passed without a
-   hit, the shield and the health mend a little every frame, as in SHIELD and HEAL. Before
-   that only a life crate (LIFE.heal), a level gained, a new chapter or a retry puts them
-   back. From level 4 the shield is SHIELD.perLevel bigger for each level. */
-export const LIFE = { perLevel: 10, hit: 20, heal: 20 };
-export const SHIELD = { base: 20, perLevel: 5, regen: 0.15 };
+   never a level or an upgrade. The ship mends its own health from the start: once CALM frames
+   (six seconds) have passed without a hit, the health mends a little every frame, at HEAL.base of
+   HEAL.life until the self-repair upgrade (level 5) brings it up to the full rate (and in Space 2
+   mends the shield too, as in SHIELD). Before that only a life crate (LIFE.heal), a level gained, a new chapter or a retry
+   puts them back. The shield holds SHIELD.base, also fixed. In Space 1 the ship sets out with
+   no shield at all, and only a shield crate (SHIELD.drop) fills it: no level, chapter or
+   self-repair does. In Space 2 it sets out with SHIELD.start of it, a level gained mends only
+   the health, and self-repair brings the shield back slowly. What levels bring is how the ship copes:
+   the mechanical shield takes ARMOR.reduction off every hit, self-repair mends it. */
+export const LIFE = { hit: 20, heal: 20 };
+/* `start` is the share Space 2 sets out with; Space 1 sets out with none. */
+export const SHIELD = { base: 50, regen: 0.05, drop: 25, start: 0.5 };
 export const CALM = 360;
-export const HEAL = { life: 0.06 };
+export const HEAL = { life: 0.06, base: 0.7 };
 
 /* The upgrades. Torpedo: a launcher under the hull that never runs out of torpedoes;
    twin: a second one on top, firing faster and harder. Hypersonic: the ship flies faster
    and every gun fires more often. Mechanical shield: the hull is plated, so every hit does
-   less, and the health bar and shield are longer. Self-repair: see CALM. HQ: see HQ. */
+   less, but the bars stay the same length. Self-repair: see CALM. HQ: see HQ. */
 export const TUBES = { single: { cooldown: 72, damage: 5 }, twin: { cooldown: 52, damage: 7 } };
 
 /* The HQ's support, from level 9. A carrier's hangar fills the left edge of the screen
@@ -84,7 +92,7 @@ export const HYPERSONIC = { speed: 1.3, rate: 0.75, shot: 6 };
    blaster's bolt flies at BLASTER.speed, a fifth slower than it did. */
 export const POWER = 0.75;
 export const BLASTER = { speed: 4.8, cooldown: 12 };
-export const ARMOR = { reduction: 0.3, defense: 0.1 };
+export const ARMOR = { reduction: 0.3 };
 /* Frames the ship's change of shape lasts, for the drawing. */
 export const MORPH = 48;
 
@@ -111,7 +119,8 @@ export const CLEAR = { go: 70, talk: 170 };
 
 /* The last boss has a shield of its own that takes damage before its health does, and
    comes back after `wait` frames without a hit, `regen` a frame. */
-export const BOSS_SHIELD_AT: Partial<Record<EType, number>> = { boss8: 1500 };
+/* Dreadnought's shield is half its original 1500, as requested after boss testing. */
+export const BOSS_SHIELD_AT: Partial<Record<EType, number>> = { boss8: 750, boss16: 2200 };
 export const BOSS_SHIELD = { wait: 300, regen: 0.6 };
 
 /* Frozen: an enemy that is not a boss barely moves and does not fire for `frames`, and
@@ -125,11 +134,58 @@ export const ICEBOMB = { speed: 4.2, life: 55, radius: 42, damage: 3.5 };
 export const FLAME = { speed: 4.6, life: 15, damage: 0.5, r: 3.2, spread: 0.2 };
 export const KATANA = { reach: 54, half: 30, damage: 6, boss: 3.5, wave: 2.5 };
 
+/* Space 2. Chapters above FIRST_CAMPAIGN are Space 2's; there the ship grows by experience, not by
+   gold hearts: every enemy destroyed fills a gauge, and each `perLevel` points of it is a level.
+   (The ship keeps its experience in `p.extra`, the field Space 1 uses for hearts, so a saved run
+   needs nothing new.) `div` turns an enemy's score into its experience, and a boss is worth `boss`. */
+export const FIRST_CAMPAIGN = 8;
+/* Space 1 levels a tenth more slowly: `div1`, `boss1` and `heart1` are its share of each. */
+export const XP = { perLevel: 100, div: 28, div1: 22, boss: 30, heart: 30, boss1: 27, heart1: 27 };
+export const isSecond = (chapter: number) => chapter > FIRST_CAMPAIGN;
+
+/* The mini rocket: four small rockets fan out and then home, on an enemy shot first and on an
+   enemy ship if there is no shot to stop. Strong against little things, weak against a boss. */
+export const ROCKET = { count: 4, fan: [-0.5, -0.17, 0.17, 0.5], speed: 3.2, top: 5.2, turn: 0.13, seekBullet: 120, seekEnemy: 170, life: 90, damage: 1.5, boss: 0.4, arm: 6 };
+
+/* Bloom: an umbrella that opens in front of the nose when enemy fire comes close and swallows what
+   touches it. It drains while open (`energy` frames to a pickup, `max` at most), every shot it
+   swallows costs `cost` more, and having swallowed `burstAt` or more it sheds a fan of petals when
+   it closes. It stops shots and nothing else: beams, flares, blades and bodies pass through. Dense
+   fire empties it quickly, so it buys a moment, not a wall. */
+export const BLOOM = { radius: 22, energy: 240, max: 300, cost: 15, hold: 16, burstAt: 16, petal: 1.4 };
+
+/* The hyperbeam: when a tough enemy is in its lane the pod charges for `charge` frames (the ship at
+   half speed), then fires one beam `h` thick across the screen for `live` frames. It goes through
+   everything, wipes the enemy shots in its lane, and hurts each thing it crosses once. */
+export const HYPER = { charge: 60, live: 20, h: 14, damage: 250, boss: 90, after: 40, slow: 0.5 };
+export type Hyper = { t: number; x: number; y: number; live: number; hit: number[] };
+
+/* Kite, ORB's wingman: it keeps a little behind and above the ship, catches up with a short delay,
+   and fires a light shot whenever something is ahead. It cannot be hit, and does a boss only a
+   fraction of its harm, so it helps without carrying the fight. */
+export const KITE = { dx: -16, dy: -14, follow: 0.12, cooldown: 18, damage: 0.45, boss: 0.35, speed: 5 };
+export type Kite = { x: number; y: number; cd: number; kick: number };
+
+/* Halo's ORB cover: Kite carries a Bloom of its own that it can use again and again. When enemy fire
+   comes within `reach` of the ship it lays the Bloom over it for `frames`, and is ready again
+   `cooldown` frames (fifteen seconds) after the cover ends. */
+export const COVER = { frames: 120, cooldown: 900, reach: 70 };
+
+/* Space 2: the ship's launchers fire deadly stingers instead of torpedoes. They leave the tubes
+   angled a little, home hard on the nearest enemy ahead, and hit harder than a torpedo. */
+export const PSTINGER = { single: { cooldown: 60, damage: 6.5 }, twin: { cooldown: 46, damage: 8.5 }, speed: 3.4, top: 6.6, accel: 0.16, turn: 0.1, home: 90, life: 110 };
+
+/* What Space 2's own achievements count, chapter by chapter: rocket volleys, Bloom openings, shots
+   it swallowed, hyperbeams fired and the most a single beam destroyed, and covers given. */
+export type Counters2 = { rockets: number; bloomOpens: number; blocks: number; beams: number; bestBeam: number; covers: number };
+
 type Equipped = { level: number };
 export const hasUpgrade = (p: { level: number }, u: Upgrade) => p.level >= UPGRADE_AT[u];
-export const maxLife = (p: Equipped) => Math.round(maxHpFor(p.level) * (hasUpgrade(p, "armor") ? 1 + ARMOR.defense : 1));
-export const maxShield = (p: Equipped) =>
-  Math.round((SHIELD.base + SHIELD.perLevel * Math.max(0, p.level - 3)) * (hasUpgrade(p, "armor") ? 1 + ARMOR.defense : 1));
+/* Fixed for every level (LIFE, SHIELD); `p` stays so callers need not change. */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const maxLife = (p: Equipped) => MAX_HP;
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+export const maxShield = (p: Equipped) => SHIELD.base;
 export const shipScale = (level: number) => 0.85 * (1 + 0.2 * (Math.min(level, 3) - 1));
 export const shipSize = (level: number) => ({
   w: PLAYER_W * shipScale(level),
@@ -144,9 +200,14 @@ export type EType =
   | "shard" | "comet" | "fighter" | "funnel"
   | "tank" | "aagun" | "bunker" | "samsite" | "jet" | "gunship" | "airbomber" | "gunboat" | "destroyer"
   | "boulder"
-  | "boss1" | "boss2" | "boss3" | "boss4" | "boss5" | "boss6" | "boss7" | "boss8";
+  | "boss1" | "boss2" | "boss3" | "boss4" | "boss5" | "boss6" | "boss7" | "boss8"
+  | "boss9" | "boss10" | "boss11" | "boss12" | "boss13" | "boss14" | "boss15" | "boss16"
+  /* Space 2's mini bosses, one before each chapter's boss. */
+  | "mini9" | "mini10" | "mini11" | "mini12" | "mini13" | "mini14" | "mini15" | "mini16"
+  /* Space 2's submarine, under the water, with its sea missiles. */
+  | "sub";
 
-export type Gun = "blaster" | "machine" | "spread" | "laser" | "torpedo" | "icebomb" | "flame" | "katana";
+export type Gun = "blaster" | "machine" | "spread" | "laser" | "torpedo" | "icebomb" | "flame" | "katana" | "minirocket" | "hyperbeam";
 
 export type Box = { x: number; y: number; w: number; h: number };
 
@@ -155,7 +216,18 @@ export type Box = { x: number; y: number; w: number; h: number };
 export type AttackKind =
   | "fan" | "burst" | "missiles" | "beam" | "spiral" | "charge" | "curtain" | "flare" | "support" | "nova"
   | "stomp" | "flak" | "surge" | "salvo" | "pincer" | "boulders" | "undertow" | "spores"
-  | "breach" | "frost" | "dive" | "wisps" | "blink" | "crescent" | "c4";
+  | "breach" | "frost" | "dive" | "wisps" | "blink" | "crescent" | "c4"
+  /* Space 2's own (see secondAttack). */
+  | "railshot" | "geysers" | "broadside" | "deckbomb" | "silorocket" | "arsenalsalvo" | "avalanche" | "icewall" | "lances"
+  | "sandspout" | "burrow" | "pinwheel" | "ram" | "searchlight" | "sweep" | "icebreak" | "harpoon" | "vortex"
+  | "lightning" | "twister" | "maelstrom" | "quake" | "rocketfist" | "orbital" | "cluster" | "scissor" | "march" | "volley"
+  /* Space 2's bullet patterns, two to each boss (see PATTERN_SHOT). */
+  | "helix" | "rain" | "tidewall" | "shatter" | "barrage"
+  /* Atlas's own set piece. */
+  | "grid"
+  /* Space 2's mini bosses' own (see updateMini). */
+  | "rotorwash" | "sweepgun" | "skip" | "netgun" | "cableslide" | "chaff" | "duneram" | "mortar"
+  | "ladder" | "lattice" | "torpfan" | "periscope" | "featherfan" | "divebomb" | "gatelaser" | "shielddrones";
 export type BossAttack = {
   kind: AttackKind;
   t: number;
@@ -168,7 +240,14 @@ export type BossAttack = {
   /* Where a signature attack will land, set when it is chosen or when it locks: the
      lanes of a salvo, the gap of a pincer, the spots of a barrage. Drawn as its warning. */
   lanes?: number[];
+  /* Columns a Space 2 attack will strike, by their x. */
+  cols?: number[];
   gapY?: number;
+  gapX?: number;
+  gapAngle?: number;
+  safeHalf?: number;
+  lockFrames?: number;
+  origin?: { x: number; y: number };
   spots?: { x: number; y: number }[];
 };
 
@@ -233,7 +312,7 @@ export type Bullet = {
   r: number;
   own: "p" | "e";
   dmg: number;
-  kind: "pulse" | "orb" | "spiral" | "needle" | "ice" | "fire" | "mg" | "spread" | "laser" | "torpedo" | "shell" | "wisp" | "crescent" | "frost" | "icebomb" | "flame" | "slash";
+  kind: "pulse" | "orb" | "spiral" | "needle" | "ice" | "fire" | "mg" | "spread" | "laser" | "torpedo" | "shell" | "wisp" | "crescent" | "frost" | "icebomb" | "flame" | "slash" | "minirocket" | "petal" | "stinger" | "seamissile" | "deckrocket";
   /* The ship's laser goes through what it hits, once each. */
   pierce?: boolean;
   hit?: number[];
@@ -251,10 +330,31 @@ export type Bullet = {
   back?: number;
   /* An ice bomb: what it hits freezes. */
   icy?: boolean;
+  /* Fired by Kite, which does a boss only a fraction of the harm. */
+  kite?: boolean;
+  /* Space 2's boss shots: frames before it bursts into `split` shots (of `splitKind`), or frames it
+     hangs still before setting off at (hvx, hvy). */
+  fuse?: number;
+  split?: number;
+  splitKind?: Bullet["kind"];
+  splitAngle?: number;
+  splitGap?: number;
+  splitHalf?: number;
+  patternOwner?: number;
+  hold?: number;
+  hvx?: number;
+  hvy?: number;
+  /* Space 2's enemy missiles: frames a stinger keeps steering after the ship, and frames before a
+     sea missile turns from its climb toward the ship at `speed2`. */
+  home?: number;
+  retarget?: number;
+  speed2?: number;
+  /* A deck rocket turns once toward a spot locked before its hatch opens. */
+  aim?: { x: number; y: number };
 };
 
-export type Beam = { y: number; h: number; x0: number; t: number; warn: number; live: number; ownerId?: number; slot?: number };
-export type PickupKind = "H" | "B" | "M" | "S" | "L" | "R" | "I" | "F" | "K" | "E";
+export type Beam = { patternOwner?: number; y: number; h: number; x0: number; t: number; warn: number; live: number; ownerId?: number; slot?: number; vy?: number };
+export type PickupKind = "H" | "B" | "M" | "S" | "L" | "R" | "I" | "F" | "K" | "E" | "N" | "Y" | "U" | "D";
 export type Pickup = { x: number; y: number; kind: PickupKind; t: number };
 export type Burst = { x: number; y: number; t: number; big: boolean };
 export type Smoke = { x: number; y: number; vx: number; vy: number; t: number; life: number; r: number; tone: number };
@@ -263,20 +363,32 @@ export type Smoke = { x: number; y: number; vx: number; vy: number; t: number; l
    cannot destroy them. A flare is a column of fire that is marked first; a gate
    is a pair of laser pylons with a gap that drifts up and down; a wall is a
    bulkhead with two gaps cut in it. */
-export type HKind = "flare" | "gate" | "wall" | "wave" | "spire";
-export type Hazard = { id: number; kind: HKind; x: number; w: number; g: number[]; half: number; base: number; t: number };
+/* Space 2 adds a marked column strike and a drifting twister. */
+export type HKind = "flare" | "gate" | "wall" | "wave" | "spire" | "strike" | "twister" | "cover" | "perch";
+export type Hazard = { patternOwner?: number; id: number; kind: HKind; x: number; w: number; g: number[]; half: number; base: number; t: number };
 
 export type Input = { mx: number; my: number; bomb: boolean; nuke?: boolean };
 
 export type Phase = "launch" | "play" | "clear" | "dead" | "won";
 
-export type Callout = "shield" | "armor" | "overload" | "levelup" | "phase" | "warning" | "c4" | "hypersonic" | "mechshield" | "launcher" | "repair" | "hq";
+export type Callout = "shield" | "armor" | "overload" | "levelup" | "phase" | "warning" | "c4" | "hypersonic" | "mechshield" | "launcher" | "repair" | "hq" | "cover"
+  | "ultimate" | "decks" | "magazines" | "shed" | "molt" | "decouple" | "breach" | "pressure"
+  | "plating" | "buckle" | "judgement" | "core" | "laststand" | "miniboss"
+  | "seaspray" | "downpour" | "blizzard" | "sandstorm" | "fogbank" | "polar" | "turbulence" | "clearsky";
 
 /* A C4 charge the last boss throws in its final phase. t counts from its launch
    (below zero it is still waiting in the bay); it flies from (sx, sy) to (tx, ty),
    sits there, and goes off at C4.fuse. */
-export type ZoneKind = "c4" | "flak" | "spore" | "ember";
-export type Charge = { x: number; y: number; sx: number; sy: number; tx: number; ty: number; t: number; kind?: ZoneKind };
+export type ZoneKind = "c4" | "flak" | "spore" | "ember" | "deckbomb";
+export type Charge = { patternOwner?: number; x: number; y: number; sx: number; sy: number; tx: number; ty: number; t: number; kind?: ZoneKind };
+
+export type Accolade = {
+  id: string;
+  name: string;
+  desc: string;
+  icon: string;
+  color: string;
+};
 
 /* How a chapter went, worked out when its boss falls, and the bonus it earned.
    killRate is null for a run that began at the boss checkpoint. */
@@ -290,6 +402,8 @@ export type ChapterResult = {
   noHitBonus: number;
   speedBonus: number;
   bonus: number;
+  maxCombo?: number;
+  medals?: Accolade[];
 };
 
 export type State = {
@@ -333,6 +447,12 @@ export type State = {
     morph: number;
     nukes: number;
     slashT: number;
+    /* Bloom's energy, how far the umbrella is open (0 to 1), the frames it stays open after the
+       last threat, and the shots it has swallowed since it opened. */
+    bloom: number;
+    dome: number;
+    domeHold: number;
+    absorbed: number;
   };
   enemies: Enemy[];
   bullets: Bullet[];
@@ -346,6 +466,8 @@ export type State = {
      warp after take-off. */
   timedBombs: Bomb[];
   warheads: Warhead[];
+  /* The hyperbeam, while it is charging or firing. */
+  hyper: Hyper | null;
   warp: number;
   hq: Hq;
   score: number;
@@ -360,15 +482,24 @@ export type State = {
   nuke: { t: number; x: number; y: number } | null;
   pickupIdx: number;
   bombFlash: number;
+  /* A gust pushing the ship (Cyclone's last phases): its age and how hard, up or down. */
+  gust: { t: number; dy: number } | null;
   shake: number;
   callout: { kind: Callout; t: number } | null;
   /* Frames of the launch so far, and how far the background has scrolled. */
   launchT: number;
   scroll: number;
   /* Set when the story needs the game to stop: the boss has just arrived. */
-  talk: "boss" | null;
+  talk: "boss" | "judgement" | null;
+  /* Space 2: Kite, the frames left of Halo's cover and whether it has been given, and what the
+     chapter's own achievements count. */
+  kite: Kite | null;
+  coverT: number;
+  /* Frames before Kite's Bloom is ready again. */
+  coverCd: number;
+  counters2: Counters2;
   /* What the chapter has seen so far, for its results. */
-  stats: { spawned: number; kills: number; hits: number; bossFrames: number };
+  stats: { spawned: number; kills: number; hits: number; bossFrames: number; maxCombo?: number };
   result: ChapterResult | null;
   /* This run began at the boss, after the ship was lost there. */
   checkpoint: boolean;
@@ -418,7 +549,7 @@ export function launchPose(t: number) {
 
 type Plan = { t: number; type: EType | HKind; y: number; a?: number; x?: number; g?: number[] };
 
-const isHazardType = (t: string): t is HKind => t === "flare" || t === "gate" || t === "wall";
+const isHazardType = (t: string): t is HKind => t === "flare" || t === "gate" || t === "wall" || t === "perch";
 
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
@@ -560,7 +691,7 @@ function seaPlan(): Plan[] {
   return out.sort((a, b) => a.t - b.t);
 }
 
-const PLANS: Plan[][] = [[], landPlan(), seaPlan(), plan(1), plan(2), plan(3), plan(4), plan(5), plan(6)];
+const PLANS: Plan[][] = [[], landPlan(), seaPlan(), plan(1), plan(2), plan(3), plan(4), plan(5), plan(6), ...SECOND_PLANS];
 
 /* A gold heart may drift in at each of these moments, and it only does with a chance of
    UPGRADE_LUCK: a roll that takes the luck of the run, so some runs find three or four of
@@ -627,6 +758,27 @@ const SIZE: Record<EType, [number, number, number]> = {
   boss6: [64, 52, 1100],
   boss7: [60, 38, 1250],
   boss8: [96, 84, 5000],
+  /* Space 2's bosses: Tidebreaker, Mangrove Hydra, Ice Wyvern, Dune Maw, Iron Meridian, Permafrost,
+     Cyclone and Atlas. */
+  boss9: [100, 48, 400],
+  boss10: [116, 62, 700],
+  boss11: [70, 56, 900],
+  boss12: [44, 38, 1000],
+  boss13: [110, 56, 1200],
+  boss14: [104, 56, 1500],
+  boss15: [80, 50, 1800],
+  boss16: [92, 90, 7000],
+  /* Space 2's mini bosses: Skyhook, Mudskipper, Cable Fort, Sand Skimmer, Tunnel Sentry, Ice Hunter,
+     Storm Petrel and Gatekeeper. */
+  sub: [40, 12, 9],
+  mini9: [56, 30, 110],
+  mini10: [52, 26, 130],
+  mini11: [40, 30, 210],
+  mini12: [58, 30, 240],
+  mini13: [44, 52, 270],
+  mini14: [70, 22, 300],
+  mini15: [48, 24, 330],
+  mini16: [50, 60, 400],
 };
 
 /* Where the last boss's layers break, as a share of its health: the energy shield,
@@ -635,7 +787,7 @@ const SIZE: Record<EType, [number, number, number]> = {
 export const FINAL_PHASE_AT = [0.85, 0.66, 0.47, 0.3, 0.14];
 
 /* How many phases each boss has, for the bar that shows its health. */
-export const BOSS_PHASES: Record<string, number> = { boss1: 3, boss2: 3, boss3: 3, boss4: 3, boss5: 3, boss6: 3, boss7: 3, boss8: 6 };
+export const BOSS_PHASES: Record<string, number> = { boss1: 3, boss2: 3, boss3: 3, boss4: 3, boss5: 3, boss6: 3, boss7: 3, boss8: 6, boss9: 3, boss10: 3, boss11: 3, boss12: 3, boss13: 3, boss14: 3, boss15: 3, boss16: 6 };
 
 const SCORE: Record<EType, number> = {
   scout: 10, wave: 20, rock: 30, smallrock: 5, diver: 20, gunner: 40, mine: 25, drone: 5,
@@ -643,13 +795,28 @@ const SCORE: Record<EType, number> = {
   swarm: 5, bomber: 45, sniper: 45, orbiter: 50, splitter: 50, cruiser: 400, shard: 5, comet: 20, fighter: 60, funnel: 10,
   tank: 40, aagun: 35, bunker: 90, samsite: 45, jet: 25, gunship: 60, airbomber: 70, gunboat: 40, destroyer: 450, boulder: 30,
   boss1: 1000, boss2: 1800, boss3: 800, boss4: 1500, boss5: 2200, boss6: 2800, boss7: 3500, boss8: 12000,
+  boss9: 2000, boss10: 2600, boss11: 3200, boss12: 3600, boss13: 4200, boss14: 5000, boss15: 6000, boss16: 20000,
+  sub: 70,
+  mini9: 900, mini10: 1000, mini11: 1100, mini12: 1200, mini13: 1300, mini14: 1400, mini15: 1500, mini16: 1700,
 };
 
 export const isBoss = (t: EType) => t.startsWith("boss");
+/* The last boss of each game has the shield, the plating, the six phases and the C4. */
+export const isFinal = (t: EType) => t === "boss8" || t === "boss16";
+/* Against the last boss of each game the warnings are not drawn: no marked lanes, columns, spots,
+   corridors or blast rings, no warning stage of a beam or a hazard, and no name for the move. Its
+   attacks keep exactly the same timing and the same way out, so they are dodged by reading the
+   boss and predicting, not by following marks. */
+export const hidesTells = (s: State) => s.bossId !== 0 && s.enemies.some((e) => e.id === s.bossId && isFinal(e.type));
+/* Whether a hazard is still only a warning, not yet harmful. */
+export function hazardWarning(h: Hazard) {
+  return h.kind === "strike" ? h.t < h.g[0] : h.kind === "flare" ? h.t < FLARE_WARN : h.kind === "spire" ? h.t < SPIRE.warn : false;
+}
 
 /* How hard each chapter is, set in one place: enemies reload more slowly in the
    early chapters and reach full pace by chapter seven. Their torpedoes run the
    same in every chapter (TORPEDO). Index 0 is unused. */
+/* Space 2's chapters (9 to 16) follow at the end: they begin where Space 1 left off. */
 export const DIFFICULTY = [
   { fire: 1 },
   { fire: 1.9 },
@@ -659,6 +826,14 @@ export const DIFFICULTY = [
   { fire: 1.12 },
   { fire: 1.05 },
   { fire: 1 },
+  { fire: 1 },
+  { fire: 1.6 },
+  { fire: 1.45 },
+  { fire: 1.35 },
+  { fire: 1.25 },
+  { fire: 1.15 },
+  { fire: 1.1 },
+  { fire: 1.05 },
   { fire: 1 },
 ];
 export const profile = (s: State) => DIFFICULTY[s.chapter] ?? DIFFICULTY[DIFFICULTY.length - 1];
@@ -697,6 +872,8 @@ export const GUNS: Record<Exclude<Gun, "blaster">, { cooldown: number; ammo: num
   icebomb: { cooldown: 38, ammo: 14 },
   flame: { cooldown: 4, ammo: 150 },
   katana: { cooldown: 22, ammo: 28 },
+  minirocket: { cooldown: 26, ammo: 60 },
+  hyperbeam: { cooldown: 40, ammo: 3 },
 };
 
 export function createState(chapter = 1, score = 0, weapon = 1, level = 1, extra = 0): State {
@@ -709,7 +886,7 @@ export function createState(chapter = 1, score = 0, weapon = 1, level = 1, extra
     seed: 1234567 + chapter * 977,
     nextId: 1,
     planIdx: 0,
-    p: { x: pose.x, y: launchShipY(level), hp: 0, inv: 0, weapon, gun: "blaster", ammo: 0, bombs: 2, cd: 0, bombT: 0, level, extra, launchCd: 0, tilt: 0, swap: 0, chill: 0, shield: 0, calm: 0, shieldFlash: 0, morph: 0, nukes: NUKE.count + (level >= MAX_LEVEL ? 1 : 0), slashT: 0 },
+    p: { x: pose.x, y: launchShipY(level), hp: 0, inv: 0, weapon, gun: "blaster", ammo: 0, bombs: 2, cd: 0, bombT: 0, level, extra, launchCd: 0, tilt: 0, swap: 0, chill: 0, shield: 0, calm: 0, shieldFlash: 0, morph: 0, nukes: NUKE.count + (level >= MAX_LEVEL ? 1 : 0), slashT: 0, bloom: 0, dome: 0, domeHold: 0, absorbed: 0 },
     enemies: [],
     bullets: [],
     beams: [],
@@ -720,6 +897,7 @@ export function createState(chapter = 1, score = 0, weapon = 1, level = 1, extra
     charges: [],
     timedBombs: [],
     warheads: [],
+    hyper: null,
     warp: 0,
     hq: { slide: 0, cd: HQ_LAUNCHERS.map(() => 0), kick: HQ_LAUNCHERS.map(() => 0), gap: 0 },
     score,
@@ -733,17 +911,28 @@ export function createState(chapter = 1, score = 0, weapon = 1, level = 1, extra
     nuke: null,
     pickupIdx: 0,
     bombFlash: 0,
+    gust: null,
     shake: 0,
     callout: null,
     launchT: 0,
     scroll: 0,
     talk: null,
-    stats: { spawned: 0, kills: 0, hits: 0, bossFrames: 0 },
+    kite: isSecond(chapter) ? { x: pose.x + KITE.dx, y: launchShipY(level) + KITE.dy, cd: 30, kick: 0 } : null,
+    coverT: 0,
+    coverCd: 0,
+    counters2: { rockets: 0, bloomOpens: 0, blocks: 0, beams: 0, bestBeam: 0, covers: 0 },
+    stats: { spawned: 0, kills: 0, hits: 0, bossFrames: 0, maxCombo: 0 },
     result: null,
     checkpoint: false,
   };
+  /* A run saved when Space 1 still counted gold hearts keeps its level: its experience starts at
+     that level's floor. */
+  if (state.p.extra < XP.perLevel * (level - 1)) {
+    state.p.extra = XP.perLevel * (level - 1);
+    state.chapterStartExtra = state.p.extra;
+  }
   state.p.hp = maxLife(state.p);
-  state.p.shield = maxShield(state.p);
+  state.p.shield = isSecond(chapter) ? maxShield(state.p) * SHIELD.start : 0;
   return state;
 }
 
@@ -755,7 +944,7 @@ export function retryChapter(s: State) {
 /* Seconds a good run should take over each boss: beating it sooner earns a share
    of the speed bonus. The bosses take a couple of minutes at the end, so the later
    ones are given longer. Index 0 is unused. */
-const BOSS_PAR = [0, 30, 55, 60, 50, 90, 75, 100, 240];
+const BOSS_PAR = [0, 30, 55, 60, 50, 90, 75, 100, 240, 60, 70, 80, 80, 90, 100, 110, 260];
 
 /* What the chapter's play earned: a share of the bonus for every enemy destroyed,
    all of it again for not being hit, and more for beating the boss quickly. */
@@ -768,18 +957,31 @@ export function chapterResult(s: State): ChapterResult {
   const bossSeconds = bossFrames / 60;
   const par = BOSS_PAR[s.chapter] ?? 60;
   const speedBonus = bossSeconds < par ? Math.round((((par - bossSeconds) / par) * base) / 10) * 10 : 0;
-  return { kills, spawned, killRate, hits, bossSeconds, killBonus, noHitBonus, speedBonus, bonus: killBonus + noHitBonus + speedBonus };
+  const medals: Accolade[] = [];
+  if (hits === 0) {
+    medals.push({ id: "untouchable", name: "UNTOUCHABLE", desc: "No damage taken", icon: "🛡️", color: "#f59e0b" });
+  }
+  if (bossSeconds < par * 0.8) {
+    medals.push({ id: "speed", name: "SPEED DEMON", desc: "Record boss time", icon: "⚡", color: "#06b6d4" });
+  }
+  if (killRate !== null && killRate >= 0.85) {
+    medals.push({ id: "titan", name: "TITAN SLAYER", desc: "85%+ kill rate", icon: "🎯", color: "#ef4444" });
+  }
+  if ((s.stats.maxCombo ?? 0) >= 6) {
+    medals.push({ id: "combo", name: "CHAIN MASTER", desc: `${s.stats.maxCombo}x combo chain`, icon: "🔥", color: "#ec4899" });
+  }
+  return { kills, spawned, killRate, hits, bossSeconds, killBonus, noHitBonus, speedBonus, bonus: killBonus + noHitBonus + speedBonus, maxCombo: s.stats.maxCombo ?? 0, medals };
 }
 
 /* The same chapter again, starting at its boss: the ship as it began the chapter,
    no launch and no enemies before the boss. Offered after the ship is lost there. */
 export function bossCheckpoint(s: State) {
   const next = createState(s.chapter, s.chapterStartScore, s.chapterStartWeapon, s.chapterStartLevel, s.chapterStartExtra);
-  const list = PLANS[s.chapter];
+  const list = (PLANS[s.chapter] ?? []);
   next.phase = "play";
   next.planIdx = list.length;
   next.t = list.length ? list[list.length - 1].t : 0;
-  next.pickupIdx = PICKUP_PLANS[s.chapter].length;
+  next.pickupIdx = (PICKUP_PLANS[s.chapter] ?? []).length;
   next.p.x = 36;
   next.p.y = H / 2;
   next.p.inv = 90;
@@ -789,7 +991,7 @@ export function bossCheckpoint(s: State) {
 
 /* How far through the chapter's script the run is, 0 to 1, for the progress bar. */
 export function chapterProgress(s: State) {
-  const list = PLANS[s.chapter];
+  const list = (PLANS[s.chapter] ?? []);
   const end = list.length ? list[list.length - 1].t : 1;
   return Math.max(0, Math.min(1, s.t / end));
 }
@@ -811,7 +1013,9 @@ const hits = (a: Box, b: Box) => a.x < b.x + b.w && a.x + a.w > b.x && a.y < b.y
 /* The parts of a hazard that hurt right now. */
 export function hazardBoxes(h: Hazard): Box[] {
   if (h.kind === "flare") return h.t >= FLARE_WARN ? [{ x: h.x, y: 0, w: h.w, h: H }] : [];
-  if (h.kind === "wave") return [{ x: h.x, y: h.base, w: h.w, h: h.half }];
+  if (h.kind === "wave" || h.kind === "cover" || h.kind === "perch") return [{ x: h.x, y: h.base, w: h.w, h: h.half }];
+  if (h.kind === "strike") return h.t >= h.g[0] && h.t < h.g[0] + h.g[1] ? [{ x: h.x, y: h.base, w: h.w, h: h.half }] : [];
+  if (h.kind === "twister") return h.t >= h.g[0] ? [{ x: h.x + 3, y: h.base, w: h.w - 6, h: h.half }] : [];
   if (h.kind === "spire") {
     const tall = spireHeight(h.t);
     return tall > 0 ? [{ x: h.x, y: H - tall, w: h.w, h: tall }] : [];
@@ -843,6 +1047,73 @@ export function spireHeight(t: number) {
   return down < SPIRE.fall ? (SPIRE.height * (SPIRE.fall - down)) / SPIRE.fall : 0;
 }
 
+/* Space 2: Earth Force digs in. Most ground units come with a wall in front of them, and most ships
+   with a floating barrier (a wreck, rocks, a block of ice). It stops the ship's shots, not theirs.
+   It is never destroyed: shot, it crumbles down to a stump (`stump` of its height), which leaves
+   the top of the unit behind it open. It moves with its unit and stays once the unit is gone.
+   g = [hp, maxHp, unit id, gap to the unit, 0 land / 1 sea, hit flash, chapter, bottom, full height]. */
+export const COVER2 = { land: { hp: 10, w: 12, rise: 5 }, sea: { hp: 14, w: 16, rise: 4, under: 5 }, gap: 5, share: 0.75, stump: 0.4 };
+
+function digIn(s: State, e: Enemy) {
+  const sea = SHIPS.includes(e.type);
+  if (!sea && !GROUND_UNITS.includes(e.type)) return;
+  if (noise1(e.id) >= COVER2.share) return;
+  const c = sea ? COVER2.sea : COVER2.land;
+  const top = e.y - c.rise;
+  const bottom = sea ? WATER_Y + COVER2.sea.under : e.y + e.h;
+  s.hazards.push({ id: s.nextId++, kind: "cover", x: e.x - COVER2.gap - c.w, w: c.w, g: [c.hp, c.hp, e.id, COVER2.gap + c.w, sea ? 1 : 0, 0, s.chapter, bottom, bottom - top], half: bottom - top, base: top, t: 0 });
+}
+/* Space 2: high ground. On land some ground units sit up on a hill or a crag, and at sea every gun
+   emplacement stands on an island; the script also sends big rocks out of the sea on their own.
+   A perch is solid: it stops the ship's shots and hurts the ship that flies into it. Under a unit
+   it moves with the unit, and drifts with the ground once the unit is gone.
+   g = [unit id (0 for none), how far it reaches left of the unit, 0 hill / 1 island / 2 sea rock, chapter]. */
+export const PERCH = { share: 0.45, land: [22, 46], island: [20, 34], pad: 20, right: 6 };
+export const SEA_PLACES = [1, 2, 6, 7];
+
+function perchUp(s: State, e: Enemy) {
+  if (!GROUND_UNITS.includes(e.type)) return;
+  const sea = SEA_PLACES.includes(s.chapter - 8);
+  if (!sea && noise1(e.id * 1.7 + 3) >= PERCH.share) return;
+  const [lo, hi] = sea ? PERCH.island : PERCH.land;
+  const tall = Math.round(lo + (hi - lo) * noise1(e.id * 2.3 + 1));
+  const floor = sea ? WATER_Y : GROUND_Y;
+  const top = floor - tall;
+  e.y = e.y0 = top - e.h;
+  s.hazards.push({ id: s.nextId++, kind: "perch", x: e.x - PERCH.pad, w: e.w + PERCH.pad + PERCH.right, g: [e.id, PERCH.pad, sea ? 1 : 0, s.chapter], half: (sea ? WATER_Y + 6 : GROUND_Y) - top, base: top, t: 0 });
+}
+
+const noise1 = (n: number) => {
+  const x = Math.sin(n * 91.345 + 12.9) * 43758.5453;
+  return x - Math.floor(x);
+};
+
+/* Space 2: every place does something to the ship, announced as the chapter starts.
+   1 Pacific: low over the sea (below `below`) the spray slows it.  2 Monsoon: the rain pushes it down.
+   3 Himalayas: the wind pushes it back.  4 Sahara: sand in the guns, which cycle at `jam` speed.
+   5 Alps: inside a fog band enemy aim scatters (the fog is on the ship's side).  6 Arctic: cold
+   engines, slower.  7 Hurricane: turbulence shoves it about.  8 Citadel: home air, the shield
+   recharges slowly on its own. */
+export const TERRAIN = {
+  spray: { below: WATER_Y - 40, slow: 0.75 },
+  rain: { push: 0.3 },
+  wind: { push: 0.4 },
+  sand: { jam: 0.8 },
+  fog: { bands: [120, 142, 164], half: 8, scatter: 0.7 },
+  cold: { slow: 0.82 },
+  turbulence: { x: 0.45, y: 0.6 },
+  dawn: { regen: 0.02 },
+};
+export const TERRAIN_CALL: Callout[] = ["seaspray", "downpour", "blizzard", "sandstorm", "fogbank", "polar", "turbulence", "clearsky"];
+export const placeOf = (s: { chapter: number }) => (isSecond(s.chapter) ? s.chapter - 8 : 0);
+
+/* Is the ship inside one of the alpine fog bands? */
+export function inFog(s: State) {
+  if (placeOf(s) !== 5) return false;
+  const c = s.p.y + shipSize(s.p.level).h / 2;
+  return TERRAIN.fog.bands.some((y) => Math.abs(c - y) < TERRAIN.fog.half);
+}
+
 export const FLARE_WARN = 70;
 export const FLARE_LIVE = 45;
 
@@ -851,6 +1122,8 @@ function spawnHazard(s: State, it: Plan) {
   const h: Hazard =
     kind === "flare"
       ? { id: s.nextId++, kind, x: it.x ?? 150, w: 24, g: [], half: 0, base: 0, t: 0 }
+      : kind === "perch"
+        ? { id: s.nextId++, kind, x: W + 8, w: it.g?.[0] ?? 44, g: [0, 0, 2, s.chapter], half: it.y + 6, base: WATER_Y - it.y, t: 0 }
       : kind === "gate"
         ? { id: s.nextId++, kind, x: W + 8, w: 6, g: [it.y], half: s.chapter <= 7 ? 30 : 27, base: it.y, t: 0 }
         : { id: s.nextId++, kind, x: W + 8, w: 14, g: it.g ?? [60, 156], half: 25, base: 0, t: 0 };
@@ -897,11 +1170,17 @@ function spawn(s: State, type: EType, x: number, y: number, a = 0): Enemy {
     case "airbomber": e.vx = -1.4; break;
     case "gunboat": e.vx = -1.5; break;
     case "destroyer": e.vx = -0.9; break;
+    case "sub": e.vx = -1; e.cd = 70 + Math.floor(rand(s) * 60); break;
     default: e.vx = -1; e.cd = 90; break;
   }
   if (GROUND_UNITS.includes(type)) e.y = e.y0 = GROUND_Y - h;
   if (SHIPS.includes(type)) e.y = e.y0 = WATER_Y - h;
+  if (type === "sub") e.y = e.y0 = WATER_Y - 3;
   s.enemies.push(e);
+  if (isSecond(s.chapter)) {
+    perchUp(s, e);
+    digIn(s, e);
+  }
   return e;
 }
 
@@ -910,8 +1189,29 @@ export const CHILL = { frames: 150, slow: 0.55 };
 
 /* An enemy torpedo from (x, y) along `angle`; `extra` adds the fields of a guided
    or returning one. */
+/* Space 2: Earth Force fires stingers as well as torpedoes (STINGER_SHARE of its volleys). A stinger leaves fast, picks up speed,
+   and steers a little after the ship for its first moments, then flies straight. A sub's sea
+   missile climbs out of the water, turns toward where the ship is, and bursts on its own after a
+   while or when it comes close. */
+export const STINGER = { speed: 2.6, top: 4.6, accel: 0.08, home: 26, turn: 0.035, life: 150 };
+export const SEA_MISSILE = { climb: 2.6, turnAt: 20, speed: 3.4, fuse: 95, split: 6, near: 24, every: 150 };
+/* How many of every five Space 2 volleys are stingers; the rest are torpedoes. Which it is goes by
+   the frame and where the shot leaves, so every shot of one volley is the same, and no random
+   number is spent on it. */
+export const STINGER_SHARE = 3;
+export const isStingerVolley = (frame: number, x: number) => (Math.floor(x) * 7 + frame) % 5 < STINGER_SHARE;
+
 function shoot(s: State, x: number, y: number, angle: number, kind: Bullet["kind"] = "orb", r = 2.6, extra: Partial<Bullet> = {}) {
   if (x < 12 || x > W - 2 || y < 4 || y > H - 4 || s.bullets.filter(b => b.own === "e").length >= 160) return;
+  if (isSecond(s.chapter) && extra.back === undefined && extra.track === undefined) {
+    if (inFog(s)) angle += (noise1(s.frame * 3 + s.bullets.length) - 0.5) * TERRAIN.fog.scatter;
+    if (!isStingerVolley(s.frame, x)) {
+      s.bullets.push(torpedo(x, y, angle, { r, own: "e", dmg: 1, kind, ...extra }));
+      return;
+    }
+    s.bullets.push({ x, y, vx: Math.cos(angle) * STINGER.speed, vy: Math.sin(angle) * STINGER.speed, r: Math.min(r, 2.4), own: "e", dmg: 1, kind: "stinger", life: STINGER.life, home: STINGER.home, ...extra });
+    return;
+  }
   s.bullets.push(torpedo(x, y, angle, { r, own: "e", dmg: 1, kind, ...extra }));
 }
 
@@ -937,7 +1237,7 @@ function burst(s: State, x: number, y: number, big = false) {
 /* Damage to an enemy, less of it while it is guarding. */
 function damage(e: Enemy, n: number) {
   /* The dreadnought's plating turns most of the damage away, and gives less as it breaks. */
-  const plating = e.type === "boss8" ? [0.55, 0.65, 0.8, 0.9, 1, 1][e.a] ?? 1 : 1;
+  const plating = isFinal(e.type) ? [0.55, 0.65, 0.8, 0.9, 1, 1][e.a] ?? 1 : 1;
   const shatter = e.freeze !== undefined && e.freeze > 0 ? FREEZE.shatter : 1;
   let dealt = (e.guard > 0 ? n * 0.15 : n) * plating * shatter;
   /* A shield takes it first. */
@@ -975,34 +1275,49 @@ function detonate(s: State, b: Bullet, except = 0, small = false) {
 
 /* The guns a crate can hold. There are fewer crates than there were, so each is a find. */
 const GUN_CRATES: PickupKind[] = ["M", "S", "L", "R", "I", "F", "K"];
-const GUN_OF: Record<string, Exclude<Gun, "blaster">> = { M: "machine", S: "spread", L: "laser", R: "torpedo", I: "icebomb", F: "flame", K: "katana" };
+const GUN_OF: Record<string, Exclude<Gun, "blaster">> = { M: "machine", S: "spread", L: "laser", R: "torpedo", I: "icebomb", F: "flame", K: "katana", N: "minirocket", Y: "hyperbeam" };
+/* Space 2 adds the mini rocket and the hyperbeam to the crates, and Bloom to what a supply pod can hold. */
+const NEW_CRATES: PickupKind[] = ["N", "Y", "U"];
+const crateFor = (s: State): PickupKind => {
+  const all = isSecond(s.chapter) ? [...GUN_CRATES, ...NEW_CRATES] : GUN_CRATES;
+  return all[Math.floor(rand(s) * all.length)];
+};
 
 function drop(s: State, e: Enemy) {
   const x = e.x + e.w / 2;
   const y = e.y + e.h / 2;
   /* A boss leaves nothing: the ship flies off as it falls, with no time to pick anything up. */
   if (isBoss(e.type)) return;
+  if (isMini(e.type)) {
+    /* A mini boss always leaves a gun and a repair. */
+    s.pickups.push({ x, y: y - 10, kind: crateFor(s), t: 0 }, { x, y: y + 10, kind: "H", t: 0 });
+    if (!isSecond(s.chapter)) s.pickups.push({ x: x + 16, y, kind: "D", t: 0 });
+    return;
+  }
   if (e.type === "pod") {
     /* A supply pod always holds a gun. */
-    s.pickups.push({ x, y, kind: GUN_CRATES[Math.floor(rand(s) * GUN_CRATES.length)], t: 0 });
+    s.pickups.push({ x, y, kind: crateFor(s), t: 0 });
     return;
   }
   if (e.type === "shard" || e.type === "swarm" || e.type === "funnel" || e.type === "smallrock") return;
   if (e.type === "cruiser" || e.type === "destroyer") {
     s.pickups.push({ x, y, kind: "H", t: 0 });
-    if (rand(s) < 0.5) s.pickups.push({ x, y: y + 18, kind: GUN_CRATES[Math.floor(rand(s) * GUN_CRATES.length)], t: 0 });
+    if (rand(s) < 0.5) s.pickups.push({ x, y: y + 18, kind: crateFor(s), t: 0 });
     return;
   }
   const r = rand(s);
-  /* The blaster has no power-ups: that share of drops is simply nothing. */
+  /* The blaster has no power-ups: that share of drops is simply nothing, but in Space 1 part
+     of it is a shield crate, the only thing that fills the shield there. */
+  if (r < 0.06 && !isSecond(s.chapter)) s.pickups.push({ x, y, kind: "D", t: 0 });
   if (r < 0.12) return;
   if (r < 0.2) s.pickups.push({ x, y, kind: "H", t: 0 });
   else if (r < 0.25) s.pickups.push({ x, y, kind: "B", t: 0 });
-  else if (r < 0.27) s.pickups.push({ x, y, kind: GUN_CRATES[Math.floor(rand(s) * GUN_CRATES.length)], t: 0 });
+  else if (r < 0.27) s.pickups.push({ x, y, kind: crateFor(s), t: 0 });
 }
 
 function kill(s: State, e: Enemy) {
   s.score += SCORE[e.type];
+  addXp(s, xpOf(e.type, isSecond(s.chapter)));
   if (e.fromPlan) s.stats.kills += 1;
   burst(s, e.x + e.w / 2, e.y + e.h / 2, isBoss(e.type) || e.type === "armor" || e.type === "rock" || HEAVY.includes(e.type));
   if (e.type === "rock" || e.type === "boulder") {
@@ -1020,11 +1335,13 @@ function kill(s: State, e: Enemy) {
   }
   if (e.type === "mine") ring(s, e.x + e.w / 2, e.y + e.h / 2, 6, 0, "orb", 2.2);
   drop(s, e);
+  if (isMini(e.type)) clearPatternOrdnance(s, e.id);
   if (isBoss(e.type)) {
     s.bullets = s.bullets.filter((b) => b.own === "p");
     s.beams = [];
     s.charges = [];
-    s.hazards = s.hazards.filter((h) => h.kind !== "flare");
+    s.hazards = s.hazards.filter((h) => h.kind !== "flare" && h.kind !== "strike" && h.kind !== "twister");
+    s.gust = null;
     for (const o of s.enemies) if (o.type === "funnel" || o.type === "shard") o.hp = 0;
     s.shake = 40;
     for (let i = 0; i < 7; i++) burst(s, e.x + rand(s) * e.w, e.y + rand(s) * e.h, true);
@@ -1032,24 +1349,21 @@ function kill(s: State, e: Enemy) {
 }
 
 /* One more point of extra health; enough of it makes the ship a level bigger. */
-function addExtra(s: State) {
+/* The ship becomes a level bigger: refilled, a flash, and the upgrade that level brings. */
+function gainLevel(s: State) {
   const p = s.p;
-  p.extra += 1;
-  while (p.level < MAX_LEVEL && p.extra >= LEVEL_AT[p.level]) {
-    p.level += 1;
-    p.hp = maxLife(p);
-    p.shield = maxShield(p);
-    if (p.level === MAX_LEVEL) p.nukes += 1;
-    p.morph = MORPH;
-    p.inv = Math.max(p.inv, 60);
-    s.shake = 18;
-    s.bombFlash = 6;
-    setCallout(
-      s,
-      p.level === UPGRADE_AT.hypersonic ? "hypersonic" : p.level === UPGRADE_AT.armor ? "mechshield" : p.level === TWIN_AT ? "launcher" : p.level === UPGRADE_AT.repair ? "repair" : p.level === UPGRADE_AT.hq ? "hq" : "levelup",
-    );
-    burst(s, p.x + shipSize(p.level).w / 2, p.y + shipSize(p.level).h / 2, true);
-  }
+  p.level += 1;
+  p.hp = maxLife(p);
+  if (p.level === MAX_LEVEL) p.nukes += 1;
+  p.morph = MORPH;
+  p.inv = Math.max(p.inv, 60);
+  s.shake = 18;
+  s.bombFlash = 6;
+  setCallout(
+    s,
+    p.level === UPGRADE_AT.hypersonic ? "hypersonic" : p.level === UPGRADE_AT.armor ? "mechshield" : p.level === TWIN_AT ? "launcher" : p.level === UPGRADE_AT.repair ? "repair" : p.level === UPGRADE_AT.hq ? "hq" : "levelup",
+  );
+  burst(s, p.x + shipSize(p.level).w / 2, p.y + shipSize(p.level).h / 2, true);
 }
 
 /* Returns whether the ship was actually hurt (it is not while it is flashing). A hit
@@ -1186,8 +1500,8 @@ function tickWarheads(s: State) {
 }
 
 /* Whether the self-repair is mending something right now, for the drawing. */
-export function isRepairing(p: State["p"]) {
-  return hasUpgrade(p, "repair") && p.calm <= 0 && (p.hp < maxLife(p) || p.shield < maxShield(p));
+export function isRepairing(p: State["p"], second = true) {
+  return p.calm <= 0 && (p.hp < maxLife(p) || (second && hasUpgrade(p, "repair") && p.shield < maxShield(p)));
 }
 
 /* The HQ slides in at level 9 and out if it is lost. Once it is in, each launcher fires in
@@ -1622,6 +1936,17 @@ function updateEnemy(s: State, e: Enemy) {
         } else e.cd = Math.round(10 * ease);
       }
       break;
+    case "sub":
+      /* Under the water, only its sail breaking the surface; now and then a sea missile out of its hatch. */
+      e.x += e.vx;
+      e.y = e.y0 + Math.sin(e.t / 30) * 0.8;
+      if (e.n > 0) e.n -= 1;
+      if (--e.cd <= 0 && e.x < W - 30 && e.x > 30) {
+        e.cd = Math.round(SEA_MISSILE.every * ease);
+        e.n = 14;
+        s.bullets.push({ x: e.x + e.w * 0.62, y: e.y - 2, vx: -0.3, vy: -SEA_MISSILE.climb, r: 3, own: "e", dmg: 1, kind: "seamissile", retarget: SEA_MISSILE.turnAt, speed2: SEA_MISSILE.speed, fuse: SEA_MISSILE.fuse, split: SEA_MISSILE.split, splitKind: "needle" });
+      }
+      break;
     case "gunboat":
       e.x += e.vx;
       e.y = e.y0 + Math.sin(e.t / 22) * 1.2;
@@ -1660,7 +1985,13 @@ function updateEnemy(s: State, e: Enemy) {
       break;
     case "boss1": case "boss2": case "boss3": case "boss4":
     case "boss5": case "boss6": case "boss7": case "boss8":
+    case "boss9": case "boss10": case "boss11": case "boss12":
+    case "boss13": case "boss14": case "boss15": case "boss16":
       updateBoss(s, e);
+      break;
+    case "mini9": case "mini10": case "mini11": case "mini12":
+    case "mini13": case "mini14": case "mini15": case "mini16":
+      updateMini(s, e);
       break;
   }
 }
@@ -1701,9 +2032,16 @@ function phaseUp(s: State, e: Enemy, cuts: number[]) {
   return false;
 }
 
+/* Bosses that stand on the ground or float on the water, and where each waits at the right of the
+   screen (the rest hang in the air at `W - 90`). */
+export const BOSS_FLOOR: Partial<Record<EType, "ground" | "sea">> = { boss1: "ground", boss2: "sea", boss9: "sea", boss10: "sea", boss13: "ground", boss14: "sea", boss16: "ground" };
+export const BOSS_HOME: Partial<Record<EType, number>> = { boss1: W - 96, boss2: W - 126, boss5: W - 112, boss8: W - 112, boss9: W - 126, boss10: W - 112, boss13: W - 124, boss14: W - 120, boss15: W - 108, boss16: W - 112 };
+const floorY = (e: Pick<Enemy, "type" | "h">) => (BOSS_FLOOR[e.type] === "ground" ? GROUND_Y - e.h : BOSS_FLOOR[e.type] === "sea" ? WATER_Y - e.h : null);
+
 export const BOSS_SCALE: Partial<Record<EType, number>> = {
   boss1: 1.3, boss2: 1.3, boss3: 1.3, boss4: 1.3,
   boss5: 1.65, boss6: 1.45, boss7: 1.65, boss8: 1.35,
+  boss9: 1.3, boss10: 1.3, boss11: 1.4, boss12: 1.5, boss13: 1.2, boss14: 1.3, boss15: 1.45, boss16: 1.75,
 };
 export const bossScale = (e: Pick<Enemy, "type" | "renderScale">) => e.renderScale ?? BOSS_SCALE[e.type] ?? 1;
 export function bossModel(e: Enemy): Enemy {
@@ -1754,6 +2092,19 @@ export function fixedAim(e: Enemy, slot = 0): number | null {
 }
 
 /* The renderer and firing rules use the same mount and barrel geometry. */
+/* Where each of Space 2's bosses fires from, as an offset from its top left corner in the drawing's
+   own units, and how far apart its mounts are. The art is drawn to put its barrels here. */
+export const BOSS_MUZZLE: Partial<Record<EType, { x: number; y: number; dy: number }>> = {
+  boss9: { x: 6, y: 22, dy: 14 },
+  boss10: { x: 44, y: 32, dy: 0 },
+  boss11: { x: -2, y: 24, dy: 12 },
+  boss12: { x: 0, y: 19, dy: 10 },
+  boss13: { x: 4, y: 22, dy: 14 },
+  boss14: { x: 4, y: 24, dy: 14 },
+  boss15: { x: 2, y: 26, dy: 14 },
+  boss16: { x: 5, y: 45, dy: 24 },
+};
+
 export function enemyMuzzle(e: Enemy, s: State, slot = 0): { x: number; y: number; angle: number } {
   if (bossScale(e) !== 1) {
     const k = bossScale(e);
@@ -1775,6 +2126,12 @@ export function enemyMuzzle(e: Enemy, s: State, slot = 0): { x: number; y: numbe
     case "boss6": x = cx - 31; y = cy - 1; break;
     case "boss7": x = e.x - 3; y = e.y + 19; break;
     case "boss8": x = e.x + 5; y = cy + slot * 24; break;
+    case "boss9": case "boss10": case "boss11": case "boss12": case "boss13": case "boss14": case "boss15": case "boss16": {
+      const m = BOSS_MUZZLE[e.type]!;
+      x = e.x + m.x;
+      y = e.y + m.y + slot * m.dy;
+      break;
+    }
     case "tank": x = e.x + 14; y = e.y + 4; length = 14; break;
     case "aagun": x = cx; y = e.y + 4; length = 14; break;
     case "gunboat": x = e.x + 6; y = e.y + 2; length = 12; break;
@@ -1795,6 +2152,8 @@ export function enemyMuzzle(e: Enemy, s: State, slot = 0): { x: number; y: numbe
 export function beamMuzzle(e: Enemy, slot = 0): { x: number; y: number } {
   if (bossScale(e) !== 1) return bossPoint(e, beamMuzzle(bossModel(e), slot));
   const cy = e.y + e.h / 2;
+  const own = BOSS_MUZZLE[e.type];
+  if (own) return { x: e.x + own.x - 4, y: e.y + own.y + slot * own.dy };
   if (e.type === "boss2") return { x: e.x - 8, y: e.y + e.h - 20 };
   if (e.type === "boss7") return { x: e.x - 3, y: e.y + 19 };
   return { x: e.x + (e.type === "boss8" ? 5 : -10), y: cy + slot * (e.type === "boss8" ? 24 : 20) };
@@ -1802,6 +2161,7 @@ export function beamMuzzle(e: Enemy, slot = 0): { x: number; y: number } {
 
 export function missileMuzzle(e: Enemy, slot = 0): { x: number; y: number } {
   if (bossScale(e) !== 1) return bossPoint(e, missileMuzzle(bossModel(e), slot));
+  if (e.type === "boss10") return hydraMuzzle(e, 2);
   if (e.type === "samsite") return { x: e.x + 8 + Math.cos(-2) * 15, y: e.y + e.h - 7 + Math.sin(-2) * 15 };
   if (e.type === "boss1") return { x: e.x + e.w - 17, y: e.y + 12 };
   if (e.type === "boss2") return { x: e.x + 31, y: e.y + e.h - 33 };
@@ -1820,6 +2180,24 @@ const BOSS_MOVES: Record<string, AttackKind[][]> = {
   boss5: [["fan", "curtain"], ["fan", "frost", "charge", "breach", "curtain"], ["breach", "frost", "curtain", "charge", "fan", "frost"]],
   boss6: [["fan", "charge"], ["fan", "wisps", "flare", "dive", "charge"], ["dive", "wisps", "curtain", "flare", "dive", "charge", "wisps"]],
   boss7: [["burst", "charge"], ["burst", "crescent", "support", "blink", "charge"], ["blink", "crescent", "burst", "beam", "blink", "charge", "support", "crescent"]],
+  boss9: [["railshot", "tidewall", "geysers", "volley", "helix"], ["geysers", "helix", "railshot", "tidewall", "volley", "railshot"], ["broadside", "helix", "railshot", "tidewall", "geysers", "broadside", "volley"]],
+  boss10: [["deckbomb", "rain", "silorocket", "volley", "barrage"], ["silorocket", "barrage", "deckbomb", "rain", "volley", "deckbomb"], ["arsenalsalvo", "rain", "silorocket", "barrage", "deckbomb", "arsenalsalvo", "volley"]],
+  boss11: [["avalanche", "shatter", "icewall", "volley", "helix"], ["icewall", "helix", "avalanche", "shatter", "volley", "icewall"], ["lances", "helix", "avalanche", "shatter", "icewall", "lances", "volley"]],
+  boss12: [["sandspout", "barrage", "burrow", "volley", "rain"], ["burrow", "rain", "sandspout", "barrage", "volley", "burrow"], ["pinwheel", "barrage", "burrow", "rain", "sandspout", "pinwheel", "volley"]],
+  boss13: [["searchlight", "tidewall", "ram", "volley", "shatter"], ["ram", "shatter", "searchlight", "tidewall", "volley", "ram"], ["sweep", "tidewall", "searchlight", "shatter", "ram", "sweep", "volley"]],
+  boss14: [["icebreak", "rain", "harpoon", "volley", "helix"], ["harpoon", "helix", "icebreak", "rain", "volley", "harpoon"], ["vortex", "rain", "icebreak", "helix", "harpoon", "vortex", "volley"]],
+  boss15: [["lightning", "helix", "twister", "volley", "barrage"], ["twister", "barrage", "lightning", "helix", "volley", "lightning"], ["maelstrom", "helix", "twister", "barrage", "lightning", "maelstrom", "volley"]],
+  /* Atlas is the final exam: its own armour first, then Tidebreaker's walls, then Hydra's rain and
+     the Wyvern's shatter, then its set piece, the Judgement grid, then all of it, and last a stand
+     with no filler at all. */
+  boss16: [
+    ["quake", "rocketfist", "barrage", "volley", "cluster"],
+    ["tidewall", "rocketfist", "quake", "scissor", "volley", "barrage"],
+    ["rain", "shatter", "orbital", "cluster", "rocketfist", "volley"],
+    ["grid", "march", "helix", "scissor", "grid", "barrage"],
+    ["grid", "helix", "shatter", "tidewall", "rocketfist", "rain", "march"],
+    ["march", "grid", "helix", "rain", "shatter", "tidewall", "barrage", "grid"],
+  ],
   boss8: [["burst", "fan", "beam"], ["missiles", "fan", "beam", "support"], ["spiral", "beam", "charge", "curtain", "missiles"], ["nova", "beam", "flare", "curtain", "charge", "spiral"], ["nova", "spiral", "beam", "flare", "curtain", "charge", "missiles", "nova"], ["c4", "burst", "c4", "spiral", "c4", "missiles"]],
 };
 
@@ -1881,11 +2259,12 @@ function pickSpots(s: State, n: number, cols: number[], rows: number[], jitter: 
 }
 
 function nextBossAttack(s: State, e: Enemy) {
+  if (isSecondBoss(e.type)) clearPatternOrdnance(s, e.id);
   const moves = BOSS_MOVES[e.type][e.a];
   const index = e.attackIndex ?? 0;
   const kind = moves[index % moves.length];
   e.attackIndex = index + 1;
-  const timing = TIMING[kind];
+  const timing = TIMING[kind] ?? SECOND_TIMING[kind];
   const warn = timing ? timing[0] : kind === "charge" ? 64 : kind === "beam" ? 62 : kind === "curtain" ? 48 : kind === "nova" ? 44 : kind === "c4" ? 40 : 36;
   const live = timing ? timing[1] : kind === "charge" ? 104 : kind === "beam" ? 34 : kind === "spiral" ? 84 : kind === "burst" ? 42 : kind === "missiles" ? 32 : kind === "nova" ? 26 : kind === "c4" ? C4.count * C4.every : 1;
   const muzzle = enemyMuzzle(e, s);
@@ -1897,7 +2276,7 @@ function nextBossAttack(s: State, e: Enemy) {
   }
   if (kind === "pincer") extra.gapY = Math.round(70 + rand(s) * 76);
   if (kind === "spores") extra.spots = pickSpots(s, e.a >= 2 ? 5 : 4, SPORE_COLS, SPORE_ROWS, 12);
-  e.attack = { kind, t: 0, warn, live, recover: e.type === "boss8" ? [40, 36, 34, 32, 32, 34][e.a] : (e.a >= 2 ? 38 : 52) + (e.type === "boss1" ? 24 : 0), angle: muzzle.angle, targetY: s.p.y + shipSize(s.p.level).h / 2, targetX: s.p.x, ...extra };
+  e.attack = { kind, t: 0, warn, live, recover: isSecondBoss(e.type) ? (e.type === "boss10" ? PATTERN.hydraRecovery : isFinal(e.type) ? (e.a >= 4 ? PATTERN.lastRecovery : PATTERN.finalRecovery) : PATTERN.bossRecovery) : isFinal(e.type) ? [40, 36, 34, 32, 32, 34][e.a] : (e.a >= 2 ? 38 : 52) + (e.type === "boss1" ? 24 : 0), lockFrames: isSecondBoss(e.type) && e.type !== "boss10" ? PATTERN.bossLock : 18, angle: muzzle.angle, targetY: s.p.y + shipSize(s.p.level).h / 2, targetX: s.p.x, ...extra };
   if (kind === "charge") { e.c = 1; e.d = 0; }
 }
 
@@ -1962,12 +2341,16 @@ function tickCharges(s: State) {
       if (near(s, c.x, c.y, EMBER.radius)) hurtPlayer(s);
       continue;
     }
-    const flight = kind === "flak" ? FLAK.flight : kind === "spore" ? SPORE.flight : C4.flight;
+    const flight = kind === "deckbomb" ? HYDRA.flight : kind === "flak" ? FLAK.flight : kind === "spore" ? SPORE.flight : C4.flight;
     const u = Math.min(1, c.t / flight);
-    const k = 1 - (1 - u) * (1 - u);
+    const k = kind === "deckbomb" ? u : 1 - (1 - u) * (1 - u);
     if (kind === "spore" && c.t > flight) c.tx -= SPORE.drift;
     c.x = c.sx + (c.tx - c.sx) * k;
-    c.y = c.sy + (c.ty - c.sy) * k - (kind === "flak" ? Math.sin(Math.PI * u) * FLAK.arc : 0);
+    c.y = c.sy + (c.ty - c.sy) * k - (kind === "deckbomb" ? 4 * HYDRA.arc * u * (1 - u) : kind === "flak" ? Math.sin(Math.PI * u) * FLAK.arc : 0);
+    if (kind === "deckbomb" && c.t >= HYDRA.fuse && c.t < HYDRA.fuse + HYDRA.blast) {
+      if (near(s, c.x, c.y, HYDRA.radius)) hurtPlayer(s);
+      if (c.t === HYDRA.fuse) { burst(s, c.x, c.y, true); s.shake = Math.max(s.shake, 4); }
+    }
     if (kind === "c4" && c.t === C4.fuse) {
       if (near(s, c.x, c.y, C4.radius)) hurtPlayer(s);
       burst(s, c.x, c.y, true);
@@ -1980,6 +2363,7 @@ function tickCharges(s: State) {
   }
   s.charges = s.charges.filter((c) => {
     switch (c.kind ?? "c4") {
+      case "deckbomb": return c.t < HYDRA.fuse + HYDRA.blast;
       case "flak": return c.t < FLAK.burst + 8;
       case "spore": return c.t < SPORE.flight + SPORE.life && c.x > -20;
       case "ember": return c.t < EMBER.life;
@@ -2006,11 +2390,681 @@ function bossFan(s: State, e: Enemy, count: number, width: number, slot = 0, gap
 function bossBeam(s: State, e: Enemy, slot = 0) {
   const m = beamMuzzle(e, slot);
   const a = e.attack!;
-  s.beams.push({ x0: m.x, y: m.y, h: e.type === "boss8" ? 18 : 14, t: 0, warn: a.warn, live: a.live, ownerId: e.id, slot });
+  s.beams.push({ x0: m.x, y: m.y, h: isFinal(e.type) ? 18 : 14, t: 0, warn: a.warn, live: a.live, ownerId: e.id, slot });
 }
 
 /* Moves that carry the boss about on their own, so the usual drift is left alone. */
-const OWN_MOVE: AttackKind[] = ["charge", "surge", "dive", "blink", "breach"];
+const OWN_MOVE: AttackKind[] = ["charge", "surge", "dive", "blink", "breach", "burrow"];
+
+/* ---------- Space 2's bosses: their own attacks, ultimates and phase shifts ----------
+
+   None of Space 2's bosses borrows a Space 1 move. Each has two signature attacks, an ultimate
+   that opens its last phase (and comes back), and a phase shift of its own. Every attack warns
+   first and shows where it will land: lanes (`a.lanes`), columns (`a.cols`) or spots (`a.spots`),
+   drawn by space2-boss-fx-art.ts, and always leaves a way through.
+
+     9  Tidebreaker   railshot (a locked rail lane), geysers (columns burst from the sea)
+                      ultimate: broadside (wave after wave of shells, the gap shifting)
+                      shift: decks awash (escort boats and floating mines)
+     10 Hydra         deckbomb (locked mortar arcs), silorocket (below-deck vertical launches)
+                      ultimate: arsenal salvo (a marked safe corridor) shift: magazine shutters rupture
+     11 Ice Wyvern    avalanche (ice down every column but one), icewall (a wall that forms, then flies)
+                      ultimate: lances (three great icicles, each shattering)   shift: shed frost
+     12 Dune Maw      sandspout (columns marching out of the sand), burrow (under, and up beneath you)
+                      ultimate: pinwheel (four arms turning, then turning back) shift: molt
+     13 Iron Meridian ram (a car let loose along the rails), searchlight (a light that hunts, then fires)
+                      ultimate: sweep (the great gun's beam rolls down the sky) shift: decoupled
+     14 Permafrost    icebreak (spikes out of the sea, marching), harpoon (a chain pulled tight)
+                      ultimate: vortex (a ring closing on where you were)       shift: hull breach
+     15 Cyclone       lightning (strikes that walk after you), twister (a funnel drifting through)
+                      ultimate: maelstrom (six turning arms)       shift: pressure drop (gusts)
+     16 Atlas         quake, rocket fist, orbital, cluster, scissor; ultimate: march of Judgement;
+                      set piece: the Judgement grid (columns and beams at once, one marked safe cell)
+   Each also has two of Space 2's bullet patterns, in a shot of its own (PATTERN_SHOT):
+     helix     arms of slow shots wheeling out of the main gun, turning back halfway
+     rain      columns of shots falling from the top, but for a marked lane
+     tidewall  walls of shots from the right with a marked gap, fast and slow shots in turn
+     shatter   shells that burst into rings at marked spots around the ship
+     barrage   shotgun blasts at the locked spot, the pellets at mixed speeds
+   and every ultimate ends on a fan from the hull, forward only, with an opening toward the ship.
+   Every one of them also has volley: its guns fire a fan or two at the ship's locked height, with
+   a marked opening just off to one side, so the ship has to move between the bigger attacks. */
+export const SECOND_TIMING = SECOND_BOSS_TIMING;
+export const PATTERN_SHOT: Partial<Record<EType, Bullet["kind"]>> = {
+  boss9: "shell", boss10: "needle", boss11: "ice", boss12: "orb", boss13: "needle", boss14: "frost", boss15: "spiral", boss16: "orb",
+};
+export const ULTIMATES: AttackKind[] = ["broadside", "arsenalsalvo", "lances", "pinwheel", "sweep", "vortex", "maelstrom", "march"];
+export const isSecondBoss = (t: EType) => /^boss(9|1[0-6])$/.test(t);
+/* What each column strike looks like: sea spray, sand, white-hot light, ice. */
+export const STRIKE_STYLE = { sea: 0, sand: 1, light: 2, ice: 3 } as const;
+export const GUST = { every: 420, warn: 54, live: 48, push: 0.7 };
+
+/* A shot that runs straight, unlike the torpedo-paced shots most enemies fire. */
+function raw(s: State, x: number, y: number, vx: number, vy: number, kind: Bullet["kind"], r: number, extra: Partial<Bullet> = {}) {
+  s.bullets.push({ x, y, vx, vy, r, own: "e", dmg: 1, kind, life: PATTERN.shotLife, ...extra });
+}
+
+/* Each encounter owns only its pattern ordnance. Structural scenery and other
+   actors are retained when a pattern ends or a mini boss retreats. */
+function patternCounts(s: State) { return [s.bullets.length, s.beams.length, s.charges.length, s.hazards.length]; }
+function tagPattern(s: State, e: Enemy, start: number[]) {
+  for (const b of s.bullets.slice(start[0])) b.patternOwner = e.id;
+  for (const b of s.beams.slice(start[1])) b.patternOwner = e.id;
+  for (const b of s.charges.slice(start[2])) b.patternOwner = e.id;
+  for (const b of s.hazards.slice(start[3])) b.patternOwner = e.id;
+}
+function clearPatternOrdnance(s: State, owner: number) {
+  s.bullets = s.bullets.filter(b => b.patternOwner !== owner);
+  s.beams = s.beams.filter(b => b.patternOwner !== owner);
+  s.charges = s.charges.filter(b => b.patternOwner !== owner);
+  s.hazards = s.hazards.filter(b => b.patternOwner !== owner);
+}
+
+/* A column of harm, marked for `warn` frames, then live for `live`. */
+function strike(s: State, x: number, w: number, warn: number, live: number, style: number, top = 22, height = H - 22) {
+  s.hazards.push({ id: s.nextId++, kind: "strike", x: x - w / 2, w, g: [warn, live, style], half: height, base: top, t: 0 });
+}
+
+/* A beam across the screen from the left edge to `x0`, already warned, that can roll up or down. */
+function lane(s: State, x0: number, y: number, h: number, live: number, vy = 0) {
+  s.beams.push({ x0, y, h, t: 0, warn: 0, live, vy });
+}
+
+/* Three internal magazines replace the old exposed hydraulic heads. */
+export const HYDRA = {
+  bays: [{ x: 20, y: 32 }, { x: 44, y: 32 }, { x: 68, y: 32 }],
+  flight: 64, fuse: 82, blast: 16, radius: 17, arc: 48,
+  climb: 24, launchSpeed: 2.4, rocketSpeed: 3, safeHalf: 25,
+} as const;
+
+export function hydraMuzzle(e: Enemy, bay: number) {
+  const p = HYDRA.bays[((bay % 3) + 3) % 3];
+  return bossPoint(e, { x: e.x + p.x, y: e.y + p.y });
+}
+
+function throwDeckBomb(s: State, e: Enemy, bay: number, target: { x: number; y: number }) {
+  const p = hydraMuzzle(e, bay);
+  s.charges.push({ kind: "deckbomb", x: p.x, y: p.y, sx: p.x, sy: p.y, tx: target.x, ty: target.y, t: 0 });
+}
+
+function launchDeckRocket(s: State, e: Enemy, bay: number, target: { x: number; y: number }) {
+  const p = hydraMuzzle(e, bay);
+  raw(s, p.x, p.y, 0, -HYDRA.launchSpeed, "deckrocket", 3,
+    { retarget: HYDRA.climb + 1, speed2: HYDRA.rocketSpeed, aim: { ...target }, life: 200 });
+}
+
+function secondAttack(s: State, e: Enemy, a: BossAttack) {
+  const start = patternCounts(s);
+  const warning = a.t < a.warn, firing = a.t >= a.warn && a.t < a.warn + a.live;
+  const lock = a.warn - (a.lockFrames ?? PATTERN.bossLock), t2 = a.t - a.warn;
+  const late = e.a >= 2, m = enemyMuzzle(e, s);
+  const sx = s.p.x + shipSize(s.p.level).w / 2, sy = s.p.y + shipSize(s.p.level).h / 2;
+  const cx = e.x + e.w / 2, cy = e.y + e.h / 2;
+  if (a.t === 0 && ULTIMATES.includes(a.kind)) setCallout(s, "ultimate");
+  switch (a.kind) {
+    case "volley": {
+      /* Fans of shells at the locked height, with the opening a little to one side of it. */
+      if (a.t <= lock) {
+        const aim = Math.atan2(sy - m.y, sx - m.x), side = (e.attackIndex ?? 0) % 4 < 2 ? 1 : -1;
+        a.angle = aim; a.gapAngle = aim + side * 0.3;
+      }
+      const waves = e.a >= 1 ? 3 : 2, count = e.a >= 1 ? 11 : 9;
+      if (firing && t2 % 18 === 0 && t2 / 18 < waves) for (let k = 0; k < count; k++) {
+        const angle = a.angle + (k - (count - 1) / 2) * 0.13;
+        if (Math.abs(angleDifference(angle, a.gapAngle!)) < 0.2) continue;
+        raw(s, m.x, m.y, Math.cos(angle) * 2.6, Math.sin(angle) * 2.6, "shell", 2.4);
+      }
+      break;
+    }
+    case "helix": {
+      /* Arms wheeling round the gun, only those facing left firing; they turn back halfway. */
+      if (a.t === 0) a.spots = [{ x: m.x, y: m.y }];
+      const arms = 3 + Math.min(2, e.a), every = e.a >= 2 ? 4 : 5;
+      if (firing && t2 % every === 0) {
+        const half = a.live / 2, turn = (t2 < half ? t2 : 2 * half - t2) * 0.07;
+        for (let k = 0; k < arms; k++) {
+          const angle = Math.PI + turn + (k * Math.PI * 2) / arms;
+          if (Math.cos(angle) < 0.15) raw(s, m.x, m.y, Math.cos(angle) * 1.9, Math.sin(angle) * 1.9, PATTERN_SHOT[e.type] ?? "orb", 2.4);
+        }
+      }
+      break;
+    }
+    case "rain": {
+      /* Columns falling from the top edge, every one but the lane nearest the ship. */
+      const grid = Array.from({ length: 11 }, (_, i) => 30 + i * 20);
+      if (a.t <= lock) {
+        a.gapX = grid.reduce((best, x) => Math.abs(x - sx) < Math.abs(best - sx) ? x : best);
+        a.safeHalf = PATTERN.gapHalf;
+        a.cols = grid.filter((x) => Math.abs(x - a.gapX!) > 20);
+      }
+      const gap = e.a >= 2 ? 7 : 9;
+      if (firing && t2 % gap === 0) for (const x of a.cols!) raw(s, x + ((t2 / gap) % 2 ? 6 : -6), 24, 0, 2.3, PATTERN_SHOT[e.type] ?? "needle", 2.3, { life: 96 });
+      break;
+    }
+    case "tidewall": {
+      /* Walls of shots from the right with a gap at the locked height; every other shot is
+         slower, so each wall shears into layers as it comes. */
+      if (a.t <= lock) { a.gapY = clamp(sy, 50, 170); a.safeHalf = 22; }
+      const walls = e.a >= 1 ? 7 : 6;
+      if (firing && t2 % 13 === 0 && t2 / 13 < walls) {
+        /* The rows stop above the sea or the ground the boss stands on. */
+        const floor = (BOSS_FLOOR[e.type] === "sea" ? WATER_Y : GROUND_Y) - 8;
+        let k = 0;
+        for (let y = 30; y <= floor; y += 14, k++) {
+          if (Math.abs(y - a.gapY!) < 22) continue;
+          const speed = k % 2 ? 1.9 : 2.6;
+          raw(s, e.x - 4, y, -speed, 0, PATTERN_SHOT[e.type] ?? "shell", 2.4);
+        }
+      }
+      break;
+    }
+    case "shatter": {
+      /* Shells to marked spots round the ship, each bursting into a ring. */
+      const count = e.a >= 1 ? 4 : 3;
+      if (a.t <= lock) a.spots = spacedPositions(sy, count, 40, 36, 184).map((y, i) => ({ x: clamp(sx + (i % 2 ? 36 : 12), 50, 200), y }));
+      if (firing && t2 % 16 === 0 && t2 / 16 < count) {
+        const p = a.spots![t2 / 16], angle = Math.atan2(p.y - m.y, p.x - m.x), dist = Math.hypot(p.x - m.x, p.y - m.y);
+        raw(s, m.x, m.y, Math.cos(angle) * 3, Math.sin(angle) * 3, "shell", 3.4,
+          { fuse: Math.max(12, Math.round(dist / 3)), split: e.a >= 2 ? 12 : 10, splitKind: PATTERN_SHOT[e.type] ?? "needle", splitAngle: t2 * 0.3 });
+      }
+      break;
+    }
+    case "barrage": {
+      /* Shotgun blasts at the locked spot, the pellets spread a little and at mixed speeds. */
+      if (a.t <= lock) a.spots = [{ x: sx, y: sy }];
+      const blasts = e.a >= 1 ? 5 : 4;
+      if (firing && t2 % 14 === 0 && t2 / 14 < blasts) {
+        const aim = Math.atan2(a.spots![0].y - m.y, a.spots![0].x - m.x);
+        for (let k = 0; k < 7; k++) {
+          const angle = aim + (rand(s) - 0.5) * 0.5, speed = 1.9 + rand(s) * 1.2;
+          raw(s, m.x, m.y, Math.cos(angle) * speed, Math.sin(angle) * speed, PATTERN_SHOT[e.type] ?? "shell", 2.2);
+        }
+      }
+      break;
+    }
+    case "railshot":
+      if (a.t <= lock) {
+        const count = e.a >= 1 ? 2 : 1;
+        a.lanes = spacedPositions(sy, count, 58, 34, 188);
+      }
+      if (firing && t2 % 24 < 6 && t2 % 3 === 0 && Math.floor(t2 / 24) < (a.lanes?.length ?? 0)) {
+        const angle = Math.atan2(a.lanes![Math.floor(t2 / 24)] - m.y, 24 - m.x);
+        raw(s, m.x, m.y, Math.cos(angle) * 4.4, Math.sin(angle) * 4.4, "needle", 2.6);
+        s.shake = Math.max(s.shake, 4);
+      }
+      break;
+    case "geysers": {
+      const grid = [40, 96, 152, 208];
+      if (a.t === 0) {
+        a.gapX = grid.reduce((best, x) => Math.abs(x - sx) < Math.abs(best - sx) ? x : best);
+        a.safeHalf = PATTERN.gapHalf; a.cols = grid.filter(x => x !== a.gapX);
+      }
+      if (firing && t2 % 18 === 0 && t2 / 18 < 3) strike(s, a.cols![t2 / 18], 18, 12, 18, STRIKE_STYLE.sea, 30, WATER_Y - 30);
+      break;
+    }
+    case "broadside":
+      if (a.t === 0) { a.gapY = clamp(sy, 64, 152); a.safeHalf = 28; }
+      if (firing && t2 % 32 === 0) {
+        const wave = t2 / 32, gapY = clamp(a.gapY! + Math.sin(wave * 0.7) * 18, 52, 166);
+        for (const slot of [-1, 0, 1]) {
+          const port = enemyMuzzle(e, s, slot), gap = Math.atan2(gapY - port.y, 40 - port.x);
+          for (let k = -4; k <= 4; k++) {
+            const angle = Math.PI + k * 0.2;
+            if (Math.abs(angleDifference(angle, gap)) < 0.24) continue;
+            raw(s, port.x, port.y, Math.cos(angle) * 2.5, Math.sin(angle) * 2.5, "shell", 2.6);
+          }
+        }
+      }
+      break;
+    case "deckbomb": {
+      const count = e.a === 0 ? 2 : 3;
+      if (a.t <= lock) a.spots = spacedPositions(sx, count, 48, 30, W * 0.48).map((x, i) => ({ x, y: clamp(sy + (i % 2 ? 14 : -14), 42, 154) }));
+      if (firing && t2 % 24 === 0 && t2 / 24 < count) throwDeckBomb(s, e, t2 / 24, a.spots![t2 / 24]);
+      break;
+    }
+    case "silorocket": {
+      if (a.t <= lock) a.spots = spacedPositions(sy, 3, 34, 40, 154).map(y => ({ x: clamp(sx, 30, W * 0.48), y }));
+      const count = late ? 5 : e.a >= 1 ? 4 : 3;
+      if (firing && t2 % 14 === 0 && t2 / 14 < count) { const i = t2 / 14; launchDeckRocket(s, e, 2 - i % 3, a.spots![i % 3]); }
+      break;
+    }
+    case "arsenalsalvo":
+      if (a.t === 0) {
+        a.gapY = sy < 100 ? 155 : 48; a.safeHalf = 25;
+        const row = a.gapY > 100 ? 62 : 137;
+        a.spots = [{ x: 68, y: row }, { x: 140, y: row }, { x: 104, y: row + (row < 100 ? 12 : -12) }];
+      }
+      if (firing && t2 % 32 === 0 && t2 < 96) { const i = t2 / 32; throwDeckBomb(s, e, i, a.spots![i % 3]); }
+      if (firing && t2 % 18 === 9 && t2 < 108) { const i = (t2 - 9) / 18; launchDeckRocket(s, e, 2 - i % 3, a.spots![i % 3]); }
+      break;
+    case "avalanche": {
+      const grid = [42, 98, 154, 210];
+      if (a.t === 0) { a.gapX = grid[(e.attackIndex ?? 0) % grid.length]; a.safeHalf = 26; a.cols = grid.filter(x => x !== a.gapX); a.spots = [{ x: a.gapX, y: 0 }]; }
+      if (firing && t2 % 24 === 0 && t2 < (late ? 96 : 72)) for (const x of a.cols!) raw(s, x, 24, 0, 2.6, "ice", 3);
+      break;
+    }
+    case "icewall":
+      if (a.t === 0) { a.gapY = [62, 108, 154][(e.attackIndex ?? 0) % 3]; a.safeHalf = 32; }
+      if (firing && t2 === 0) for (let y = 30; y < H - 12; y += 18) {
+        if (Math.abs(y - a.gapY!) < 37) continue;
+        raw(s, e.x - 20, y, 0, 0, "ice", 3, { hold: 30, hvx: -2.6, hvy: 0 });
+      }
+      break;
+    case "lances":
+      if (a.t <= lock) a.spots = spacedPositions(sy, 3, 48, 38, 182).map((y, i) => ({ x: clamp(sx + (i - 1) * 22, 40, 182), y }));
+      a.gapAngle = Math.PI;
+      if (firing && t2 % 44 === 0 && t2 / 44 < 3) {
+        const p = a.spots![t2 / 44], angle = Math.atan2(p.y - m.y, p.x - m.x);
+        raw(s, m.x, m.y, Math.cos(angle) * 3.4, Math.sin(angle) * 3.4, "ice", 5,
+          { fuse: Math.max(12, Math.round(Math.hypot(p.x - m.x, p.y - m.y) / 3.4)), split: 8, splitKind: "frost", splitGap: Math.PI, splitHalf: 0.65 });
+      }
+      break;
+    case "sandspout": {
+      const grid = [40, 96, 152, 208];
+      if (a.t === 0) { a.gapX = grid[(e.attackIndex ?? 0) % 4]; a.safeHalf = 26; a.cols = grid.filter(x => x !== a.gapX).reverse(); }
+      if (firing && t2 % 22 === 0 && t2 / 22 < 3) strike(s, a.cols![t2 / 22], 18, 14, 20, STRIKE_STYLE.sand, 46, GROUND_Y - 38);
+      break;
+    }
+    case "burrow": {
+      if (a.t <= lock) a.spots = [{ x: clamp(sx, 56, 182), y: GROUND_Y }];
+      const p = a.spots?.[0];
+      if (warning) glide(e, e.x, H + 30, 4);
+      else if (firing && p) {
+        if (t2 === 0) { e.x = p.x - e.w / 2; e.y = H + 10; }
+        if (t2 < 24) e.y -= (H + 10 - (GROUND_Y - e.h - 30)) / 24;
+        if (t2 === 24) {
+          for (const angle of [Math.PI + 0.35, Math.PI + 0.8, Math.PI + 1.2]) raw(s, e.x, e.y + e.h / 2, Math.cos(angle) * 2.1, Math.sin(angle) * 2.1, "shell", 2.6);
+          s.shake = Math.max(s.shake, 6);
+        }
+      } else glide(e, Math.min(BOSS_HOME[e.type] ?? W - 100, W - e.w - 14), H / 2 - e.h / 2, 5);
+      break;
+    }
+    case "pinwheel":
+      if (a.t === 0) { a.gapAngle = Math.PI; a.spots = [{ x: m.x, y: m.y }]; }
+      if (firing && t2 % 10 === 0) {
+        const turn = Math.min(t2, a.live - t2) * 0.022;
+        for (let k = 0; k < 5; k++) {
+          const angle = turn + k * Math.PI * 2 / 5;
+          if (Math.abs(angleDifference(angle, Math.PI)) < 0.34) continue;
+          raw(s, m.x, m.y, Math.cos(angle) * 2, Math.sin(angle) * 2, "spiral", 2.4, { life: 180 });
+        }
+      }
+      break;
+    case "ram":
+      a.lanes = [GROUND_Y - 13];
+      if (firing) for (let i = 0; i < (e.a >= 1 ? 2 : 1); i++) {
+        const age = t2 - i * 40;
+        if (age < 0) continue;
+        const x = e.x - 4 - age * 4.4;
+        if (x > -30) e.parts.push({ x: x - 26, y: GROUND_Y - 25, w: 26, h: 24 });
+      }
+      break;
+    case "searchlight":
+      if (a.t <= lock) a.spots = [{ x: clamp(sx, 30, 190), y: clamp(sy, 34, 184) }];
+      if (firing && t2 % 26 === 0) {
+        const p = a.spots![0], angle = Math.atan2(p.y - m.y, p.x - m.x);
+        for (const d of [-0.14, 0, 0.14]) raw(s, m.x, m.y, Math.cos(angle + d) * 2.8, Math.sin(angle + d) * 2.8, "needle", 2.2);
+      }
+      break;
+    case "sweep": {
+      const down = (e.attackIndex ?? 0) % 2 === 1;
+      if (a.t === 0) { a.lanes = down ? [30, 142] : [194, 82]; a.gapY = down ? 180 : 50; a.safeHalf = 20; }
+      if (firing && t2 === 0) lane(s, m.x, a.lanes![0], 16, a.live, (a.lanes![1] - a.lanes![0]) / a.live);
+      break;
+    }
+    case "icebreak": {
+      const grid = [40, 96, 152, 208];
+      if (a.t === 0) { a.gapX = grid[(e.attackIndex ?? 0) % 4]; a.safeHalf = 26; a.cols = grid.filter(x => x !== a.gapX); }
+      if (firing && t2 % 26 === 0 && t2 / 26 < 3) strike(s, a.cols![t2 / 26], 18, 16, 24, STRIKE_STYLE.ice, WATER_Y - 104, 104);
+      break;
+    }
+    case "harpoon":
+      if (a.t <= lock) a.lanes = spacedPositions(sy, e.a >= 1 ? 2 : 1, 58, 36, 186);
+      if (firing && (t2 === 0 || t2 >= 28 && t2 < 44 && t2 % 4 === 0)) a.lanes!.forEach((y, i) => {
+        const p = enemyMuzzle(e, s, i), angle = Math.atan2(y - p.y, 24 - p.x);
+        raw(s, p.x, p.y, Math.cos(angle) * (t2 === 0 ? 4 : 3), Math.sin(angle) * (t2 === 0 ? 4 : 3), "needle", t2 === 0 ? 2.6 : 1.7);
+      });
+      break;
+    case "vortex":
+      if (a.t <= lock) { a.spots = [{ x: clamp(sx, 100, 178), y: clamp(sy, 76, 140) }]; a.gapAngle = sy < 108 ? Math.PI / 2 : -Math.PI / 2; }
+      if (firing && t2 === 0) {
+        const p = a.spots![0];
+        for (let i = 0; i < 20; i++) {
+          const angle = i * Math.PI / 10;
+          if (Math.abs(angleDifference(angle, a.gapAngle!)) < 0.6) continue;
+          raw(s, p.x + Math.cos(angle) * PATTERN.vortexRadius, p.y + Math.sin(angle) * PATTERN.vortexRadius, -Math.cos(angle) * 1.2, -Math.sin(angle) * 1.2, "frost", 2.4, { life: 82 });
+        }
+      }
+      break;
+    case "lightning":
+      if (a.t <= lock) { a.cols = spacedPositions(sx, late ? 4 : 3, 48, 24, 224); if ((e.attackIndex ?? 0) % 2) a.cols.reverse(); }
+      if (firing && t2 % 26 === 0 && t2 / 26 < a.cols!.length) strike(s, a.cols![t2 / 26], 16, 24, 10, STRIKE_STYLE.light);
+      break;
+    case "twister":
+      if (a.t === 0) { const top = (e.attackIndex ?? 0) % 2 === 0; a.lanes = top ? [30, 128] : [102, 200]; a.gapY = top ? 176 : 54; a.safeHalf = 22; }
+      if (firing && t2 === 0) s.hazards.push({ id: s.nextId++, kind: "twister", x: e.x - 20, w: 20, g: [24, 190, 0], half: 98, base: a.lanes![0], t: 0 });
+      break;
+    case "maelstrom":
+      if (a.t <= lock) a.gapAngle = Math.atan2(sy - cy, sx - cx);
+      if (firing && t2 % 10 === 0) {
+        const turn = Math.min(t2, a.live - t2) * 0.02;
+        for (let k = 0; k < 6; k++) {
+          const angle = turn + k * Math.PI / 3;
+          if (Math.abs(angleDifference(angle, a.gapAngle!)) < 0.38) continue;
+          raw(s, cx, cy, Math.cos(angle) * 1.95, Math.sin(angle) * 1.95, "spiral", 2.3, { life: 180 });
+        }
+      }
+      break;
+    case "quake": {
+      const grid = [38, 86, 134, 182];
+      if (a.t === 0) { a.gapX = grid[(e.attackIndex ?? 0) % 4]; a.safeHalf = 24; a.spots = grid.filter(x => x !== a.gapX).map(x => ({ x, y: GROUND_Y })); }
+      if (firing && t2 % 22 === 0 && t2 / 22 < 3) {
+        const p = a.spots![t2 / 22];
+        for (const dx of [-4, 4]) raw(s, p.x + dx, GROUND_Y - 2, 0, -2.6, "shell", 2.5);
+        /* Once the plating has cracked each vent fans out as well. */
+        if (e.a >= 1) for (const d of [-0.4, 0.4]) raw(s, p.x, GROUND_Y - 2, Math.sin(d) * 2.4, -Math.cos(d) * 2.4, "orb", 2.4);
+        if (t2 === 0) s.shake = Math.max(s.shake, 6);
+      }
+      break;
+    }
+    case "rocketfist":
+      if (a.t <= lock) { a.spots = [{ x: clamp(sx, 44, 184), y: clamp(sy, 38, 178) }]; a.lanes = [a.spots[0].y]; a.origin = { x: m.x, y: m.y }; }
+      if (firing) {
+        const from = a.origin!, to = a.spots![0];
+        const u = t2 < 32 ? t2 / 32 : Math.max(0, (64 - t2) / 32);
+        if (u > 0) e.parts.push({ x: from.x + (to.x - from.x) * u - 10, y: from.y + (to.y - from.y) * u - 9, w: 20, h: 18 });
+        /* Once the plating has cracked the fist bursts into a ring where it lands. */
+        if (t2 === 32 && e.a >= 1) {
+          for (let i = 0; i < 8; i++) { const ang = (i / 8) * Math.PI * 2 + Math.PI / 8; raw(s, to.x, to.y, Math.cos(ang) * 2, Math.sin(ang) * 2, "orb", 2.4); }
+          s.shake = Math.max(s.shake, 6);
+        }
+      }
+      break;
+    case "grid": {
+      /* The Judgement grid: every column but one burns, and every lane but one, at once; the one
+         safe cell is where the open column and the open lane cross, nearest the ship at lock. */
+      const columns = [38, 86, 134, 182], lanesY = [52, 92, 132, 172];
+      if (a.t <= lock) {
+        a.gapX = columns.reduce((best, x) => Math.abs(x - sx) < Math.abs(best - sx) ? x : best);
+        a.gapY = lanesY.reduce((best, y) => Math.abs(y - sy) < Math.abs(best - sy) ? y : best);
+        a.safeHalf = 22;
+        a.cols = columns.filter((x) => x !== a.gapX);
+        a.lanes = lanesY.filter((y) => y !== a.gapY);
+      }
+      if (firing && t2 === 0) {
+        for (const x of a.cols!) strike(s, x, 22, 0, a.live, STRIKE_STYLE.light);
+        for (const y of a.lanes!) lane(s, e.x - 4, y, 14, a.live);
+        s.shake = Math.max(s.shake, 8);
+      }
+      break;
+    }
+    case "orbital": {
+      const grid = [38, 86, 134, 182];
+      if (a.t === 0) { a.gapX = grid[(e.attackIndex ?? 0) % 4]; a.safeHalf = 24; a.cols = grid.filter(x => x !== a.gapX); }
+      if (firing && t2 % 28 === 0 && t2 / 28 < 3) strike(s, a.cols![t2 / 28], 20, 30, 12, STRIKE_STYLE.light);
+      break;
+    }
+    case "cluster":
+      if (a.t <= lock) a.spots = spacedPositions(sy, 3, 52, 38, 182).map(y => ({ x: clamp(sx + 18, 56, 182), y }));
+      a.gapAngle = Math.PI;
+      if (firing && t2 % 22 === 0 && t2 / 22 < 3) {
+        const p = a.spots![t2 / 22], angle = Math.atan2(p.y - m.y, p.x - m.x);
+        raw(s, m.x, m.y, Math.cos(angle) * 2.8, Math.sin(angle) * 2.8, "shell", 3.6,
+          { fuse: Math.max(12, Math.round(Math.hypot(p.x - m.x, p.y - m.y) / 2.8)), split: 8, splitAngle: 0, splitGap: Math.PI, splitHalf: 0.6 });
+      }
+      break;
+    case "scissor": {
+      const top = beamMuzzle(e, -1), bottom = beamMuzzle(e, 1);
+      if (a.t === 0) { a.lanes = [top.y, bottom.y]; a.gapY = 108; a.safeHalf = 22; }
+      if (firing && t2 === 0) {
+        lane(s, top.x, top.y, 12, a.live, (78 - top.y) / a.live);
+        lane(s, bottom.x, bottom.y, 12, a.live, (138 - bottom.y) / a.live);
+      }
+      break;
+    }
+    case "march":
+      if (a.t === 0) a.cols = [204, 170, 136, 102, 68, 34];
+      if (firing) {
+        if (t2 % 22 === 0 && t2 / 22 < 6) strike(s, a.cols![t2 / 22], 18, 36, 10, STRIKE_STYLE.light);
+        const second = t2 - 162;
+        if (e.a >= 4 && second >= 0 && second % 22 === 0 && second / 22 < 6) strike(s, [...a.cols!].reverse()[second / 22], 18, 36, 10, STRIKE_STYLE.light);
+      }
+      break;
+  }
+  /* An ultimate ends on a fan from the hull, every way forward of it, with an opening toward the
+     ship; nothing is thrown back behind the boss. */
+  if (ULTIMATES.includes(a.kind) && firing && t2 === a.live - 1) {
+    const n = 22 + e.a * 2, aim = Math.atan2(sy - cy, sx - cx);
+    for (let i = 0; i < n; i++) {
+      const angle = aim + Math.PI / n + (i / n) * Math.PI * 2;
+      if (Math.abs(angleDifference(angle, aim)) < 0.42 || Math.cos(angle) > 0.15) continue;
+      raw(s, cx, cy, Math.cos(angle) * 2.2, Math.sin(angle) * 2.2, PATTERN_SHOT[e.type] ?? "orb", 2.4);
+    }
+    s.shake = Math.max(s.shake, 10);
+  }
+  tagPattern(s, e, start);
+}
+
+/* ---------- Space 2's mini bosses ----------
+
+   Before each chapter's boss, a mini boss holds the way: a machine of its own with two attacks
+   of its own, marked before they land like everything else. It comes in from the right, takes its
+   place, alternates its attacks, and after MINI.stay frames gives up and flies off (it is then not
+   counted as destroyed). The chapter's boss waits until it has gone. Destroyed, it always leaves a
+   gun crate and a repair crate.
+
+     9  Skyhook       tiltrotor gunship   rotor wash (mines that hang, then drop), sweep gun (a stream that swings)
+     10 Mudskipper    hovercraft          skip (a hop to a marked spot, a splash ring), net gun (a net that opens)
+     11 Cable Fort    gondola on a cable  cable slide (along the top, icicles below), chaff (a slow ring)
+     12 Sand Skimmer  sail tank           dune ram (a dash along the ground), mortar (shells that burst in a cross)
+     13 Tunnel Sentry guns in the rock    ladder (lanes, one by one, top to bottom), lattice (a grid that lets go)
+     14 Ice Hunter    submarine           torpedo fan (low lanes), periscope (a column up from the sea)
+     15 Storm Petrel  drone leader        feather fan (two fans crossing), dive bomb (a dive to a marked spot)
+     16 Gatekeeper    gate mech           gate laser (columns with one gap), shield drones (it guards and fires) */
+export const MINI = { stay: 2400, recover: PATTERN.miniRecovery };
+export const isMini = (t: EType) => t.startsWith("mini");
+const MINI_MOVES: Partial<Record<EType, AttackKind[]>> = {
+  mini9: ["rotorwash", "sweepgun"],
+  mini10: ["skip", "netgun"],
+  mini11: ["cableslide", "chaff"],
+  mini12: ["duneram", "mortar"],
+  mini13: ["ladder", "lattice"],
+  mini14: ["torpfan", "periscope"],
+  mini15: ["featherfan", "divebomb"],
+  mini16: ["gatelaser", "shielddrones"],
+};
+export const MINI_TIMING = SECOND_MINI_TIMING;
+/* Where each stands: on the water, on the ground, along the top, or in the air. */
+const MINI_FLOOR: Partial<Record<EType, "sea" | "ground" | "top" | "air">> = {
+  mini9: "air", mini10: "sea", mini11: "top", mini12: "ground", mini13: "air", mini14: "sea", mini15: "air", mini16: "ground",
+};
+
+function miniRest(e: Enemy) {
+  const f = MINI_FLOOR[e.type];
+  return f === "sea" ? WATER_Y - e.h : f === "ground" ? GROUND_Y - e.h : f === "top" ? 20 : H / 2 - e.h / 2;
+}
+
+/* Canonical visible gun apertures; the Sentry has three separate rails. */
+export function miniMuzzle(e: Enemy, slot = 0) {
+  if (e.type === "mini13") return { x: e.x + (slot === 1 ? 2 : 1), y: e.y + [12, 26, 39][Math.max(0, Math.min(2, slot))] };
+  return { x: e.x + 2, y: e.y + e.h / 2 };
+}
+
+function updateMini(s: State, e: Enemy) {
+  const home = W - e.w - 22, rest = miniRest(e);
+  if (e.t > MINI.stay) {
+    clearPatternOrdnance(s, e.id); e.attack = undefined; e.guard = 0; e.x += 2.2;
+    if (e.x > W + 60) e.x = W + 200;
+    return;
+  }
+  if (!e.attack && e.b === 0) {
+    e.x = Math.max(home, e.x - 2); e.y = rest;
+    if (e.x > home) return;
+    setCallout(s, "miniboss");
+  }
+  e.b += 1;
+  if (!e.attack) {
+    clearPatternOrdnance(s, e.id);
+    const moves = MINI_MOVES[e.type] ?? [], kind = moves[(e.attackIndex ?? 0) % moves.length];
+    e.attackIndex = (e.attackIndex ?? 0) + 1;
+    const [warn, live] = MINI_TIMING[kind] ?? [60, 60];
+    e.attack = { kind, t: 0, warn, live, recover: MINI.recover, lockFrames: PATTERN.miniLock, angle: Math.PI, targetX: s.p.x, targetY: s.p.y };
+  }
+  const a = e.attack, start = patternCounts(s);
+  const warning = a.t < a.warn, firing = a.t >= a.warn && a.t < a.warn + a.live;
+  const lock = a.warn - (a.lockFrames ?? PATTERN.miniLock), t2 = a.t - a.warn;
+  const sx = s.p.x + shipSize(s.p.level).w / 2, sy = s.p.y + shipSize(s.p.level).h / 2;
+  const port = miniMuzzle(e), mx = port.x, my = port.y;
+  const settle = () => { e.x += (home - e.x) * 0.12; e.y += (rest - e.y) * 0.12; };
+  e.guard = 0;
+  switch (a.kind) {
+    case "rotorwash":
+      if (a.t === 0) { a.cols = [88, 148, 208]; a.gapY = 56; a.safeHalf = 26; a.spots = a.cols.map(x => ({ x, y: H - 8 })); }
+      if (firing && t2 === 0) for (const target of a.spots!) {
+        const source = { x: e.x + 47, y: e.y + 22 };
+        raw(s, source.x, source.y, (target.x - source.x) / 76, (target.y - source.y) / 76, "orb", 3.3, { life: 100 });
+      }
+      break;
+    case "sweepgun":
+      if (a.t === 0) { a.lanes = [my - 64, my, my + 64]; a.spots = a.lanes.map(y => ({ x: 32, y: clamp(y, 28, 194) })); }
+      if (firing && t2 % 24 < 9 && t2 % 3 === 0 && Math.floor(t2 / 24) < 3) {
+        const p = a.spots![Math.floor(t2 / 24)], angle = Math.atan2(p.y - my, p.x - mx);
+        raw(s, mx, my, Math.cos(angle) * 2.7, Math.sin(angle) * 2.7, "needle", 2.1);
+      }
+      break;
+    case "skip": {
+      if (a.t <= lock) { a.spots = [{ x: clamp(sx + 30, 84, 220), y: WATER_Y }]; a.origin = { x: e.x, y: e.y }; }
+      if (firing) {
+        const p = a.spots![0], from = a.origin!;
+        if (t2 <= 36) {
+          const u = t2 / 36; e.x = from.x + (p.x - e.w / 2 - from.x) * u; e.y = rest - Math.sin(Math.PI * u) * 42;
+          if (t2 === 36) { for (const angle of [Math.PI + 0.25, Math.PI + 0.65, Math.PI + 1.05]) raw(s, p.x, WATER_Y - 4, Math.cos(angle) * 1.8, Math.sin(angle) * 1.8, "orb", 2.4); }
+        } else settle();
+      } else if (!warning) settle();
+      break;
+    }
+    case "netgun":
+      if (a.t <= lock) { a.spots = [{ x: clamp(sx, 30, 190), y: clamp(sy, 34, 184) }]; a.gapAngle = Math.atan2(a.spots[0].y - my, a.spots[0].x - mx); }
+      if (firing && (t2 === 0 || t2 === 28)) for (const side of [-1, 1]) for (const d of [0.25, 0.43, 0.61]) {
+        const angle = a.gapAngle! + side * d; raw(s, mx, my, Math.cos(angle) * 2.2, Math.sin(angle) * 2.2, "spiral", 2.3);
+      }
+      break;
+    case "cableslide": {
+      if (a.t <= lock) a.cols = spacedPositions(sx, 3, 52, 32, 224);
+      if (warning && a.cols) e.x += clamp(a.cols[0] - e.w / 2 - e.x, -4, 4);
+      if (firing && t2 < 96) {
+        const index = Math.floor(t2 / 32), target = a.cols![index];
+        e.x += clamp(target - e.w / 2 - e.x, -4, 4);
+        if (t2 % 32 === 22) raw(s, e.x + 20, e.y + 29, 0, 2.7, "ice", 3);
+      } else if (!warning) settle();
+      break;
+    }
+    case "chaff":
+      if (a.t <= lock) { a.gapAngle = Math.atan2(sy - my, sx - mx); a.spots = [{ x: sx, y: sy }]; }
+      if (firing && (t2 === 0 || t2 === 30)) for (let i = 0; i < 12; i++) {
+        const angle = i * Math.PI / 6 + (t2 ? Math.PI / 12 : 0);
+        if (Math.abs(angleDifference(angle, a.gapAngle!)) < 0.5) continue;
+        raw(s, mx, my, Math.cos(angle) * 1.6, Math.sin(angle) * 1.6, "frost", 2.4, { life: 180 });
+      }
+      break;
+    case "duneram":
+      a.lanes = [GROUND_Y - e.h / 2];
+      if (a.t === 0) a.origin = { x: e.x, y: e.y };
+      if (firing) { if (t2 < 32) e.x = a.origin!.x - (a.origin!.x - 34) * t2 / 32; else settle(); }
+      break;
+    case "mortar":
+      if (a.t <= lock) a.spots = spacedPositions(sx, 2, 70, 34, 190).map((x, i) => ({ x, y: clamp(sy + (i ? 20 : -20), 42, 176) }));
+      if (firing && (t2 === 0 || t2 === 28)) {
+        const p = a.spots![t2 / 28], angle = Math.atan2(p.y - my, p.x - mx);
+        raw(s, mx, my, Math.cos(angle) * 2.7, Math.sin(angle) * 2.7, "shell", 3.3,
+          { fuse: Math.max(12, Math.round(Math.hypot(p.x - mx, p.y - my) / 2.7)), split: 4, splitAngle: 0 });
+      }
+      break;
+    case "ladder":
+      if (a.t === 0) a.lanes = [0, 1, 2].map(i => miniMuzzle(e, i).y);
+      if (firing && t2 % 24 === 0 && t2 / 24 < 3) { const p = miniMuzzle(e, t2 / 24); lane(s, p.x, p.y, 4, 12); }
+      break;
+    case "lattice":
+      if (a.t === 0) { a.gapY = e.y + 26; a.safeHalf = 26; a.lanes = [e.y + 12, e.y + 39]; }
+      if (firing && (t2 === 0 || t2 === 30)) for (const side of [-1, 1]) {
+        const p = miniMuzzle(e, side === -1 ? 0 : 2);
+        for (const d of [0.16, 0.34, 0.52]) {
+          const angle = Math.PI - side * d;
+          raw(s, p.x, p.y, Math.cos(angle) * 2.3, Math.sin(angle) * 2.3, "orb", 2.4);
+        }
+      }
+      break;
+    case "torpfan":
+      if (a.t === 0) { a.lanes = [WATER_Y - 55, WATER_Y - 30, WATER_Y - 5]; a.gapY = 56; a.safeHalf = 26; }
+      if (firing && t2 % 22 === 0 && t2 / 22 < 3) {
+        const angle = Math.atan2(a.lanes![t2 / 22] - my, 24 - mx);
+        raw(s, mx, my, Math.cos(angle) * 2.8, Math.sin(angle) * 2.8, "shell", 2.8);
+      }
+      break;
+    case "periscope":
+      if (a.t <= lock) a.cols = spacedPositions(sx, 2, 64, 28, 220);
+      if (firing && (t2 === 0 || t2 === 26)) strike(s, a.cols![t2 / 26], 20, 12, 18, STRIKE_STYLE.sea, 30, WATER_Y - 30);
+      break;
+    case "featherfan":
+      if (a.t === 0) { a.gapAngle = Math.PI; a.spots = [{ x: 30, y: my }]; }
+      if (firing && t2 % 18 === 0 && t2 / 18 < 3) for (const side of [-1, 1]) for (const d of [0.25, 0.47, 0.69]) {
+        const angle = Math.PI + side * (d + t2 / 18 * 0.06);
+        raw(s, mx, my, Math.cos(angle) * 2.3, Math.sin(angle) * 2.3, "spiral", 2.2);
+      }
+      break;
+    case "divebomb":
+      if (a.t <= lock) { a.spots = [{ x: clamp(sx, 48, 184), y: clamp(sy, 50, 168) }]; a.origin = { x: e.x, y: e.y }; }
+      if (firing) {
+        if (t2 <= 32) {
+          const p = a.spots![0], u = t2 / 32; e.x = a.origin!.x + (p.x - e.w / 2 - a.origin!.x) * u; e.y = a.origin!.y + (p.y - e.h / 2 - a.origin!.y) * u;
+          if (t2 === 32) burst(s, p.x, p.y, false);
+        } else settle();
+      } else if (!warning) settle();
+      break;
+    case "gatelaser": {
+      const grid = [44, 100, 156, 212];
+      if (a.t === 0) { a.gapX = grid.reduce((best, x) => Math.abs(x - sx) < Math.abs(best - sx) ? x : best); a.safeHalf = 26; a.cols = grid.filter(x => x !== a.gapX); }
+      if (firing && t2 % 16 === 0 && t2 / 16 < 3) strike(s, a.cols![t2 / 16], 20, 0, 14, STRIKE_STYLE.light);
+      break;
+    }
+    case "shielddrones":
+      if (a.t <= lock) { a.spots = [{ x: clamp(sx, 30, 184), y: clamp(sy, 34, 184) }]; a.angle = Math.atan2(a.spots[0].y - my, a.spots[0].x - mx); }
+      e.guard = firing && t2 < 56 ? 1 : 0;
+      if (firing && (t2 === 0 || t2 === 28)) for (const d of [-0.2, 0, 0.2]) raw(s, mx, my, Math.cos(a.angle + d) * 2.6, Math.sin(a.angle + d) * 2.6, "needle", 2.2);
+      break;
+  }
+  if (!["skip", "cableslide", "duneram", "divebomb"].includes(a.kind)) settle();
+  tagPattern(s, e, start);
+  a.t += 1;
+  if (a.t >= a.warn + a.live + a.recover) e.attack = undefined;
+}
+
+/* A boss of Space 2 crossing into a new phase: each changes in its own way. */
+export const PHASE_CALL: Partial<Record<EType, Callout>> = {
+  boss9: "decks", boss10: "magazines", boss11: "shed", boss12: "molt", boss13: "decouple", boss14: "breach", boss15: "pressure",
+};
+export const ATLAS_CALLS: Callout[] = ["plating", "buckle", "judgement", "core", "laststand"];
+
+function secondPhaseShift(s: State, e: Enemy) {
+  const call = e.type === "boss16" ? ATLAS_CALLS[e.a - 1] : PHASE_CALL[e.type];
+  if (call) setCallout(s, call);
+  // A transformation is a quiet visual beat. No unannounced escorts, mines or
+  // shards are allowed to interrupt the player's phase recovery window.
+  clearPatternOrdnance(s, e.id);
+  s.bullets = s.bullets.filter(b => b.own === "p");
+  s.gust = null;
+  burst(s, e.x + e.w * 0.45, e.y + e.h * 0.5, true);
+  if (e.type === "boss15") e.n = 120;
+}
+
+/* A gust: marked, then it pushes the ship up or down for a while. */
+function tickGust(s: State) {
+  const g = s.gust;
+  if (!g) return;
+  g.t += 1;
+  if (g.t >= GUST.warn + GUST.live) s.gust = null;
+}
+
 
 function updateBoss(s: State, e: Enemy) {
   /* The shield mends once it has been left alone. */
@@ -2019,14 +3073,14 @@ function updateBoss(s: State, e: Enemy) {
     if (e.shieldWait !== undefined && e.shieldWait > 0) e.shieldWait -= 1;
     else if (e.shield < e.maxShield) e.shield = Math.min(e.maxShield, e.shield + BOSS_SHIELD.regen);
   }
-  const home = Math.min(e.type === "boss1" ? W - 96 : e.type === "boss2" ? W - 126 : e.type === "boss5" ? W - 112 : e.type === "boss8" ? W - 112 : W - 90, W - e.w - 14);
+  const home = Math.min(BOSS_HOME[e.type] ?? W - 90, W - e.w - 14);
   if (!e.attack && e.b === 0 && !enterX(e, home)) {
-    if (e.type === "boss1") e.y = GROUND_Y - e.h;
-    if (e.type === "boss2") e.y = WATER_Y - e.h;
+    const rest0 = floorY(e);
+    if (rest0 !== null) e.y = rest0;
     return;
   }
   const oldPhase = e.a;
-  if (e.type === "boss8") {
+  if (isFinal(e.type)) {
     const share = e.hp / e.maxHp;
     e.a = FINAL_PHASE_AT.filter((cut) => share <= cut).length;
     if (e.a > oldPhase) {
@@ -2035,6 +3089,7 @@ function updateBoss(s: State, e: Enemy) {
       s.charges = [];
       e.stun = 70;
       setCallout(s, e.a === 1 ? "shield" : e.a === 2 ? "armor" : e.a === 3 ? "overload" : e.a === 4 ? "warning" : "c4");
+      if (e.type === "boss16" && e.a >= 3 && oldPhase < 3) s.talk = "judgement";
       s.shake = 24;
       for (let i = 0; i < 6; i++) burst(s, e.x + rand(s) * e.w, e.y + rand(s) * e.h, true);
       if (e.a === 1) s.pickups.push({ x: 210, y: 165, kind: "B", t: 0 });
@@ -2052,14 +3107,21 @@ function updateBoss(s: State, e: Enemy) {
     /* Whatever the last phase left lying about goes, and so does a boss caught in the
        middle of a dive, a blink or a breach. */
     s.charges = [];
-    s.hazards = s.hazards.filter((h) => h.kind !== "wave" && h.kind !== "spire");
-    if (e.type === "boss1") e.y = GROUND_Y - e.h;
-    else if (e.type === "boss2") e.y = WATER_Y - e.h;
+    s.hazards = s.hazards.filter((h) => h.kind !== "wave" && h.kind !== "spire" && h.kind !== "strike" && h.kind !== "twister");
+    s.beams = [];
+    const rest1 = floorY(e);
+    if (rest1 !== null) e.y = rest1;
     else e.y = clamp(e.y, 30, H - 16 - e.h);
   }
+  if (e.a > oldPhase && isSecondBoss(e.type)) secondPhaseShift(s, e);
   if (e.stun > 0) {
-    if (e.type === "boss8") e.stun--;
+    if (isFinal(e.type)) e.stun--;
     return;
+  }
+  /* Cyclone, past its first phase, throws a gust now and then. */
+  if (e.type === "boss15" && e.a >= 1 && !s.gust && (!e.attack || e.attack.t >= e.attack.warn + e.attack.live) && --e.n <= 0) {
+    e.n = GUST.every;
+    s.gust = { t: 0, dy: (rand(s) < 0.5 ? -1 : 1) * GUST.push };
   }
   e.b++;
   if (!e.attack) nextBossAttack(s, e);
@@ -2067,7 +3129,7 @@ function updateBoss(s: State, e: Enemy) {
   const firing = a.t >= a.warn && a.t < a.warn + a.live;
   const recovering = a.t >= a.warn + a.live;
   const warning = a.t < a.warn;
-  const lock = a.warn - 18;
+  const lock = a.warn - (a.lockFrames ?? 18);
   const ship = s.p;
 
   if (warning && a.t < lock) {
@@ -2089,18 +3151,18 @@ function updateBoss(s: State, e: Enemy) {
   }
   // Beam mounts remain still for both the warning and live beam.
   if (a.kind !== "beam" && !OWN_MOVE.includes(a.kind) && (recovering || (warning && a.t < lock))) {
-    if (e.type === "boss1") e.y = GROUND_Y - e.h;
-    else if (e.type === "boss2") e.y = WATER_Y - e.h + Math.sin(e.b / 45) * 1.2;
+    const rest2 = floorY(e);
+    if (rest2 !== null) e.y = rest2 + (BOSS_FLOOR[e.type] === "sea" ? Math.sin(e.b / 45) * 1.2 : 0);
     else {
-      const amplitude = Math.min(e.type === "boss5" ? 60 : e.type === "boss8" ? 38 + e.a * 7 : 48, Math.max(0, (H - e.h) / 2 - 26));
-      glide(e, home, H / 2 - e.h / 2 + Math.sin(e.b / (e.type === "boss6" ? 62 : 85)) * amplitude, e.type === "boss8" ? 1.2 + e.a * 0.3 : 1.2);
+      const amplitude = Math.min(e.type === "boss5" ? 60 : isFinal(e.type) ? 38 + e.a * 7 : 48, Math.max(0, (H - e.h) / 2 - 26));
+      glide(e, home, H / 2 - e.h / 2 + Math.sin(e.b / (e.type === "boss6" ? 62 : 85)) * amplitude, isFinal(e.type) ? 1.2 + e.a * 0.3 : 1.2);
     }
   }
   if (a.kind === "beam" && a.t === 0) {
-    if (e.type === "boss3" || (e.a >= 2 && ["boss4", "boss8"].includes(e.type))) {
+    if (e.type === "boss3" || (e.a >= 2 && (e.type === "boss4" || isFinal(e.type)))) {
       bossBeam(s, e, -1); bossBeam(s, e, 1);
     } else bossBeam(s, e);
-    if (e.type === "boss8" && e.a >= 3) bossBeam(s, e, 0);
+    if (isFinal(e.type) && e.a >= 3) bossBeam(s, e, 0);
   }
   if (a.kind === "charge") {
     if (warning) {
@@ -2118,6 +3180,8 @@ function updateBoss(s: State, e: Enemy) {
       }
     } else { e.x = Math.max(home, e.x - 4); e.c = 0; }
   }
+
+  if (isSecondBoss(e.type)) secondAttack(s, e, a);
 
   /* The chapter bosses' own moves. */
   const t2 = a.t - a.warn;
@@ -2226,22 +3290,22 @@ function updateBoss(s: State, e: Enemy) {
         if (t === 0) bossFan(s, e, 5 + e.a * 2, 0.8 + e.a * 0.15, attackSlot(e));
         break;
       case "burst":
-        if (t % (e.type === "boss8" && e.a >= 2 ? 6 : 10) === 0) {
+        if (t % (isFinal(e.type) && e.a >= 2 ? 6 : 10) === 0) {
           const slot = e.type === "boss2" ? (t / 10) % 3 : 0;
           const origin = enemyMuzzle(e, s, slot);
           shoot(s, origin.x, origin.y, origin.angle, "needle", 2.3);
-          if (e.type === "boss8" && e.a >= 3) for (const d of [-0.15, 0.15]) shoot(s, origin.x, origin.y, origin.angle + d, "needle", 2.3);
+          if (isFinal(e.type) && e.a >= 3) for (const d of [-0.15, 0.15]) shoot(s, origin.x, origin.y, origin.angle + d, "needle", 2.3);
         }
         break;
       case "missiles":
-        if (t % (e.type === "boss8" ? 10 : 16) === 0 && s.enemies.filter(o => o.type === "seeker").length < (e.type === "boss8" ? 5 : 3)) {
+        if (t % (isFinal(e.type) ? 10 : 16) === 0 && s.enemies.filter(o => o.type === "seeker").length < (isFinal(e.type) ? 5 : 3)) {
           const tip = missileMuzzle(e, t ? 1 : 0);
           const missile = spawn(s, "seeker", tip.x - 7, tip.y - 3.5);
           missile.vx = -1.3; missile.vy = t ? 1 : -1;
         }
         break;
       case "spiral":
-        if (e.type === "boss8" && e.a >= 3) {
+        if (isFinal(e.type) && e.a >= 3) {
           /* A wheel of shots turning in every direction. */
           if (t % 6 === 0) for (let k = 0; k < 4; k++) {
             const ang = t * 0.12 + (k * Math.PI) / 2;
@@ -2257,11 +3321,11 @@ function updateBoss(s: State, e: Enemy) {
         }
         break;
       case "curtain":
-        if (t === 0) bossFan(s, e, e.type === "boss8" ? 17 + e.a : 13 + (e.a >= 2 ? 2 : 0), e.type === "boss8" ? 2.3 : 2.05, 0, true);
+        if (t === 0) bossFan(s, e, isFinal(e.type) ? 17 + e.a : 13 + (e.a >= 2 ? 2 : 0), isFinal(e.type) ? 2.3 : 2.05, 0, true);
         break;
       case "flare":
         if (t === 0) {
-          const xs = e.type === "boss8" ? [a.targetX, a.targetX - 80, a.targetX + 80].slice(0, e.a >= 4 ? 3 : 2) : [a.targetX];
+          const xs = isFinal(e.type) ? [a.targetX, a.targetX - 80, a.targetX + 80].slice(0, e.a >= 4 ? 3 : 2) : [a.targetX];
           for (const fx of xs) spawnHazard(s, { t: 0, type: "flare", y: 0, x: clamp(fx, 45, W * 0.55) });
         }
         break;
@@ -2377,8 +3441,8 @@ function updateBoss(s: State, e: Enemy) {
         break;
       case "support":
         if (t === 0) {
-          const type = e.type === "boss7" ? "funnel" : e.type === "boss4" ? "drone" : e.type === "boss8" ? "fighter" : "scout";
-          if (s.enemies.filter(o => o.type === type).length < (e.type === "boss8" ? 2 : 3)) {
+          const type = e.type === "boss7" ? "funnel" : e.type === "boss4" ? "drone" : isFinal(e.type) ? "fighter" : "scout";
+          if (s.enemies.filter(o => o.type === type).length < (isFinal(e.type) ? 2 : 3)) {
             for (let i = 0; i < 2; i++) {
               const child = spawn(s, type, e.x + e.w / 2, e.y + i * 28, e.type === "boss7" ? e.id : i);
               if (type === "funnel") child.b = i * Math.PI;
@@ -2435,6 +3499,19 @@ function hasTarget(s: State, gun: Exclude<Gun, "blaster">, laneY?: number) {
       case "katana":
         if (dx < KATANA.reach + 14 && dy < KATANA.half + e.h / 2) return true;
         break;
+      case "minirocket":
+        if (dx < ROCKET.seekEnemy + 20 && dy < 80 + e.h / 2) return true;
+        break;
+      case "hyperbeam":
+        /* Saved for what is worth it: a boss, or something that takes a few hits. */
+        if (dy < e.h / 2 + 8 && (isBoss(e.type) || e.maxHp >= 6)) return true;
+        break;
+    }
+  }
+  /* The rockets are as much for stopping shots as for hitting ships. */
+  if (gun === "minirocket") {
+    for (const b of s.bullets) {
+      if (b.own === "e" && b.kind !== "crescent" && b.x > fx && b.x < fx + ROCKET.seekBullet + 40 && Math.abs(b.y - fy) < 80) return true;
     }
   }
   /* The katana also cuts enemy shots out of the air. */
@@ -2476,6 +3553,187 @@ export function podMuzzle(p: { x: number; y: number; level: number; tilt?: numbe
   };
 }
 
+/* How full the experience gauge is, 0 to 1 (full at the top level). */
+export function xpGauge(p: { level: number; extra: number }) {
+  return p.level >= MAX_LEVEL ? 1 : (p.extra % XP.perLevel) / XP.perLevel;
+}
+
+/* What an enemy's fall adds to the gauge. */
+/* Space 1 has fewer enemies a chapter, so each is worth a little more (`div1`). */
+export const xpOf = (t: EType, second = true) => (isBoss(t) ? (second ? XP.boss : XP.boss1) : Math.max(1, Math.round(SCORE[t] / (second ? XP.div : XP.div1))));
+
+function addXp(s: State, n: number) {
+  const p = s.p;
+  p.extra += n;
+  while (p.level < MAX_LEVEL && p.extra >= XP.perLevel * p.level) gainLevel(s);
+}
+
+/* Where Bloom's umbrella is centred: just ahead of the nose. */
+export function domeCenter(p: { x: number; y: number; level: number }) {
+  const sz = shipSize(p.level);
+  return { x: p.x + sz.w * 0.9, y: p.y + sz.h / 2 };
+}
+
+const angleDiff = (a: number, b: number) => Math.atan2(Math.sin(a - b), Math.cos(a - b));
+
+/* A mini rocket steers after the nearest enemy shot, or else the nearest enemy, once it has
+   fanned out. */
+function steerRocket(s: State, b: Bullet) {
+  const age = ROCKET.life - (b.life ?? 0);
+  let tx = 0;
+  let ty = 0;
+  let best = 1e9;
+  if (age > ROCKET.arm) {
+    for (const o of s.bullets) {
+      if (o.own !== "e" || o.kind === "crescent" || o.x < b.x - 30) continue;
+      const d = Math.hypot(o.x - b.x, o.y - b.y);
+      if (d < ROCKET.seekBullet && d < best) {
+        best = d;
+        tx = o.x;
+        ty = o.y;
+      }
+    }
+    if (best >= 1e9) {
+      for (const e of s.enemies) {
+        if (e.hp <= 0 || e.x > W - 4 || e.x + e.w < b.x - 10) continue;
+        const d = Math.hypot(e.x + e.w / 2 - b.x, e.y + e.h / 2 - b.y);
+        if (d < ROCKET.seekEnemy && d < best) {
+          best = d;
+          tx = e.x + e.w / 2;
+          ty = e.y + e.h / 2;
+        }
+      }
+    }
+  }
+  const cur = Math.atan2(b.vy, b.vx);
+  const speed = Math.min(ROCKET.top, Math.hypot(b.vx, b.vy) + 0.14);
+  const a = best < 1e9 ? cur + clamp(angleDiff(Math.atan2(ty - b.y, tx - b.x), cur), -ROCKET.turn, ROCKET.turn) : cur;
+  b.vx = Math.cos(a) * speed;
+  b.vy = Math.sin(a) * speed;
+}
+
+/* A rocket that reaches an enemy shot takes it out, and itself. */
+function tickRockets(s: State) {
+  for (const b of s.bullets) {
+    if (b.own !== "p" || b.kind !== "minirocket") continue;
+    for (const o of s.bullets) {
+      if (o.own !== "e" || o.kind === "crescent" || o.x < 0) continue;
+      if (Math.hypot(o.x - b.x, o.y - b.y) <= b.r + o.r + 2) {
+        burst(s, o.x, o.y, false);
+        o.x = -99;
+        b.x = W + 99;
+        break;
+      }
+    }
+  }
+}
+
+/* Bloom: open when fire comes close, swallow it, close, and shed petals if it swallowed enough. */
+function tickBloom(s: State) {
+  const p = s.p;
+  if (s.phase !== "play") {
+    p.dome = Math.max(0, p.dome - 0.2);
+    return;
+  }
+  const c = domeCenter(p);
+  let threat = false;
+  for (const b of s.bullets) {
+    if (b.own !== "e" || b.kind === "crescent" || b.kind === "seamissile" || b.kind === "deckrocket" || b.x < c.x - 10) continue;
+    if (Math.hypot(b.x - c.x, b.y - c.y) < BLOOM.radius + 46) {
+      threat = true;
+      break;
+    }
+  }
+  if (p.bloom > 0 && threat) p.domeHold = BLOOM.hold;
+  else if (p.domeHold > 0) p.domeHold -= 1;
+  const covering = s.coverT > 0;
+  if (covering) s.coverT -= 1;
+  const open = covering || (p.bloom > 0 && p.domeHold > 0);
+  if (open && p.dome === 0 && !covering) s.counters2.bloomOpens += 1;
+  p.dome = clamp(p.dome + (open ? 0.25 : -0.2), 0, 1);
+  if (p.dome === 0 && !open) {
+    if (p.absorbed >= BLOOM.burstAt) {
+      for (const a of [-0.5, -0.25, 0, 0.25, 0.5]) {
+        s.bullets.push({ x: c.x, y: c.y, vx: Math.cos(a) * 5, vy: Math.sin(a) * 5, r: 2.2, own: "p", dmg: BLOOM.petal, kind: "petal", life: 50 });
+      }
+      burst(s, c.x, c.y, false);
+    }
+    p.absorbed = 0;
+    return;
+  }
+  if (p.dome < 0.6) return;
+  if (!covering) p.bloom = Math.max(0, p.bloom - 1);
+  for (const b of s.bullets) {
+    if (b.own !== "e" || b.kind === "crescent" || b.kind === "seamissile" || b.kind === "deckrocket" || b.x < c.x - 6 || b.x < 0) continue;
+    if (Math.hypot(b.x - c.x, b.y - c.y) <= BLOOM.radius + b.r) {
+      b.x = -99;
+      p.absorbed += 1;
+      s.counters2.blocks += 1;
+      if (!covering) p.bloom = Math.max(0, p.bloom - BLOOM.cost);
+    }
+  }
+}
+
+/* Kite follows and fires. */
+function tickKite(s: State) {
+  const k = s.kite;
+  if (!k) return;
+  const p = s.p;
+  if (k.kick > 0) k.kick -= 1;
+  const tx = p.x + KITE.dx;
+  const ty = clamp(p.y + KITE.dy, 14, H - 22);
+  k.x += (tx - k.x) * KITE.follow;
+  k.y += (ty - k.y) * KITE.follow;
+  if (s.phase !== "play") return;
+  if (k.cd > 0) {
+    k.cd -= 1;
+    return;
+  }
+  const ahead = s.enemies.some((e) => e.hp > 0 && e.x > k.x && e.x < W - 4 && Math.abs(e.y + e.h / 2 - k.y) < 60);
+  if (!ahead) return;
+  k.cd = KITE.cooldown;
+  k.kick = 4;
+  s.bullets.push({ x: k.x + 10, y: k.y + 3, vx: KITE.speed, vy: 0, r: 1.8, own: "p", dmg: KITE.damage, kind: "pulse", life: 90, kite: true });
+}
+
+/* The hyperbeam: charge, then one long beam. */
+function tickHyper(s: State) {
+  const h = s.hyper;
+  if (!h) return;
+  const p = s.p;
+  if (s.phase !== "play") {
+    s.hyper = null;
+    return;
+  }
+  const m = podMuzzle(p);
+  h.x = m.x;
+  if (h.live === 0) {
+    h.y = m.y;
+    h.t += 1;
+    if (h.t < HYPER.charge) return;
+    h.live = HYPER.live;
+    p.ammo -= 1;
+    /* The last charge spent, the pod goes back to the blaster as soon as the beam has gone. */
+    if (p.ammo <= 0) p.gun = "blaster";
+    p.cd = HYPER.after;
+    s.shake = Math.max(s.shake, 10);
+    s.bombFlash = Math.max(s.bombFlash, 4);
+    for (const e of s.enemies) {
+      if (e.hp <= 0 || h.hit.includes(e.id)) continue;
+      if (e.x + e.w < h.x || e.y > h.y + HYPER.h / 2 || e.y + e.h < h.y - HYPER.h / 2) continue;
+      h.hit.push(e.id);
+      damage(e, isBoss(e.type) ? HYPER.boss : HYPER.damage);
+      e.flash = 6;
+    }
+    s.counters2.beams += 1;
+    s.counters2.bestBeam = Math.max(s.counters2.bestBeam, s.enemies.filter((e) => h.hit.includes(e.id) && e.hp <= 0).length);
+  } else {
+    h.live -= 1;
+    if (h.live <= 0) s.hyper = null;
+  }
+  s.bullets = s.bullets.filter((b) => b.own === "p" || b.x < h.x || Math.abs(b.y - h.y) > HYPER.h / 2 + b.r);
+}
+
 /* The ship's guns. */
 function fire(s: State) {
   const p = s.p;
@@ -2498,6 +3756,11 @@ function fire(s: State) {
   /* An equipped weapon is the only gun: with nothing in its line it waits, keeping its
      ammunition, and fires at the next frame once something is. */
   if (!hasTarget(s, p.gun)) return;
+  if (p.gun === "hyperbeam") {
+    /* One shot, charged first; tickHyper does the rest and spends the ammunition. */
+    if (!s.hyper) s.hyper = { t: 0, x: ox, y: oy, live: 0, hit: [] };
+    return;
+  }
   p.cd = hasUpgrade(p, "hypersonic") ? Math.max(2, Math.round(GUNS[p.gun].cooldown * HYPERSONIC.rate)) : GUNS[p.gun].cooldown;
   p.ammo -= 1;
   switch (p.gun) {
@@ -2527,6 +3790,10 @@ function fire(s: State) {
     case "katana":
       slash(s, ox, oy);
       break;
+    case "minirocket":
+      s.counters2.rockets += 1;
+      for (const a of ROCKET.fan) s.bullets.push(shot(Math.cos(a) * ROCKET.speed, Math.sin(a) * ROCKET.speed, 0, { kind: "minirocket", dmg: ROCKET.damage, r: 2.2, life: ROCKET.life }));
+      break;
   }
   if (p.ammo <= 0) p.gun = "blaster";
 }
@@ -2538,6 +3805,15 @@ function fireLaunchers(s: State) {
   const p = s.p;
   const size = shipSize(p.level);
   const ox = p.x + size.w * 0.5;
+  if (isSecond(s.chapter)) {
+    /* Space 2: deadly stingers, one tube, then two. */
+    if (!s.enemies.some((e) => e.hp > 0 && e.x > p.x && e.x < W - 4)) return;
+    const sp = p.level >= TWIN_AT ? PSTINGER.twin : PSTINGER.single;
+    const tubes = p.level >= TWIN_AT ? [[p.y + size.h + 2, 0.18], [p.y - 2, -0.18]] : [[p.y + size.h + 2, 0.12]];
+    for (const [y, a] of tubes) s.bullets.push({ x: ox, y, vx: Math.cos(a) * PSTINGER.speed, vy: Math.sin(a) * PSTINGER.speed, r: 2.4, own: "p", dmg: sp.damage, kind: "stinger", life: PSTINGER.life, home: PSTINGER.home });
+    p.launchCd = sp.cooldown;
+    return;
+  }
   const spec = p.level >= TWIN_AT ? TUBES.twin : TUBES.single;
   const tube = (y: number) => torpedo(ox, y, 0, { r: 3, own: "p", dmg: spec.damage, kind: "torpedo", life: 150 });
   const lanes = p.level >= TWIN_AT ? [p.y + size.h + 2, p.y - 2] : [p.y + size.h + 2];
@@ -2616,13 +3892,16 @@ export function step(s: State, input: Input) {
   if (s.banner > 0) s.banner -= 1;
   if (s.callout && --s.callout.t <= 0) s.callout = null;
   if (p.inv > 0) p.inv -= 1;
-  /* Self-repair (level 5): after CALM frames without a hit the shield and the ship's own
-     health mend together. */
+  /* After CALM frames without a hit the ship's own health mends, slower until self-repair
+     (level 5), which brings it to the full rate and in Space 2 mends the shield as well. */
   if (p.calm > 0) p.calm -= 1;
-  else if (hasUpgrade(p, "repair")) {
-    if (p.shield < maxShield(p)) p.shield = Math.min(maxShield(p), p.shield + SHIELD.regen);
-    if (p.hp < maxLife(p)) p.hp = Math.min(maxLife(p), p.hp + HEAL.life);
+  else {
+    const repair = hasUpgrade(p, "repair");
+    if (repair && isSecond(s.chapter) && p.shield < maxShield(p)) p.shield = Math.min(maxShield(p), p.shield + SHIELD.regen);
+    if (p.hp < maxLife(p)) p.hp = Math.min(maxLife(p), p.hp + HEAL.life * (repair ? 1 : HEAL.base));
   }
+  if (placeOf(s) === 8 && s.phase === "play" && p.shield < maxShield(p)) p.shield = Math.min(maxShield(p), p.shield + TERRAIN.dawn.regen);
+  if (isSecond(s.chapter) && s.phase === "play" && s.t === 90) setCallout(s, TERRAIN_CALL[placeOf(s) - 1]);
   if (p.shieldFlash > 0) p.shieldFlash -= 1;
   if (p.morph > 0) p.morph -= 1;
   if (p.slashT > 0) p.slashT -= 1;
@@ -2638,15 +3917,26 @@ export function step(s: State, input: Input) {
   const hullScale = shipScale(p.level);
   // Keep the new fins inside the playfield; collision dimensions stay the same.
   /* Frostbite slows the ship for a while (CHILL); the hypersonic drive speeds it up. */
-  const pace = (p.chill > 0 ? CHILL.slow : 1) * (hasUpgrade(p, "hypersonic") ? HYPERSONIC.speed : 1);
+  const place = s.phase === "play" ? placeOf(s) : 0;
+  const low = place === 1 && p.y + shipSize(p.level).h > TERRAIN.spray.below;
+  const ground = low ? TERRAIN.spray.slow : place === 6 ? TERRAIN.cold.slow : 1;
+  const pace = ground * (p.chill > 0 ? CHILL.slow : 1) * (hasUpgrade(p, "hypersonic") ? HYPERSONIC.speed : 1) * (s.hyper && s.hyper.live === 0 ? HYPER.slow : 1);
   if (p.chill > 0) p.chill -= 1;
   const free = s.phase !== "clear";
   if (free) {
     p.x = clamp(p.x + input.mx * pace, Math.max(6 * hullScale + 1, (HQ.width + 6) * s.hq.slide), W * 0.55);
     p.y = clamp(p.y + input.my * pace, 13 * hullScale + 1, H - 12 - shipSize(s.p.level).h);
+    if (s.gust && s.gust.t >= GUST.warn) p.y = clamp(p.y + s.gust.dy, 13 * hullScale + 1, H - 12 - shipSize(s.p.level).h);
+    /* The weather of the place pushes the ship. */
+    const dx = place === 3 ? -TERRAIN.wind.push : place === 7 ? Math.sin(s.t / 50) * TERRAIN.turbulence.x : 0;
+    const dy = place === 2 ? TERRAIN.rain.push : place === 7 ? Math.cos(s.t / 37) * TERRAIN.turbulence.y : 0;
+    if (dx || dy) {
+      p.x = clamp(p.x + dx, Math.max(6 * hullScale + 1, (HQ.width + 6) * s.hq.slide), W * 0.55);
+      p.y = clamp(p.y + dy, 13 * hullScale + 1, H - 12 - shipSize(s.p.level).h);
+    }
     p.tilt += (clamp(input.my / 2.7, -1, 1) * 0.26 - p.tilt) * 0.18;
   } else flyAway(s);
-  if (p.cd > 0) p.cd -= 1;
+  if (p.cd > 0) p.cd -= place === 4 ? TERRAIN.sand.jam : 1;
   if (p.cd <= 0 && s.phase === "play") fire(s);
   if (p.launchCd > 0) p.launchCd -= 1;
   if (hasUpgrade(p, "torpedo") && p.launchCd <= 0 && s.phase === "play") fireLaunchers(s);
@@ -2678,13 +3968,27 @@ export function step(s: State, input: Input) {
 
   /* Enemies arrive. */
   s.t += 1;
-  const hearts = PICKUP_PLANS[s.chapter];
+  /* Kite's Bloom: ready, it covers the ship as soon as enemy fire comes close; then it recharges. */
+  if (s.kite && s.phase === "play") {
+    if (s.coverT === 0 && s.coverCd > 0) s.coverCd -= 1;
+    if (s.coverT === 0 && s.coverCd === 0) {
+      const c = domeCenter(p);
+      const near = s.bullets.some((b) => b.own === "e" && b.kind !== "crescent" && b.kind !== "seamissile" && b.kind !== "deckrocket" && b.x > 0 && Math.hypot(b.x - c.x, b.y - c.y) < BLOOM.radius + COVER.reach);
+      if (near) {
+        s.coverT = COVER.frames;
+        s.coverCd = COVER.cooldown;
+        s.counters2.covers += 1;
+        setCallout(s, "cover");
+      }
+    }
+  }
+  const hearts = (PICKUP_PLANS[s.chapter] ?? []);
   while (s.pickupIdx < hearts.length && hearts[s.pickupIdx].t <= s.t) {
     /* Luck decides whether this one turns up at all. */
     if (rand(s) < UPGRADE_LUCK) s.pickups.push({ x: W + 10, y: hearts[s.pickupIdx].y, kind: "E", t: 0 });
     s.pickupIdx += 1;
   }
-  const list = PLANS[s.chapter];
+  const list = (PLANS[s.chapter] ?? []);
   while (s.planIdx < list.length && list[s.planIdx].t <= s.t) {
     const it = list[s.planIdx++];
     if (isHazardType(it.type)) spawnHazard(s, it);
@@ -2695,7 +3999,8 @@ export function step(s: State, input: Input) {
   }
   if (s.planIdx >= list.length && s.bossId === 0) {
     const regular = s.enemies.filter((e) => !isBoss(e.type)).length;
-    if (regular <= 2 || s.t > list[list.length - 1].t + 900) {
+    /* A mini boss still holding the way keeps the boss back. */
+    if (!s.enemies.some((e) => isMini(e.type) && e.x < W + 100) && (regular <= 2 || s.t > list[list.length - 1].t + 900)) {
       const type = `boss${s.chapter}` as EType;
       const b = spawn(s, type, W + 20, H / 2 - SIZE[type][1] / 2);
       s.bossId = b.id;
@@ -2713,12 +4018,30 @@ export function step(s: State, input: Input) {
       h.x -= 1.1;
       h.g[0] = h.base + Math.sin(h.t / 48) * 40;
     } else if (h.kind === "wave") h.x -= WAVE.speed;
-    else if (h.kind !== "spire") h.x -= 1;
+    else if (h.kind === "twister") h.x += -0.85 + Math.sin(h.t / 18) * 0.6;
+    else if (h.kind === "perch") {
+      const unit = h.g[0] ? s.enemies.find((e) => e.id === h.g[0] && e.hp > 0) : undefined;
+      if (unit) h.x = unit.x - h.g[1];
+      else {
+        h.g[0] = 0;
+        h.x -= 1;
+      }
+    } else if (h.kind === "cover") {
+      if (h.g[5] > 0) h.g[5] -= 1;
+      const unit = h.g[2] ? s.enemies.find((e) => e.id === h.g[2] && e.hp > 0) : undefined;
+      if (unit) h.x = unit.x - h.g[3];
+      else {
+        h.g[2] = 0;
+        h.x -= 1;
+      }
+    }
+    else if (h.kind !== "spire" && h.kind !== "strike") h.x -= 1;
   }
   s.hazards = s.hazards.filter(
-    (h) => h.x > -h.w - 6 && (h.kind !== "flare" || h.t < FLARE_WARN + FLARE_LIVE) && (h.kind !== "spire" || h.t < SPIRE_END),
+    (h) => h.x > -h.w - 6 && (h.kind !== "flare" || h.t < FLARE_WARN + FLARE_LIVE) && (h.kind !== "spire" || h.t < SPIRE_END) && (h.kind !== "strike" || h.t < h.g[0] + h.g[1]) && (h.kind !== "twister" || h.g[1] === 0 || h.t < h.g[0] + h.g[1]),
   );
   tickCharges(s);
+  const born: Bullet[] = [];
   for (const b of s.bullets) {
     if (b.ux !== undefined && b.uy !== undefined) {
       /* A torpedo: out of the tube, motor lit, then flat out (TORPEDO). */
@@ -2763,15 +4086,92 @@ export function step(s: State, input: Input) {
       b.vx = b.ux * v;
       b.vy = b.uy * v;
     }
+    if (b.own === "e" && b.hold !== undefined && b.hold > 0) {
+      b.hold -= 1;
+      if (b.hold === 0) {
+        b.vx = b.hvx ?? 0;
+        b.vy = b.hvy ?? 0;
+      }
+    }
+    if (b.own === "e" && b.home !== undefined && b.home > 0) {
+      b.home -= 1;
+      const size = shipSize(p.level);
+      const cur = Math.atan2(b.vy, b.vx);
+      const want = Math.atan2(p.y + size.h / 2 - b.y, p.x + size.w / 2 - b.x);
+      const sp = Math.min(STINGER.top, Math.hypot(b.vx, b.vy) + STINGER.accel);
+      const a2 = cur + clamp(Math.atan2(Math.sin(want - cur), Math.cos(want - cur)), -STINGER.turn, STINGER.turn);
+      b.vx = Math.cos(a2) * sp;
+      b.vy = Math.sin(a2) * sp;
+    } else if (b.own === "e" && b.kind === "stinger") {
+      const sp = Math.hypot(b.vx, b.vy);
+      if (sp < STINGER.top) {
+        b.vx *= (sp + STINGER.accel) / sp;
+        b.vy *= (sp + STINGER.accel) / sp;
+      }
+    }
+    if (b.own === "e" && b.retarget !== undefined && b.retarget > 0 && --b.retarget === 0) {
+      const size = shipSize(p.level);
+      const ang = Math.atan2((b.aim?.y ?? p.y + size.h / 2) - b.y, (b.aim?.x ?? p.x + size.w / 2) - b.x);
+      b.vx = Math.cos(ang) * (b.speed2 ?? 3);
+      b.vy = Math.sin(ang) * (b.speed2 ?? 3);
+    }
+    if (b.own === "e" && b.kind === "seamissile" && b.fuse !== undefined && b.fuse > 1) {
+      const size = shipSize(p.level);
+      if (Math.hypot(p.x + size.w / 2 - b.x, p.y + size.h / 2 - b.y) < SEA_MISSILE.near) b.fuse = 1;
+    }
+    if (b.own === "e" && b.fuse !== undefined && --b.fuse <= 0) {
+      const n = b.split ?? 6;
+      const from = b.splitAngle ?? Math.atan2(b.vy, b.vx);
+      for (let i = 0; i < n; i++) {
+        const ang = from + (i / n) * Math.PI * 2;
+        if (b.splitGap !== undefined && Math.abs(angleDifference(ang, b.splitGap)) < (b.splitHalf ?? 0.55)) continue;
+        born.push({ x: b.x, y: b.y, vx: Math.cos(ang) * 2.2, vy: Math.sin(ang) * 2.2, r: 2.3, own: "e", dmg: 1, kind: b.splitKind ?? "needle", patternOwner: b.patternOwner, life: PATTERN.shotLife });
+      }
+      burst(s, b.x, b.y, false);
+      b.x = -99;
+      continue;
+    }
+    if (b.kind === "minirocket") steerRocket(s, b);
+    if (b.own === "p" && b.kind === "stinger") {
+      let best = 1e9;
+      let tx = 0;
+      let ty = 0;
+      if (b.home !== undefined && b.home > 0) {
+        b.home -= 1;
+        for (const o of s.enemies) {
+          if (o.hp <= 0 || o.x > W - 4 || o.x + o.w < b.x - 10) continue;
+          const d = Math.hypot(o.x + o.w / 2 - b.x, o.y + o.h / 2 - b.y);
+          if (d < best) {
+            best = d;
+            tx = o.x + o.w / 2;
+            ty = o.y + o.h / 2;
+          }
+        }
+      }
+      const cur = Math.atan2(b.vy, b.vx);
+      const sp = Math.min(PSTINGER.top, Math.hypot(b.vx, b.vy) + PSTINGER.accel);
+      const a2 = best < 1e9 ? cur + clamp(Math.atan2(Math.sin(Math.atan2(ty - b.y, tx - b.x) - cur), Math.cos(Math.atan2(ty - b.y, tx - b.x) - cur)), -PSTINGER.turn, PSTINGER.turn) : cur;
+      b.vx = Math.cos(a2) * sp;
+      b.vy = Math.sin(a2) * sp;
+    }
     b.x += b.vx;
     b.y += b.vy;
+    /* Over Space 2's seas an enemy shot that dives into the water splashes and is gone, rather
+       than flying on under the surface. */
+    if (b.own === "e" && b.vy > 0 && b.y > WATER_Y + 2 && isSecond(s.chapter) && SEA_PLACES.includes(placeOf(s))) {
+      burst(s, b.x, WATER_Y, false);
+      b.x = -99;
+      continue;
+    }
     if (b.life !== undefined) b.life -= 1;
     /* An ice bomb that finds nothing goes off where it runs out. */
     if (b.kind === "icebomb" && b.own === "p" && b.life !== undefined && b.life <= 0) detonate(s, b);
   }
+  s.bullets.push(...born);
   s.bullets = s.bullets.filter((b) => b.x > -10 && b.x < W + 10 && b.y > -10 && b.y < H + 10 && (b.life === undefined || b.life > 0));
   for (const b of s.beams) {
     b.t += 1;
+    if (b.vy && b.t >= b.warn) b.y += b.vy;
     if (b.ownerId !== undefined) {
       const owner = s.enemies.find(e => e.id === b.ownerId && e.hp > 0);
       if (!owner) { b.t = b.warn + b.live; continue; }
@@ -2789,9 +4189,17 @@ export function step(s: State, input: Input) {
   for (const b of s.bursts) b.t += 1;
   s.bursts = s.bursts.filter((b) => b.t < BURST_LIFE);
 
+  /* Rockets against shots, Bloom against shots, the hyperbeam against everything in its lane. */
+  tickRockets(s);
+  tickBloom(s);
+  tickHyper(s);
+  tickKite(s);
+  tickGust(s);
+
   /* The ship's shots against enemies, then against what stands in the way. */
   const solids: Box[] = [];
-  for (const h of s.hazards) if (h.kind !== "flare") solids.push(...hazardBoxes(h));
+  for (const h of s.hazards) if (h.kind !== "flare" && h.kind !== "strike" && h.kind !== "twister" && h.kind !== "cover") solids.push(...hazardBoxes(h));
+  const covers = s.hazards.filter((h) => h.kind === "cover");
   for (const b of s.bullets) {
     if (b.own !== "p") continue;
     const shotBox = { x: b.x - b.r, y: b.y - b.r, w: b.r * 2, h: b.r * 2 };
@@ -2800,7 +4208,7 @@ export function step(s: State, input: Input) {
       if (b.pierce && b.hit?.includes(e.id)) continue;
       const body: Box = { x: e.x + 2, y: e.y + 2, w: e.w - 4, h: e.h - 4 };
       if (!hits(shotBox, body)) continue;
-      damage(e, b.dmg * POWER);
+      damage(e, b.dmg * POWER * (isBoss(e.type) ? (b.kind === "minirocket" ? ROCKET.boss : b.kite ? KITE.boss : 1) : 1));
       e.flash = 3;
       if (b.kind === "torpedo" || b.kind === "icebomb") {
         detonate(s, b, e.id);
@@ -2814,6 +4222,20 @@ export function step(s: State, input: Input) {
       }
     }
     if (b.x > W + 90 || b.pierce) continue;
+    const cover = covers.find((h) => hits(shotBox, { x: h.x, y: h.base, w: h.w, h: h.half }));
+    if (cover) {
+      const was = cover.g[0];
+      cover.g[0] = Math.max(0, cover.g[0] - b.dmg * (b.kind === "stinger" || b.kind === "minirocket" ? 2 : 1));
+      cover.g[5] = 4;
+      if (b.kind === "torpedo" || b.kind === "icebomb") detonate(s, b, 0, true);
+      b.x = W + 99;
+      /* It crumbles as it is worn down, to a stump, and no further. */
+      const tall = cover.g[8] * (1 - (1 - COVER2.stump) * (1 - cover.g[0] / cover.g[1]));
+      cover.half = tall;
+      cover.base = cover.g[7] - tall;
+      if (was > 0 && cover.g[0] === 0) burst(s, cover.x + cover.w / 2, cover.base, false);
+      continue;
+    }
     if (solids.some((r) => hits(shotBox, r)) || s.enemies.some((e) => e.parts.some((r) => hits(shotBox, r)))) {
       if (b.kind === "torpedo" || b.kind === "icebomb") detonate(s, b, 0, true);
       b.x = W + 99;
@@ -2853,9 +4275,10 @@ export function step(s: State, input: Input) {
         p.hp = Math.min(maxLife(p), p.hp + LIFE.heal);
       } else if (k.kind === "E") {
         p.hp = Math.min(maxLife(p), p.hp + LIFE.heal);
-        addExtra(s);
-      }
+        addXp(s, isSecond(s.chapter) ? XP.heart : XP.heart1);
+      } else if (k.kind === "D") p.shield = Math.min(maxShield(p), p.shield + SHIELD.drop);
       else if (k.kind === "B") p.bombs = Math.min(4, p.bombs + 1);
+      else if (k.kind === "U") p.bloom = Math.min(BLOOM.max, p.bloom + BLOOM.energy);
       else {
         const gun = GUN_OF[k.kind] ?? "torpedo";
         /* Picking up the gun already held tops up its ammunition. */
@@ -2878,6 +4301,21 @@ export function step(s: State, input: Input) {
     s.result = chapterResult(s);
     s.score += s.result.bonus;
   }
-  if (s.phase === "clear") s.clearFor += 1;
+  if (s.phase === "clear") {
+    s.clearFor += 1;
+    if (s.clearFor < 60) {
+      if (s.clearFor % 8 === 0) {
+        const bx = W - 35 - ((s.clearFor * 17) % 65);
+        const by = H / 2 - 30 + ((s.clearFor * 23) % 60);
+        burst(s, bx, by, true);
+        s.shake = Math.max(s.shake, 6);
+      }
+      if (s.clearFor === 54) {
+        burst(s, W - 60, H / 2, true);
+        s.bombFlash = 12;
+        s.shake = Math.max(s.shake, 18);
+      }
+    }
+  }
 }
 

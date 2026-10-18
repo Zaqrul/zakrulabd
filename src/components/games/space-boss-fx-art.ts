@@ -23,8 +23,11 @@ import {
   type Enemy,
   type Hazard,
   type State,
+  isFinal,
 } from "./space-logic";
 import { drawCharge, drawMotor } from "./space-fx-art";
+
+import { drawDeckBomb } from "./space2-arsenal-art";
 
 type Ctx = CanvasRenderingContext2D;
 type Bullet = State["bullets"][number];
@@ -317,14 +320,15 @@ function drawEmber(ctx: Ctx, c: Charge, reduceMotion: boolean) {
   ctx.restore();
 }
 
-export function drawZone(ctx: Ctx, c: Charge, reduceMotion: boolean) {
+export function drawZone(ctx: Ctx, c: Charge, reduceMotion: boolean, hideZone = false) {
   const kind = c.kind ?? "c4";
   if (kind === "c4") {
-    drawCharge(ctx, c, reduceMotion);
+    drawCharge(ctx, c, reduceMotion, hideZone);
     return;
   }
   if (c.t < 0) return;
-  if (kind === "flak") drawFlak(ctx, c, reduceMotion);
+  if (kind === "deckbomb") drawDeckBomb(ctx, c, reduceMotion);
+  else if (kind === "flak") drawFlak(ctx, c, reduceMotion);
   else if (kind === "spore") drawSpore(ctx, c, reduceMotion);
   else drawEmber(ctx, c, reduceMotion);
 }
@@ -461,6 +465,8 @@ export function drawSignatureCue(ctx: Ctx, e: Enemy, s: State, reduceMotion = fa
   const a = e.attack;
   if (!a) return;
   const warning = a.t < a.warn;
+  /* The last boss gives no marks while it winds up (see hidesTells). */
+  if (warning && isFinal(e.type)) return;
   const firing = a.t >= a.warn && a.t < a.warn + a.live;
   const t2 = a.t - a.warn;
   const locked = a.t >= a.warn - 18;

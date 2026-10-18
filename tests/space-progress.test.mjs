@@ -90,3 +90,17 @@ test('storage that cannot be used loses nothing and throws nothing', () => {
   assert.doesNotThrow(() => saveSaved('nova', run(3)));
   assert.doesNotThrow(() => stashGuest(run(2)));
 });
+
+test("a run keeps the chances it has left, and a spent chance is never handed back", async () => {
+  const { CHANCES } = await import("../src/components/games/space-progress.ts");
+  assert.equal(CHANCES, 2);
+  assert.equal(parseProgress({ ...run(3, 250), chances: 1 }).chances, 1);
+  assert.equal(parseProgress({ ...run(3, 250), chances: 9 }).chances, CHANCES);
+  assert.equal(parseProgress({ ...run(3, 250), chances: -1 }).chances, 0);
+  assert.equal(parseProgress(run(3, 250)).chances, undefined, "an old save: the game gives it the full count");
+  const fresh = { ...run(4, 900), chances: 2 };
+  const spent = { ...run(4, 900), chances: 0 };
+  assert.equal(furthest(fresh, spent), spent);
+  assert.equal(furthest(spent, fresh), spent);
+  assert.equal(furthest({ ...run(5, 100), chances: 2 }, spent).chapter, 5, "a later chapter still wins");
+});

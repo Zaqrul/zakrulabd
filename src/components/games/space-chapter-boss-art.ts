@@ -4,6 +4,7 @@ import { beamMuzzle, bossScale, bossModel, coils, enemyMuzzle, missileMuzzle, sh
 import { tone } from "./space-material";
 import { drawDreadnought } from "./space-final-boss-art";
 import { drawCrimsonFang } from "./space-fang-art";
+import { drawSecondBoss } from "./space2-boss-art";
 type Ctx = CanvasRenderingContext2D;
 const INK = "#252c30", STEEL = "#929b96", CREAM = "#e5d8ad";
 
@@ -19,6 +20,7 @@ export function drawChapterBoss(ctx: Ctx, e: Enemy, s: State, reduceMotion: bool
   }
   if (e.type === "boss8") { drawDreadnought(ctx, e, s, reduceMotion); return; }
   if (e.type === "boss7") { drawCrimsonFang(ctx, e, s, reduceMotion); return; }
+  if (drawSecondBoss(ctx, e, s, reduceMotion)) return;
   const { x, y, h } = e, cy = h / 2;
   const t = reduceMotion ? 0 : e.t;
   const a = e.attack, warning = !!a && a.t < a.warn;

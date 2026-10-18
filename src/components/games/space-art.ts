@@ -5,6 +5,7 @@ import { drawEndymionHull } from "./space-ship-art";
 import { drawFormsBack, drawFormsFront } from "./space-ship-forms-art";
 import { glow, lamp, rivets, seam, slab } from "./space-material";
 import { drawEnvironment } from "./space-environment";
+import { drawSecondEarth } from "./space2-environment";
 import {
   FLARE_WARN,
   GROUND_Y,
@@ -222,6 +223,11 @@ const SKY: Record<number, [string, string]> = {
 };
 
 export function drawBackdrop(ctx: Ctx, s: State, reduceMotion = false) {
+  /* Space 2 is set on Earth throughout: its chapters are the engine's 9 to 16. */
+  if (s.chapter > 8) {
+    drawSecondEarth(ctx, s, reduceMotion);
+    return;
+  }
   if (s.chapter <= 2) {
     drawEarth(ctx, s, reduceMotion);
     return;
@@ -503,7 +509,7 @@ export function drawSmoke(ctx: Ctx, s: State) {
    is the weapon: its shape changes with the gun it holds, it kicks back when it
    fires, and it is swapped for a new one when a crate is taken. The ship tips
    with each move, and its flames run with the throttle. */
-const POD_CD: Record<string, number> = { blaster: 12, machine: 4, spread: 19, laser: 3, torpedo: 32, icebomb: 38, flame: 4, katana: 22 };
+const POD_CD: Record<string, number> = { blaster: 12, machine: 4, spread: 19, laser: 3, torpedo: 32, icebomb: 38, flame: 4, katana: 22, minirocket: 26, hyperbeam: 40 };
 
 function drawPod(ctx: Ctx, s: State, k: number, reduceMotion: boolean) {
   const p = s.p;
@@ -516,7 +522,7 @@ function drawPod(ctx: Ctx, s: State, k: number, reduceMotion: boolean) {
   const elbowY = 13 + (reduceMotion ? 0 : Math.sin(f / 32 + 0.6) * 0.22);
   const x = GUNPOD.x + slide - recoil;
   const y = GUNPOD.y + bob;
-  const bodyFill: Record<string, string> = { blaster: "#506178", machine: "#45566e", spread: "#4f5b48", laser: "#28475c", torpedo: "#5b4547", icebomb: "#3d5a6c", flame: "#6b3b2e", katana: "#4a4f5c" };
+  const bodyFill: Record<string, string> = { blaster: "#506178", machine: "#45566e", spread: "#4f5b48", laser: "#28475c", torpedo: "#5b4547", icebomb: "#3d5a6c", flame: "#6b3b2e", katana: "#4a4f5c", minirocket: "#4d5a3a", hyperbeam: "#2a3f5a" };
 
   /* The arm: a shoulder under the hull, an upper arm, a joint, and the claw. */
   ctx.strokeStyle = "#0b1326";
@@ -605,6 +611,22 @@ function drawPod(ctx: Ctx, s: State, k: number, reduceMotion: boolean) {
       ctx.fillStyle = f % 6 < 3 ? "#fde047" : "#fb923c";
       ctx.fillRect(mx + 2.2, my - 0.4, 0.9, 0.8);
       break;
+    case "minirocket":
+      /* Two stubby launch tubes with rocket noses in the mouths. */
+      ctx.fillStyle = "#475569";
+      ctx.fillRect(mx - 0.4, my - 1.6, 2, 1.2);
+      ctx.fillRect(mx - 0.4, my + 0.4, 2, 1.2);
+      ctx.fillStyle = "#a3e635";
+      ctx.fillRect(mx + 1.6, my - 1.3, 0.9, 0.6);
+      ctx.fillRect(mx + 1.6, my + 0.7, 0.9, 0.6);
+      break;
+    case "hyperbeam":
+      /* A long barrel with a lens that brightens as the charge builds. */
+      ctx.fillStyle = "#1e3a5f";
+      ctx.fillRect(mx, my - 0.8, 4.4, 1.6);
+      ctx.fillStyle = s.hyper && s.hyper.live === 0 ? "#ffffff" : "#67e8f9";
+      ctx.fillRect(mx + 3.4, my - 0.5, 1.4, 1);
+      break;
     case "katana":
       /* The blade slides out of the pod, a gold guard at its root. */
       ctx.fillStyle = "#f1f5f9";
@@ -640,20 +662,68 @@ export function drawPlayer(ctx: Ctx, s: State, reduceMotion = false) {
   /* What the upgrades add behind the hull: the launcher pods. */
   drawFormsBack(ctx, p);
 
-  /* Blue-violet exhaust stays animated independently of the hull. */
+  /* Blue-violet exhaust stays animated independently of the hull with dynamic afterburner & ion pulse. */
   /* Flying away at the end of a chapter the engines open up: the flame grows as the ship picks up speed. */
   const leaving = s.phase === "clear" && s.clearFor >= CLEAR.go ? Math.min(1, (s.clearFor - CLEAR.go) / 30) : 0;
-  const len = (3 + throttle * 6) * (s.phase === "launch" && s.launchT >= LAUNCH_GO ? 1.9 : 1) * (1 + leaving * 1.6) * (hasUpgrade(p, "hypersonic") ? 1.45 : 1);
+  const isHypersonic = hasUpgrade(p, "hypersonic");
+  const flutter = reduceMotion ? 1 : 1 + Math.sin(f * 0.75) * 0.12 + Math.cos(f * 1.3) * 0.08;
+  const len = (3 + throttle * 6) * (s.phase === "launch" && s.launchT >= LAUNCH_GO ? 1.9 : 1) * (1 + leaving * 1.6) * (isHypersonic ? 1.5 : 1) * flutter;
+
   for (const fy of throttle > 0 ? [3.8, 5.4] : []) {
-    ctx.fillStyle = "rgb(139 92 246 / 0.25)";
-    poly(ctx, [[-2.5, fy - 1.9], [-len * 1.5 - 2.5, fy], [-2.5, fy + 1.9]]);
+    // Outer ion halo
+    ctx.fillStyle = isHypersonic ? "rgb(56 189 248 / 0.25)" : "rgb(139 92 246 / 0.28)";
+    poly(ctx, [[-2.5, fy - 2.2], [-len * 1.6 - 2.5, fy], [-2.5, fy + 2.2]]);
     ctx.fill();
-    ctx.fillStyle = "#a78bfa";
-    poly(ctx, [[-2.5, fy - 0.9], [-len - 2.5, fy], [-2.5, fy + 0.9]]);
+
+    // Secondary plasma plume
+    ctx.fillStyle = isHypersonic ? "#38bdf8" : "#a78bfa";
+    poly(ctx, [[-2.5, fy - 1.1], [-len - 2.5, fy], [-2.5, fy + 1.1]]);
     ctx.fill();
+
+    // Hot inner core
     ctx.fillStyle = "#e0f2fe";
-    poly(ctx, [[-2.5, fy - 0.4], [-len * 0.6 - 2.5, fy], [-2.5, fy + 0.4]]);
+    poly(ctx, [[-2.5, fy - 0.5], [-len * 0.65 - 2.5, fy], [-2.5, fy + 0.5]]);
     ctx.fill();
+
+    // White-hot nozzle point
+    ctx.fillStyle = "#ffffff";
+    poly(ctx, [[-2.5, fy - 0.25], [-len * 0.3 - 2.5, fy], [-2.5, fy + 0.25]]);
+    ctx.fill();
+
+    // Supersonic Mach shock diamonds
+    if (!reduceMotion && (isHypersonic || throttle > 0.8)) {
+      ctx.fillStyle = "#ffffff";
+      for (let d = 3.5; d < len * 0.8; d += 4) {
+        poly(ctx, [[-2.5 - d, fy], [-2.5 - d - 1, fy - 0.7], [-2.5 - d - 2, fy], [-2.5 - d - 1, fy + 0.7]]);
+        ctx.fill();
+      }
+    }
+
+    // Micro ion spark embers
+    if (!reduceMotion && throttle > 0.2) {
+      for (let i = 0; i < 2; i++) {
+        const seed = (f * 9 + i * 23 + (fy > 4 ? 13 : 0)) % 100;
+        const sparkDist = (seed / 100) * (len * 1.5);
+        const sparkSpread = ((seed * 7) % 20 - 10) / 30;
+        const sparkAlpha = Math.max(0, 1 - sparkDist / (len * 1.5));
+        ctx.fillStyle = isHypersonic ? `rgb(56 189 248 / ${sparkAlpha * 0.8})` : `rgb(196 181 253 / ${sparkAlpha * 0.8})`;
+        ctx.fillRect(-2.5 - sparkDist, fy + sparkSpread, 0.8, 0.8);
+      }
+    }
+  }
+
+  // Aerodynamic Wingtip Vapor Trails during maneuvers and high speed
+  if (!reduceMotion && (Math.abs(p.tilt) > 0.05 || isHypersonic || throttle > 0.85)) {
+    const vLen = 6 + Math.abs(p.tilt) * 16 + (isHypersonic ? 8 : 0);
+    const vAlpha = 0.22 + Math.min(0.45, Math.abs(p.tilt) * 0.9);
+    ctx.strokeStyle = `rgb(224 242 254 / ${vAlpha})`;
+    ctx.lineWidth = 0.65;
+    for (const wy of [2.2, 7.2]) {
+      ctx.beginPath();
+      ctx.moveTo(-1, wy);
+      ctx.lineTo(-vLen - 1, wy + p.tilt * 2.5);
+      ctx.stroke();
+    }
   }
 
   drawEndymionHull(ctx, reduceMotion ? 0 : f, p.tilt);

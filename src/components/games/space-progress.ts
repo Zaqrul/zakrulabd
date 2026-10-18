@@ -7,43 +7,52 @@
 /* The series' limits, as space-logic has them (a test keeps the two together). This file
    imports nothing from the game so that the tests can load it on its own. */
 export const LIMITS = { chapters: 8, level: 10 };
+/* Space 2 is the engine's chapters 9 to 16, saved apart from Space 1 (a run is saved from its second chapter). */
+export const LIMITS2 = { first: 9, last: 16 };
 
-export type Progress = { chapter: number; score: number; weapon: number; level: number; extra: number };
+/* A run has CHANCES: each time the ship is lost one is spent to fly the chapter (or the boss) again.
+   Lost with none left, the run is over and starts again from Chapter 1. */
+export const CHANCES = 2;
+
+export type Progress = { chapter: number; score: number; weapon: number; level: number; extra: number; chances?: number };
 
 /* The key before accounts, and the marker a guest leaves on clearing Chapter 1. */
 const LEGACY_KEY = "space-progress-v1";
 const GUEST_KEY = "space-guest-clear-v1";
-export const progressKey = (slot: string) => `space-progress-v2:${slot}`;
+export const progressKey = (slot: string, campaign = 1) => (campaign === 2 ? `space2-progress-v1:${slot}` : `space-progress-v2:${slot}`);
 
 /* A run read back from storage or from the account, or null if it is not one. */
-export function parseProgress(raw: unknown): Progress | null {
+export function parseProgress(raw: unknown, campaign = 1): Progress | null {
   if (!raw || typeof raw !== "object") return null;
-  const { chapter, score, weapon, level, extra } = raw as Record<string, unknown>;
+  const { chapter, score, weapon, level, extra, chances } = raw as Record<string, unknown>;
   const nums = [chapter, score, weapon, level, extra];
   if (!nums.every((v) => typeof v === "number" && Number.isFinite(v))) return null;
   const c = Math.floor(chapter as number);
-  if (c < 2 || c > LIMITS.chapters) return null;
+  if (campaign === 2 ? c < LIMITS2.first + 1 || c > LIMITS2.last : c < 2 || c > LIMITS.chapters) return null;
   return {
     chapter: c,
     score: Math.max(0, Math.floor(score as number)),
     weapon: Math.min(3, Math.max(1, Math.floor(weapon as number))),
     level: Math.min(LIMITS.level, Math.max(1, Math.floor(level as number))),
     extra: Math.max(0, Math.floor(extra as number)),
+    ...(typeof chances === "number" && Number.isFinite(chances) ? { chances: Math.min(CHANCES, Math.max(0, Math.floor(chances))) } : {}),
   };
 }
 
 /* The run that is further along: the later chapter, and at the same chapter the higher
-   score. The first one wins a tie. */
+   score; at the same score the one with fewer chances left, so another device cannot hand
+   back a chance already spent. The first one wins a tie. */
 export function furthest(a: Progress | null, b: Progress | null): Progress | null {
   if (!a) return b;
   if (!b) return a;
   if (b.chapter !== a.chapter) return b.chapter > a.chapter ? b : a;
-  return b.score > a.score ? b : a;
+  if (b.score !== a.score) return b.score > a.score ? b : a;
+  return (b.chances ?? CHANCES) < (a.chances ?? CHANCES) ? b : a;
 }
 
-function read(key: string): Progress | null {
+function read(key: string, campaign = 1): Progress | null {
   try {
-    return parseProgress(JSON.parse(localStorage.getItem(key) ?? "null"));
+    return parseProgress(JSON.parse(localStorage.getItem(key) ?? "null"), campaign);
   } catch {
     return null;
   }
@@ -61,7 +70,8 @@ function write(key: string, p: Progress | null) {
 /* A signed-in player's saved run. Whatever a guest cleared before signing in, and the key
    from before accounts, are taken in once: the furthest of them is kept under this name
    and the markers go. */
-export function loadSaved(slot: string): Progress | null {
+export function loadSaved(slot: string, campaign = 1): Progress | null {
+  if (campaign === 2) return read(progressKey(slot, 2), 2);
   const own = read(progressKey(slot));
   const waiting = furthest(read(GUEST_KEY), read(LEGACY_KEY));
   const best = furthest(own, waiting);
@@ -73,8 +83,8 @@ export function loadSaved(slot: string): Progress | null {
   return best;
 }
 
-export function saveSaved(slot: string, p: Progress | null) {
-  write(progressKey(slot), p);
+export function saveSaved(slot: string, p: Progress | null, campaign = 1) {
+  write(progressKey(slot, campaign), p);
 }
 
 /* A guest cleared Chapter 1: remembered only so that signing in carries it over. */

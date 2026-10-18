@@ -6,7 +6,7 @@ export const accountsEnabled = supabaseEnabled;
 export const USERNAME_RE = /^[a-z0-9_]{3,20}$/;
 export const PASSWORD_MIN = 8;
 
-const GAMES = ["runner", "flap", "match", "trap", "space"] as const;
+const GAMES = ["space", "space2"] as const;
 /* Remembers on this browser that someone signed in, so a visitor who never made
    an account never loads the auth client just to find out there is no session. */
 const HINT_KEY = "account-hint";
@@ -42,12 +42,11 @@ function setHint(on: boolean) {
   }
 }
 
-/* Raw 0 means "no score". The trap game stores deaths plus one, so for it a
-   smaller number is the better one. */
-function better(game: string, a: number, b: number) {
+/* Raw 0 means "no score"; otherwise the bigger number is the better one. */
+function better(a: number, b: number) {
   if (!a) return b;
   if (!b) return a;
-  return game === "trap" ? Math.min(a, b) : Math.max(a, b);
+  return Math.max(a, b);
 }
 
 function failure(error: { code?: string; message?: string; status?: number }): AuthFailure {
@@ -159,11 +158,13 @@ export function watchAccount(onUser: (username: string | null) => void) {
     const { data } = client.auth.onAuthStateChange((event, session) => {
       const name = usernameOf(session);
       onUser(name);
+      void import("@/lib/achievements").then((m) => m.setAchievementUser(name));
       if (name && (event === "INITIAL_SESSION" || event === "SIGNED_IN")) {
         setHint(true);
         /* Deferred: supabase-js holds a lock during this callback, and calling
            back into it from here would wait on itself. */
         setTimeout(() => void syncScores(), 0);
+        setTimeout(() => void import("@/lib/achievements").then((m) => m.syncAchievements()), 400);
       }
       if (!session && event === "SIGNED_OUT") setHint(false);
     });
@@ -195,7 +196,7 @@ export async function syncScores() {
     for (const game of GAMES) {
       const local = readLocal(game);
       const remote = saved.get(game) ?? 0;
-      const best = better(game, local, remote);
+      const best = better(local, remote);
       if (best && best !== local) {
         writeLocal(game, best);
         changed = true;
@@ -252,6 +253,35 @@ export async function pullProgress(game: (typeof GAMES)[number]): Promise<unknow
     const client = await pending;
     const { data } = await client.auth.getUser();
     return data.user?.user_metadata?.[progressField(game)] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+/* Achievements live in a table of their own (see accounts.sql), because the account's metadata
+   travels inside every sign-in token. Both calls are quiet when offline or signed out. */
+export async function pushAchievements(data: object) {
+  if (!hasAccountHint()) return;
+  const pending = getSupabase();
+  if (!pending) return;
+  try {
+    const client = await pending;
+    const { data: sessionData } = await client.auth.getSession();
+    if (!sessionData.session) return;
+    await client.rpc("save_achievements", { p_data: data });
+  } catch {
+    /* Offline: the next change tries again. */
+  }
+}
+
+export async function pullAchievements(): Promise<unknown> {
+  if (!hasAccountHint()) return null;
+  const pending = getSupabase();
+  if (!pending) return null;
+  try {
+    const client = await pending;
+    const { data, error } = await client.from("player_achievements").select("data").maybeSingle();
+    return error ? null : (data?.data ?? null);
   } catch {
     return null;
   }

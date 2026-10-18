@@ -1,6 +1,6 @@
 ﻿import assert from 'node:assert/strict';
 import test from 'node:test';
-import { HQ, HQ_LAUNCHERS, PICKUP_PLANS, UPGRADE_LUCK, ARMOR, BLASTER, BOMBS, BOSS_SHIELD, BOSS_SHIELD_AT, CALM, CLEAR, FLAME, POWER, WARP, warpPower, FREEZE, GUNS, ICEBOMB, KATANA, LEVEL_AT, MAX_LEVEL, NUKE, TWIN_AT, UPGRADE_AT, hasUpgrade, podMuzzle, shipScale, BLINK, BURST_LIFE, HYPERSONIC, LIFE, SHIELD, TUBES, maxLife, maxShield, nextChapter, retryChapter, bossScale, C4, CHILL, DIVE, EMBER, FINAL_PHASE_AT, FLAK, GROUND_Y, H, LAUNCH_RAIL_Y, LOCK_FRAMES, MISSILE, PINCER, SIGNATURE, SPIRE, SPORE, STOMP, SURGE, TORPEDO, W, WAVE, WISP, hazardBoxes, pinch, shipSize, spireHeight, beamMuzzle, bossCheckpoint, chapterProgress, chapterResult, createState, enemyMuzzle, launchShipY, maxHpFor, missileMuzzle, step, torpedoSpeed } from '../src/components/games/space-logic.ts';
+import { XP, HEAL, HQ, HQ_LAUNCHERS, PICKUP_PLANS, UPGRADE_LUCK, ARMOR, BLASTER, BOMBS, BOSS_SHIELD, BOSS_SHIELD_AT, CALM, CLEAR, FLAME, POWER, WARP, warpPower, FREEZE, GUNS, ICEBOMB, KATANA, MAX_LEVEL, NUKE, TWIN_AT, UPGRADE_AT, hasUpgrade, podMuzzle, shipScale, BLINK, BURST_LIFE, HYPERSONIC, LIFE, SHIELD, TUBES, maxLife, maxShield, nextChapter, retryChapter, bossScale, C4, CHILL, DIVE, EMBER, FINAL_PHASE_AT, FLAK, GROUND_Y, H, LAUNCH_RAIL_Y, LOCK_FRAMES, MISSILE, PINCER, SIGNATURE, SPIRE, SPORE, STOMP, SURGE, TORPEDO, W, WAVE, WISP, hazardBoxes, pinch, shipSize, spireHeight, beamMuzzle, bossCheckpoint, chapterProgress, chapterResult, createState, enemyMuzzle, launchShipY, maxHpFor, missileMuzzle, step, torpedoSpeed } from '../src/components/games/space-logic.ts';
 const idle={mx:0,my:0,bomb:false};
 const life=(s)=>s.p.hp+s.p.shield;const HIT=LIFE.hit;
 const sizes=[[64,60,160],[96,52,300],[74,66,650],[70,74,720],[34,28,560],[64,52,1100],[60,38,1250],[96,84,5000]];
@@ -149,7 +149,7 @@ test('a hit, a slow boss or no kills earn nothing for that part',()=>{
 test('the boss checkpoint starts at the boss with the ship the chapter began with',()=>{
  const s=createState(4,5000,2,2,3);s.phase='play';s.score=9000;s.p.hp=1;s.p.weapon=3;s.stats.kills=12;
  const c=bossCheckpoint(s);
- assert.equal(c.phase,'play');assert.equal(c.chapter,4);assert.equal(c.score,5000);assert.equal(c.p.weapon,2);assert.equal(c.p.level,2);assert.equal(c.p.extra,3);
+ assert.equal(c.phase,'play');assert.equal(c.chapter,4);assert.equal(c.score,5000);assert.equal(c.p.weapon,2);assert.equal(c.p.level,2);assert.equal(c.p.extra,100,'an old save at level 2 starts at the floor of that level');
  assert.equal(c.p.hp,maxHpFor(2));assert.equal(c.enemies.length,0);assert(c.checkpoint);assert.equal(chapterProgress(c),1);
  for(let i=0;i<5&&c.bossId===0;i++)step(c,idle);
  assert.notEqual(c.bossId,0);assert(c.enemies.some(e=>e.type==='boss4'));assert.equal(c.stats.spawned,0);
@@ -486,9 +486,10 @@ const hurt=(s)=>{s.p.inv=0;s.bullets.push({x:s.p.x+7,y:s.p.y+4,vx:0,vy:0,r:2,own
 const foe=(id,type,x,y,w,h,hp)=>({id,type,x,y,w,h,vx:0,vy:0,hp,maxHp:hp,t:0,cd:999,y0:0,flash:0,stun:0,a:0,b:0,c:0,d:0,n:0,rot:0,guard:0,parts:[]});
 const gain=(s)=>{s.pickups.push({x:s.p.x+7,y:s.p.y+4,kind:'E',t:0});step(s,idle);};
 
-test('the ship has its own health bar and a small shield: a hit goes to the shield first',()=>{
- const s=playing();assert.equal(s.p.hp,maxHpFor(1));assert.equal(s.p.hp,100);assert.equal(s.p.shield,SHIELD.base);
- s.p.weapon=3;hurt(s);
+test('the ship has 100 health and a 50 shield, empty in Space 1 until a crate fills it: a hit goes to the shield first',()=>{
+ const s=playing();assert.equal(s.p.hp,maxHpFor(1));assert.equal(s.p.hp,100);assert.equal(s.p.shield,0);
+ for(const want of [SHIELD.drop,50,50]){s.pickups.push({x:s.p.x+7,y:s.p.y+4,kind:'D',t:0});step(s,idle);assert.equal(s.p.shield,want);}
+ s.p.weapon=3;s.p.shield=LIFE.hit;hurt(s);
  assert.equal(s.p.shield,0);assert.equal(s.p.hp,100);
  hurt(s);assert.equal(s.p.hp,100-LIFE.hit);assert.equal(s.p.weapon,3,'the blaster has no power levels to lose');
  for(let i=0;i<4;i++)hurt(s);assert.equal(s.phase,'dead');assert.equal(s.p.hp,0);
@@ -496,19 +497,22 @@ test('the ship has its own health bar and a small shield: a hit goes to the shie
 test('a hit bigger than the shield takes the rest from the health bar',()=>{
  const s=playing();s.p.shield=8;hurt(s);assert.equal(s.p.shield,0);assert.equal(s.p.hp,100-(LIFE.hit-8));
 });
-test('nothing mends the ship by itself before level 5: shield and health stay where the hits left them',()=>{
+test('before level 5 the ship mends its own health at 70% of the rate, never its shield, and only after six seconds clear',()=>{
+ assert.equal(HEAL.base,0.7);
  const s=playing(3);
- s.p.hp=60;s.p.shield=0;
- run(s,3000);assert.equal(s.p.hp,60);assert.equal(s.p.shield,0);
- hurt(s);const after=life(s);run(s,3000);assert.equal(life(s),after,'and a hit does not start any mending');
- const t=playing(1);t.p.hp=50;t.pickups.push({x:t.p.x+7,y:t.p.y+4,kind:'H',t:0});step(t,idle);assert.equal(t.p.hp,50+LIFE.heal,'a life crate still mends');
+ s.p.hp=60;s.p.shield=0;s.p.calm=CALM;
+ run(s,CALM-2);assert.equal(s.p.hp,60,'nothing while it is still shaken');
+ run(s,102);assert(Math.abs(s.p.hp-(60+100*HEAL.life*HEAL.base))<0.2,`${s.p.hp}`);assert.equal(s.p.shield,0);
+ const full=playing(5);full.p.hp=60;full.p.calm=0;run(full,100);
+ assert(full.p.hp-60>(s.p.hp-60)*1.3,'self-repair mends faster');
+ const t=playing(1);t.p.hp=50;t.p.calm=CALM;t.pickups.push({x:t.p.x+7,y:t.p.y+4,kind:'H',t:0});step(t,idle);assert.equal(t.p.hp,50+LIFE.heal,'a life crate still mends');
 });
 
-test('levels arrive by themselves up to ten: gold hearts only, one more for each level than the last, each with its upgrade announced',()=>{
- assert.equal(MAX_LEVEL,10);assert.equal(LEVEL_AT.length,MAX_LEVEL);assert.deepEqual(LEVEL_AT,[0,1,3,6,10,15,21,28,36,45]);
+test('levels arrive by themselves up to ten on the experience gauge, a hundred points a level, each with its upgrade announced',()=>{
+ assert.equal(MAX_LEVEL,10);assert.equal(XP.perLevel,100);
  const s=playing(1);const seen=[];
- for(let i=0;i<LEVEL_AT[MAX_LEVEL-1]+3;i++){const before=s.p.level;gain(s);
-  const want=1+LEVEL_AT.filter((v,k)=>k>0&&s.p.extra>=v).length;assert.equal(s.p.level,want,'extra '+s.p.extra);
+ for(let i=0;i<40&&s.p.level<MAX_LEVEL;i++){const before=s.p.level;gain(s);
+  assert.equal(s.p.level,Math.min(MAX_LEVEL,1+Math.floor(s.p.extra/XP.perLevel)),'xp '+s.p.extra);
   if(s.p.level>before){seen.push([s.p.level,s.callout.kind]);assert.equal(s.p.hp,maxLife(s.p),'a level refills health');assert(s.p.morph>0);}
  }
  assert.equal(s.p.level,10);
@@ -521,16 +525,15 @@ test('the upgrades come with the level: torpedo 1, hypersonic 2, mechanical shie
  assert.deepEqual(has(1),['torpedo']);assert.deepEqual(has(2),['torpedo','hypersonic']);assert.deepEqual(has(3),['torpedo','hypersonic','armor']);
  assert.deepEqual(has(4),['torpedo','hypersonic','armor']);assert.deepEqual(has(5),['torpedo','hypersonic','armor','repair']);assert.deepEqual(has(8),has(5));assert.deepEqual(has(9),['torpedo','hypersonic','armor','repair','hq']);assert.deepEqual(has(10),has(9));
 });
-test('health and shield grow with the level, the ship only through its first three',()=>{
- assert.deepEqual([1,2,3,4,10].map(maxHpFor),[100,110,120,130,190]);
- assert.deepEqual([1,2,3,4,5,10].map(l=>maxShield({level:l})),[1,2,3,4,5,10].map(l=>Math.round((20+5*Math.max(0,l-3))*(l>=3?1.1:1))));
- assert.equal(maxShield({level:2}),20);assert.equal(maxShield({level:4}),Math.round(25*1.1),'from level 4 five more for each level, a tenth more with the armour');
+test('health stays at 100 and the shield at 50 at every level; the ship grows only through its first three',()=>{
+ assert.deepEqual([1,2,3,4,10].map(l=>maxLife({level:l})),[100,100,100,100,100]);
+ assert.deepEqual([1,2,3,4,10].map(l=>maxShield({level:l})),[50,50,50,50,50]);
  assert(shipScale(1)<shipScale(2)&&shipScale(2)<shipScale(3));assert.equal(shipScale(3),shipScale(10));
  assert.equal(playing(10).p.hp,maxLife({level:10}));assert.equal(createState(1,0,1,10).p.nukes,NUKE.count+1);assert.equal(createState(1,0,1,9).p.nukes,NUKE.count);
 });
 test('the level, the gold hearts and the nuclear warheads carry to the next chapter, a retry and the boss checkpoint',()=>{
- const s=playing(6,7);
- for(const next of [nextChapter(s),retryChapter(s),bossCheckpoint(s)]){assert.equal(next.p.level,6);assert.equal(next.p.extra,7);assert.equal(next.p.nukes,NUKE.count);}
+ const s=playing(6,537);
+ for(const next of [nextChapter(s),retryChapter(s),bossCheckpoint(s)]){assert.equal(next.p.level,6);assert.equal(next.p.extra,537);assert.equal(next.p.nukes,NUKE.count);}
  assert.equal(nextChapter(s).p.hp,maxLife(s.p));
 });
 
@@ -553,10 +556,10 @@ test('a hit goes to the shield first and then to the health, at every level',()=
  }
 });
 
-test('mechanical shield (level 3): 30% less damage and 10% more health and shield',()=>{
+test('mechanical shield (level 3): 30% less damage, and no longer bars',()=>{
  const plain=playing(2),armour=playing(3);
- assert.equal(maxLife(armour.p),Math.round(maxHpFor(3)*1.1));assert.equal(armour.p.hp,maxLife(armour.p));
- assert.equal(maxShield(armour.p),Math.round(SHIELD.base*1.1));assert.equal(armour.p.shield,maxShield(armour.p));
+ assert.equal(maxLife(armour.p),100);assert.equal(armour.p.hp,maxLife(armour.p));
+ assert.equal(maxShield(armour.p),SHIELD.base);assert.equal(armour.p.shield,0,'Space 1: no level fills the shield');
  plain.p.shield=0;armour.p.shield=0;hurt(plain);hurt(armour);
  assert.equal(plain.p.hp,maxLife(plain.p)-LIFE.hit);
  assert(Math.abs(armour.p.hp-(maxLife(armour.p)-LIFE.hit*(1-ARMOR.reduction)))<1e-9,'a hit does 70% of the damage');
@@ -734,14 +737,15 @@ test('a bomb that goes off defuses the charges, clouds and fire in its reach',()
 });
 
 test('the last boss has a shield of its own: it takes the damage first, mends after five seconds untouched, and no chapter boss has one',()=>{
- assert.deepEqual(BOSS_SHIELD_AT,{boss8:1500});assert.equal(BOSS_SHIELD.wait,300);
+ assert.deepEqual(BOSS_SHIELD_AT,{boss8:750,boss16:2200});assert.equal(BOSS_SHIELD.wait,300);
  for(let ch=1;ch<=7;ch++){const t=bossCheckpoint(createState(ch));step(t,idle);const b=t.enemies.find(e=>e.type==='boss'+ch);assert(b);assert.equal(b.shield,undefined,'chapter '+ch);}
  const s=bossCheckpoint(createState(8));s.p.inv=1e6;s.p.cd=1e6;s.p.launchCd=1e6;step(s,idle);
  const e=s.enemies.find(e=>e.type==='boss8');assert(e);
- assert.equal(e.maxHp,5000);assert.equal(e.hp,5000);assert.equal(e.shield,1500);assert.equal(e.maxShield,1500);
+ const full=BOSS_SHIELD_AT.boss8;
+ assert.equal(e.maxHp,5000);assert.equal(e.hp,5000);assert.equal(e.shield,full);assert.equal(e.maxShield,full);
  e.x=160;e.y=50;e.stun=1e6;s.talk=null;
  const hit=(n)=>{s.bullets=[{x:e.x+e.w-6,y:e.y+e.h/2,vx:0,vy:0,r:2,own:'p',dmg:n,kind:'pulse'}];step(s,idle);};
- hit(100);assert(e.shield<1500&&e.shield>1400,'the shield took it');assert.equal(e.hp,5000,'and the boss lost no health');
+ hit(100);assert(e.shield<full&&e.shield>full-100,'the shield took it');assert.equal(e.hp,5000,'and the boss lost no health');
  e.shield=10;hit(100);assert.equal(e.shield,0);assert(e.hp<5000,'what the shield could not take went through');
  const hp=e.hp;
  for(let i=0;i<BOSS_SHIELD.wait-4;i++){s.bullets=[];step(s,idle);}
@@ -793,16 +797,14 @@ test('the ship\'s own weapons do three quarters of the damage, and the blaster\'
  assert(Math.abs(1000-r.hp-4*POWER)<1e-9,`took ${1000-r.hp}`);
  const t=playing(1);t.p.cd=0;step(t,idle);assert.equal(t.bullets.find(b=>b.own==='p').vx,BLASTER.speed);
 });
-test('a life crate mends health but is no step toward a level; only gold hearts are',()=>{
+test('a life crate mends health but gives no experience; a gold heart is a bonus to the gauge',()=>{
  const s=playing(1);
  for(let i=0;i<30;i++){s.pickups.push({x:s.p.x+7,y:s.p.y+4,kind:'H',t:0});step(s,idle);}
  assert.equal(s.p.extra,0);assert.equal(s.p.level,1);
  s.p.hp=40;s.pickups.push({x:s.p.x+7,y:s.p.y+4,kind:'H',t:0});step(s,idle);assert(s.p.hp>40,'it mends');assert.equal(s.p.extra,0);
- for(let i=0;i<LEVEL_AT[1]-1;i++)gain(s);assert.equal(s.p.level,1,'before the first heart');
- gain(s);assert.equal(s.p.level,2,'the first heart is level 2');
- for(let i=0;i<LEVEL_AT[2]-LEVEL_AT[1]-1;i++)gain(s);assert.equal(s.p.level,2);gain(s);assert.equal(s.p.level,3);
+ gain(s);assert.equal(s.p.extra,XP.heart1);assert.equal(XP.heart1,XP.heart*0.9,'Space 1 levels a tenth more slowly');
+ const e=foe(901,'scout',200,100,16,12,1);e.hp=0;s.enemies.push(e);step(s,idle);assert.ok(s.p.extra>XP.heart1,'a kill fills the gauge too');
 });
-
 test('level-up crates are a matter of luck: fourteen places for a gold heart, each with a 30% chance',()=>{
  assert.equal(UPGRADE_LUCK,0.3);assert.equal(PICKUP_PLANS.flat().length,14);
  let appeared=0;const trials=600;
@@ -826,17 +828,17 @@ test('the blaster is a single shot, whatever the old power level says, and a wea
  assert.equal(t.p.gun,'blaster','out of ammunition, the blaster is back');t.p.cd=0;step(t,idle);assert(t.bullets.some(b=>b.kind==='pulse'));
 });
 
-test('self-repair (level 5): after six seconds without a hit the shield, upgrade bar and health mend together, and a hit starts the six seconds again',()=>{
+test('self-repair (level 5): after six seconds without a hit the health mends (never the shield in Space 1), and a hit starts the six seconds again',()=>{
  assert.equal(CALM,360);assert.equal(UPGRADE_AT.repair,5);
  const s=playing(5);
  s.p.hp=60;s.p.shield=0;s.p.calm=CALM;
  run(s,CALM-2);assert.equal(s.p.hp,60);assert.equal(s.p.shield,0);
- run(s,12);assert(s.p.hp>60&&s.p.shield>0);
- run(s,4000);assert.equal(s.p.hp,maxLife(s.p));assert.equal(s.p.shield,maxShield(s.p));
+ run(s,12);assert(s.p.hp>60);assert.equal(s.p.shield,0);
+ run(s,4000);assert.equal(s.p.hp,maxLife(s.p));assert.equal(s.p.shield,0);
  hurt(s);hurt(s);const after=life(s);run(s,CALM-10);assert.equal(life(s),after,'a hit starts the six seconds again');
 });
-test('below level 5 nothing mends the ship by itself',()=>{
- for(const level of [1,2,3,4]){const s=playing(level);s.p.hp=50;s.p.shield=0;run(s,3000);assert.equal(s.p.hp,50,'level '+level);assert.equal(s.p.shield,0);}
+test('below level 5 the health mends slowly and the shield not at all',()=>{
+ for(const level of [1,2,3,4]){const s=playing(level);s.p.hp=50;s.p.shield=0;s.p.calm=0;run(s,300);assert(s.p.hp>50&&s.p.hp<50+300*HEAL.life,'level '+level);assert.equal(s.p.shield,0);}
 });
 test('HQ support (level 9): a hangar slides in at the left edge, the ship keeps clear of it, and four launchers, two at the top and two at the bottom, fire homing torpedoes in turn',()=>{
  assert.equal(UPGRADE_AT.hq,9);assert.equal(HQ_LAUNCHERS.length,4);

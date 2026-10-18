@@ -5,9 +5,9 @@ import { createPortal } from "react-dom";
 import { SiWhatsapp } from "react-icons/si";
 import { TbDeviceGamepad2, TbMail, TbMessageCircle, TbPlus, TbUser, TbUsers, TbX } from "react-icons/tb";
 import { AccountPanel } from "@/components/account-panel";
-import { Arcade } from "@/components/arcade";
+import dynamic from "next/dynamic";
 import { loadBest } from "@/components/games/shared";
-import { GAME_ORDER, MiniGames, bestText, gameIcons, type GameId } from "@/components/mini-games";
+import { DECK_GAMES, GAME_ORDER, MiniGames, bestText, gameIcons, type GameId } from "@/components/mini-games";
 import { SectionSummary } from "@/components/section-summary";
 import { openTawkChat, subscribeTawkUnread, tawkEnabled } from "@/components/tawk-widget";
 import { SCORES_EVENT, accountsEnabled, hasAccountHint, watchAccount } from "@/lib/account";
@@ -15,6 +15,10 @@ import { wa, waMessages } from "@/lib/contact";
 import { announcement, dismissNotice, subscribeNotices, type Notice } from "@/lib/notices";
 import { loadTotalVisitors, presenceEnabled, watchOnlineCount } from "@/lib/presence";
 import { getSummariesOff, setSummariesOff, subscribeSummariesOff } from "@/lib/summary-pref";
+
+/* Only loaded once the games are opened: the arcade and its list of achievements are large. */
+const Arcade = dynamic(() => import("@/components/arcade").then((m) => m.Arcade), { ssr: false });
+const AchievementToasts = dynamic(() => import("@/components/achievement-toasts"), { ssr: false });
 
 const copy = {
   en: {
@@ -96,13 +100,14 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
   const [arcade, setArcade] = useState<{ x: number; y: number } | null>(null);
   const plusRef = useRef<HTMLButtonElement>(null);
   const prevUser = useRef<string | null>(null);
-  const [bests, setBests] = useState<Record<GameId, number>>({ runner: 0, flap: 0, match: 0, trap: 0, space: 0 });
+  const [bests, setBests] = useState<Record<GameId, number>>(() => Object.fromEntries(GAME_ORDER.map((id) => [id, 0])) as Record<GameId, number>);
   const deckInner = useRef<HTMLDivElement>(null);
   const [deckWidth, setDeckWidth] = useState(0);
   const swapTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
+  const loadBests = () => Object.fromEntries(GAME_ORDER.map((id) => [id, loadBest(id)])) as Record<GameId, number>;
   const closeGame = useCallback(() => setGame(null), []);
   const closeAccount = useCallback(() => setAccountOpen(false), []);
-  /* A game that wants an account (Space, past Chapter 1) hands the panel over to it. */
+  /* All games hand guests over to the existing account panel. */
   const openAccount = useCallback(() => {
     setGame(null);
     setAccountOpen(true);
@@ -129,7 +134,7 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
   /* A sign-in merges saved scores into this browser's; the icons' tooltips follow. */
   useEffect(() => {
     const refresh = () =>
-      setBests({ runner: loadBest("runner"), flap: loadBest("flap"), match: loadBest("match"), trap: loadBest("trap"), space: loadBest("space") });
+      setBests(loadBests());
     window.addEventListener(SCORES_EVENT, refresh);
     return () => window.removeEventListener(SCORES_EVENT, refresh);
   }, []);
@@ -235,7 +240,7 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
     setOpen(false);
     setWatching(true);
     swapTimer.current = setTimeout(() => {
-      setBests({ runner: loadBest("runner"), flap: loadBest("flap"), match: loadBest("match"), trap: loadBest("trap"), space: loadBest("space") });
+      setBests(loadBests());
       setMode("games");
       swapTimer.current = setTimeout(() => {
         setGame(first);
@@ -335,6 +340,7 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
     <div ref={root} inert={arcade !== null} className={`pointer-events-none fixed inset-x-0 bottom-4 flex flex-col items-end gap-2 px-4 sm:items-center ${game ? "z-[60]" : "z-40"}`}>
       <SectionSummary lang={lang} suspended={open || game !== null || accountOpen} onShow={hideNudge} />
 
+      {(game || arcade) && <AchievementToasts lang={lang} />}
       {game && <MiniGames lang={lang} game={game} username={username} onClose={closeGame} onAccount={openAccount} />}
       {accountOpen && <AccountPanel lang={lang} username={username} onClose={closeAccount} />}
       {arcade &&
@@ -399,7 +405,7 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
               <button
                 type="button"
                 className="shrink-0 rounded-full bg-amber-400 px-2.5 py-1 text-[11.5px] font-bold hover:bg-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy"
-                onClick={() => openGames("runner")}
+                onClick={() => openGames("space")}
               >
                 {t.playOffline}
               </button>
@@ -519,14 +525,15 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
             type="button"
             aria-label={t.games}
             className={`${item} ${onGreen}`}
-            onClick={() => (username ? enterArcade() : openGames(null))}
+            onClick={() => (username ? enterArcade() : openGames("space"))}
           >
             <TbDeviceGamepad2 aria-hidden="true" className={`${iconGreen} text-[#8b5cf6]`} />
             <span aria-hidden="true" className={tip}>{t.games}</span>
           </button>
             </>
           ) : (
-            GAME_ORDER.map((id) => {
+            <div className="flex max-w-[calc(100vw-168px)] items-center gap-2 overflow-x-auto py-1 sm:max-w-[60vw]">
+            {DECK_GAMES.map((id) => {
               const Icon = gameIcons[id];
               const label = bestText(lang, id, bests[id]);
               const active = game === id;
@@ -536,7 +543,7 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
                   type="button"
                   aria-label={label}
                   aria-pressed={active}
-                  className={`${item} h-10! w-10! ${active ? "bg-amber-400" : onGreen}`}
+                  className={`${item} h-10! w-10! shrink-0 ${active ? "bg-amber-400" : onGreen}`}
                   onClick={() => {
                     setAccountOpen(false);
                     setGame(id);
@@ -549,7 +556,8 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
                   <span aria-hidden="true" className={tip}>{label}</span>
                 </button>
               );
-            })
+            })}
+            </div>
           )}
           {mode === "games" && accountsEnabled && (
             <>

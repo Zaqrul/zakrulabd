@@ -210,7 +210,8 @@ export function drawBullet(ctx: Ctx, b: Bullet) {
    sits, its blast is marked by a dashed ring that fills as the fuse runs down,
    and its lamp blinks faster and faster. Then a flash the size of the blast, and
    a ring that fades. */
-export function drawCharge(ctx: Ctx, c: Charge, reduceMotion: boolean) {
+/* `hideZone` leaves out the marked blast ring, for the last boss's fight (see hidesTells). */
+export function drawCharge(ctx: Ctx, c: Charge, reduceMotion: boolean, hideZone = false) {
   if (c.t < 0) return;
   const boom = c.t - C4.fuse;
   ctx.save();
@@ -234,7 +235,7 @@ export function drawCharge(ctx: Ctx, c: Charge, reduceMotion: boolean) {
   }
   const landed = c.t >= C4.flight;
   const left = C4.fuse - c.t;
-  if (landed) {
+  if (landed && !hideZone) {
     const k = 1 - left / (C4.fuse - C4.flight);
     ctx.fillStyle = `rgb(251 113 133 / ${0.07 + k * 0.17})`;
     ctx.beginPath();
@@ -274,6 +275,7 @@ export function drawCharge(ctx: Ctx, c: Charge, reduceMotion: boolean) {
 
 const PICKUP_COLOR: Record<PickupKind, string> = {
   H: "#4ade80", B: "#60a5fa", M: "#fb923c", S: "#a3e635", L: "#22d3ee", R: "#f87171", I: "#7dd3fc", F: "#f97316", K: "#e2e8f0", E: "#fbbf24",
+  N: "#84cc16", Y: "#fb7185", U: "#5eead4", D: "#38bdf8",
 };
 
 /* A supply crate: a steel case with a coloured lens that carries the symbol. */
@@ -319,6 +321,15 @@ export function drawPickup(ctx: Ctx, x: number, y: number, kind: PickupKind, t: 
         stroke([[0, -2.5], [0, 1.5]]);
       }
       break;
+    case "D":
+      ctx.beginPath();
+      ctx.moveTo(0, -4.8);
+      ctx.lineTo(4.2, -3);
+      ctx.quadraticCurveTo(4.2, 2.6, 0, 4.8);
+      ctx.quadraticCurveTo(-4.2, 2.6, -4.2, -3);
+      ctx.closePath();
+      ctx.fill();
+      break;
     case "B":
       ctx.beginPath();
       ctx.arc(-0.5, 1, 3.4, 0, Math.PI * 2);
@@ -363,12 +374,35 @@ export function drawPickup(ctx: Ctx, x: number, y: number, kind: PickupKind, t: 
       stroke([[-4.6, 4.6], [3.8, -3.8]]);
       stroke([[-3.4, 0.4], [-0.4, 3.4]]);
       break;
+    case "N":
+      /* Three little rockets side by side. */
+      for (const py of [-3.2, 0, 3.2]) {
+        ctx.beginPath();
+        ctx.roundRect(-4.6, py - 0.9, 7, 1.8, 0.9);
+        ctx.fill();
+        stroke([[2.4, py - 1], [4.4, py], [2.4, py + 1]]);
+      }
+      break;
+    case "Y":
+      /* One long beam with a bright core. */
+      ctx.fillRect(-5.4, -1.1, 10.8, 2.2);
+      stroke([[-5.4, -3.6], [-5.4, 3.6]]);
+      stroke([[5.4, -3.6], [5.4, 3.6]]);
+      break;
+    case "U":
+      /* An umbrella: the canopy and its handle. */
+      ctx.beginPath();
+      ctx.arc(0, 0.6, 5, Math.PI, 0);
+      ctx.closePath();
+      ctx.fill();
+      stroke([[0, 0.6], [0, 4.6], [1.8, 5]]);
+      break;
   }
   ctx.restore();
 }
 
 /* A beam is marked first (a dashed line and a faint lane), then fires as a
-   column of white-hot energy with a glowing fringe. */
+   column of white-hot energy with heavy lightning coils and impact flare. */
 export function drawBeam(ctx: Ctx, bm: State["beams"][number], f: number, reduceMotion = false) {
   if (bm.t < bm.warn) {
     ctx.fillStyle = "rgb(251 113 133 / 0.12)";
@@ -390,64 +424,135 @@ export function drawBeam(ctx: Ctx, bm: State["beams"][number], f: number, reduce
     return;
   }
   const pulse = reduceMotion ? 1 : 0.9 + 0.1 * Math.sin(f * 1.7);
-  const g = ctx.createLinearGradient(0, top - 4, 0, top + bm.h + 4);
+  const g = ctx.createLinearGradient(0, top - 6, 0, top + bm.h + 6);
   g.addColorStop(0, "rgb(251 113 133 / 0)");
-  g.addColorStop(0.22, `rgb(251 113 133 / ${0.7 * pulse})`);
+  g.addColorStop(0.2, `rgb(251 113 133 / ${0.75 * pulse})`);
   g.addColorStop(0.5, "rgb(255 241 204 / 1)");
-  g.addColorStop(0.78, `rgb(251 113 133 / ${0.7 * pulse})`);
+  g.addColorStop(0.8, `rgb(251 113 133 / ${0.75 * pulse})`);
   g.addColorStop(1, "rgb(251 113 133 / 0)");
   ctx.save();
   ctx.globalCompositeOperation = "lighter";
   ctx.fillStyle = g;
-  ctx.fillRect(0, top - 4, bm.x0, bm.h + 8);
+  ctx.fillRect(0, top - 6, bm.x0, bm.h + 12);
+
+  // Heavy electric lightning coils crawling along the beam shaft
+  if (!reduceMotion) {
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    for (let x = 0; x < bm.x0; x += 14) {
+      const coilOffset = Math.sin(x * 0.12 + f * 0.8) * (bm.h * 0.6);
+      if (x === 0) ctx.moveTo(x, bm.y + coilOffset);
+      else ctx.lineTo(x, bm.y + coilOffset);
+    }
+    ctx.stroke();
+
+    // Beam impact spark splash
+    ctx.fillStyle = "#fff";
+    for (let i = 0; i < 4; i++) {
+      const spAng = ((f * 17 + i * 43) % 100) / 100 * Math.PI - Math.PI / 2;
+      const spDist = 4 + (i * 3.5);
+      ctx.fillRect(bm.x0 + Math.cos(spAng) * spDist, bm.y + Math.sin(spAng) * spDist, 1.2, 1.2);
+    }
+  }
+
   ctx.restore();
   ctx.fillStyle = "#ffffff";
-  ctx.fillRect(0, bm.y - bm.h * 0.14, bm.x0, bm.h * 0.28);
-  glow(ctx, bm.x0, bm.y, bm.h * 1.4, "#fda4af", 0.6);
+  ctx.fillRect(0, bm.y - bm.h * 0.16, bm.x0, bm.h * 0.32);
+  glow(ctx, bm.x0, bm.y, bm.h * 1.8, "#fda4af", 0.7);
 }
 
-/* An explosion: a fireball that blooms and cools, a ring of blast, and sparks. */
+/* Heavy Explosion VFX: Multi-layered blooming fireball, lens flares, dual supersonic shockwaves, and kinetic spark shrapnel. */
 export function drawBursts(ctx: Ctx, bursts: State["bursts"]) {
   for (const b of bursts) {
     const t = Math.min(1, b.t / BURST_LIFE);
     if (t >= 1) continue;
-    const radius = 3 + t * (b.big ? 23 : 12);
+    const isBig = b.big;
+    const radius = 3 + t * (isBig ? 28 : 14);
+    const a = 1 - t;
+
     if (!SHADED_ART) {
-      ctx.save(); ctx.globalAlpha = 1 - t; ctx.strokeStyle = t < 0.3 ? "#fff1cc" : "#fb923c"; ctx.lineWidth = 1.6 * (1 - t) + 0.5;
+      ctx.save(); ctx.globalAlpha = a; ctx.strokeStyle = t < 0.3 ? "#fff1cc" : "#fb923c"; ctx.lineWidth = 1.6 * a + 0.5;
       ctx.beginPath(); ctx.arc(b.x, b.y, radius, 0, Math.PI * 2); ctx.stroke();
       for (let i = 0; i < 6; i++) { const angle = i * Math.PI / 3; ctx.beginPath(); ctx.moveTo(b.x + Math.cos(angle) * radius * 0.6, b.y + Math.sin(angle) * radius * 0.6); ctx.lineTo(b.x + Math.cos(angle) * (radius + 4), b.y + Math.sin(angle) * (radius + 4)); ctx.stroke(); }
       ctx.restore(); continue;
     }
-    const a = 1 - t;
-    const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, radius * 1.3);
-    g.addColorStop(0, `rgb(255 244 200 / ${a})`);
-    g.addColorStop(0.35, `rgb(255 160 60 / ${a * 0.85})`);
-    g.addColorStop(0.75, `rgb(200 60 20 / ${a * 0.4})`);
-    g.addColorStop(1, "rgb(120 30 10 / 0)");
+
     ctx.save();
     ctx.globalCompositeOperation = "lighter";
+
+    // 1. Initial High-Intensity Optical Lens Flare Cross (at early ignition)
+    if (t < 0.32) {
+      const flareAlpha = (1 - t / 0.32) * 0.95;
+      const flareSize = (isBig ? 32 : 16) * (1 - t * 0.6);
+      ctx.fillStyle = `rgb(255 255 255 / ${flareAlpha})`;
+      // Horizontal flare beam
+      ctx.beginPath();
+      ctx.moveTo(b.x - flareSize, b.y);
+      ctx.lineTo(b.x, b.y - 1.2);
+      ctx.lineTo(b.x + flareSize, b.y);
+      ctx.lineTo(b.x, b.y + 1.2);
+      ctx.fill();
+      // Vertical flare beam
+      ctx.beginPath();
+      ctx.moveTo(b.x, b.y - flareSize * 0.6);
+      ctx.lineTo(b.x + 1.2, b.y);
+      ctx.lineTo(b.x, b.y + flareSize * 0.6);
+      ctx.lineTo(b.x - 1.2, b.y);
+      ctx.fill();
+    }
+
+    // 2. High-Luminance Plasma Core
+    const g = ctx.createRadialGradient(b.x, b.y, 0, b.x, b.y, radius * 1.4);
+    g.addColorStop(0, `rgb(255 255 255 / ${a})`);
+    g.addColorStop(0.25, `rgb(254 240 138 / ${a * 0.95})`);
+    g.addColorStop(0.55, `rgb(249 115 22 / ${a * 0.8})`);
+    g.addColorStop(0.85, `rgb(220 38 38 / ${a * 0.45})`);
+    g.addColorStop(1, "rgb(153 27 27 / 0)");
     ctx.fillStyle = g;
     ctx.beginPath();
-    ctx.arc(b.x, b.y, radius * 1.3, 0, Math.PI * 2);
+    ctx.arc(b.x, b.y, radius * 1.4, 0, Math.PI * 2);
     ctx.fill();
+
+    // 3. Supersonic Primary Shockwave Blast Ring
+    if (t < 0.75) {
+      const shockAlpha = (1 - t / 0.75) * 0.85;
+      const shockR = radius * 1.45;
+      ctx.strokeStyle = `rgb(254 215 170 / ${shockAlpha})`;
+      ctx.lineWidth = Math.max(0.8, (1 - t) * 2.6);
+      ctx.beginPath();
+      ctx.arc(b.x, b.y, shockR, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Secondary energetic ring for big detonations
+      if (isBig) {
+        ctx.strokeStyle = `rgb(248 113 113 / ${shockAlpha * 0.7})`;
+        ctx.lineWidth = 1.2;
+        ctx.beginPath();
+        ctx.arc(b.x, b.y, shockR * 0.78, 0, Math.PI * 2);
+        ctx.stroke();
+      }
+    }
+
+    // 4. Kinetic Shrapnel Debris Sparks with Motion Blurs
+    const sparkCount = isBig ? 12 : 7;
+    for (let i = 0; i < sparkCount; i++) {
+      const seed = (i * 37 + (b.x + b.y) * 11) % 100;
+      const ang = (i / sparkCount) * Math.PI * 2 + (seed / 100) * 0.5;
+      const speedMult = 0.8 + (seed % 5) * 0.25;
+      const rInner = radius * (0.4 + t * 0.8 * speedMult);
+      const rOuter = rInner + (3 + t * 9) * (isBig ? 1.6 : 1);
+      const sparkAlpha = Math.max(0, a * (0.6 + (seed % 4) * 0.1));
+
+      ctx.strokeStyle = seed % 2 === 0 ? `rgb(255 255 255 / ${sparkAlpha})` : `rgb(251 191 36 / ${sparkAlpha})`;
+      ctx.lineWidth = seed % 3 === 0 ? 1.6 : 1;
+      ctx.beginPath();
+      ctx.moveTo(b.x + Math.cos(ang) * rInner, b.y + Math.sin(ang) * rInner);
+      ctx.lineTo(b.x + Math.cos(ang) * rOuter, b.y + Math.sin(ang) * rOuter);
+      ctx.stroke();
+    }
+
     ctx.restore();
-    if (t < 0.65) {
-      ctx.strokeStyle = `rgb(255 230 190 / ${(1 - t / 0.65) * 0.6})`;
-      ctx.lineWidth = 1.1;
-      ctx.beginPath();
-      ctx.arc(b.x, b.y, radius * 1.15, 0, Math.PI * 2);
-      ctx.stroke();
-    }
-    ctx.strokeStyle = `rgb(255 214 150 / ${a})`;
-    ctx.lineWidth = 0.8;
-    for (let i = 0; i < 7; i++) {
-      const ang = i * 0.9 + (b.x + b.y) * 0.13;
-      const r0 = radius * (0.55 + t * 0.4);
-      ctx.beginPath();
-      ctx.moveTo(b.x + Math.cos(ang) * r0, b.y + Math.sin(ang) * r0);
-      ctx.lineTo(b.x + Math.cos(ang) * (r0 + 3 + t * 3), b.y + Math.sin(ang) * (r0 + 3 + t * 3));
-      ctx.stroke();
-    }
   }
 }
 

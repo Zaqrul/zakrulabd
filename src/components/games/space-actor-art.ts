@@ -11,6 +11,8 @@ import {
   enemyMuzzle,
   fixedAim,
   isBoss,
+  isMini,
+  isSecondBoss,
   missileMuzzle,
   missileStage,
   shipSize,
@@ -39,6 +41,10 @@ import {
 } from "./space-material";
 import { drawChapterBoss } from "./space-chapter-boss-art";
 import { drawBoulder, drawSignatureCue } from "./space-boss-fx-art";
+import { drawSecondCue } from "./space2-boss-fx-art";
+import { drawMini } from "./space2-miniboss-art";
+import { drawSub } from "./space2-actor-art";
+import { drawSecondEnemy } from "./space2-enemy-art";
 import { drawFrozen } from "./space-weapons-art";
 
 type Ctx = CanvasRenderingContext2D;
@@ -115,6 +121,7 @@ function wake(ctx: Ctx, x: number, y: number, t: number) {
    a marked row, a flare's column. It is gameplay, not decoration, so it stays
    bold and does not change with the art around it. */
 export function drawAttackCue(ctx: Ctx, e: Enemy, s: State, reduceMotion = false) {
+  if (isMini(e.type) || isSecondBoss(e.type)) return;
   const a = e.attack;
   if (!a || a.t >= a.warn || a.kind === "beam") return;
   const locked = a.t >= a.warn - 18;
@@ -242,15 +249,22 @@ export function drawSpaceEnemy(ctx: Ctx, e: Enemy, s: State, reduceMotion = fals
   setHit(e.flash > 0);
   if (isBoss(e.type)) drawChapterBoss(ctx, e, s, reduceMotion);
   else if (e.type === "boulder") drawBoulder(ctx, e, reduceMotion);
+  else if (drawSub(ctx, e, reduceMotion)) {
+    /* Space 2's submarine, mostly under the water. */
+  } else if (drawMini(ctx, e, reduceMotion)) {
+    /* A Space 2 mini boss draws itself, its bar and its marks. */
+  }
   else drawRegular(ctx, e, s, reduceMotion);
   setHit(false);
   drawFrozen(ctx, e, reduceMotion);
   drawAttackCue(ctx, e, s, reduceMotion);
   drawSignatureCue(ctx, e, s, reduceMotion);
+  drawSecondCue(ctx, e, s, reduceMotion);
   ctx.restore();
 }
 
 function drawRegular(ctx: Ctx, e: Enemy, s: State, reduceMotion: boolean) {
+  if (drawSecondEnemy(ctx, e, s, reduceMotion)) return;
   const { x, y, w, h } = e;
   const cx = x + w / 2;
   const cy = y + h / 2;

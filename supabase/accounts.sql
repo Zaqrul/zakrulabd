@@ -14,17 +14,21 @@ create table if not exists public.profiles (
 
 create unique index if not exists profiles_username_key on public.profiles (username);
 
--- Best score per player per game. "trap" counts deaths plus one (lower is
--- better); every other game counts points (higher is better).
+-- Best score per player per game, in points (higher is better).
+-- Legacy Trap rows retain their original fewest-deaths scoring.
 create table if not exists public.game_scores (
   user_id uuid not null references auth.users (id) on delete cascade,
   game text not null,
   best integer not null,
   updated_at timestamptz not null default now(),
   primary key (user_id, game),
-  constraint game_scores_game check (game in ('runner', 'flap', 'match', 'trap', 'space')),
+  constraint game_scores_game check (game in ('runner', 'flap', 'match', 'trap', 'hop', 'space', 'space2', 'drift', 'snake', 'breakout', 'pong', 'frogger', 'pacman', 'blast', 'gems', 'bastion', 'crypt', 'delve', 'gunner', 'garden')),
   constraint game_scores_best check (best between 1 and 10000000)
 );
+
+-- Extend the allowlist without deleting scores from retired games. Safe to run again.
+alter table public.game_scores drop constraint if exists game_scores_game;
+alter table public.game_scores add constraint game_scores_game check (game in ('runner', 'flap', 'match', 'trap', 'hop', 'space', 'space2', 'drift', 'snake', 'breakout', 'pong', 'frogger', 'pacman', 'blast', 'gems', 'bastion', 'crypt', 'delve', 'gunner', 'garden'));
 
 alter table public.profiles enable row level security;
 alter table public.game_scores enable row level security;
@@ -84,7 +88,7 @@ begin
   if uid is null then
     raise exception 'not signed in';
   end if;
-  if p_game not in ('runner', 'flap', 'match', 'trap', 'space') then
+  if p_game not in ('runner', 'flap', 'match', 'trap', 'hop', 'space', 'space2', 'drift', 'snake', 'breakout', 'pong', 'frogger', 'pacman', 'blast', 'gems', 'bastion', 'crypt', 'delve', 'gunner', 'garden') then
     raise exception 'unknown game';
   end if;
   if p_score is null or p_score < 1 or p_score > 10000000 then
@@ -109,3 +113,43 @@ revoke all on function public.handle_new_user() from public, anon, authenticated
 revoke all on function public.submit_score(text, integer) from public, anon;
 grant execute on function public.submit_score(text, integer) to authenticated;
 grant execute on function public.username_available(text) to anon, authenticated;
+
+-- Achievements. Kept in a table of their own, not in the account's metadata: metadata travels
+-- inside every sign-in token, and this is several kilobytes. One row per player; the browser
+-- merges before it saves, so the row only ever grows.
+create table if not exists public.player_achievements (
+  user_id uuid primary key references auth.users (id) on delete cascade,
+  data jsonb not null,
+  updated_at timestamptz not null default now(),
+  constraint player_achievements_size check (octet_length(data::text) <= 120000)
+);
+
+alter table public.player_achievements enable row level security;
+
+drop policy if exists "read own achievements" on public.player_achievements;
+create policy "read own achievements" on public.player_achievements for select to authenticated using (user_id = auth.uid());
+
+create or replace function public.save_achievements(p_data jsonb)
+returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  uid uuid := auth.uid();
+begin
+  if uid is null then
+    raise exception 'not signed in';
+  end if;
+  if p_data is null or jsonb_typeof(p_data) <> 'object' or octet_length(p_data::text) > 120000 then
+    raise exception 'bad achievements';
+  end if;
+
+  insert into public.player_achievements (user_id, data)
+  values (uid, p_data)
+  on conflict (user_id) do update set data = excluded.data, updated_at = now();
+end;
+$$;
+
+revoke all on function public.save_achievements(jsonb) from public, anon;
+grant execute on function public.save_achievements(jsonb) to authenticated;

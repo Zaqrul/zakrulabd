@@ -1,15 +1,24 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { TbArrowLeft, TbDeviceGamepad2, TbLayoutGrid, TbLogout, TbPower, TbUser } from "react-icons/tb";
+import { TbArrowLeft, TbDeviceGamepad2, TbLayoutGrid, TbLogout, TbPower, TbTrophy, TbUser } from "react-icons/tb";
 import { loadBest } from "@/components/games/shared";
+import { AchievementsView } from "@/components/arcade-achievements";
 import { GAME_ORDER, GamePlayer, bestText, gameCopy, gameIcons, type GameId } from "@/components/mini-games";
+import { ACH_CHANGED, currentStore, overall, progressOf, scanBests, type Store } from "@/lib/achievements";
 import { SCORES_EVENT, signOut } from "@/lib/account";
+
+/* The library: the Space series on its one shelf. */
+type Shelf = "space";
+const shelves: { id: Shelf; games: GameId[] }[] = [{ id: "space", games: GAME_ORDER }];
 
 const copy = {
   en: {
-    brand: "Arcade",
+    brand: "zakrulOS",
+    tagline: "library for player one",
     library: "Library",
+    achievements: "Achievements",
+    earned: (a: number, b: number) => `${a}/${b} achievements`,
     profile: "Profile",
     exit: "Exit arcade",
     back: "Back to library",
@@ -21,10 +30,14 @@ const copy = {
     saved: "Your best scores are saved to this account and follow you to any device.",
     signOut: "Sign out",
     notPlayed: "Not played yet",
+    shelves: { space: "Space series" } as Record<Shelf, string>,
   },
   ms: {
-    brand: "Arked",
+    brand: "zakrulOS",
+    tagline: "pustaka untuk pemain satu",
     library: "Perpustakaan",
+    achievements: "Pencapaian",
+    earned: (a: number, b: number) => `${a}/${b} pencapaian`,
     profile: "Profil",
     exit: "Keluar arked",
     back: "Kembali ke perpustakaan",
@@ -36,6 +49,7 @@ const copy = {
     saved: "Skor terbaik anda disimpan dalam akaun ini dan mengikut anda ke mana-mana peranti.",
     signOut: "Log keluar",
     notPlayed: "Belum dimain",
+    shelves: { space: "Siri Space" } as Record<Shelf, string>,
   },
 };
 
@@ -44,7 +58,7 @@ const copy = {
 const GROW_MS = 650;
 const BALL_RADIUS = 22;
 
-type View = "library" | "profile" | { play: GameId };
+type View = "library" | "profile" | "achievements" | { play: GameId };
 
 function readBests() {
   return Object.fromEntries(GAME_ORDER.map((id) => [id, loadBest(id)])) as Record<GameId, number>;
@@ -77,6 +91,7 @@ export function Arcade({
   const [view, setView] = useState<View>("library");
   const [bests, setBests] = useState<Record<GameId, number>>(readBests);
   const [clock, setClock] = useState("");
+  const [ach, setAch] = useState<Store>(() => currentStore());
   const [reduce] = useState(() => window.matchMedia("(prefers-reduced-motion: reduce)").matches);
   const exiting = useRef(false);
 
@@ -120,6 +135,16 @@ export function Arcade({
     const timer = setInterval(tick, 20000);
     return () => clearInterval(timer);
   }, [lang]);
+
+  /* Scores kept from before achievements existed count the first time zakrulOS opens, and a
+     new achievement changes the counts on the cards. */
+  useEffect(() => {
+    scanBests();
+    const refresh = () => setAch({ ...currentStore() });
+    refresh();
+    window.addEventListener(ACH_CHANGED, refresh);
+    return () => window.removeEventListener(ACH_CHANGED, refresh);
+  }, []);
 
   /* A sign-in merging saved scores in, or a game ending, changes the bests. */
   useEffect(() => {
@@ -205,7 +230,10 @@ export function Arcade({
               <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-400 text-navy">
                 <TbDeviceGamepad2 className="h-4.5 w-4.5" />
               </span>
-              <h2 className="flex-1 font-display text-[16px] font-extrabold tracking-tight">{t.brand}</h2>
+              <div className="min-w-0 flex-1 leading-tight">
+                <h2 className="truncate font-display text-[16px] font-extrabold tracking-tight">{t.brand}</h2>
+                <p className="hidden truncate text-[11.5px] font-semibold text-amber-400 sm:block">{t.tagline}</p>
+              </div>
 
               {online !== null && (
                 <span className="hidden items-center gap-2 text-[12.5px] font-bold text-slate-300 sm:flex">
@@ -237,9 +265,13 @@ export function Arcade({
                 aria-label={t.brand}
                 className="order-last flex shrink-0 gap-1 border-t border-white/10 p-2 sm:order-first sm:w-52 sm:flex-col sm:border-r sm:border-t-0 sm:p-3"
               >
-                <button type="button" aria-current={view !== "profile" ? "page" : undefined} className={navItem(view !== "profile")} onClick={() => open("library")}>
+                <button type="button" aria-current={view === "library" ? "page" : undefined} className={navItem(view === "library")} onClick={() => open("library")}>
                   <TbLayoutGrid aria-hidden="true" className="h-4.5 w-4.5" />
                   {t.library}
+                </button>
+                <button type="button" aria-current={view === "achievements" ? "page" : undefined} className={navItem(view === "achievements")} onClick={() => open("achievements")}>
+                  <TbTrophy aria-hidden="true" className="h-4.5 w-4.5" />
+                  {t.achievements}
                 </button>
                 <button type="button" aria-current={view === "profile" ? "page" : undefined} className={navItem(view === "profile")} onClick={() => open("profile")}>
                   <TbUser aria-hidden="true" className="h-4.5 w-4.5" />
@@ -250,36 +282,52 @@ export function Arcade({
               <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-8">
                 {view === "library" && (
                   <section aria-label={t.library}>
-                    <h3 className="rise-in mb-4 font-display text-[22px] font-extrabold tracking-tight">{t.games}</h3>
-                    <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
-                      {GAME_ORDER.map((id, i) => {
-                        const Icon = gameIcons[id];
-                        const played = bests[id] > 0;
-                        return (
-                          <li key={id} className="rise-in" style={{ animationDelay: `${60 + i * 70}ms` }}>
-                            <button
-                              type="button"
-                              onClick={() => open({ play: id })}
-                              className="group relative flex aspect-[3/4] w-full flex-col justify-end overflow-hidden rounded-2xl bg-white/5 p-3 text-left ring-1 ring-white/10 transition duration-200 hover:-translate-y-1 hover:bg-white/10 hover:ring-2 hover:ring-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
-                            >
-                              <span aria-hidden="true" className="absolute inset-x-0 top-0 flex h-3/5 items-center justify-center bg-linear-to-b from-[#8b5cf6]/30 to-transparent">
-                                <Icon className="h-14 w-14 text-[#c4b5fd] transition-transform duration-200 group-hover:scale-110 group-hover:text-amber-400" />
-                              </span>
-                              <span className="relative font-display text-[16px] font-bold">{names[id]}</span>
-                              <span className="relative text-[12px] text-slate-300">
-                                {played ? bestText(lang, id, bests[id]).split(" · ")[1] : t.notPlayed}
-                              </span>
-                            </button>
-                          </li>
-                        );
-                      })}
-                    </ul>
+                    <h3 className="rise-in mb-3 font-display text-[20px] font-extrabold tracking-tight">{t.games}</h3>
+                    <div className="flex flex-col gap-5">
+                      {shelves.map((shelf, k) => (
+                        <div key={shelf.id} role="group" aria-labelledby={`shelf-${shelf.id}`}>
+                          <h4 id={`shelf-${shelf.id}`} className="rise-in mb-2 flex items-baseline gap-2 text-[12px] font-bold uppercase tracking-wider text-slate-300" style={{ animationDelay: `${k * 60}ms` }}>
+                            {t.shelves[shelf.id]}
+                            <span className="font-mono text-[11px] text-slate-500">{shelf.games.length}</span>
+                          </h4>
+                          <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
+                            {shelf.games.map((id, n) => {
+                              const Icon = gameIcons[id];
+                              const played = bests[id] > 0;
+                              return (
+                                <li key={id} className="rise-in" style={{ animationDelay: `${k * 60 + 40 + n * 25}ms` }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => open({ play: id })}
+                                    className="group relative flex w-full flex-col overflow-hidden rounded-xl bg-white/5 px-2.5 pb-2 text-left ring-1 ring-white/10 transition duration-200 hover:-translate-y-0.5 hover:bg-white/10 hover:ring-2 hover:ring-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                                  >
+                                    <span aria-hidden="true" className="-mx-2.5 mb-1.5 flex h-14 items-center justify-center bg-linear-to-b from-[#8b5cf6]/30 to-transparent">
+                                      <Icon className="h-8 w-8 text-[#c4b5fd] transition-transform duration-200 group-hover:scale-110 group-hover:text-amber-400" />
+                                    </span>
+                                    <span className="truncate font-display text-[13.5px] font-bold leading-tight">{names[id]}</span>
+                                    <span className="truncate text-[11px] text-slate-300">
+                                      {played ? bestText(lang, id, bests[id]).split(" · ")[1] : t.notPlayed}
+                                    </span>
+                                    <span className="mt-0.5 flex items-center gap-1 text-[10.5px] font-bold text-amber-400">
+                                      <TbTrophy aria-hidden="true" className="h-3 w-3" />
+                                      {progressOf(ach, id).done}/{progressOf(ach, id).total}
+                                    </span>
+                                  </button>
+                                </li>
+                              );
+                            })}
+                          </ul>
+                        </div>
+                      ))}
+                    </div>
                   </section>
                 )}
 
+                {view === "achievements" && <AchievementsView lang={lang} />}
+
                 {playing && (
                   <section aria-label={names[playing]} className="mx-auto flex w-full flex-col gap-3">
-                    <div className={`mx-auto flex w-full items-center gap-3 ${playing === "space" || playing === "runner" ? "max-w-2xl" : "max-w-sm"}`}>
+                    <div className="mx-auto flex w-full max-w-2xl items-center gap-3">
                       <button
                         type="button"
                         onClick={() => open("library")}
@@ -290,7 +338,7 @@ export function Arcade({
                       </button>
                       <h3 className="flex-1 truncate text-right font-display text-[17px] font-extrabold">{names[playing]}</h3>
                     </div>
-                    <div className={`mx-auto w-full rounded-2xl bg-white text-navy ${playing === "space" ? "max-w-2xl p-1.5" : playing === "runner" ? "max-w-2xl p-2.5" : "max-w-sm p-2.5"}`}>
+                    <div className="mx-auto w-full max-w-2xl rounded-2xl bg-white p-1.5 text-navy">
                       <GamePlayer key={playing} lang={lang} game={playing} username={username} gated />
                     </div>
                   </section>
@@ -323,6 +371,12 @@ export function Arcade({
                         })}
                       </ul>
                     </div>
+
+                    <button type="button" onClick={() => open("achievements")} className="flex items-center gap-3 rounded-2xl bg-white/5 p-4 text-left ring-1 ring-white/10 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+                      <TbTrophy aria-hidden="true" className="h-6 w-6 shrink-0 text-amber-400" />
+                      <span className="flex-1 font-bold">{t.achievements}</span>
+                      <span className="text-[13px] font-bold text-slate-300">{t.earned(overall(ach).done, overall(ach).total)}</span>
+                    </button>
 
                     <p className="text-[12.5px] leading-snug text-slate-300">{t.saved}</p>
 

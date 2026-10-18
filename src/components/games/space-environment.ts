@@ -196,6 +196,32 @@ export function drawEnvironment(ctx: Ctx, state: State, paintScene: ScenePainter
     ctx.lineTo(306, 45);
     ctx.stroke();
   }
+  // Luminous cosmic meteor streak in space chapters
+  if (!reduceMotion && state.chapter >= 2) {
+    const meteorCycle = (state.frame + 45) % 260;
+    if (meteorCycle < 36) {
+      const p = meteorCycle / 36;
+      const sx = W + 40 - p * (W * 0.85);
+      const sy = 12 + p * 55;
+      const tailLen = 42;
+      const tailX = sx + tailLen;
+      const tailY = sy - tailLen * 0.28;
+      const col = state.chapter === 4 ? "254 215 170" : state.chapter === 3 ? "165 243 252" : "224 242 254";
+      const mGrad = ctx.createLinearGradient(sx, sy, tailX, tailY);
+      mGrad.addColorStop(0, `rgb(${col} / ${0.85 * (1 - p * 0.4)})`);
+      mGrad.addColorStop(0.35, `rgb(${col} / 0.35)`);
+      mGrad.addColorStop(1, `rgb(${col} / 0)`);
+      ctx.strokeStyle = mGrad;
+      ctx.lineWidth = 1.3;
+      ctx.beginPath();
+      ctx.moveTo(sx, sy);
+      ctx.lineTo(tailX, tailY);
+      ctx.stroke();
+      // Glowing core speck
+      ctx.fillStyle = `rgb(255 255 255 / ${0.95 * (1 - p * 0.4)})`;
+      ctx.fillRect(sx - 1, sy - 1, 2, 2);
+    }
+  }
   const edge = ctx.createLinearGradient(0, 0, 0, H);
   edge.addColorStop(0, "rgb(2 6 23 / 0.35)");
   edge.addColorStop(0.18, "rgb(2 6 23 / 0)");

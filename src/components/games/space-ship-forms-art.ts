@@ -6,7 +6,7 @@
    else is bolted on as it levels up; the later power is in what it does (self-repair,
    shown only while it mends) and in the HQ, a carrier's hangar at the left edge of the
    screen. Flat shapes with a dark rim, like the rest of the ship. */
-import { H, HQ, HQ_LAUNCHERS, MORPH, NUKE, TWIN_AT, W, hasUpgrade, isRepairing, shipSize, type State } from "./space-logic";
+import { H, HQ, HQ_LAUNCHERS, MORPH, NUKE, TWIN_AT, W, hasUpgrade, isRepairing, isSecond, shipSize, type State } from "./space-logic";
 
 type Ctx = CanvasRenderingContext2D;
 type P = State["p"];
@@ -91,57 +91,154 @@ export function drawMorph(ctx: Ctx, s: State, reduceMotion: boolean) {
   ctx.restore();
 }
 
-/* A nuclear blast: a white flash, then a ring of fire spreading from the ship until it has
-   filled the whole screen, and a warm haze that fades. */
+/* Heavy Thermonuclear Annihilation Wave: multi-wave blast rings, incendiary fallout sparks, and blinding flash. */
 export function drawNuke(ctx: Ctx, s: State, reduceMotion: boolean) {
   const n = s.nuke;
   if (!n) return;
   const u = n.t / NUKE.frames;
   const reach = Math.hypot(W, H);
-  const r = 10 + (reach * Math.min(1, n.t / 46));
+  const r = 12 + (reach * Math.min(1, n.t / 42));
+  const a = Math.max(0, 1 - u);
+
   ctx.save();
-  ctx.fillStyle = `rgb(255 214 170 / ${0.28 * (1 - u)})`;
+  ctx.globalCompositeOperation = "lighter";
+
+  // Atmospheric Annihilation Wash
+  ctx.fillStyle = `rgb(255 180 120 / ${0.35 * a})`;
   ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = `rgb(251 146 60 / ${0.3 * (1 - u)})`;
+
+  // Expanding Superheated Fireball
+  const g = ctx.createRadialGradient(n.x, n.y, 0, n.x, n.y, r);
+  g.addColorStop(0, `rgb(255 255 255 / ${0.9 * a})`);
+  g.addColorStop(0.35, `rgb(254 240 138 / ${0.75 * a})`);
+  g.addColorStop(0.65, `rgb(249 115 22 / ${0.5 * a})`);
+  g.addColorStop(1, "rgb(239 68 68 / 0)");
+  ctx.fillStyle = g;
   ctx.beginPath();
   ctx.arc(n.x, n.y, r, 0, Math.PI * 2);
   ctx.fill();
-  for (const [k, colour, width] of [[1, "254 240 138", 7], [0.78, "239 68 68", 4], [0.55, "255 255 255", 2.4]] as const) {
-    ctx.strokeStyle = `rgb(${colour} / ${Math.max(0, 1 - u * 1.15)})`;
+
+  // Multi-tier Supersonic Shockwave Blast Rings
+  for (const [k, colour, width] of [
+    [1, "255 255 255", 6],
+    [0.85, "254 240 138", 4],
+    [0.68, "239 68 68", 3],
+    [0.45, "251 146 60", 2],
+  ] as const) {
+    ctx.strokeStyle = `rgb(${colour} / ${Math.max(0, 1 - u * 1.1)})`;
     ctx.lineWidth = width;
     ctx.beginPath();
     ctx.arc(n.x, n.y, r * k, 0, Math.PI * 2);
     ctx.stroke();
   }
-  if (n.t < 10) {
-    ctx.fillStyle = `rgb(255 255 255 / ${(reduceMotion ? 0.35 : 0.95) * (1 - n.t / 10)})`;
+
+  // Incendiary Fallout Sparks & Plasma Debris Rain
+  if (!reduceMotion && n.t > 4) {
+    for (let i = 0; i < 18; i++) {
+      const seed = (i * 29 + n.t * 7) % 100;
+      const ang = (i / 18) * Math.PI * 2 + (seed / 100);
+      const dist = (r * 0.4) + (seed / 100) * (r * 0.6);
+      const sparkLen = 4 + (seed % 6);
+      ctx.strokeStyle = seed % 2 === 0 ? `rgb(254 240 138 / ${0.8 * a})` : `rgb(255 255 255 / ${a})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.moveTo(n.x + Math.cos(ang) * dist, n.y + Math.sin(ang) * dist);
+      ctx.lineTo(n.x + Math.cos(ang) * (dist + sparkLen), n.y + Math.sin(ang) * (dist + sparkLen));
+      ctx.stroke();
+    }
+  }
+
+  // Initial Relativistic Blinding White Flash
+  if (n.t < 12) {
+    ctx.fillStyle = `rgb(255 255 255 / ${(reduceMotion ? 0.4 : 0.98) * (1 - n.t / 12)})`;
     ctx.fillRect(0, 0, W, H);
   }
   ctx.restore();
 }
 
-/* The shield taking a hit: a dome of blue round the ship that fades. */
+/* Heavy Sci-Fi Energy Shield Matrix: Hexagonal honeycomb barrier, electric deflection lightning, and neon cyan plasma bloom. */
 export function drawShieldFlash(ctx: Ctx, s: State, reduceMotion: boolean) {
   const p = s.p;
   if (p.shieldFlash <= 0 || s.phase === "launch") return;
   const size = shipSize(p.level);
-  const a = p.shieldFlash / 24;
+  const a = Math.min(1, (p.shieldFlash / 24) * 1.5);
+  const cx = p.x + size.w / 2;
+  const cy = p.y + size.h / 2;
+  const rx = size.w * (0.95 + (reduceMotion ? 0 : (1 - a) * 0.35));
+  const ry = size.h * 1.55;
+
   ctx.save();
-  ctx.globalAlpha = Math.min(1, a * 1.4);
-  ctx.fillStyle = "rgb(56 189 248 / 0.22)";
-  ctx.strokeStyle = "rgb(125 211 252 / 0.95)";
-  ctx.lineWidth = 1.4;
+  ctx.globalCompositeOperation = "lighter";
+
+  // Outer Shield Glow Aura
+  const g = ctx.createRadialGradient(cx, cy, rx * 0.4, cx, cy, rx * 1.25);
+  g.addColorStop(0, `rgb(56 189 248 / ${0.12 * a})`);
+  g.addColorStop(0.7, `rgb(14 165 233 / ${0.28 * a})`);
+  g.addColorStop(1, "rgb(2 132 199 / 0)");
+  ctx.fillStyle = g;
   ctx.beginPath();
-  ctx.ellipse(p.x + size.w / 2, p.y + size.h / 2, size.w * (0.95 + (reduceMotion ? 0 : (1 - a) * 0.3)), size.h * 1.5, 0, 0, Math.PI * 2);
+  ctx.ellipse(cx, cy, rx * 1.2, ry * 1.2, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Primary Shield Dome
+  ctx.fillStyle = `rgb(56 189 248 / ${0.25 * a})`;
+  ctx.strokeStyle = `rgb(186 230 253 / ${0.95 * a})`;
+  ctx.lineWidth = 1.6;
+  ctx.beginPath();
+  ctx.ellipse(cx, cy, rx, ry, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.stroke();
+
+  // Hexagonal Honeycomb Matrix Grid Lattice
+  if (!reduceMotion) {
+    ctx.strokeStyle = `rgb(125 211 252 / ${0.5 * a})`;
+    ctx.lineWidth = 0.8;
+    const hexSize = 5;
+    for (let hx = cx - rx + 4; hx < cx + rx; hx += hexSize * 1.6) {
+      for (let hy = cy - ry + 4; hy < cy + ry; hy += hexSize * 1.8) {
+        const dx = (hx - cx) / rx;
+        const dy = (hy - cy) / ry;
+        if (dx * dx + dy * dy < 0.85) {
+          ctx.beginPath();
+          for (let k = 0; k < 6; k++) {
+            const ang = (k * Math.PI) / 3;
+            const px = hx + Math.cos(ang) * (hexSize * 0.5);
+            const py = hy + Math.sin(ang) * (hexSize * 0.5);
+            if (k === 0) ctx.moveTo(px, py);
+            else ctx.lineTo(px, py);
+          }
+          ctx.closePath();
+          ctx.stroke();
+        }
+      }
+    }
+
+    // Electric Deflection Lightning Arcs across shield surface
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1.2;
+    for (let i = 0; i < 3; i++) {
+      const startAng = (i * 2 + (p.shieldFlash * 0.3)) % (Math.PI * 2);
+      ctx.beginPath();
+      let arcX = cx + Math.cos(startAng) * rx;
+      let arcY = cy + Math.sin(startAng) * ry;
+      ctx.moveTo(arcX, arcY);
+      for (let step = 0; step < 4; step++) {
+        const nextAng = startAng + (step + 1) * 0.25;
+        arcX = cx + Math.cos(nextAng) * (rx + (Math.sin(step * 3.5 + s.frame) * 3));
+        arcY = cy + Math.sin(nextAng) * (ry + (Math.cos(step * 3.5 + s.frame) * 3));
+        ctx.lineTo(arcX, arcY);
+      }
+      ctx.stroke();
+    }
+  }
+
   ctx.restore();
 }
 
 /* Self-repair at work: a few small green crosses rise off the ship while it mends. */
 export function drawRepair(ctx: Ctx, s: State, reduceMotion: boolean) {
   const p = s.p;
-  if (s.phase !== "play" || !isRepairing(p)) return;
+  if (s.phase !== "play" || !isRepairing(p, isSecond(s.chapter))) return;
   const size = shipSize(p.level);
   ctx.save();
   ctx.fillStyle = "#4ade80";
