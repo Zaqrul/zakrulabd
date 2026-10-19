@@ -58,7 +58,8 @@ Each tune was written from motifs, not typed bar by bar. A hook, an answer, a ha
 One score in the manner of a prog-rock and techno RPG final-boss theme, played as three phases: D, E and F
 sharp minor at 164, 172 and 180 bpm, so all three share every part, motif and band change. A drumless intro over a
 piano ostinato, hits under a riser, a four-on-the-floor drive with a sixteenth-note synth bass and arpeggio under a
-long sad line, a 7/8 break on the organ, half time on the guitar, then each phase's own eight-bar solo in
-sixteenths (violin, guitar, synth), a climb a minor third higher, and the fall back. 40 bars.
+long sad line, a 7/8 break on the organ, half time on the guitar, then each phase's own sixteen-bar solo in
+sixteenths over an eight-bar vamp played twice (violin, guitar, synth), up front over the bass and drums alone, a
+climb a minor third higher, and the fall back. 48 bars.
 In the climb only, the synth turns round the root in sixteenths, a light touch of a late-90s villain's theme. No
 note is taken from any existing work.

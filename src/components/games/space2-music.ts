@@ -657,25 +657,27 @@ const STAGE_EXTENDED: Song = {
 /* Final Extremity, in three phases, like a last boss that changes form. One score, written in D minor, moved up a
    tone for each phase (D, E and F sharp minor) and played faster each time (164, 172, 180 bpm), so the three share
    every part, motif and change of band; what is each phase's own is the voice that opens it (strings, organ,
-   piano) and its solo. Parts, 40 bars: a drumless intro of long notes over a piano ostinato (bars 1-4); orchestral
+   piano) and its solo. Parts, 48 bars: a drumless intro of long notes over a piano ostinato (bars 1-4); orchestral
    hits under a riser (5-6); the drive (7-14), a long sad line over a four-on-the-floor kit, a synth bass in
    sixteenths that pops the octave and a synth arpeggio in sixteenths; a break in 7/8 on the organ (15-18); half
-   time on the guitar (19-22); the phase's own solo in sixteenths (23-30): a violin that sings and breaks into runs,
-   a guitar in groups of four and pedal tones, a synth in odd groupings and chromatic climbs; the climb a minor
-   third higher (31-38), where the synth turns round the root, a touch of a late-90s RPG villain's theme; and the
-   fall back to the top (39-40). It is written in the manner of a prog-rock and techno RPG finale; no note is
-   taken from any existing work. */
-const EXTREMITY_FILLS = [5, 13, 17, 21, 29, 37];
-const EXTREMITY_CRASHES = [6, 14, 18, 22, 30, 38];
+   time on the guitar (19-22); the phase's own solo (23-38), sixteen bars over an eight-bar vamp played twice, the
+   second time higher and busier: a violin that sings and breaks into runs, a guitar in groups of four, sweeps and
+   pedal tones, a synth in odd groupings and chromatic climbs; the climb a minor third higher (39-46), where the
+   synth turns round the root, a touch of a late-90s RPG villain's theme; and the fall back to the top (47-48). The
+   half time and the solo are played up front, over the bass and drums alone. It is written in the manner of a
+   prog-rock and techno RPG finale; no note is taken from any existing work. */
+const EXTREMITY_FILLS = [5, 13, 17, 21, 29, 37, 45];
+const EXTREMITY_CRASHES = [6, 14, 18, 22, 30, 38, 46];
+const EXTREMITY_FRONT = Array(16).fill(1.4);
 const extremitySections = (intro: Voice, introLayer: Voice, solo: Voice, soloLayer?: Voice): Song["sections"] => [
   { from: 0, lead: intro, layer: introLayer, pad: "organ", counter: "piano", drums: "none", stabs: false },
   { from: 4, lead: "brass", layer: undefined },
   { from: 6 },
   { from: 14, lead: "organ", layer: "lead", counter: "bell" },
-  { from: 18, lead: "guitar", layer: undefined, counter: "organ" },
-  { from: 22, lead: solo, layer: soloLayer, counter: "organ", stabs: false },
-  { from: 30, lead: "brass", layer: "lead" },
-  { from: 38, lead: intro, layer: introLayer, stabs: false },
+  { from: 18, lead: "guitar", layer: undefined, counter: undefined, stabs: false },
+  { from: 22, lead: solo, layer: soloLayer, counter: undefined, pad: undefined, stabs: false },
+  { from: 38, lead: "brass", layer: "lead" },
+  { from: 46, lead: intro, layer: introLayer, stabs: false },
 ];
 
 const FINAL_EXTREMITY: Song = {
@@ -699,18 +701,26 @@ const FINAL_EXTREMITY: Song = {
     { kit: "kh . h ks h . kh h . ks h . ks h", bass: "Bb1 . Bb2 Bb1 . Bb2 Bb1 . Ab2 . F2 . Bb2 ." },
     { kit: "kh . h ks h . kh h . ks h . ks h", bass: "G2 . G3 G2 . G3 G2 . F3 . D3 . G3 ." },
     { kit: "kh . h ks h . kh t . s t s s s", bass: "A1 . A2 A1 . A2 A1 . G2 . E2 . A2 ." },
-    { kit: "kc . h . h . h . ks . h . h . h .", bass: "D2 . . . D3 . . . D2 . . . C3 . A2 ." },
-    { kit: "kh . h . h . h . ks . h . h . h .", bass: "Bb1 . . . Bb2 . . . Bb1 . . . Ab2 . F2 ." },
-    { kit: "kh . h . h . h . ks . h . h . h .", bass: "G2 . . . G3 . . . G2 . . . F3 . D3 ." },
-    { kit: "kh . h . h . h . ks . s s t t s s", bass: "A1 . . . A2 . . . A1 . . . G2 . E2 ." },
-    { kit: "kc h h h ks h h h kh h h h ks h kh h", bass: "D2 D2 D3 D2 . D2 D3 D2 C3 D2 D3 D2 A2 . C3 D3" },
-    { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "Bb1 Bb1 Bb2 Bb1 . Bb1 Bb2 Bb1 Ab2 Bb1 Bb2 Bb1 F2 . Ab2 Bb2" },
-    { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "C2 C2 C3 C2 . C2 C3 C2 Bb2 C2 C3 C2 G2 . Bb2 C3" },
-    { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "A1 A1 A2 A1 . A1 A2 A1 G2 A1 A2 A1 E2 . G2 A2" },
-    { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "G2 G2 G3 G2 . G2 G3 G2 F3 G2 G3 G2 D3 . F3 G3" },
-    { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "D2 D2 D3 D2 . D2 D3 D2 C3 D2 D3 D2 A2 . C3 D3" },
-    { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "Bb1 Bb1 Bb2 Bb1 . Bb1 Bb2 Bb1 Ab2 Bb1 Bb2 Bb1 F2 . Ab2 Bb2" },
-    { kit: "kh h h h ks h h h kh . s s t t s s", bass: "A1 A1 A2 A1 . A1 A2 A1 G2 A1 A2 A1 E2 . G2 A2" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kc . h . h . h . ks . h . h . h .", bass: "D2 . . . D3 . . . D2 . . . C3 . A2 ." },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . h . h . h . ks . h . h . h .", bass: "Bb1 . . . Bb2 . . . Bb1 . . . Ab2 . F2 ." },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . h . h . h . ks . h . h . h .", bass: "G2 . . . G3 . . . G2 . . . F3 . D3 ." },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . h . h . h . ks . s s t t s s", bass: "A1 . . . A2 . . . A1 . . . G2 . E2 ." },
+    { leadAccents: EXTREMITY_FRONT, kit: "kc h h h ks h h h kh h h h ks h kh h", bass: "D2 D2 D3 D2 . D2 D3 D2 C3 D2 D3 D2 A2 . C3 D3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "Bb1 Bb1 Bb2 Bb1 . Bb1 Bb2 Bb1 Ab2 Bb1 Bb2 Bb1 F2 . Ab2 Bb2" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "C2 C2 C3 C2 . C2 C3 C2 Bb2 C2 C3 C2 G2 . Bb2 C3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "A1 A1 A2 A1 . A1 A2 A1 G2 A1 A2 A1 E2 . G2 A2" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "G2 G2 G3 G2 . G2 G3 G2 F3 G2 G3 G2 D3 . F3 G3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "D2 D2 D3 D2 . D2 D3 D2 C3 D2 D3 D2 A2 . C3 D3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "Bb1 Bb1 Bb2 Bb1 . Bb1 Bb2 Bb1 Ab2 Bb1 Bb2 Bb1 F2 . Ab2 Bb2" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh . s s t t s s", bass: "A1 A1 A2 A1 . A1 A2 A1 G2 A1 A2 A1 E2 . G2 A2" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kc h h h ks h h h kh h h h ks h kh h", bass: "D2 D2 D3 D2 . D2 D3 D2 C3 D2 D3 D2 A2 . C3 D3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "Bb1 Bb1 Bb2 Bb1 . Bb1 Bb2 Bb1 Ab2 Bb1 Bb2 Bb1 F2 . Ab2 Bb2" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "C2 C2 C3 C2 . C2 C3 C2 Bb2 C2 C3 C2 G2 . Bb2 C3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "A1 A1 A2 A1 . A1 A2 A1 G2 A1 A2 A1 E2 . G2 A2" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "G2 G2 G3 G2 . G2 G3 G2 F3 G2 G3 G2 D3 . F3 G3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "D2 D2 D3 D2 . D2 D3 D2 C3 D2 D3 D2 A2 . C3 D3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "Bb1 Bb1 Bb2 Bb1 . Bb1 Bb2 Bb1 Ab2 Bb1 Bb2 Bb1 F2 . Ab2 Bb2" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh . s s t t s s", bass: "A1 A1 A2 A1 . A1 A2 A1 G2 A1 A2 A1 E2 . G2 A2" },
     { kit: "kc h h h ks h h h kh h h h ks h kh h", bass: "F2 F2 F3 F2 . F2 F3 F2 Eb3 F2 F3 F2 C3 . Eb3 F3" },
     { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "C#2 C#2 C#3 C#2 . C#2 C#3 C#2 B2 C#2 C#3 C#2 Ab2 . B2 C#3" },
     { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "Bb1 Bb1 Bb2 Bb1 . Bb1 Bb2 Bb1 Ab2 Bb1 Bb2 Bb1 F2 . Ab2 Bb2" },
@@ -755,6 +765,14 @@ const FINAL_EXTREMITY: Song = {
     ["D6 - - C#6 D6 E6 F6 E6 D6 C#6 D6 A5 F5 - E5 -", "Dm", "pump16"],
     ["D5 F5 Bb5 A5 G5 F5 D5 F5 Bb5 C6 D6 C6 Bb5 A5 G5 F5", "Bb", "pump16"],
     ["E5 - - - G5 - - - A5 - - - C#6 - - -", "A7", "pump16"],
+    ["D6 C#6 D6 E6 F6 E6 D6 C6 A5 Bb5 C6 D6 E6 F6 E6 D6", "Dm", "pump16"],
+    ["D6 - F6 - D6 C6 Bb5 C6 D6 F6 D6 C6 Bb5 A5 G5 F5", "Bb", "pump16"],
+    ["E6 D6 C6 D6 E6 F6 G6 F6 E6 C6 G5 C6 E6 D6 C6 B5", "C", "pump16"],
+    ["C#6 D6 E6 G6 - - F6 E6 D6 - C#6 - A5 - - -", "A7", "pump16"],
+    ["Bb5 C6 D6 Bb5 A5 G5 A5 G5 D5 G5 A5 Bb5 C6 D6 F6 D6", "Gm", "pump16"],
+    ["A5 - D6 - F6 - G6 - A6 G6 F6 E6 D6 C#6 D6 F6", "Dm", "pump16"],
+    ["F6 E6 D6 C6 Bb5 C6 D6 E6 F6 G6 F6 E6 D6 C6 Bb5 A5", "Bb", "pump16"],
+    ["G5 - - - A5 - - - C#6 - - - D6 - - -", "A7", "pump16"],
     ["C6 - - - - - - - Bb5 - - - Ab5 - - -", "Fm", "pump16", "F4 G4 Ab4 G4 F4 E4 F4 G4 Ab4 Bb4 Ab4 G4 F4 E4 F4 C4"],
     ["Ab5 - - - - - - - F5 - - - - - Eb5 -", "C#", "pump16", "Ab4 F#4 F4 F#4 Ab4 A4 Ab4 F#4 F4 Eb4 F4 F#4 Ab4 F#4 F4 Eb4"],
     ["F5 - - - - - - - C#6 - - - C6 - Bb5 -", "Bbm", "pump16", "Bb3 C4 C#4 C4 Bb3 A3 Bb3 C4 C#4 Eb4 C#4 C4 Bb3 A3 Bb3 F3"],
@@ -789,18 +807,26 @@ const FINAL_EXTREMITY_2: Song = {
     { kit: "kh . h ks h . kh h . ks h . ks h", bass: "C2 . C3 C2 . C3 C2 . A#2 . G2 . C3 ." },
     { kit: "kh . h ks h . kh h . ks h . ks h", bass: "A1 . A2 A1 . A2 A1 . G2 . E2 . A2 ." },
     { kit: "kh . h ks h . kh t . s t s s s", bass: "B1 . B2 B1 . B2 B1 . A2 . F#2 . B2 ." },
-    { kit: "kc . h . h . h . ks . h . h . h .", bass: "E2 . . . E3 . . . E2 . . . D3 . B2 ." },
-    { kit: "kh . h . h . h . ks . h . h . h .", bass: "C2 . . . C3 . . . C2 . . . A#2 . G2 ." },
-    { kit: "kh . h . h . h . ks . h . h . h .", bass: "A1 . . . A2 . . . A1 . . . G2 . E2 ." },
-    { kit: "kh . h . h . h . ks . s s t t s s", bass: "B1 . . . B2 . . . B1 . . . A2 . F#2 ." },
-    { kit: "kc h h h ks h h h kh h h h ks h kh h", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
-    { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "C2 C2 C3 C2 . C2 C3 C2 A#2 C2 C3 C2 G2 . A#2 C3" },
-    { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "D2 D2 D3 D2 . D2 D3 D2 C3 D2 D3 D2 A2 . C3 D3" },
-    { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "B1 B1 B2 B1 . B1 B2 B1 A2 B1 B2 B1 F#2 . A2 B2" },
-    { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "A1 A1 A2 A1 . A1 A2 A1 G2 A1 A2 A1 E2 . G2 A2" },
-    { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
-    { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "C2 C2 C3 C2 . C2 C3 C2 A#2 C2 C3 C2 G2 . A#2 C3" },
-    { kit: "kh h h h ks h h h kh . s s t t s s", bass: "B1 B1 B2 B1 . B1 B2 B1 A2 B1 B2 B1 F#2 . A2 B2" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kc . h . h . h . ks . h . h . h .", bass: "E2 . . . E3 . . . E2 . . . D3 . B2 ." },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . h . h . h . ks . h . h . h .", bass: "C2 . . . C3 . . . C2 . . . A#2 . G2 ." },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . h . h . h . ks . h . h . h .", bass: "A1 . . . A2 . . . A1 . . . G2 . E2 ." },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . h . h . h . ks . s s t t s s", bass: "B1 . . . B2 . . . B1 . . . A2 . F#2 ." },
+    { leadAccents: EXTREMITY_FRONT, kit: "kc h h h ks h h h kh h h h ks h kh h", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "C2 C2 C3 C2 . C2 C3 C2 A#2 C2 C3 C2 G2 . A#2 C3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "D2 D2 D3 D2 . D2 D3 D2 C3 D2 D3 D2 A2 . C3 D3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "B1 B1 B2 B1 . B1 B2 B1 A2 B1 B2 B1 F#2 . A2 B2" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "A1 A1 A2 A1 . A1 A2 A1 G2 A1 A2 A1 E2 . G2 A2" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "C2 C2 C3 C2 . C2 C3 C2 A#2 C2 C3 C2 G2 . A#2 C3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh . s s t t s s", bass: "B1 B1 B2 B1 . B1 B2 B1 A2 B1 B2 B1 F#2 . A2 B2" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kc h h h ks h h h kh h h h ks h kh h", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "C2 C2 C3 C2 . C2 C3 C2 A#2 C2 C3 C2 G2 . A#2 C3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "D2 D2 D3 D2 . D2 D3 D2 C3 D2 D3 D2 A2 . C3 D3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "B1 B1 B2 B1 . B1 B2 B1 A2 B1 B2 B1 F#2 . A2 B2" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "A1 A1 A2 A1 . A1 A2 A1 G2 A1 A2 A1 E2 . G2 A2" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "C2 C2 C3 C2 . C2 C3 C2 A#2 C2 C3 C2 G2 . A#2 C3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh . s s t t s s", bass: "B1 B1 B2 B1 . B1 B2 B1 A2 B1 B2 B1 F#2 . A2 B2" },
     { kit: "kc h h h ks h h h kh h h h ks h kh h", bass: "G2 G2 G3 G2 . G2 G3 G2 F3 G2 G3 G2 D3 . F3 G3" },
     { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "Eb2 Eb2 Eb3 Eb2 . Eb2 Eb3 Eb2 C#3 Eb2 Eb3 Eb2 Bb2 . C#3 Eb3" },
     { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "C2 C2 C3 C2 . C2 C3 C2 Bb2 C2 C3 C2 G2 . Bb2 C3" },
@@ -845,6 +871,14 @@ const FINAL_EXTREMITY_2: Song = {
     ["G6 E6 F#6 E6 D6 E6 B5 E6 C6 E6 A5 E6 B5 E6 G5 B5", "Em", "pump16"],
     ["E6 D6 C6 B5 C6 D6 E6 G6 F#6 E6 D6 C6 B5 C6 D6 E6", "C", "pump16"],
     ["D#6 - - - F#6 - - - B5 - - - A5 - F#5 -", "B7", "pump16"],
+    ["B5 A5 G5 A5 B5 C6 D6 E6 D6 C6 B5 A5 G5 F#5 E5 F#5", "Em", "pump16"],
+    ["G5 E5 G5 C6 E6 D6 C6 G5 E5 G5 C6 E6 D6 C6 B5 C6", "C", "pump16"],
+    ["A5 B5 A5 G5 F#5 E5 D5 E5 F#5 A5 D6 E6 F#6 E6 D6 A5", "D", "pump16"],
+    ["D#6 C6 B5 A5 F#5 A5 B5 C6 D#6 E6 F#6 E6 D#6 C6 B5 A5", "B7", "pump16"],
+    ["A5 E5 A5 C6 B5 A5 E6 A5 C6 A5 E6 A5 D6 A5 C6 B5", "Am", "pump16"],
+    ["G5 B5 E6 G6 F#6 E6 D6 C6 B5 C6 E6 F#6 G6 A6 B6 G6", "Em", "pump16"],
+    ["E6 G6 E6 D6 C6 D6 E6 C6 G5 E5 G5 C6 E6 D6 C6 B5", "C", "pump16"],
+    ["A5 - - - B5 - - - D#6 - - - E6 - - -", "B7", "pump16"],
     ["D6 - - - - - - - C6 - - - Bb5 - - -", "Gm", "pump16", "G3 A3 Bb3 A3 G3 F#3 G3 A3 Bb3 C4 Bb3 A3 G3 F#3 G3 D3"],
     ["Bb5 - - - - - - - G5 - - - - - F5 -", "Eb", "pump16", "Bb4 Ab4 G4 Ab4 Bb4 B4 Bb4 Ab4 G4 F4 G4 Ab4 Bb4 Ab4 G4 F4"],
     ["G5 - - - - - - - Eb6 - - - D6 - C6 -", "Cm", "pump16", "C4 D4 Eb4 D4 C4 B3 C4 D4 Eb4 F4 Eb4 D4 C4 B3 C4 G3"],
@@ -879,18 +913,26 @@ const FINAL_EXTREMITY_3: Song = {
     { kit: "kh . h ks h . kh h . ks h . ks h", bass: "D2 . D3 D2 . D3 D2 . C3 . A2 . D3 ." },
     { kit: "kh . h ks h . kh h . ks h . ks h", bass: "B1 . B2 B1 . B2 B1 . A2 . F#2 . B2 ." },
     { kit: "kh . h ks h . kh t . s t s s s", bass: "C#2 . C#3 C#2 . C#3 C#2 . B2 . G#2 . C#3 ." },
-    { kit: "kc . h . h . h . ks . h . h . h .", bass: "F#2 . . . F#3 . . . F#2 . . . E3 . C#3 ." },
-    { kit: "kh . h . h . h . ks . h . h . h .", bass: "D2 . . . D3 . . . D2 . . . C3 . A2 ." },
-    { kit: "kh . h . h . h . ks . h . h . h .", bass: "B1 . . . B2 . . . B1 . . . A2 . F#2 ." },
-    { kit: "kh . h . h . h . ks . s s t t s s", bass: "C#2 . . . C#3 . . . C#2 . . . B2 . G#2 ." },
-    { kit: "kc h h h ks h h h kh h h h ks h kh h", bass: "F#2 F#2 F#3 F#2 . F#2 F#3 F#2 E3 F#2 F#3 F#2 C#3 . E3 F#3" },
-    { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "D2 D2 D3 D2 . D2 D3 D2 C3 D2 D3 D2 A2 . C3 D3" },
-    { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
-    { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "C#2 C#2 C#3 C#2 . C#2 C#3 C#2 B2 C#2 C#3 C#2 G#2 . B2 C#3" },
-    { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "B1 B1 B2 B1 . B1 B2 B1 A2 B1 B2 B1 F#2 . A2 B2" },
-    { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "F#2 F#2 F#3 F#2 . F#2 F#3 F#2 E3 F#2 F#3 F#2 C#3 . E3 F#3" },
-    { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "D2 D2 D3 D2 . D2 D3 D2 C3 D2 D3 D2 A2 . C3 D3" },
-    { kit: "kh h h h ks h h h kh . s s t t s s", bass: "C#2 C#2 C#3 C#2 . C#2 C#3 C#2 B2 C#2 C#3 C#2 G#2 . B2 C#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kc . h . h . h . ks . h . h . h .", bass: "F#2 . . . F#3 . . . F#2 . . . E3 . C#3 ." },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . h . h . h . ks . h . h . h .", bass: "D2 . . . D3 . . . D2 . . . C3 . A2 ." },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . h . h . h . ks . h . h . h .", bass: "B1 . . . B2 . . . B1 . . . A2 . F#2 ." },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . h . h . h . ks . s s t t s s", bass: "C#2 . . . C#3 . . . C#2 . . . B2 . G#2 ." },
+    { leadAccents: EXTREMITY_FRONT, kit: "kc h h h ks h h h kh h h h ks h kh h", bass: "F#2 F#2 F#3 F#2 . F#2 F#3 F#2 E3 F#2 F#3 F#2 C#3 . E3 F#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "D2 D2 D3 D2 . D2 D3 D2 C3 D2 D3 D2 A2 . C3 D3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "C#2 C#2 C#3 C#2 . C#2 C#3 C#2 B2 C#2 C#3 C#2 G#2 . B2 C#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "B1 B1 B2 B1 . B1 B2 B1 A2 B1 B2 B1 F#2 . A2 B2" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "F#2 F#2 F#3 F#2 . F#2 F#3 F#2 E3 F#2 F#3 F#2 C#3 . E3 F#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "D2 D2 D3 D2 . D2 D3 D2 C3 D2 D3 D2 A2 . C3 D3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh . s s t t s s", bass: "C#2 C#2 C#3 C#2 . C#2 C#3 C#2 B2 C#2 C#3 C#2 G#2 . B2 C#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kc h h h ks h h h kh h h h ks h kh h", bass: "F#2 F#2 F#3 F#2 . F#2 F#3 F#2 E3 F#2 F#3 F#2 C#3 . E3 F#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "D2 D2 D3 D2 . D2 D3 D2 C3 D2 D3 D2 A2 . C3 D3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "C#2 C#2 C#3 C#2 . C#2 C#3 C#2 B2 C#2 C#3 C#2 G#2 . B2 C#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "B1 B1 B2 B1 . B1 B2 B1 A2 B1 B2 B1 F#2 . A2 B2" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "F#2 F#2 F#3 F#2 . F#2 F#3 F#2 E3 F#2 F#3 F#2 C#3 . E3 F#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "D2 D2 D3 D2 . D2 D3 D2 C3 D2 D3 D2 A2 . C3 D3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh h h h ks h h h kh . s s t t s s", bass: "C#2 C#2 C#3 C#2 . C#2 C#3 C#2 B2 C#2 C#3 C#2 G#2 . B2 C#3" },
     { kit: "kc h h h ks h h h kh h h h ks h kh h", bass: "A1 A1 A2 A1 . A1 A2 A1 G2 A1 A2 A1 E2 . G2 A2" },
     { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "F2 F2 F3 F2 . F2 F3 F2 D#3 F2 F3 F2 C3 . D#3 F3" },
     { kit: "kh h h h ks h h h kh h h h ks h kh h", bass: "D2 D2 D3 D2 . D2 D3 D2 C3 D2 D3 D2 A2 . C3 D3" },
@@ -935,6 +977,14 @@ const FINAL_EXTREMITY_3: Song = {
     ["A5 G#5 F#5 E5 F#5 G#5 A5 B5 C#6 E6 D6 C#6 F#6 E6 D6 C#6", "F#m", "pump16"],
     ["D6 E6 F#6 E6 D6 E6 F#6 G#6 A6 G#6 F#6 E6 F#6 A6 B6 A6", "D", "pump16"],
     ["G#6 - - - - - - - F6 - - - G#6 - - -", "C#7", "pump16"],
+    ["C#6 B5 C#6 A5 B5 C#6 F#5 G#5 A5 C#6 D6 E6 F#6 E6 D6 C#6", "F#m", "pump16"],
+    ["D6 C#6 D6 F#6 E6 F#6 A6 G#6 A6 F#6 E6 D6 A5 D6 E6 F#6", "D", "pump16"],
+    ["G#6 F#6 E6 D#6 E6 F#6 G#6 B6 A6 G#6 F#6 E6 D#6 E6 F#6 G#6", "E", "pump16"],
+    ["F6 E6 D6 C#6 B5 C#6 D6 E6 F6 G#6 F6 E6 D6 C#6 B5 G#5", "C#7", "pump16"],
+    ["B5 C#6 D6 F#6 E6 D6 C#6 D6 E6 F#6 G6 F#6 E6 D6 C#6 D6", "Bm", "pump16"],
+    ["C#6 D6 E6 F#6 G#6 A6 B6 A6 G#6 F#6 E6 D6 C#6 B5 A5 G#5", "F#m", "pump16"],
+    ["A5 D6 E6 F#6 A6 B6 A6 F#6 E6 D6 E6 F#6 A6 B6 A6 F#6", "D", "pump16"],
+    ["G#6 - - - F6 - - - G#6 - - - B6 - - -", "C#7", "pump16"],
     ["E6 - - - - - - - D6 - - - C6 - - -", "Am", "pump16", "A3 B3 C4 B3 A3 G#3 A3 B3 C4 D4 C4 B3 A3 G#3 A3 E3"],
     ["C6 - - - - - - - A5 - - - - - G5 -", "F", "pump16", "C5 A#4 A4 A#4 C5 C#5 C5 A#4 A4 G4 A4 A#4 C5 A#4 A4 G4"],
     ["A5 - - - - - - - F6 - - - E6 - D6 -", "Dm", "pump16", "D4 E4 F4 E4 D4 C#4 D4 E4 F4 G4 F4 E4 D4 C#4 D4 A3"],
@@ -1371,7 +1421,9 @@ export class SagaMusic {
     const performance = song.performance?.[b];
 
     const counter = plan.counter.get(step);
-    if (counter) this.voice(song.counter ?? "chip", counter.value, at, counter.len * stepSec * 0.8, 0.035);
+    /* A song with no counter voice plays its arpeggios on the chip; a section that sets the counter to undefined silences it. */
+    const counterVoice = "counter" in song ? song.counter : "chip";
+    if (counter && counterVoice) this.voice(counterVoice, counter.value, at, counter.len * stepSec * 0.8, 0.035);
 
     if (song.riser && pos === 0 && b === song.riser[0]) {
       let steps = 0;

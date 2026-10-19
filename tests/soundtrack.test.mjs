@@ -231,22 +231,25 @@ test("Final Extremity's three phases are one score a tone higher and faster each
   const phases = [SPACE2.s2bonus10, SPACE2.s2bonus13, SPACE2.s2bonus14];
   const len = (b) => b[0].trim().split(/\s+/).length;
   const pitches = (song) => song.bars.map((b) => b[0].trim().split(/\s+/).filter((c) => /^[A-G]/.test(c)).map(midi));
-  const solo = (i) => i >= 22 && i < 30;
+  const solo = (i) => i >= 22 && i < 38;
   assert.deepEqual(phases.map((p) => p.bpm), [164, 172, 180], "faster each phase");
   for (const [n, song] of phases.entries()) {
-    assert.equal(song.bars.length, 40);
-    assert.deepEqual(song.bars.map(len), [...Array(14).fill(16), ...Array(4).fill(14), ...Array(22).fill(16)]);
-    assert.deepEqual([song.fills, song.crashes, song.riser], [[5, 13, 17, 21, 29, 37], [6, 14, 18, 22, 30, 38], [4, 5]]);
+    assert.equal(song.bars.length, 48);
+    assert.deepEqual(song.bars.map(len), [...Array(14).fill(16), ...Array(4).fill(14), ...Array(30).fill(16)]);
+    assert.deepEqual([song.fills, song.crashes, song.riser], [[5, 13, 17, 21, 29, 37, 45], [6, 14, 18, 22, 30, 38, 46], [4, 5]]);
     assert.equal(song.sections[0].drums, "none", "a drumless intro");
-    assert.deepEqual(song.sections.map((s) => s.from), [0, 4, 6, 14, 18, 22, 30, 38], "the band changes at the same bars");
+    assert.deepEqual(song.sections.map((s) => s.from), [0, 4, 6, 14, 18, 22, 38, 46], "the band changes at the same bars");
     // The same melody a tone higher per phase, except in the solo.
     pitches(song).forEach((bar, i) => { if (!solo(i)) bar.forEach((v, k) => assert.equal(v, pitches(phases[0])[i][k] + 2 * n, `phase ${n + 1} bar ${i + 1}`)); });
-    // The solo: eight bars, most of them in sixteenths.
-    assert.ok(pitches(song).slice(22, 30).filter((bar) => bar.length >= 12).length >= 5, `phase ${n + 1}: a long, busy solo`);
+    // The solo: sixteen bars over the vamp played twice, most of them in sixteenths, the second pass its own.
+    assert.ok(pitches(song).slice(22, 38).filter((bar) => bar.length >= 12).length >= 11, `phase ${n + 1}: a long, busy solo`);
+    assert.deepEqual(song.bars.slice(22, 30).map((b) => b[1]), song.bars.slice(30, 38).map((b) => b[1]), "the vamp loops");
+    assert.notDeepEqual(pitches(song).slice(22, 30), pitches(song).slice(30, 38), "the second pass is new");
+    assert.ok(song.sections[5].counter === undefined && song.sections[5].pad === undefined && song.performance[22].leadAccents[0] > 1, "the solo is up front");
     // The turning sixteenth figure is a touch, only in the climb.
-    song.bars.forEach((b, i) => assert.equal(Boolean(b[3]) && i >= 6, i >= 30 && i < 38, `phase ${n + 1} bar ${i + 1}: counter-line`));
+    song.bars.forEach((b, i) => assert.equal(Boolean(b[3]) && i >= 6, i >= 38 && i < 46, `phase ${n + 1} bar ${i + 1}: counter-line`));
   }
-  const solos = phases.map((song) => pitches(song).slice(22, 30).flat().join(","));
+  const solos = phases.map((song) => pitches(song).slice(22, 38).flat().join(","));
   assert.equal(new Set(solos).size, 3, "each phase has a solo of its own");
   assert.deepEqual(phases.map((song) => song.sections[5].lead), ["violin", "guitar", "lead"]);
 });
