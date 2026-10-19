@@ -301,4 +301,9 @@ test("Final Extremity's fourth phase, Eternity: the same score in G sharp minor,
     top.forEach((c, k) => { if (/^[A-G]/.test(c)) assert.ok([3, 4].includes(midi(c) - midi(under[k])), `a third below ${c}`); });
   }
   assert.equal(Math.max(...pitches(p4).flat()), midi("C#7"), "the top of the whole suite");
+  // Heavy metal: a palm-muted guitar chugging the root and double kicks under the heavy parts, over a picked bass.
+  assert.equal(p4.counter, "metal");
+  assert.equal(p4.bassVoice, "picked");
+  assert.ok(p4.bars.slice(6, 14).every((b) => b[3].split(/\s+/).filter((c) => c !== ".").length >= 12), "the drive chugs in sixteenths");
+  assert.ok(p4.performance.slice(6, 13).every((p) => p.kit.split(/\s+/).filter((h) => h.includes("k")).length >= 12), "double kicks");
 });
