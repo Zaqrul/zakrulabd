@@ -15,6 +15,7 @@ import type { Song as ChipSong } from "./space-music";
 import { CODEX_SPACE_2 } from "./space-codex-music.ts";
 import { FINAL_EXTREMITY_II } from "./space-final-extremity-ii.ts";
 import { arrangeAscension } from "./space2-ascension.ts";
+import { SPACE3_SONGS, type Space3Track } from "./space3-music.ts";
 
 export type BaseSagaTrack =
   | "s2title" | "s2hangar" | "s2hangar2" | "s2hangar3" | "s2stage" | "s2stage2" | "s2alert" | "s2alert2" | "s2alert3" | "s2pause" | "s2victory" | "s2gameover" | "s2ending" | "s2fanfare"
@@ -24,9 +25,9 @@ export type BaseSagaTrack =
   /* A bonus tune for the soundtrack player in zakrulOS only; the game never plays it. */
   | "s2bonus1" | "s2bonus2" | "s2bonus3" | "s2bonus4" | "s2bonus5" | "s2bonus6" | "s2bonus7" | "s2bonus8" | "s2bonus9" | "s2bonus10" | "s2bonus11" | "s2bonus12" | "s2bonus13" | "s2bonus14" | "s2bonus15";
 export type AlternateSagaTrack = `alt:${BaseSagaTrack}`;
-export type SagaTrack = BaseSagaTrack | AlternateSagaTrack;
+export type SagaTrack = BaseSagaTrack | AlternateSagaTrack | Space3Track;
 
-type Voice = "brass" | "strings" | "lead" | "organ" | "bell" | "harp" | "chip" | "trumpet" | "violin" | "guitar" | "piano" | "metal";
+type Voice = "brass" | "strings" | "lead" | "organ" | "organChord" | "bell" | "harp" | "chip" | "trumpet" | "violin" | "guitar" | "piano";
 /* A bar may carry a counter-line too, played by the song's `counter` voice. */
 type Bar = [lead: string, chord: string, riff?: string, counter?: string];
 export type BarPerformance = {
@@ -96,6 +97,11 @@ const RIFFS: Record<string, string> = {
   hold12: "0 - - - - - 7 - - - - -",
   ostinato16: "0 . 12 . 1 . 12 . 0 . 12 . 6 . 12 .",
   throb14: "0 . . 0 . . 0 . . . 0 . 0 .",
+  /* Space 3: a battle bass after Kenji Ito's, root and octave pushed off the beat, a seventh and a fifth to turn round. */
+  ito16: "0 . 12 0 . 12 0 . 0 . 12 0 . 10 12 .",
+  itoRun16: "0 0 12 0 0 12 0 12 0 0 12 0 10 0 7 0",
+  ito14: "0 . 12 0 . 12 0 . 10 . 12 0 7 .",
+  ito12: "0 . 12 0 . 12 0 . 12 10 . 7",
 };
 
 /* k kick, s snare, h hat, t tom; "." nothing. A crash marks the start of a song and of each change
@@ -998,16 +1004,16 @@ const FINAL_EXTREMITY_3: Song = {
   ],
 };
 
-/* Phase 4, Eternity: the last form, and heavy metal. G sharp minor, 188 bpm, the same score as the other phases
-   with a solo of its own, but the band turns to metal: double kicks under every heavy part, a picked bass, and a
-   palm-muted rhythm guitar chugging power chords on the root in sixteenths (the "metal" voice), as a rock orchestra
+/* Phase 4, Eternity: the last form. G sharp minor, 188 bpm, the same score as the other phases
+   with a solo of its own, driven by a picked bass, an organ playing root-fifth-octave power chords,
+   and a heavy but less crowded eighth-note kick pulse under the main riffs, as a rock orchestra
    plays a last battle. The solo, twenty-four bars over the vamp played three times and written new for it: four
    bars of violin, four of guitar over a pedal, four of synth in chromatic climbs, a bar each in turn, and eight
    bars of all of them together, synth and violin as one with the guitar a third below, over strings and brass.
    The climb after it reaches C sharp 7, the top of the whole suite. */
-const soloBand = (lead: Voice, layer?: Voice) => ({ lead, layer, counter: "metal" as const, pad: undefined, stabs: false });
+const soloBand = (lead: Voice, layer?: Voice) => ({ lead, layer, counter: "organChord" as const, pad: undefined, stabs: false });
 const FINAL_EXTREMITY_4: Song = {
-  bpm: 188, lead: "lead", layer: "brass", pad: "strings", counter: "metal", bassVoice: "picked",
+  bpm: 188, lead: "lead", layer: "brass", pad: "strings", counter: "organChord", bassVoice: "picked",
   stabs: true, drums: "battle", riff: "pump16", performance: [
     { bass: "G#2 - - - - - - - - - - - - - - -" },
     { bass: "E2 - - - - - - - - - - - - - - -" },
@@ -1015,56 +1021,56 @@ const FINAL_EXTREMITY_4: Song = {
     { bass: "D#2 - - - - - - - - - - - - - - -" },
     { kit: "kc . . k . . k . s . s . s s s s", bass: "C#2 . . C#2 . . C#2 . C#3 . . . C#3 . C#2 C#3" },
     { kit: "kc . . k . . k . s . s . s s s s", bass: "D#2 . . D#2 . . D#2 . D#3 . . . D#3 . D#2 D#3" },
-    { kit: "kc k k k ks k k k kh k k k ks k k k", bass: "G#2 G#2 G#3 G#2 . G#2 G#3 G#2 F#3 G#2 G#3 G#2 D#3 . F#3 G#3" },
-    { kit: "kh k k k ks k k k kh k k k ks k k k", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
-    { kit: "kh k k k ks k k k kh k k k ks k k k", bass: "C#2 C#2 C#3 C#2 . C#2 C#3 C#2 B2 C#2 C#3 C#2 G#2 . B2 C#3" },
-    { kit: "kh k k k ks k k k kh k k k ks k k k", bass: "D#2 D#2 D#3 D#2 . D#2 D#3 D#2 C#3 D#2 D#3 D#2 A#2 . C#3 D#3" },
-    { kit: "kh k k k ks k k k kh k k k ks k k k", bass: "G#2 G#2 G#3 G#2 . G#2 G#3 G#2 F#3 G#2 G#3 G#2 D#3 . F#3 G#3" },
-    { kit: "kh k k k ks k k k kh k k k ks k k k", bass: "F#2 F#2 F#3 F#2 . F#2 F#3 F#2 E3 F#2 F#3 F#2 C#3 . E3 F#3" },
-    { kit: "kh k k k ks k k k kh k k k ks k k k", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
-    { kit: "kh k k k ks k k k ks k s s t t s s", bass: "D#2 D#2 D#3 D#2 . D#2 D#3 D#2 C#3 D#2 D#3 D#2 A#2 . C#3 D#3" },
-    { kit: "kc k k ks k k kh k k ks k k ks k", bass: "G#2 . G#3 G#2 . G#3 G#2 . F#3 . D#3 . G#3 ." },
-    { kit: "kh k k ks k k kh k k ks k k ks k", bass: "E2 . E3 E2 . E3 E2 . D3 . B2 . E3 ." },
-    { kit: "kh k k ks k k kh k k ks k k ks k", bass: "C#2 . C#3 C#2 . C#3 C#2 . B2 . G#2 . C#3 ." },
+    { kit: "kc . k . ks . k . kh . k . ks . k .", bass: "G#2 G#2 G#3 G#2 . G#2 G#3 G#2 F#3 G#2 G#3 G#2 D#3 . F#3 G#3" },
+    { kit: "kh . k . ks . k . kh . k . ks . k .", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
+    { kit: "kh . k . ks . k . kh . k . ks . k .", bass: "C#2 C#2 C#3 C#2 . C#2 C#3 C#2 B2 C#2 C#3 C#2 G#2 . B2 C#3" },
+    { kit: "kh . k . ks . k . kh . k . ks . k .", bass: "D#2 D#2 D#3 D#2 . D#2 D#3 D#2 C#3 D#2 D#3 D#2 A#2 . C#3 D#3" },
+    { kit: "kh . k . ks . k . kh . k . ks . k .", bass: "G#2 G#2 G#3 G#2 . G#2 G#3 G#2 F#3 G#2 G#3 G#2 D#3 . F#3 G#3" },
+    { kit: "kh . k . ks . k . kh . k . ks . k .", bass: "F#2 F#2 F#3 F#2 . F#2 F#3 F#2 E3 F#2 F#3 F#2 C#3 . E3 F#3" },
+    { kit: "kh . k . ks . k . kh . k . ks . k .", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
+    { kit: "kh . k . ks . k . ks . s s t t s s", bass: "D#2 D#2 D#3 D#2 . D#2 D#3 D#2 C#3 D#2 D#3 D#2 A#2 . C#3 D#3" },
+    { kit: "kc . k ks . . kh . k . ks . . ks", bass: "G#2 . G#3 G#2 . G#3 G#2 . F#3 . D#3 . G#3 ." },
+    { kit: "kh . k ks . . kh . k . ks . . ks", bass: "E2 . E3 E2 . E3 E2 . D3 . B2 . E3 ." },
+    { kit: "kh . k ks . . kh . k . ks . . ks", bass: "C#2 . C#3 C#2 . C#3 C#2 . B2 . G#2 . C#3 ." },
     { kit: "kh k k ks k k kh t . s t s s s", bass: "D#2 . D#3 D#2 . D#3 D#2 . C#3 . A#2 . D#3 ." },
     { leadAccents: EXTREMITY_FRONT, kit: "kc k . k h . k . ks . h k k . h .", bass: "G#2 . . . G#3 . . . G#2 . . . F#3 . D#3 ." },
     { leadAccents: EXTREMITY_FRONT, kit: "kh k . k h . k . ks . h k k . h .", bass: "E2 . . . E3 . . . E2 . . . D3 . B2 ." },
     { leadAccents: EXTREMITY_FRONT, kit: "kh k . k h . k . ks . h k k . h .", bass: "C#2 . . . C#3 . . . C#2 . . . B2 . G#2 ." },
     { leadAccents: EXTREMITY_FRONT, kit: "kh k . k h . k . ks . s s t t s s", bass: "D#2 . . . D#3 . . . D#2 . . . C#3 . A#2 ." },
-    { leadAccents: EXTREMITY_FRONT, kit: "kc k k k ks k k k kh k k k ks k k k", bass: "G#2 G#2 G#3 G#2 . G#2 G#3 G#2 F#3 G#2 G#3 G#2 D#3 . F#3 G#3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kh k k k ks k k k kh k k k ks k k k", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kh k k k ks k k k kh k k k ks k k k", bass: "F#2 F#2 F#3 F#2 . F#2 F#3 F#2 E3 F#2 F#3 F#2 C#3 . E3 F#3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kh k k k ks k k k ks k s s t t s s", bass: "D#2 D#2 D#3 D#2 . D#2 D#3 D#2 C#3 D#2 D#3 D#2 A#2 . C#3 D#3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kc k k k ks k k k kh k k k ks k k k", bass: "C#2 C#2 C#3 C#2 . C#2 C#3 C#2 B2 C#2 C#3 C#2 G#2 . B2 C#3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kh k k k ks k k k kh k k k ks k k k", bass: "G#2 G#2 G#3 G#2 . G#2 G#3 G#2 F#3 G#2 G#3 G#2 D#3 . F#3 G#3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kh k k k ks k k k kh k k k ks k k k", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kh k k k ks k k k ks k s s t t s s", bass: "D#2 D#2 D#3 D#2 . D#2 D#3 D#2 C#3 D#2 D#3 D#2 A#2 . C#3 D#3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kc k k k ks k k k kh k k k ks k k k", bass: "G#2 G#2 G#3 G#2 . G#2 G#3 G#2 F#3 G#2 G#3 G#2 D#3 . F#3 G#3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kh k k k ks k k k kh k k k ks k k k", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kh k k k ks k k k kh k k k ks k k k", bass: "F#2 F#2 F#3 F#2 . F#2 F#3 F#2 E3 F#2 F#3 F#2 C#3 . E3 F#3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kh k k k ks k k k ks k s s t t s s", bass: "D#2 D#2 D#3 D#2 . D#2 D#3 D#2 C#3 D#2 D#3 D#2 A#2 . C#3 D#3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kc k k k ks k k k kh k k k ks k k k", bass: "C#2 C#2 C#3 C#2 . C#2 C#3 C#2 B2 C#2 C#3 C#2 G#2 . B2 C#3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kh k k k ks k k k kh k k k ks k k k", bass: "G#2 G#2 G#3 G#2 . G#2 G#3 G#2 F#3 G#2 G#3 G#2 D#3 . F#3 G#3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kh k k k ks k k k kh k k k ks k k k", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kh k k k ks k k k ks k s s t t s s", bass: "D#2 D#2 D#3 D#2 . D#2 D#3 D#2 C#3 D#2 D#3 D#2 A#2 . C#3 D#3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kc k k k ks k k k kh k k k ks k k k", bass: "G#2 G#2 G#3 G#2 . G#2 G#3 G#2 F#3 G#2 G#3 G#2 D#3 . F#3 G#3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kh k k k ks k k k kh k k k ks k k k", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kh k k k ks k k k kh k k k ks k k k", bass: "F#2 F#2 F#3 F#2 . F#2 F#3 F#2 E3 F#2 F#3 F#2 C#3 . E3 F#3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kh k k k ks k k k kh k k k ks k k k", bass: "D#2 D#2 D#3 D#2 . D#2 D#3 D#2 C#3 D#2 D#3 D#2 A#2 . C#3 D#3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kh k k k ks k k k kh k k k ks k k k", bass: "C#2 C#2 C#3 C#2 . C#2 C#3 C#2 B2 C#2 C#3 C#2 G#2 . B2 C#3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kh k k k ks k k k kh k k k ks k k k", bass: "G#2 G#2 G#3 G#2 . G#2 G#3 G#2 F#3 G#2 G#3 G#2 D#3 . F#3 G#3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kh k k k ks k k k kh k k k ks k k k", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
-    { leadAccents: EXTREMITY_FRONT, kit: "kh k k k ks k k k ks k s s t t s s", bass: "D#2 D#2 D#3 D#2 . D#2 D#3 D#2 C#3 D#2 D#3 D#2 A#2 . C#3 D#3" },
-    { kit: "kc k k k ks k k k kh k k k ks k k k", bass: "B1 B1 B2 B1 . B1 B2 B1 A2 B1 B2 B1 F#2 . A2 B2" },
-    { kit: "kh k k k ks k k k kh k k k ks k k k", bass: "G2 G2 G3 G2 . G2 G3 G2 F3 G2 G3 G2 D3 . F3 G3" },
-    { kit: "kh k k k ks k k k kh k k k ks k k k", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
-    { kit: "kh k k k ks k k k kh k k k ks k k k", bass: "F#2 F#2 F#3 F#2 . F#2 F#3 F#2 E3 F#2 F#3 F#2 C#3 . E3 F#3" },
-    { kit: "kh k k k ks k k k kh k k k ks k k k", bass: "B1 B1 B2 B1 . B1 B2 B1 A2 B1 B2 B1 F#2 . A2 B2" },
-    { kit: "kh k k k ks k k k kh k k k ks k k k", bass: "G2 G2 G3 G2 . G2 G3 G2 F3 G2 G3 G2 D3 . F3 G3" },
-    { kit: "kh k k k ks k k k kh k k k ks k k k", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
-    { kit: "kh k k k ks k k k ks k s s t t s s", bass: "F#2 F#2 F#3 F#2 . F#2 F#3 F#2 E3 F#2 F#3 F#2 C#3 . E3 F#3" },
-    { kit: "kc k k k ks k k k kh k k k ks k k k", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
-    { kit: "kh k k k ks k k k kh k k k ks k k k", bass: "D#2 D#2 D#3 D#2 . D#2 D#3 D#2 C#3 D#2 D#3 D#2 A#2 . C#3 D#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kc . k . ks . k . kh . k . ks . k .", bass: "G#2 G#2 G#3 G#2 . G#2 G#3 G#2 F#3 G#2 G#3 G#2 D#3 . F#3 G#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . k . ks . k . kh . k . ks . k .", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . k . ks . k . kh . k . ks . k .", bass: "F#2 F#2 F#3 F#2 . F#2 F#3 F#2 E3 F#2 F#3 F#2 C#3 . E3 F#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . k . ks . k . ks . s s t t s s", bass: "D#2 D#2 D#3 D#2 . D#2 D#3 D#2 C#3 D#2 D#3 D#2 A#2 . C#3 D#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kc . k . ks . k . kh . k . ks . k .", bass: "C#2 C#2 C#3 C#2 . C#2 C#3 C#2 B2 C#2 C#3 C#2 G#2 . B2 C#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . k . ks . k . kh . k . ks . k .", bass: "G#2 G#2 G#3 G#2 . G#2 G#3 G#2 F#3 G#2 G#3 G#2 D#3 . F#3 G#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . k . ks . k . kh . k . ks . k .", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . k . ks . k . ks . s s t t s s", bass: "D#2 D#2 D#3 D#2 . D#2 D#3 D#2 C#3 D#2 D#3 D#2 A#2 . C#3 D#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kc . k . ks . k . kh . k . ks . k .", bass: "G#2 G#2 G#3 G#2 . G#2 G#3 G#2 F#3 G#2 G#3 G#2 D#3 . F#3 G#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . k . ks . k . kh . k . ks . k .", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . k . ks . k . kh . k . ks . k .", bass: "F#2 F#2 F#3 F#2 . F#2 F#3 F#2 E3 F#2 F#3 F#2 C#3 . E3 F#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . k . ks . k . ks . s s t t s s", bass: "D#2 D#2 D#3 D#2 . D#2 D#3 D#2 C#3 D#2 D#3 D#2 A#2 . C#3 D#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kc . k . ks . k . kh . k . ks . k .", bass: "C#2 C#2 C#3 C#2 . C#2 C#3 C#2 B2 C#2 C#3 C#2 G#2 . B2 C#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . k . ks . k . kh . k . ks . k .", bass: "G#2 G#2 G#3 G#2 . G#2 G#3 G#2 F#3 G#2 G#3 G#2 D#3 . F#3 G#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . k . ks . k . kh . k . ks . k .", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . k . ks . k . ks . s s t t s s", bass: "D#2 D#2 D#3 D#2 . D#2 D#3 D#2 C#3 D#2 D#3 D#2 A#2 . C#3 D#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kc . k . ks . k . kh . k . ks . k .", bass: "G#2 G#2 G#3 G#2 . G#2 G#3 G#2 F#3 G#2 G#3 G#2 D#3 . F#3 G#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . k . ks . k . kh . k . ks . k .", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . k . ks . k . kh . k . ks . k .", bass: "F#2 F#2 F#3 F#2 . F#2 F#3 F#2 E3 F#2 F#3 F#2 C#3 . E3 F#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . k . ks . k . kh . k . ks . k .", bass: "D#2 D#2 D#3 D#2 . D#2 D#3 D#2 C#3 D#2 D#3 D#2 A#2 . C#3 D#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . k . ks . k . kh . k . ks . k .", bass: "C#2 C#2 C#3 C#2 . C#2 C#3 C#2 B2 C#2 C#3 C#2 G#2 . B2 C#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . k . ks . k . kh . k . ks . k .", bass: "G#2 G#2 G#3 G#2 . G#2 G#3 G#2 F#3 G#2 G#3 G#2 D#3 . F#3 G#3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . k . ks . k . kh . k . ks . k .", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
+    { leadAccents: EXTREMITY_FRONT, kit: "kh . k . ks . k . ks . s s t t s s", bass: "D#2 D#2 D#3 D#2 . D#2 D#3 D#2 C#3 D#2 D#3 D#2 A#2 . C#3 D#3" },
+    { kit: "kc . k . ks . k . kh . k . ks . k .", bass: "B1 B1 B2 B1 . B1 B2 B1 A2 B1 B2 B1 F#2 . A2 B2" },
+    { kit: "kh . k . ks . k . kh . k . ks . k .", bass: "G2 G2 G3 G2 . G2 G3 G2 F3 G2 G3 G2 D3 . F3 G3" },
+    { kit: "kh . k . ks . k . kh . k . ks . k .", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
+    { kit: "kh . k . ks . k . kh . k . ks . k .", bass: "F#2 F#2 F#3 F#2 . F#2 F#3 F#2 E3 F#2 F#3 F#2 C#3 . E3 F#3" },
+    { kit: "kh . k . ks . k . kh . k . ks . k .", bass: "B1 B1 B2 B1 . B1 B2 B1 A2 B1 B2 B1 F#2 . A2 B2" },
+    { kit: "kh . k . ks . k . kh . k . ks . k .", bass: "G2 G2 G3 G2 . G2 G3 G2 F3 G2 G3 G2 D3 . F3 G3" },
+    { kit: "kh . k . ks . k . kh . k . ks . k .", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
+    { kit: "kh . k . ks . k . ks . s s t t s s", bass: "F#2 F#2 F#3 F#2 . F#2 F#3 F#2 E3 F#2 F#3 F#2 C#3 . E3 F#3" },
+    { kit: "kc . k . ks . k . kh . k . ks . k .", bass: "E2 E2 E3 E2 . E2 E3 E2 D3 E2 E3 E2 B2 . D3 E3" },
+    { kit: "kh . k . ks . k . kh . k . ks . k .", bass: "D#2 D#2 D#3 D#2 . D#2 D#3 D#2 C#3 D#2 D#3 D#2 A#2 . C#3 D#3" },
   ],
   fills: [5, 13, 17, 21, 25, 29, 33, 37, 45, 53], crashes: [6, 14, 18, 22, 26, 30, 34, 38, 46, 54], riser: [4, 5],
   sections: [
@@ -1156,7 +1162,7 @@ export const SONGS: Record<BaseSagaTrack, Song> = {
 };
 
 export const ALTERNATE_SONGS = arrangeAscension(SONGS);
-const PLAYBACK_SONGS: Record<SagaTrack, Song> = { ...SONGS, ...ALTERNATE_SONGS };
+const PLAYBACK_SONGS: Record<SagaTrack, Song> = { ...SONGS, ...ALTERNATE_SONGS, ...SPACE3_SONGS };
 
 /* Each song laid out step by step, checked once as the module loads. */
 type Plan = { steps: number; bar: number[]; pos: number[]; len: number[]; start: number[]; bands: Song[]; kits: (string[] | undefined)[]; lead: Map<number, Cell>; counter: Map<number, Cell>; bass: Map<number, Cell>[]; chords: ReturnType<typeof chordOf>[] };
@@ -1206,8 +1212,17 @@ for (const [track, song] of Object.entries(PLAYBACK_SONGS) as [SagaTrack, Song][
   PLANS[track] = plan;
 }
 
-const LOOKAHEAD = 0.12;
+/* Notes are queued this far ahead, so a slow game frame (a burst of particles, a garbage collection) never leaves the music late. */
+const LOOKAHEAD = 0.3;
 const TICK_MS = 25;
+/* The guitar amp's distortion curve, worked out once instead of for every note. */
+const GUITAR_CURVE = Float32Array.from({ length: 1024 }, (_, i) => Math.tanh(3.5 * (2 * i / 1023 - 1)));
+/* A tune is played note by note the first time it is asked for, and recorded at the same time on an offline context, a couple of
+   seconds of score at a time. From its next loop on it plays from the recording: one buffer instead of hundreds of synth voices a
+   second, so the busiest score plays as smoothly as the quietest. Mono at 32 kHz, the last few kept. */
+const RENDER = { rate: 32000, chunk: 2, keep: 6, tail: 2.5 };
+const RENDERED = new Map<SagaTrack, AudioBuffer>();
+const RENDERING = new Set<SagaTrack>();
 
 export class SagaMusic {
   private ctx: AudioContext | null = null;
@@ -1220,6 +1235,8 @@ export class SagaMusic {
   private nextTime = 0;
   private noise: AudioBuffer | null = null;
   private organ: PeriodicWave | null = null;
+  /* The recording being played, when the tune is playing from one. */
+  private source: AudioBufferSourceNode | null = null;
 
   /* The mixer: everything goes through one bus, straight out and into a hall reverb and an echo. */
   private prepare(ctx: AudioContext, out: AudioNode) {
@@ -1259,7 +1276,59 @@ export class SagaMusic {
   }
 
   get playing(): SagaTrack | null {
-    return this.timer ? this.track : null;
+    return this.timer || this.source ? this.track : null;
+  }
+
+  /* Records a tune on an offline context, scheduling a chunk of the score at a time so no one moment builds thousands of nodes. */
+  private record(track: SagaTrack) {
+    if (typeof OfflineAudioContext === "undefined" || RENDERED.has(track) || RENDERING.has(track)) return;
+    const song = PLAYBACK_SONGS[track], plan = PLANS[track], stepSec = 60 / song.bpm / 4;
+    const length = plan.steps * stepSec + (song.once ? RENDER.tail : 0.05);
+    let off: OfflineAudioContext;
+    try { off = new OfflineAudioContext(1, Math.ceil(length * RENDER.rate), RENDER.rate); } catch { return; }
+    RENDERING.add(track);
+    const writer = new SagaMusic();
+    writer.prepare(off as unknown as AudioContext, off.destination);
+    let step = 0, t = 0;
+    const until = (end: number) => {
+      while (step < plan.steps && t < end) { writer.playStep(song, plan, step, t, stepSec); step += 1; t += stepSec; }
+    };
+    until(RENDER.chunk + 0.5);
+    for (let at = RENDER.chunk; at < length; at += RENDER.chunk) {
+      const mark = at;
+      off.suspend(mark).then(() => { until(mark + RENDER.chunk + 0.5); return off.resume(); }).catch(() => {});
+    }
+    off.startRendering().then((buffer) => {
+      RENDERED.set(track, buffer);
+      while (RENDERED.size > RENDER.keep) RENDERED.delete(RENDERED.keys().next().value as SagaTrack);
+    }).catch(() => {}).finally(() => RENDERING.delete(track));
+  }
+
+  /* Plays a tune from its recording: looping from where its loop starts, or once, handing on to what follows. */
+  private playRecording(track: SagaTrack, buffer: AudioBuffer, at: number, offset: number) {
+    const ctx = this.ctx!, song = PLAYBACK_SONGS[track], plan = PLANS[track], stepSec = 60 / song.bpm / 4;
+    const src = ctx.createBufferSource();
+    src.buffer = buffer;
+    if (!song.once) {
+      src.loop = true;
+      src.loopStart = plan.start[song.intro ?? 0] * stepSec;
+      src.loopEnd = plan.steps * stepSec;
+    }
+    src.connect(this.dest!);
+    src.start(at, offset);
+    this.track = track;
+    this.source = src;
+    if (song.once && song.then) {
+      const next = song.then;
+      src.onended = () => {
+        if (this.source !== src) return;
+        this.source = null;
+        this.requested = next;
+        const recorded = RENDERED.get(next);
+        if (recorded) this.playRecording(next, recorded, ctx.currentTime + 0.02, 0);
+        else { this.play(next, ctx.currentTime + 0.02); this.record(next); }
+      };
+    }
   }
 
   /* Asking again for what was last asked for, or for what is already playing, changes nothing. */
@@ -1271,7 +1340,10 @@ export class SagaMusic {
     this.stop();
     this.prepare(ctx, out);
     this.requested = track;
+    const recorded = RENDERED.get(track);
+    if (recorded) { this.playRecording(track, recorded, ctx.currentTime + 0.05, 0); return; }
     this.play(track, ctx.currentTime + 0.05);
+    this.record(track);
   }
 
   private play(track: SagaTrack, at: number) {
@@ -1286,6 +1358,12 @@ export class SagaMusic {
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
     this.requested = null;
+    if (this.source) {
+      const src = this.source;
+      this.source = null;
+      try { src.stop(); } catch { /* already stopped */ }
+      src.disconnect();
+    }
   }
 
   private schedule() {
@@ -1295,8 +1373,16 @@ export class SagaMusic {
     while (this.timer && this.nextTime < ctx.currentTime + LOOKAHEAD) {
       const song = PLAYBACK_SONGS[this.track], plan = PLANS[this.track];
       if (this.step >= plan.steps) {
+        /* At the loop, a tune whose recording is ready carries on from it, seamlessly. */
+        const recorded = !song.once && RENDERED.get(this.track);
+        if (recorded) {
+          clearInterval(this.timer);
+          this.timer = null;
+          this.playRecording(this.track, recorded, this.nextTime, plan.start[song.intro ?? 0] * (60 / song.bpm / 4));
+          return;
+        }
         if (song.once) {
-          if (song.then) { this.play(song.then, this.nextTime); continue; }
+          if (song.then) { this.play(song.then, this.nextTime); this.record(song.then); continue; }
           clearInterval(this.timer);
           this.timer = null;
           return;
@@ -1378,24 +1464,20 @@ export class SagaMusic {
       case "guitar": {
         // Pick transient into a nonlinear amp; no sample or reference audio.
         const g = this.env(at, 0.003, level * 0.44, dur * 0.85, 0.07);
-        const amp = ctx.createWaveShaper(), curve = new Float32Array(1024);
-        for (let i = 0; i < curve.length; i++) curve[i] = Math.tanh(3.5 * (2 * i / (curve.length - 1) - 1));
-        amp.curve = curve; amp.oversample = "2x";
+        const amp = ctx.createWaveShaper();
+        amp.curve = GUITAR_CURVE; amp.oversample = "2x";
         const cab = ctx.createBiquadFilter(); cab.type = "lowpass"; cab.frequency.value = 3300; cab.Q.value = 0.6;
         amp.connect(cab).connect(g);
         const a = this.osc("sawtooth", f, 0, at, end, amp);
         this.vibrato(at, end, 0.22, 11, [a]);
         break;
       }
-      case "metal": {
-        // A palm-muted power chord: root, fifth and octave through a hard-clipping amp and a dark cabinet, cut short.
-        const g = this.env(at, 0.002, level * 2.4, Math.min(dur, 0.09), 0.06);
-        const amp = ctx.createWaveShaper(), curve = new Float32Array(1024);
-        for (let i = 0; i < curve.length; i++) curve[i] = Math.tanh(9 * (2 * i / (curve.length - 1) - 1));
-        amp.curve = curve; amp.oversample = "4x";
-        const cab = ctx.createBiquadFilter(); cab.type = "lowpass"; cab.frequency.value = 2400; cab.Q.value = 0.9;
-        amp.connect(cab).connect(g);
-        for (const [ratio, detune] of [[1, -6], [1, 6], [1.5, 0], [2, 3]]) this.osc("sawtooth", f * ratio, detune, at, end, amp);
+      case "organChord": {
+        // Keep the root-fifth-octave power-chord shape, voiced by the game's organ instead of distorted guitar.
+        const g = this.env(at, 0.008, level * 0.72, dur * 0.95, 0.075);
+        for (const [ratio, detune] of [[1, -2], [1, 2], [1.5, 0], [2, 1]]) {
+          this.osc(this.organ!, f * ratio, detune, at, end, g);
+        }
         break;
       }
       case "piano": {

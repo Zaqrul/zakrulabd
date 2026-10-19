@@ -71,6 +71,20 @@ function drawFlatBullet(ctx: Ctx, b: Bullet) {
       ctx.fillStyle = "#facc15"; ctx.fillRect(-3, -1.8, 1.4, 3.6);
       path(ctx, [[4, -1.8], [8, 0], [4, 1.8]]); ctx.fillStyle = "#ef4444"; ctx.fill(); ctx.restore(); return;
     }
+    if (b.kind === "plasmatorp") {
+      /* The plasma torpedo: the torpedo's own launch (cold, lighting, burning) around a long thin violet body with a white core. */
+      ctx.save(); ctx.translate(b.x, b.y);
+      if (torpedoStage(b.age ?? 99) === "burn") {
+        ctx.fillStyle = "#c4b5fd";
+        for (let i = 0; i < 3; i++) { ctx.beginPath(); ctx.arc(-21 - i * 3.4, Math.sin(((b.life ?? 0) / 3) + i) * 1, 1 - i * 0.2, 0, Math.PI * 2); ctx.fill(); }
+      }
+      drawMotor(ctx, b, -11, 1.4);
+      path(ctx, [[-10, -1.2], [-13, -3.2], [-8, -1.2]]); ctx.fillStyle = "#7c3aed"; ctx.fill();
+      path(ctx, [[-10, 1.2], [-13, 3.2], [-8, 1.2]]); ctx.fillStyle = "#7c3aed"; ctx.fill();
+      ctx.fillStyle = "#a78bfa"; ctx.fillRect(-11, -1.4, 17, 2.8);
+      ctx.fillStyle = "#f8fafc"; ctx.fillRect(-6, -0.6, 10, 1.2);
+      path(ctx, [[6, -1.4], [11, 0], [6, 1.4]]); ctx.fillStyle = "#22d3ee"; ctx.fill(); ctx.restore(); return;
+    }
     if (b.kind === "spread") {
       ctx.beginPath(); ctx.arc(b.x, b.y, 2.4, 0, Math.PI * 2); ctx.fillStyle = "#a3e635"; ctx.fill();
       ctx.fillStyle = "#ecfccb"; ctx.fillRect(b.x - 0.6, b.y - 0.6, 1.2, 1.2); return;
@@ -276,6 +290,7 @@ export function drawCharge(ctx: Ctx, c: Charge, reduceMotion: boolean, hideZone 
 const PICKUP_COLOR: Record<PickupKind, string> = {
   H: "#4ade80", B: "#60a5fa", M: "#fb923c", S: "#a3e635", L: "#22d3ee", R: "#f87171", I: "#7dd3fc", F: "#f97316", K: "#e2e8f0", E: "#fbbf24",
   N: "#84cc16", Y: "#fb7185", U: "#5eead4", D: "#38bdf8",
+  Z: "#a5f3fc", W: "#a3e635", P: "#22d3ee", Q: "#fbbf24",
 };
 
 /* A supply crate: a steel case with a coloured lens that carries the symbol. */
@@ -388,6 +403,34 @@ export function drawPickup(ctx: Ctx, x: number, y: number, kind: PickupKind, t: 
       ctx.fillRect(-5.4, -1.1, 10.8, 2.2);
       stroke([[-5.4, -3.6], [-5.4, 3.6]]);
       stroke([[5.4, -3.6], [5.4, 3.6]]);
+      break;
+    case "Z":
+      /* A Resonance cell: a faceted diamond. */
+      ctx.beginPath();
+      ctx.moveTo(0, -4.8);
+      ctx.lineTo(4, 0);
+      ctx.lineTo(0, 4.8);
+      ctx.lineTo(-4, 0);
+      ctx.closePath();
+      ctx.fill();
+      ctx.strokeStyle = "#f0fdfa";
+      ctx.lineWidth = 0.8;
+      stroke([[0, -3], [0, 3]]);
+      break;
+    case "W":
+      /* Wide: a fan of three. */
+      for (const py of [-4, 0, 4]) stroke([[-4, py * 0.25], [4, py]]);
+      break;
+    case "P":
+      /* Pierce: an arrow through a bar. */
+      stroke([[-5, 0], [5, 0]]);
+      stroke([[2, -3], [5, 0], [2, 3]]);
+      ctx.fillRect(-1, -3.5, 1.6, 7);
+      break;
+    case "Q":
+      /* Rapid: two chevrons. */
+      stroke([[-4.4, -3], [-1.2, 0], [-4.4, 3]]);
+      stroke([[0, -3], [3.2, 0], [0, 3]]);
       break;
     case "U":
       /* An umbrella: the canopy and its handle. */

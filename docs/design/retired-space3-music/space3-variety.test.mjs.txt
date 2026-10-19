@@ -1,0 +1,162 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { SPACE3_SONGS } from "../src/components/games/space3-music.ts";
+import { BASS, KIT12, KIT14, KIT16, bassLine, echoLine, noteMidi, transposeChord, transposeLine } from "../src/components/games/space3-groove.ts";
+import { midiOf } from "../src/components/games/space-music.ts";
+
+/* Phobos Run (s3stage1) was approved as it is and keeps its original bass and kit; every other tune is held to the rules
+   below, which exist because the first Space 3 tunes all shared one beat, one bass, one meter and one shape. */
+const NEW = Object.entries(SPACE3_SONGS).filter(([id]) => id !== "s3stage1");
+const cells = (bar) => bar[0].trim().split(/\s+/).length;
+const kits = (song) => new Set((song.performance ?? []).map((p) => p.kit).filter(Boolean));
+const root = (song) => /^[A-G][#b]?/.exec(song.bars[0][1])[0];
+
+test("no two tunes are within 8 BPM of each other", () => {
+  const tempos = Object.entries(SPACE3_SONGS).map(([id, s]) => [id, s.bpm]).sort((a, b) => a[1] - b[1]);
+  for (let i = 1; i < tempos.length; i++) assert.ok(tempos[i][1] - tempos[i - 1][1] >= 8, `${tempos[i - 1]} and ${tempos[i]}`);
+  assert.ok(tempos[0][1] <= 90 && tempos.at(-1)[1] >= 160, "from a lullaby to a run");
+});
+
+test("the album uses 4/4, 6/8 and 7/8 bars", () => {
+  const lengths = new Set(Object.values(SPACE3_SONGS).flatMap((s) => s.bars.map(cells)));
+  assert.deepEqual([...lengths].sort((a, b) => a - b), [12, 14, 16]);
+});
+
+test("no two tunes share more than a third of their drum patterns", () => {
+  const ids = Object.keys(SPACE3_SONGS);
+  for (let i = 0; i < ids.length; i++) for (let j = i + 1; j < ids.length; j++) {
+    const a = kits(SPACE3_SONGS[ids[i]]), b = kits(SPACE3_SONGS[ids[j]]);
+    const shared = [...a].filter((k) => b.has(k)).length, union = new Set([...a, ...b]).size;
+    assert.ok(shared / union <= 1 / 3, `${ids[i]} and ${ids[j]} share ${shared} of ${union}`);
+  }
+});
+
+test("every new tune writes its bass bar by bar, and no kit carries more than 60% of a tune", () => {
+  for (const [id, song] of NEW) {
+    assert.equal(song.performance.length, song.bars.length, id);
+    assert.ok(song.performance.every((p) => p.bass && p.kit), `${id}: bass and kit in every bar`);
+    const counts = new Map();
+    for (const p of song.performance) if (!/^[. ]+$/.test(p.kit)) counts.set(p.kit, (counts.get(p.kit) ?? 0) + 1);
+    const most = Math.max(...counts.values());
+    assert.ok(most / song.bars.length <= 0.6, `${id}: one kit in ${most} of ${song.bars.length} bars`);
+  }
+});
+
+test("a written bass moves: it is not one bar copied, and it leans into the next chord", () => {
+  for (const [id, song] of NEW) {
+    const lines = song.performance.map((p) => p.bass);
+    assert.ok(new Set(lines).size >= Math.min(4, lines.length * 0.4), `${id}: ${new Set(lines).size} different bass lines in ${lines.length} bars`);
+  }
+  assert.equal(bassLine("Am", "F", BASS.walk).split(" ")[12], "E2", "an approach a half step below F");
+  assert.equal(bassLine("Am", "G", BASS.walk).split(" ")[12], "F#2", "and below G");
+});
+
+test("the tunes stand on five or more different tonal centres, and no two share an instrument order", () => {
+  const roots = new Set(Object.values(SPACE3_SONGS).map(root));
+  assert.ok(roots.size >= 5, [...roots].join(" "));
+  const orders = Object.entries(SPACE3_SONGS).map(([id, s]) => [id, [s.lead, ...(s.sections ?? []).map((x) => x.lead ?? s.lead)].join(">")]);
+  assert.equal(new Set(orders.map(([, o]) => o)).size, orders.length, orders.map(([id, o]) => `${id}: ${o}`).join("\n"));
+});
+
+test("every tune moves between keys somewhere, except the lullaby, the warning and the short fanfare", () => {
+  const rootsIn = (song) => new Set(song.bars.map((b) => /^[A-G][#b]?/.exec(b[1])[0]));
+  for (const id of ["s3title", "s3stage2", "s3boss1", "s3boss2"]) assert.ok(rootsIn(SPACE3_SONGS[id]).size >= 6, id);
+});
+
+/* ---- the tools ---- */
+
+test("every drum pattern and bass pattern fits its bar", () => {
+  for (const [table, n] of [[KIT16, 16], [KIT14, 14], [KIT12, 12]]) for (const [name, pattern] of Object.entries(table)) assert.equal(pattern.trim().split(/\s+/).length, n, `${n}-cell kit ${name}`);
+  for (const [name, pattern] of Object.entries(BASS)) assert.ok([12, 14, 16].includes(pattern.trim().split(/\s+/).length), name);
+});
+
+test("transposing a line keeps its rhythm and moves its notes; a chord moves with it", () => {
+  assert.equal(transposeLine("A4 . - C5", 2), "B4 . - D5");
+  assert.equal(transposeLine("A4 C5", -2, true), "G4 Bb4");
+  assert.equal(transposeChord("Am", 5), "Dm");
+  assert.equal(transposeChord("E7", -2, true), "D7");
+  assert.equal(echoLine("A4 B4 C5 D5 E5 F5", 2), ". . A4 B4 C5 D5");
+  assert.equal(noteMidi("C4"), midiOf("C4"));
+});
+
+/* ---- Ghost Corvet's shape ---- */
+
+const corvet = SPACE3_SONGS.s3boss1;
+const starts = () => {
+  const out = []; let last = null;
+  corvet.bars.forEach((b, i) => { const n = cells(b); if (n !== last) { out.push([i, n]); last = n; } });
+  return out;
+};
+
+test("the boss opens with a prelude that has no drums, and the drums come in on a crash", () => {
+  const prelude = corvet.performance.slice(0, 8);
+  assert.ok(prelude.every((p) => /^[. ]+$/.test(p.kit)), "no drum in the first eight bars");
+  assert.ok(corvet.crashes.includes(8), "the drums enter with a crash");
+  assert.ok(!/^[. ]+$/.test(corvet.performance[8].kit));
+});
+
+test("the boss changes key between its sections and its last chorus is the chorus a step down", () => {
+  const chordAt = (i) => /^[A-G][#b]?/.exec(corvet.bars[i][1])[0];
+  assert.deepEqual([chordAt(8), chordAt(16), chordAt(24), chordAt(40)], ["G", "B", "A", "G"], "verse, pre-chorus, chorus, last chorus");
+  assert.equal(chordAt(36), "F", "and a bridge in F minor between them, so the last chorus lifts a whole tone");
+  const chorus = corvet.bars.slice(24, 31), last = corvet.bars.slice(40, 47);
+  chorus.forEach((b, i) => assert.equal(last[i][0], transposeLine(b[0], -2, true), `chorus bar ${i + 1} a step down`));
+});
+
+test("the lead-out is in 7/8 and half time, and the rest of the boss is in 4/4", () => {
+  assert.deepEqual(starts().map(([, n]) => n), [16, 14, 16]);
+  assert.deepEqual(corvet.bars.slice(32, 36).map(cells), [14, 14, 14, 14]);
+});
+
+test("in the choruses the chip repeats the lead exactly one beat late", () => {
+  for (const range of [[24, 32], [40, 48]]) for (let i = range[0]; i < range[1]; i++) {
+    assert.equal(corvet.bars[i][3], echoLine(corvet.bars[i][0]), `bar ${i + 1}`);
+  }
+});
+
+/* ---- the foundry and the excavator ---- */
+
+test("the foundry swings in six and the excavator stomps in six; their breaks are in four and seven", () => {
+  const foundry = SPACE3_SONGS.s3stage2, exc = SPACE3_SONGS.s3boss2;
+  assert.ok(foundry.bars.filter((b) => cells(b) === 12).length >= 20);
+  assert.ok(foundry.bars.some((b) => cells(b) === 16), "the bridge is in four");
+  assert.ok(exc.bars.filter((b) => cells(b) === 12).length >= 10);
+  assert.ok(exc.bars.some((b) => cells(b) === 14), "the grind is in seven");
+  assert.ok(exc.bars.some((b) => cells(b) === 16), "the chorale and the blast are in four");
+  assert.ok(exc.bpm <= 112 && foundry.bpm >= 140);
+});
+
+test("the foundry's head comes back a fourth up, with a new last bar", () => {
+  const f = SPACE3_SONGS.s3stage2;
+  const head = f.bars.slice(4, 12), again = f.bars.slice(f.bars.length - 10, f.bars.length - 2);
+  again.slice(0, 7).forEach((b, i) => assert.equal(b[0], transposeLine(head[i][0], 5), `bar ${i + 1}`));
+  assert.notEqual(again[7][0], transposeLine(head[7][0], 5));
+});
+
+test("the lullaby is in six, soft, and the victory fanfare lifts into it", () => {
+  const h = SPACE3_SONGS.s3hangar, v = SPACE3_SONGS.s3victory;
+  assert.ok(h.bars.every((b) => cells(b) === 12) && h.bpm < 90);
+  assert.equal(v.then, "s3hangar");
+  assert.equal(root(v), "D");
+  assert.equal(root(h), "D");
+});
+
+/* ---- Cryo-Crags is a hard-rock song ---- */
+
+test("Cryo-Crags: a guitar riff carries the verse, the break is the riff with no drums, and the last chorus is the chorus a whole tone up", () => {
+  const c = SPACE3_SONGS.s3stage3;
+  assert.equal(c.bars.length, 58);
+  const riff = c.bars.slice(4, 12).map((b) => b[0]), verse = c.bars.slice(12, 20), chorus = c.bars.slice(20, 28), breakdown = c.bars.slice(44, 48), final = c.bars.slice(48, 56);
+  verse.forEach((b, i) => assert.equal(b[3], riff[i], `the riff goes on under verse bar ${i + 1}`));
+  breakdown.forEach((b, i) => assert.equal(b[0], riff[i], `the break is riff bar ${i + 1}`));
+  assert.ok(c.performance.slice(44, 47).every((p) => /^[. ]+$/.test(p.kit)), "no drums for three bars");
+  chorus.slice(0, 7).forEach((b, i) => assert.equal(final[i][0], transposeLine(b[0], 2, true), `chorus bar ${i + 1} a whole tone up`));
+});
+
+test("Cryo-Crags is hard rock, not metal: one kick, no galloping or blast kit, no sixteenth bass", () => {
+  const c = SPACE3_SONGS.s3stage3;
+  const banned = [KIT16.gallopKit, KIT16.blast, KIT16.doubleTime];
+  assert.ok(c.performance.every((p) => !banned.includes(p.kit)), "no double-kick kit");
+  const sixteenths = c.performance.filter((p) => p.bass && p.bass.split(" ").slice(0, 8).every((x) => /^[A-G]/.test(x)));
+  assert.equal(sixteenths.length, 0, "no bar of unbroken sixteenth bass");
+});

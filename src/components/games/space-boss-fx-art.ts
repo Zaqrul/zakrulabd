@@ -23,7 +23,7 @@ import {
   type Enemy,
   type Hazard,
   type State,
-  isFinal,
+  hidesAttackPrediction,
 } from "./space-logic";
 import { drawCharge, drawMotor } from "./space-fx-art";
 
@@ -221,16 +221,16 @@ export function drawBossBullet(ctx: Ctx, b: Bullet): boolean {
 
 /* ---- things thrown or dropped: flak, spores, embers (and the last boss's C4) ---- */
 
-function drawFlak(ctx: Ctx, c: Charge, reduceMotion: boolean) {
+function drawFlak(ctx: Ctx, c: Charge, reduceMotion: boolean, hideZone = false) {
   const landed = c.t >= FLAK.flight;
   const left = FLAK.burst - c.t;
   if (c.t < FLAK.burst) {
-    const closing = 1 - c.t / FLAK.burst;
-    ctx.fillStyle = `rgb(251 113 133 / ${0.05 + (1 - closing) * 0.14})`;
-    ctx.beginPath();
-    ctx.arc(c.tx, c.ty, 7 + closing * 10, 0, Math.PI * 2);
-    ctx.fill();
-    mark(ctx, c.tx, c.ty, 7 + closing * 10, left < 16 ? CREAM : CORAL);
+    if (!hideZone) {
+      const closing = 1 - c.t / FLAK.burst;
+      ctx.fillStyle = `rgb(251 113 133 / ${0.05 + (1 - closing) * 0.14})`;
+      ctx.beginPath(); ctx.arc(c.tx, c.ty, 7 + closing * 10, 0, Math.PI * 2); ctx.fill();
+      mark(ctx, c.tx, c.ty, 7 + closing * 10, left < 16 ? CREAM : CORAL);
+    }
     /* The shell: a short dark body with a fuse, tumbling on the way up. */
     ctx.save();
     ctx.translate(c.x, c.y);
@@ -327,8 +327,8 @@ export function drawZone(ctx: Ctx, c: Charge, reduceMotion: boolean, hideZone = 
     return;
   }
   if (c.t < 0) return;
-  if (kind === "deckbomb") drawDeckBomb(ctx, c, reduceMotion);
-  else if (kind === "flak") drawFlak(ctx, c, reduceMotion);
+  if (kind === "deckbomb") drawDeckBomb(ctx, c, reduceMotion, hideZone);
+  else if (kind === "flak") drawFlak(ctx, c, reduceMotion, hideZone);
   else if (kind === "spore") drawSpore(ctx, c, reduceMotion);
   else drawEmber(ctx, c, reduceMotion);
 }
@@ -465,8 +465,8 @@ export function drawSignatureCue(ctx: Ctx, e: Enemy, s: State, reduceMotion = fa
   const a = e.attack;
   if (!a) return;
   const warning = a.t < a.warn;
-  /* The last boss gives no marks while it winds up (see hidesTells). */
-  if (warning && isFinal(e.type)) return;
+  const hidden = hidesAttackPrediction(e);
+  if (warning && hidden) return;
   const firing = a.t >= a.warn && a.t < a.warn + a.live;
   const t2 = a.t - a.warn;
   const locked = a.t >= a.warn - 18;
@@ -475,6 +475,7 @@ export function drawSignatureCue(ctx: Ctx, e: Enemy, s: State, reduceMotion = fa
   const cy = e.y + e.h / 2;
   const pulse = reduceMotion ? 0.5 : 0.5 + 0.5 * Math.sin(a.t / 4);
   const lane = (x1: number, y1: number, x2: number, y2: number, fillH?: number) => {
+    if (hidden) return;
     if (fillH) {
       ctx.fillStyle = `rgb(251 113 133 / ${0.08 + pulse * 0.06})`;
       ctx.fillRect(x1, y1 - fillH / 2, x2 - x1, fillH);
@@ -482,6 +483,7 @@ export function drawSignatureCue(ctx: Ctx, e: Enemy, s: State, reduceMotion = fa
     line(ctx, x1, y1, x2, y2, col, locked ? 1.4 : 1, [6, 5]);
   };
   const chevrons = (y: number, x0: number, x1: number) => {
+    if (hidden) return;
     const shift = reduceMotion ? 0 : (a.t * 2) % 36;
     ctx.fillStyle = CORAL;
     for (let x = x1 - shift; x > x0 + 14; x -= 36) poly(ctx, [[x + 5, y - 3], [x, y], [x + 5, y + 3]], CORAL);
@@ -516,7 +518,7 @@ export function drawSignatureCue(ctx: Ctx, e: Enemy, s: State, reduceMotion = fa
     case "pincer": {
       const gy = a.gapY ?? H / 2;
       const half = PINCER.gap / 2;
-      if (warning || (firing && t2 < 4)) {
+      if (!hidden && (warning || (firing && t2 < 4))) {
         ctx.fillStyle = `rgb(251 113 133 / ${0.1 + pulse * 0.06})`;
         ctx.fillRect(0, 26, e.x - 8, gy - half - 26);
         ctx.fillRect(0, gy + half, e.x - 8, H - 12 - (gy + half));
@@ -620,7 +622,7 @@ export function drawSignatureCue(ctx: Ctx, e: Enemy, s: State, reduceMotion = fa
     case "blink": {
       const spot = a.spots?.[0];
       if (!spot) break;
-      if (warning || (firing && t2 < BLINK.gone + BLINK.blade)) {
+      if (!hidden && (warning || (firing && t2 < BLINK.gone + BLINK.blade))) {
         ctx.save();
         ctx.globalAlpha = 0.5 + pulse * 0.3;
         ctx.setLineDash([4, 3]);

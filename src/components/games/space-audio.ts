@@ -1,7 +1,7 @@
 /* Procedural Web Audio Engine for Space 1 & Space 2: sound effects here, Space 1's NES-style music
    in space-music.ts and Space 2's 16-bit orchestra in space2-music.ts. 100% procedural, zero
    external MP3/audio assets, zero licensing issues. */
-import { isSecond, type Gun } from "./space-logic";
+import { isSecond, isThird, type Gun } from "./space-logic";
 import { NesMusic, type NesTrack } from "./space-music";
 import { SagaMusic, type SagaTrack } from "./space2-music";
 
@@ -359,7 +359,16 @@ class SpaceAudioEngine {
     const shift = place === 8 && mode === "boss" ? (phase >= 5 ? "c" : phase >= 3 ? "b" : "") : "";
     /* Each campaign's hangar and warning take turns between three tunes, chapter by chapter. */
     const turn = (place - 1) % 3, variant = (mode === "hangar" || mode === "alert") && turn > 0 ? String(turn + 1) : "";
-    if (isSecond(chapter)) {
+    if (isThird(chapter)) {
+      /* Space 3's tunes (space3-music.ts); the cues it has not written yet borrow Space 2's. */
+      /* Space 3's tunes (space3-orchestra.ts); the cues it has not written borrow Space 2's. */
+      /* Each chapter its own battle and boss; the hangar and the warning take turns between three; the Herald changes with its phases. */
+      const n = Math.min(12, Math.max(1, chapter - 16)), turn3 = ["", "2", "3"][(n - 1) % 3];
+      const boss = n === 12 ? (phase >= 2 ? "s3boss12c" : phase >= 1 ? "s3boss12b" : "s3boss12") : `s3boss${n}`;
+      const own: Partial<Record<string, SagaTrack>> = { hangar: `s3hangar${turn3}` as SagaTrack, stage: `s3stage${n}` as SagaTrack, alert: `s3alert${turn3}` as SagaTrack, boss: boss as SagaTrack, victory: "s3victory", title: "s3title", fanfare: "s3fanfare", pause: "s3pause", gameover: "s3gameover", ending: "s3ending" };
+      this.music.stop();
+      this.saga.start(ctx, this.musicGain, own[mode] ?? (`s2${mode}` as SagaTrack));
+    } else if (isSecond(chapter)) {
       const tune = mode === "boss" ? `boss${place}${shift}` : mode === "stage" && place >= 6 ? "stage2" : mode;
       this.music.stop();
       this.saga.start(ctx, this.musicGain, `s2${tune}${variant}` as SagaTrack);
@@ -429,7 +438,10 @@ class SpaceAudioEngine {
     rumbleGain.connect(this.sfxGain);
     rumble.start(now);
     rumble.stop(now + dur);
-    if (isSecond(chapter)) {
+    if (isThird(chapter)) {
+      this.music.stop();
+      this.saga.start(ctx, this.musicGain, "s3victory");
+    } else if (isSecond(chapter)) {
       this.music.stop();
       this.saga.start(ctx, this.musicGain, "s2fanfare");
     } else {

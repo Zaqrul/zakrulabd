@@ -1,0 +1,105 @@
+/* Space 3's music: run-and-gun fusion meets an orchestral-rock traveller's score, and the two games before it. The drive
+   is a late-90s arcade shooter (brass hooks, a jazz interlude inside a metal tune, a guitar solo, a key that lifts); the
+   heart is a JRPG battle theme (a drumless prelude, a lyrical middle, a chorus in a new key); the chip of Space 1 and the
+   brass and strings of Space 2 turn up inside it (space3-motifs.ts). One theme runs through the whole album, the Gate
+   theme, the hook of Phobos Run: a rising pickup to a held fifth, and a falling answer. Every tune treats it its own way
+   (a march, a lullaby, a swung head, a coiled riff, a glacier) the way Metal Slug brings its main theme back later in the
+   series in a bigger arrangement. Every tune is written for this game; none copies a note from anything else.
+   Notation is Space 2's (see space2-music.ts); the reasoning is in docs/space3-music-research.md. */
+import type { Song } from "./space2-music";
+import { join, section, transposeChord, transposeLine } from "./space3-groove.ts";
+import { EXCAVATOR_THEME, FOUNDRY_RUN } from "./space3-music-ch2.ts";
+import { CRYO_CRAGS, WYRM_THEME } from "./space3-music-ch3.ts";
+import { KHARN_WRECKAGE, RECLAIMER_THEME } from "./space3-music-ch4.ts";
+import { ALERT, GHOST_CORVET, HANGAR, TITLE, VICTORY } from "./space3-tunes.ts";
+
+export type Space3Track = "s3title" | "s3hangar" | "s3stage1" | "s3stage2" | "s3stage3" | "s3stage4" | "s3alert" | "s3boss1" | "s3boss2" | "s3boss3" | "s3boss4" | "s3victory";
+
+/* ---------- Battle: Phobos Run (desert metal, with a jazz interlude) ---------- */
+
+/* The Gate theme, in A minor with the flat second of the desert on the dominant. */
+const HOOK = [
+  "A4 . C5 E5 - - D5 . C5 - A4 - E4 - A4 -", "F4 . A4 C5 - - B4 . A4 - F4 - C4 - F4 -", "G4 . B4 D5 - - C5 . B4 - G4 - D4 - G4 -", "G#4 . B4 E5 - F5 E5 - D5 - B4 - G#4 - . .",
+  "A4 C5 E5 A5 - - G5 - E5 - C5 - A4 - E5 -", "F5 - E5 - C5 - A4 - F4 - A4 - C5 - F5 -", "D5 . F5 A5 - - G5 - F5 - D5 - A4 - D5 -", "E5 F5 G#4 B4 - D5 . C5 - B4 - G#4 - E4 . .",
+];
+const HOOK_CHORDS = ["Am", "F", "G", "E7", "Am", "F", "Dm", "E7"];
+
+/* The answer: the hook moved up a step at a time, then taken to its highest note. */
+const ANSWER = [
+  "C5 . E5 A5 - - G5 . E5 - C5 - A4 - C5 -", "A4 . C5 F5 - - E5 . C5 - A4 - F4 - A4 -", "B4 . D5 G5 - - F5 . D5 - B4 - G4 - B4 -", "G#4 . B4 E5 - - D5 . B4 - G#4 - E4 - G#4 -",
+  "E5 . A5 C6 - - B5 . A5 - E5 - C5 - E5 -", "D5 . F5 A5 - - G5 . F5 - D5 - A4 - D5 -", "E5 G#5 B5 E6 - - D6 - B5 - G#5 - E5 - G#5 -", "A5 - - - E5 - - - C5 - A4 - . . . .",
+];
+const ANSWER_CHORDS = ["Am", "F", "G", "E7", "Am", "Dm", "E7", "Am"];
+
+const MIDDLE = [
+  "C5 - - - - - A4 - F5 - - - E5 - D5 -", "D5 - - - - - B4 - G5 - - - F5 - E5 -", "E5 - - - G5 - B5 - A5 - - - G5 - E5 -", "C5 - - - E5 - - - A5 - - - . . G5 A5",
+  "A5 - - - C6 - - - A5 - G5 - F5 - A5 -", "B5 - - - D6 - - - B5 - A5 - G5 - B5 -", "A5 - - - F5 - D5 - E5 - F5 - A5 - D6 -", "B5 - - - G#5 - - - E5 - - - . . . .",
+];
+
+const SOLO = [
+  "A4 C5 E5 A5 G5 E5 C5 E5 A5 - G5 - E5 - C5 -", "F4 A4 C5 F5 E5 C5 A4 C5 F5 - E5 - C5 - A4 -", "G4 B4 D5 G5 F5 D5 B4 D5 G5 - B5 - D6 - B5 -", "E5 G#5 B5 E6 D6 B5 G#5 B5 E6 - - - . . . .",
+  "D5 F5 A5 D6 C6 A5 F5 A5 D6 - C6 - A5 - F5 -", "G4 B4 D5 G5 F5 D5 B4 D5 G5 - F5 - D5 - B4 -", "C5 E5 G5 C6 B5 G5 E5 G5 C6 - B5 - G5 - E5 -", "E5 G#5 B5 E6 F6 E6 D6 B5 G#5 B5 E6 - . . . .",
+];
+
+const PHOBOS_INTRO = section({
+  leads: ["A3 C4 E4 A4 C5 E5 A5 - E5 C5 A4 E4 C4 A3 . .", "E4 F4 E4 G#4 . E4 . B4 . A4 G#4 F4 E4 . B3 C4", "A4 . . . A4 . . . A4 . . . A4 . A4 A4", "E5 . . E5 . . E5 . F5 . E5 . D#5 . E5 ."],
+  chords: ["Am", "E7", "Am", "E7"], bass: ["pump", "syncop", "stab", "stab"], kit: ["riff", "fill", "break", "fill"], counters: "rest", after: "Am", feel: "stop", gate: 0.85,
+});
+const PHOBOS_HOOK = section({
+  leads: HOOK, chords: HOOK_CHORDS, bass: ["gallop", "syncop", "gallop", "stab", "pump", "gallop", "syncop", "stab"],
+  kit: ["drive", "drive", "drive", "drive", "drive", "drive", "drive", "fill"], counters: "none", after: "Am", feel: "drive",
+});
+const PHOBOS_ANSWER = section({
+  leads: ANSWER, chords: ANSWER_CHORDS, bass: ["syncop", "gallop", "syncop", "stab", "gallop", "syncop", "double", "pedal"],
+  kit: ["drive", "drive", "drive", "drive", "drive", "drive", "fill", "break"], counters: ANSWER.map((l) => transposeLine(l, 12)), after: "Am", feel: "drive",
+});
+/* A jazz interlude inside the metal, as in Metal Slug: six, a walking bass, a trumpet that plays with the tune. */
+const PHOBOS_JAZZ = section({
+  leads: ["A4 . C5 . E5 . G5 . E5 . C5 .", "D5 . F5 . A5 . C6 . A5 . F5 .", "G#4 . B4 . D5 . E5 . D5 . B4 .", "A4 . E5 . C5 . A4 - - - - -"],
+  chords: ["Am7", "Dm7", "E7", "Am7"], bass: ["walk12", "walk12b", "walk12", "sway"], kit: ["walk", "ballad", "walk", "ballad"], counters: "rest", after: "F", feel: "swing", gate: 0.8,
+});
+const PHOBOS_MIDDLE = section({
+  leads: MIDDLE, chords: ["F", "G", "Em", "Am", "F", "G", "Dm", "E7"], bass: ["walk", "walkUp", "slide", "walk", "walkUp", "slide", "walk", "stab"],
+  kit: ["halfTime", "halfTime", "halfTime", "halfTime", "halfTime", "halfTime", "halfTime", "tumble"], counters: "rest", after: "Am", feel: "lyric", gate: 0.98,
+});
+const PHOBOS_SOLO = section({
+  leads: SOLO, chords: ["Am", "F", "G", "E7", "Dm", "G", "C", "E7"], bass: ["gallop", "double", "gallop", "double", "gallop", "double", "octave", "stab"],
+  kit: ["drive", "drive", "drive", "fill", "drive", "drive", "drive", "break"], counters: "rest", after: "Am", feel: "drive", gate: 0.82,
+});
+const PHOBOS_BREAK = section({
+  leads: ["B4 . . . . . . . G#4 . . . . . . .", "E4 . . . . . . . . . . . . . E5 ."],
+  chords: ["E7", "E7"], bass: ["pedal", "stab"], kit: ["none", "heartbeat"], counters: "rest", after: "Bm", feel: "stop",
+});
+/* The hook once more, a whole tone up in B minor, the brass and violin together and the chip an octave above. */
+const FINAL_LINES = HOOK.map((l, i) => (i === 7 ? "F#5 G5 A#4 C#5 - E5 . D5 - C#5 - A#4 - F#4 . ." : transposeLine(l, 2)));
+const PHOBOS_FINAL = section({
+  leads: FINAL_LINES, chords: HOOK_CHORDS.map((c) => transposeChord(c, 2)), bass: ["gallop", "double", "gallop", "stab", "double", "gallop", "double", "stab"],
+  kit: ["drive", "drive", "drive", "fill", "drive", "drive", "drive", "fill"], counters: FINAL_LINES.map((l) => transposeLine(l, 12)), after: "Em", feel: "drive",
+});
+const PHOBOS_CODA = section({
+  leads: ["E5 . G#5 . B5 . E6 . D6 . B5 . G#5 . E5 .", "G#5 - B5 - E6 - D6 - B5 - G#5 - E5 - . ."],
+  chords: ["E7", "E7"], bass: ["octave", "walk"], kit: ["fill", "ending"], counters: "rest", after: "Am", feel: "stop",
+});
+
+const PHOBOS = join(PHOBOS_INTRO, PHOBOS_HOOK, PHOBOS_ANSWER, PHOBOS_JAZZ, PHOBOS_MIDDLE, PHOBOS_SOLO, PHOBOS_BREAK, PHOBOS_FINAL, PHOBOS_CODA);
+
+export const PHOBOS_RUN: Song = {
+  bpm: 168, lead: "trumpet", layer: "chip", pad: "organ", counter: "chip", bassVoice: "picked", drums: "battle", riff: "gallop16", stabs: true,
+  performance: PHOBOS.performance, crashes: PHOBOS.starts, fills: [], riser: [0, 1],
+  sections: [
+    { from: 0, lead: "guitar", layer: undefined, pad: undefined, counter: undefined, stabs: false },
+    { from: PHOBOS.starts[1], lead: "trumpet", layer: "chip", pad: "organ", counter: undefined, stabs: true, bassVoice: "picked" },
+    { from: PHOBOS.starts[2], lead: "trumpet", layer: "violin", pad: "strings", counter: "chip", stabs: true, bassVoice: "picked" },
+    { from: PHOBOS.starts[3], lead: "trumpet", layer: undefined, pad: undefined, counter: undefined, stabs: false, bassVoice: "slap" },
+    { from: PHOBOS.starts[4], lead: "violin", layer: undefined, pad: "strings", counter: "piano", stabs: false, bassVoice: "picked" },
+    { from: PHOBOS.starts[5], lead: "guitar", layer: undefined, pad: "organ", counter: undefined, stabs: false, bassVoice: "picked" },
+    { from: PHOBOS.starts[6], lead: "organ", layer: undefined, pad: undefined, counter: undefined, stabs: false },
+    { from: PHOBOS.starts[7], lead: "trumpet", layer: "violin", pad: "strings", counter: "chip", stabs: true, bassVoice: "picked" },
+    { from: PHOBOS.starts[8], lead: "guitar", layer: "trumpet", pad: "organ", counter: undefined, stabs: false, bassVoice: "picked" },
+  ],
+  bars: PHOBOS.bars,
+};
+
+export const SPACE3_SONGS: Record<Space3Track, Song> = {
+  s3title: TITLE, s3hangar: HANGAR, s3stage1: PHOBOS_RUN, s3stage2: FOUNDRY_RUN, s3stage3: CRYO_CRAGS, s3stage4: KHARN_WRECKAGE, s3alert: ALERT, s3boss1: GHOST_CORVET, s3boss2: EXCAVATOR_THEME, s3boss3: WYRM_THEME, s3boss4: RECLAIMER_THEME, s3victory: VICTORY,
+};

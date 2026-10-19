@@ -4,7 +4,8 @@ import dynamic from "next/dynamic";
 import { useEffect } from "react";
 import type { IconType } from "react-icons";
 import { SPACE2_CHAPTERS, SPACE2_COPY, space2ChapterName } from "@/components/games/space2-copy";
-import { TbPlanet, TbRocket, TbX } from "react-icons/tb";
+import { SPACE3_BOSS_NAMES, SPACE3_COPY, space3ChapterName } from "@/components/games/space3-copy";
+import { TbGhost2, TbPlanet, TbRocket, TbX } from "react-icons/tb";
 
 const Loading = () => <div className="h-48 animate-pulse rounded-xl bg-neutral-100" aria-hidden="true" />;
 
@@ -13,22 +14,22 @@ const Loading = () => <div className="h-48 animate-pulse rounded-xl bg-neutral-1
 const Space = dynamic(() => import("@/components/games/space"), { ssr: false, loading: Loading });
 
 /* The Space series is all there is: Space and Space 2, which plays on Space's screen. */
-export type GameId = "space" | "space2";
+export type GameId = "space" | "space2" | "space3";
 
-export const GAME_ORDER: GameId[] = ["space", "space2"];
+export const GAME_ORDER: GameId[] = ["space", "space2", "space3"];
 /* Anyone can play: a guest flies each campaign's first chapter, and an account opens the rest. */
-export const GUEST_GAMES: GameId[] = ["space", "space2"];
+export const GUEST_GAMES: GameId[] = ["space", "space2", "space3"];
 /* What the dock offers. */
 export const DECK_GAMES: GameId[] = GAME_ORDER;
 export const isLocked = (id: GameId, username: string | null) => !username && !GUEST_GAMES.includes(id);
-export const gameIcons: Record<GameId, IconType> = { space: TbRocket, space2: TbPlanet };
+export const gameIcons: Record<GameId, IconType> = { space: TbRocket, space2: TbPlanet, space3: TbGhost2 };
 export const gameCopy = {
   en: {
-    names: { space: "Space", space2: "Space 2" } as Record<GameId, string>,
+    names: { space: "Space", space2: "Space 2", space3: "Space 3" } as Record<GameId, string>,
     best: "Best",
   },
   ms: {
-    names: { space: "Angkasa", space2: "Angkasa 2" } as Record<GameId, string>,
+    names: { space: "Angkasa", space2: "Angkasa 2", space3: "Space 3" } as Record<GameId, string>,
     best: "Terbaik",
   },
 };
@@ -55,7 +56,7 @@ const copy = {
     spaceHelp: "How to play",
     spaceGuide: "Tap Launch or press Space to start. Use the arrow keys to fly, or drag; on a phone use the on-screen joystick. Shoot green supply capsules for weapons and destroy enemies to fill the XP gauge and level up. Tap Bomb or press B to throw ten timed bombs: each goes off three seconds later and hurts what is near it. The weapon is a pod on an arm under the nose. The blaster fires a single shot, and while a weapon is equipped it is switched off: the weapon fires only when something is in its line, until it runs out of ammo and you are back to the blaster. Boss weapons light up before firing: move after their aim locks. Laser gates, walls and marked flares block the way, so fly through the gaps. Enemies lock on to where you are, shown by a red mark, and fire a torpedo at that spot: move off it before it lands and it misses. You have two chances: each time your ship is lost, one is used to try again. Lose it with none left and the run starts again from Chapter 1. Press P or the pause button to pause. Sign in to play every chapter. A signed-in player's progress is saved after every chapter, and if the ship is lost at a boss you can retry from the boss. Your ship has 100 health and a 50 shield, and neither ever grows: levels make the ship tougher in other ways. Every enemy you destroy fills the XP gauge under your level: 100 XP is one level, as far as level 10, and gold hearts add a bonus. Each level upgrades the ship by itself: level 1 torpedoes, 2 hypersonic drive, 3 mechanical shield (30% less damage from every hit), 4 a second launcher, 5 self-repair (the ship mends itself faster), 9 HQ support (the hangar of a carrier fills the left edge and fires homing torpedoes from its four launchers). Being hit costs health only: hits go to the shield and then to the health bar, and the ship never loses a level or an upgrade. From the start the ship slowly mends its own health after 6 seconds without a hit; self-repair at level 5 makes it mend faster. Life crates still matter. Weapon crates are rarer, and can hold an ice bomb, a flamethrower or a katana. Press N to fire a nuclear warhead (3 a chapter): the missile homes in on the boss, or else the nearest enemy, and its blast wipes out small enemies and takes a bite out of a boss. The last boss also has a shield of its own that takes damage before its health and mends if you leave it alone.",
     spaceGuns: { machine: "VULCAN", spread: "WIDE", laser: "LASER", torpedo: "TORPEDO", icebomb: "ICE BOMB", flame: "FLAME", katana: "KATANA", minirocket: "MINI ROCKET", hyperbeam: "HYPERBEAM" },
-    spaceCallouts: { shield: "Shield down!", armor: "Armour down!", overload: "OVERLOAD!", levelup: "Ship upgraded!", phase: "Phase shift!", warning: "WARNING", c4: "C4 BARRAGE!", hypersonic: "HYPERSONIC DRIVE!", mechshield: "MECHANICAL SHIELD!", launcher: "TWIN LAUNCHERS!", repair: "SELF-REPAIR!", hq: "HQ SUPPORT!", power: "POWER UP! Shots hit 12% harder", cover: "ORB COVER!", ultimate: "ULTIMATE!", decks: "DECKS AWASH!", magazines: "MAGAZINES EXPOSED!", shed: "FROST SHED!", molt: "ARMOUR MOLTED!", decouple: "CARS DECOUPLED!", breach: "HULL BREACH!", pressure: "PRESSURE DROP!", plating: "PLATING CRACKED!", buckle: "LEGS BUCKLING!", judgement: "JUDGEMENT AWAKE!", core: "CORE EXPOSED!", laststand: "LAST STAND!", miniboss: "MINI BOSS!", seaspray: "SEA SPRAY: slower low over the water", downpour: "DOWNPOUR: the rain pushes you down", blizzard: "BLIZZARD: the wind pushes you back", sandstorm: "SANDSTORM: sand slows your guns", fogbank: "FOG: inside a band, enemy aim scatters", polar: "POLAR COLD: engines run slower", turbulence: "TURBULENCE: the storm shoves you about", clearsky: "CLEAR DAWN: your shield recharges" },
+    spaceCallouts: { shield: "Shield down!", armor: "Armour down!", overload: "OVERLOAD!", levelup: "Ship upgraded!", phase: "Phase shift!", warning: "WARNING", c4: "C4 BARRAGE!", hypersonic: "HYPERSONIC DRIVE!", mechshield: "MECHANICAL SHIELD!", launcher: "TWIN LAUNCHERS!", repair: "SELF-REPAIR!", hq: "HQ SUPPORT!", power: "POWER UP! Shots hit 12% harder", cover: "ORB COVER!", ultimate: "ULTIMATE!", decks: "DECKS AWASH!", magazines: "MAGAZINES EXPOSED!", shed: "FROST SHED!", molt: "ARMOUR MOLTED!", decouple: "CARS DECOUPLED!", breach: "HULL BREACH!", pressure: "PRESSURE DROP!", plating: "PLATING CRACKED!", buckle: "LEGS BUCKLING!", judgement: "JUDGEMENT AWAKE!", core: "CORE EXPOSED!", laststand: "LAST STAND!", miniboss: "MINI BOSS!", mortar: "REAR MORTARS!", sweep: "ENERGY CURTAIN!", scissor: "SCISSOR PINCER!", wheel: "SPIRAL MATRIX!", flank: "FLANK RUN!", tether: "TETHER!", storm: "DISASTER INCOMING!", surge: "GRAVITY SURGE!", stage: "ARMOUR BROKEN: IT CHANGES!", trueform: "TRUE FORM!", seaspray: "SEA SPRAY: slower low over the water", downpour: "DOWNPOUR: the rain pushes you down", blizzard: "BLIZZARD: the wind pushes you back", sandstorm: "SANDSTORM: sand slows your guns", fogbank: "FOG: inside a band, enemy aim scatters", polar: "POLAR COLD: engines run slower", turbulence: "TURBULENCE: the storm shoves you about", clearsky: "CLEAR DAWN: your shield recharges" },
     talkNext: "Tap or press Space",
     launch: { engine: "ENGINE START", ready: "CATAPULT READY", go: "LAUNCH!" },
     chapterName: (n: number) =>
@@ -126,7 +127,7 @@ const copy = {
     spaceHelp: "Cara bermain",
     spaceGuide: "Ketik Mula atau tekan Space untuk bermula. Guna kekunci anak panah atau seret untuk terbang; di telefon guna kayu bedal pada skrin. Tembak kapsul bekalan hijau untuk senjata dan musnahkan musuh untuk memenuhi tolok XP dan naik tahap. Ketik Bom atau tekan B untuk membaling sepuluh bom berjangka: setiap satu meletup tiga saat kemudian dan mencederakan apa yang berdekatan. Senjata ialah pod pada lengan di bawah hidung kapal. Blaster menembak satu das sahaja, dan semasa senjata dipasang blaster dimatikan: senjata hanya menembak bila ada sasaran di barisannya, sehingga peluru habis dan anda kembali kepada blaster. Senjata boss menyala sebelum menembak: bergerak selepas sasarannya dikunci. Pintu laser, dinding dan api suria bertanda menghalang laluan, jadi terbang melalui ruang kosong. Musuh mengunci tempat anda berada, ditunjukkan dengan tanda merah, dan melepaskan torpedo ke situ: beralih sebelum ia tiba dan ia akan tersasar. Anda ada dua peluang: setiap kali kapal musnah, satu digunakan untuk cuba semula. Jika kapal musnah tanpa peluang lagi, permainan bermula semula dari Bab 1. Tekan P atau butang jeda untuk berhenti seketika. Log masuk untuk bermain semua bab. Kemajuan pemain yang log masuk disimpan selepas setiap bab, dan jika kapal musnah semasa melawan boss, anda boleh cuba semula dari boss. Kapal anda ada 100 kesihatan dan 50 perisai, dan kedua-duanya tidak pernah bertambah: tahap menjadikan kapal lebih tahan dengan cara lain. Setiap musuh yang dimusnahkan memenuhi tolok XP di bawah tahap anda: 100 XP satu tahap, sehingga tahap 10, dan hati emas memberi bonus. Setiap tahap menaik taraf kapal dengan sendirinya: tahap 1 torpedo, 2 pacuan hipersonik, 3 perisai mekanikal (setiap serangan 30% kurang kesan), 4 pelancar kedua, 5 pembaikan sendiri (kapal pulih lebih pantas), 9 sokongan HQ (hangar kapal induk memenuhi tepi kiri dan melepaskan torpedo pengesan dari empat pelancarnya). Bila diserang, hanya kesihatan yang berkurang: pukulan kena perisai dahulu kemudian bar kesihatan, dan kapal tidak pernah kehilangan tahap atau naik taraf. Sejak awal, kapal memulihkan kesihatannya sendiri secara perlahan selepas 6 saat tanpa terkena; pembaikan sendiri pada tahap 5 menjadikannya lebih pantas. Kotak nyawa masih penting. Kapsul senjata kini lebih jarang, dan boleh mengandungi bom ais, penyembur api atau katana. Tekan N untuk melepaskan hulu peledak nuklear (3 setiap bab): peluru berpandu itu mengejar boss, atau musuh terdekat, dan letupannya menghapuskan musuh kecil serta mengurangkan sebahagian kesihatan boss. Boss terakhir juga ada perisai sendiri yang menerima kerosakan sebelum kesihatannya dan pulih jika dibiarkan.",
     spaceGuns: { machine: "VULCAN", spread: "WIDE", laser: "LASER", torpedo: "TORPEDO", icebomb: "BOM AIS", flame: "API", katana: "KATANA", minirocket: "ROKET MINI", hyperbeam: "HIPERBEAM" },
-    spaceCallouts: { shield: "Perisai musnah!", armor: "Perisai besi musnah!", overload: "LEBIH BEBAN!", levelup: "Kapal dinaik taraf!", phase: "Fasa bertukar!", warning: "AMARAN", c4: "HUJAN C4!", hypersonic: "PACUAN HIPERSONIK!", mechshield: "PERISAI MEKANIKAL!", launcher: "PELANCAR BERKEMBAR!", repair: "PEMBAIKAN SENDIRI!", hq: "SOKONGAN HQ!", power: "KUASA NAIK! Tembakan 12% lebih kuat", cover: "LINDUNGAN ORB!", ultimate: "SERANGAN MUKTAMAD!", decks: "DEK DIBANJIRI!", magazines: "RUANG SENJATA TERDEDAH!", shed: "FROST GUGUR!", molt: "PERISAI TERLERAI!", decouple: "GERABAK TERPISAH!", breach: "BADAN KAPAL BOCOR!", pressure: "TEKANAN JATUH!", plating: "PLAT RETAK!", buckle: "KAKI GOYAH!", judgement: "JUDGEMENT AKTIF!", core: "TERAS TERDEDAH!", laststand: "PERTAHANAN TERAKHIR!", miniboss: "BOS KECIL!", seaspray: "PERCIKAN LAUT: lebih perlahan dekat air", downpour: "HUJAN LEBAT: hujan menolak anda ke bawah", blizzard: "RIBUT SALJI: angin menolak anda ke belakang", sandstorm: "RIBUT PASIR: pasir melambatkan senjata", fogbank: "KABUS: dalam jalur kabus, tembakan musuh tersasar", polar: "SEJUK KUTUB: enjin lebih perlahan", turbulence: "GELORA: ribut menolak anda ke sana sini", clearsky: "FAJAR CERAH: perisai anda pulih sendiri" },
+    spaceCallouts: { shield: "Perisai musnah!", armor: "Perisai besi musnah!", overload: "LEBIH BEBAN!", levelup: "Kapal dinaik taraf!", phase: "Fasa bertukar!", warning: "AMARAN", c4: "HUJAN C4!", hypersonic: "PACUAN HIPERSONIK!", mechshield: "PERISAI MEKANIKAL!", launcher: "PELANCAR BERKEMBAR!", repair: "PEMBAIKAN SENDIRI!", hq: "SOKONGAN HQ!", power: "KUASA NAIK! Tembakan 12% lebih kuat", cover: "LINDUNGAN ORB!", ultimate: "SERANGAN MUKTAMAD!", decks: "DEK DIBANJIRI!", magazines: "RUANG SENJATA TERDEDAH!", shed: "FROST GUGUR!", molt: "PERISAI TERLERAI!", decouple: "GERABAK TERPISAH!", breach: "BADAN KAPAL BOCOR!", pressure: "TEKANAN JATUH!", plating: "PLAT RETAK!", buckle: "KAKI GOYAH!", judgement: "JUDGEMENT AKTIF!", core: "TERAS TERDEDAH!", laststand: "PERTAHANAN TERAKHIR!", miniboss: "BOS KECIL!", mortar: "MORTAR BELAKANG!", sweep: "TIRAI TENAGA!", scissor: "SEPIT GUNTING!", wheel: "MATRIKS SPIRAL!", flank: "SERANGAN APIT!", tether: "TALI HARPUN!", storm: "BENCANA DATANG!", surge: "GELOMBANG GRAVITI!", stage: "PERISAI PECAH: IA BERUBAH!", trueform: "BENTUK SEBENAR!", seaspray: "PERCIKAN LAUT: lebih perlahan dekat air", downpour: "HUJAN LEBAT: hujan menolak anda ke bawah", blizzard: "RIBUT SALJI: angin menolak anda ke belakang", sandstorm: "RIBUT PASIR: pasir melambatkan senjata", fogbank: "KABUS: dalam jalur kabus, tembakan musuh tersasar", polar: "SEJUK KUTUB: enjin lebih perlahan", turbulence: "GELORA: ribut menolak anda ke sana sini", clearsky: "FAJAR CERAH: perisai anda pulih sendiri" },
     talkNext: "Ketik atau tekan Space",
     launch: { engine: "ENJIN DIHIDUPKAN", ready: "KATAPULT SEDIA", go: "BERLEPAS!" },
     chapterName: (n: number) =>
@@ -242,13 +243,29 @@ export function GamePlayer({
     clear: (n: number) => `${s2.clear}: ${space2ChapterName(lang, n) ?? ""}`,
     bossNames: [...t.bossNames, ...SPACE2_CHAPTERS.map((c) => c.boss)],
   };
+  /* Space 3 is English only. */
+  const s3 = SPACE3_COPY[lang];
+  const space3Labels = {
+    tap: s3.start,
+    help: s3.help,
+    guide: s3.guide,
+    won: s3.won,
+    next: s3.next,
+    retry: s3.retry,
+    retryBoss: s3.retryBoss,
+    newGame: s3.newGame,
+    continueRun: s3.continue,
+    chapterName: (n: number) => space3ChapterName(n, lang) ?? t.chapterName(n),
+    clear: (n: number) => `${s3.clear}: ${space3ChapterName(n, lang) ?? ""}`,
+    bossNames: [...space2Labels.bossNames, ...SPACE3_BOSS_NAMES],
+  };
   useSession(game, !isLocked(game, username));
   return (
     <>
-      {(game === "space" || game === "space2") && (
+      {(game === "space" || game === "space2" || game === "space3") && (
         <Space
           key={game}
-          campaign={game === "space2" ? 2 : 1}
+          campaign={game === "space3" ? 3 : game === "space2" ? 2 : 1}
           lang={lang}
           username={username}
           onAccount={onAccount}
@@ -290,7 +307,7 @@ export function GamePlayer({
             results: t.spaceResults,
             bossNames: t.bossNames,
             attackNames: t.attackNames,
-            ...(game === "space2" ? space2Labels : {}),
+            ...(game === "space2" ? space2Labels : game === "space3" ? space3Labels : {}),
           }}
         />
       )}

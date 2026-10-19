@@ -5,6 +5,7 @@ import type { IconType } from "react-icons";
 import {
   TbChevronsRight,
   TbDeviceTv,
+  TbBolt,
   TbDrone,
   TbHeadset,
   TbHelmet,
@@ -20,7 +21,7 @@ import {
 } from "react-icons/tb";
 import { spaceAudio } from "./space-audio";
 import { AMBER, fitCanvas, isTyping, loadBest, makeReporter, saveBest, stat } from "./shared";
-import { CHANCES, LIMITS2, furthest, loadSaved, parseProgress, saveSaved, stashGuest, type Progress } from "./space-progress";
+import { CHANCES, LIMITS2, LIMITS3, furthest, loadSaved, parseProgress, saveSaved, stashGuest, type Progress } from "./space-progress";
 import { pullProgress, pushProgress } from "@/lib/account";
 import { Joystick, useTouchPad } from "./touch-controls";
 import {
@@ -64,6 +65,14 @@ import {
 } from "./space-logic";
 import { SPEAKERS, STORY, type Line } from "./space-story";
 import { SPACE2_EVENTS, SPACE2_SPEAKERS, SPACE2_STORY } from "./space2-story";
+import { SPACE3_SPEAKERS, SPACE3_STORY } from "./space3-story";
+import { drawResonanceEffects, drawResonanceHUD } from "./space3-hud-art";
+import { drawThirdBullet } from "./space3-projectile-art";
+import { Space3FlightControls, type FlightControlsStatus } from "./space3-touch-controls";
+import { drawKineticWave, drawModeTag, drawSeedBullet } from "./space3-weapons-art";
+import { drawHints } from "./space3-hints-art";
+import { drawAct2Beam, drawAct2Hazard, drawLands, drawOuterField } from "./space3-act2-art";
+import { drawLumenWing } from "./space3-lumen-art";
 import { drawSpaceEnemy } from "./space-actor-art";
 import { drawBeam, drawBullet, drawBursts, drawPickup } from "./space-fx-art";
 import { drawBossBullet, drawBossHazard, drawChill, drawZone } from "./space-boss-fx-art";
@@ -129,9 +138,10 @@ function linesFor(lang: "en" | "ms", key: string): { who: string; text: string }
   const one = STORY[lang] as Record<string, Line[]>;
   const two = SPACE2_STORY[lang] as Record<string, { who: string; text: string }[]>;
   const events = SPACE2_EVENTS[lang] as Record<string, { who: string; text: string }[]>;
-  return one[key] ?? two[key] ?? events[key] ?? [];
+  const three = SPACE3_STORY[lang] as Record<string, { who: string; text: string }[]>;
+  return one[key] ?? two[key] ?? events[key] ?? three[key] ?? [];
 }
-const ALL_SPEAKERS: Record<string, { name: string; color: string }> = { ...SPEAKERS, ...SPACE2_SPEAKERS };
+const ALL_SPEAKERS: Record<string, { name: string; color: string }> = { ...SPEAKERS, ...SPACE2_SPEAKERS, ...SPACE3_SPEAKERS };
 
 /* The colour of each stretch of the upgrade bar: that of the upgrade its level brought. */
 const LEVEL_COLOR: Record<number, string> = { 2: "#a3e635", 3: "#cbd5e1", 4: "#f87171", 5: "#7dd3fc" };
@@ -145,6 +155,7 @@ const SPEAKER_ICON: Record<string, IconType> = {
   vex: TbSwords,
   kroll: TbSkull,
   halo: TbDrone,
+  lumen: TbBolt,
   marsh: TbMilitaryRank,
 };
 
@@ -175,8 +186,8 @@ export default function Space({
 }: {
   labels: SpaceLabels;
   lang: "en" | "ms";
-  /* 1 is Space, 2 is Space 2 (the engine's chapters 9 to 16, its own score and its own save). */
-  campaign?: 1 | 2;
+  /* 1 is Space, 2 is Space 2 (the engine's chapters 9 to 16, its own score and its own save), 3 is Space 3 (chapters 17 to 28; only the first is written). */
+  campaign?: 1 | 2 | 3;
   /* Guests can fly Chapter 1 only; an account is required to save or continue.
      `onAccount` opens registration/login. */
   username?: string | null;
@@ -184,13 +195,13 @@ export default function Space({
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const preview = useRef<HTMLCanvasElement>(null);
-  const first = campaign === 2 ? LIMITS2.first : 1;
-  const last = campaign === 2 ? LIMITS2.last : CHAPTERS;
-  const gameKey = campaign === 2 ? "space2" : "space";
+  const first = campaign === 3 ? LIMITS3.first : campaign === 2 ? LIMITS2.first : 1;
+  const last = campaign === 3 ? LIMITS3.ready : campaign === 2 ? LIMITS2.last : CHAPTERS;
+  const gameKey = campaign === 3 ? "space3" : campaign === 2 ? "space2" : "space";
   const [rep] = useState(() => makeReporter("space2"));
   const [mode, setMode] = useState<Mode>("ready");
   const { touch, portrait } = useTouchPad();
-  const [chapter, setChapter] = useState(1);
+  const [chapter, setChapter] = useState(campaign === 3 ? first : 1);
   const [score, setScore] = useState(0);
   const [bombs, setBombs] = useState(2);
   const [nukes, setNukes] = useState(NUKE.count);
@@ -210,13 +221,18 @@ export default function Space({
   const doneRef = useRef(false);
   const seen = useRef(new Set<string>());
   const outroStarted = useRef(false);
-  const keys = useRef({ up: false, down: false, left: false, right: false, bomb: false, nuke: false });
+  const keys = useRef({ up: false, down: false, left: false, right: false, bomb: false, nuke: false, phase: false, barrier: false, overdrive: false, focus: false });
   const drag = useRef<{ x: number; y: number; id: number } | null>(null);
   const pending = useRef({ x: 0, y: 0 });
   /* Where the joystick is pushed, each way from -1 to 1. */
   const joy = useRef({ x: 0, y: 0 });
   const bombQueued = useRef(false);
   const nukeQueued = useRef(false);
+  const resonanceQueued = useRef({ phase: false, barrier: false, overdrive: false });
+  const readResonance = useCallback((): FlightControlsStatus | null => {
+    const s = world.current, r = s.res;
+    return r ? { meter: Math.floor(r.meter), phase: r.phase, phaseCd: r.phaseCd, barrier: r.barrier, barrierCd: r.barrierCd, overdrive: r.overdrive, flying: s.phase === "play", lanceActive: s.lance !== null } : null;
+  }, []);
   const moveSurface = useRef<HTMLDivElement>(null);
   const queueMove = useCallback((x: number, y: number) => {
     pending.current.x = Math.max(-24, Math.min(24, pending.current.x + x));
@@ -294,6 +310,7 @@ export default function Space({
     modeRef.current = next;
     setMode(next);
     if (next !== "play") {
+      resonanceQueued.current = { phase: false, barrier: false, overdrive: false };
       spaceAudio.stopMusic();
     }
   }, []);
@@ -319,12 +336,13 @@ export default function Space({
 
   /* Lets go of every key and drag, so nothing stays held through a pause. */
   const release = useCallback(() => {
-    keys.current = { up: false, down: false, left: false, right: false, bomb: false, nuke: false };
+    keys.current = { up: false, down: false, left: false, right: false, bomb: false, nuke: false, phase: false, barrier: false, overdrive: false, focus: false };
     drag.current = null;
     pending.current = { x: 0, y: 0 };
     joy.current = { x: 0, y: 0 };
     bombQueued.current = false;
     nukeQueued.current = false;
+    resonanceQueued.current = { phase: false, barrier: false, overdrive: false };
   }, []);
 
   const pause = useCallback(() => {
@@ -356,7 +374,10 @@ export default function Space({
       setScene(null);
       const s = world.current;
       if (after === "clear") {
-        if (campaign === 2) {
+        if (campaign === 3) {
+          stat("space3", "chapter", s.chapter - 16);
+          if (s.stats.hits === 0) stat("space3", "noHitChapters", 1, "add");
+        } else if (campaign === 2) {
           stat("space2", "chapter", s.chapter - 8);
           if (s.stats.hits === 0) stat("space2", "noHitChapters", 1, "add");
         } else stat("space", "chapter", s.chapter);
@@ -401,6 +422,7 @@ export default function Space({
 
   const begin = useCallback(
     (s: State) => {
+      if (s.res) release();
       world.current = s;
       outroStarted.current = false;
       setChapter(s.chapter);
@@ -415,7 +437,7 @@ export default function Space({
       if (!seen.current.has(key)) startScene(key, "launch");
       else goTo("play");
     },
-    [goTo, startScene],
+    [goTo, startScene, release],
   );
 
   const newGame = useCallback(() => {
@@ -542,7 +564,9 @@ export default function Space({
           const nuke = flying && (k.nuke || nukeQueued.current);
           bombQueued.current = false;
           nukeQueued.current = false;
-          step(s, { mx, my, bomb, nuke });
+          const ability = resonanceQueued.current;
+          resonanceQueued.current = { phase: false, barrier: false, overdrive: false };
+          step(s, { mx, my, bomb, nuke, phase: flying && (k.phase || ability.phase), barrier: flying && (k.barrier || ability.barrier), overdrive: flying && (k.overdrive || ability.overdrive), focus: flying && k.focus });
 
           /* The launch: the hangar tune while the engines spool up, a beep for each count and GO,
              then the roar and the fanfare as the ship leaves the rail. */
@@ -840,10 +864,23 @@ export default function Space({
         case "KeyD":
           k.right = down;
           break;
-        case "KeyB":
-        case "KeyX":
         case "ShiftLeft":
         case "ShiftRight":
+          /* Space 3 keeps Shift for its Phase Shift; Space and Space 2 for the bomb. */
+          if (campaign === 3) k.phase = down;
+          else k.bomb = down;
+          break;
+        case "KeyC":
+          k.barrier = down;
+          break;
+        case "KeyZ":
+          k.focus = down;
+          break;
+        case "KeyV":
+          k.overdrive = down;
+          break;
+        case "KeyB":
+        case "KeyX":
           k.bomb = down;
           break;
         case "KeyN":
@@ -858,7 +895,7 @@ export default function Space({
         case "Space":
         case "Enter":
           /* A button picked on the overlay answers for itself. */
-          if (e.target instanceof Element && e.target.closest("[data-space-overlay]")) return;
+          if (e.target instanceof Element && e.target.closest("[data-space-overlay], [data-space-controls]")) return;
           if (down && !e.repeat && modeRef.current !== "play") act();
           break;
         default:
@@ -887,7 +924,7 @@ export default function Space({
       document.removeEventListener("visibilitychange", onVisibility);
       release();
     };
-  }, [act, pause, release, resume]);
+  }, [act, pause, release, resume, campaign]);
 
   const primary =
     "rounded-full bg-amber-400 px-4 py-1.5 text-[12px] font-bold text-navy hover:bg-amber-300 shadow-md shadow-amber-400/20 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white";
@@ -896,6 +933,7 @@ export default function Space({
   const who = line ? ALL_SPEAKERS[line.who] : null;
   const SpeakerIcon = line ? SPEAKER_ICON[line.who] : null;
   const canPause = mode === "play" || mode === "paused";
+  const splitTouch = touch && campaign === 3 && !portrait && canPause;
   const onJoystick = (x: number, y: number) => {
     joy.current = modeRef.current === "play" ? { x, y } : { x: 0, y: 0 };
   };
@@ -906,12 +944,15 @@ export default function Space({
     if (modeRef.current === "play") nukeQueued.current = true;
   };
   const onPause = () => (mode === "paused" ? resume() : pause());
+  const queueAbility = (ability: "phase" | "barrier" | "overdrive") => {
+    if (modeRef.current === "play" && world.current.phase === "play" && world.current.res) resonanceQueued.current[ability] = true;
+  };
   /* Before a run starts, the header shows where Continue would pick up. */
   const offer = mode === "ready" ? saved : null;
 
   return (
-    <div className="flex flex-col gap-2">
-      <div className="flex items-center justify-between gap-2 text-[12px] font-bold text-navy">
+    <div className={splitTouch ? "grid grid-cols-[minmax(0,1fr)_200px] items-start gap-x-3 gap-y-1" : "flex flex-col gap-2"}>
+      <div className={`flex items-center justify-between gap-2 text-[12px] font-bold text-navy ${splitTouch ? "col-span-2" : ""}`}>
         <span className="shrink-0 tabular-nums">{labels.score}: {offer ? offer.score : score}</span>
         <span className="min-w-0 truncate text-center">{labels.chapterName(offer ? offer.chapter : chapter)}</span>
         <div className="flex items-center gap-1.5 shrink-0">
@@ -940,7 +981,7 @@ export default function Space({
       <div
         ref={moveSurface}
         className="relative mx-auto w-full touch-none select-none overflow-hidden rounded-xl border border-slate-700/60 shadow-2xl ring-1 ring-white/10 bg-[#070c1f]"
-        style={{ maxWidth: touch && !portrait ? "max(200px, calc((100dvh - 150px) * 16 / 9))" : "max(200px, calc((100dvh - 240px) * 16 / 9))" }}
+        style={{ maxWidth: splitTouch ? "max(160px, calc((100dvh - 235px) * 16 / 9))" : touch && !portrait ? "max(200px, calc((100dvh - 150px) * 16 / 9))" : "max(200px, calc((100dvh - 240px) * 16 / 9))" }}
         onPointerDown={(e) => {
           if (modeRef.current !== "play" || world.current.phase === "launch" || e.button !== 0 || drag.current || e.target !== canvas.current) return;
           e.preventDefault();
@@ -971,7 +1012,7 @@ export default function Space({
       >
         <canvas ref={canvas} className="block h-auto w-full" style={{ aspectRatio: `${W} / ${H}` }} />
 
-        {touch && !portrait && mode === "play" && (
+        {touch && campaign !== 3 && !portrait && mode === "play" && (
           <TouchControls
             variant="over"
             labels={labels}
@@ -1133,7 +1174,7 @@ export default function Space({
         )}
       </div>
 
-      {touch && portrait && (
+      {touch && campaign !== 3 && portrait && (
         <TouchControls
           variant="below"
           labels={labels}
@@ -1148,21 +1189,41 @@ export default function Space({
         />
       )}
 
-      <div className={touch ? "flex flex-col gap-1" : "grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1"}>
+      {touch && campaign === 3 && canPause && (
+        <div className={splitTouch ? "self-center" : ""}>
+        <Space3FlightControls
+          readStatus={readResonance}
+          playing={mode === "play"}
+          compact={false}
+          onJoystick={onJoystick}
+          onPhase={() => queueAbility("phase")}
+          onBarrier={() => queueAbility("barrier")}
+          onOverdrive={() => queueAbility("overdrive")}
+          onLance={onBomb}
+          onPush={onBomb}
+          onPause={onPause}
+          lang={lang}
+        />
+        </div>
+      )}
+
+      <div className={splitTouch ? "col-span-2 flex items-center justify-between gap-3" : touch ? "flex flex-col gap-1" : "grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1"}>
         {!touch && (
-        <div className="row-span-2 flex gap-2 self-start">
+        <div data-space-controls={campaign === 3 ? "" : undefined} className="row-span-2 flex gap-2 self-start">
           <button
             type="button"
             onPointerDown={(e) => {
               e.preventDefault();
               if (modeRef.current === "play") bombQueued.current = true;
             }}
-            disabled={mode !== "play" || bombs <= 0}
+            disabled={mode !== "play" || (campaign !== 3 && bombs <= 0)}
+            aria-label={campaign === 3 ? (lang === "ms" ? "Tolakan Kinetik" : "Kinetic Push") : labels.bomb}
+            onClick={campaign === 3 ? e => { if (e.detail === 0) onBomb(); } : undefined}
             className="flex h-11 touch-none select-none items-center justify-center rounded-full bg-navy px-5 text-[12px] font-bold text-amber-400 transition-colors active:bg-amber-400 active:text-navy disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy"
           >
-            {labels.bomb} × {bombs}
+            {campaign === 3 ? (lang === "ms" ? "Tolakan Kinetik · B" : "Kinetic Push · B") : `${labels.bomb} × ${bombs}`}
           </button>
-          <button
+          {campaign !== 3 && <button
             type="button"
             onPointerDown={(e) => {
               e.preventDefault();
@@ -1172,7 +1233,7 @@ export default function Space({
             className="flex h-11 touch-none select-none items-center justify-center rounded-full bg-red-600 px-4 text-[12px] font-bold text-white transition-colors active:bg-amber-400 active:text-navy disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy"
           >
             {labels.nuke} × {nukes}
-          </button>
+          </button>}
           <button
             type="button"
             onClick={() => (mode === "paused" ? resume() : pause())}
@@ -1185,7 +1246,15 @@ export default function Space({
           </button>
         </div>
         )}
-        <p className="text-[12px] font-semibold leading-snug text-neutral-500">{touch ? labels.touchHint : labels.hint}</p>
+        <p className="text-[12px] font-semibold leading-snug text-neutral-500">
+          {campaign === 3
+            ? touch
+              ? splitTouch
+                ? (lang === "ms" ? "Kayu bedal: terbang. Ketik Tolakan Kinetik bila sedia." : "Joystick: fly. Tap Kinetic Push when ready.")
+                : (lang === "ms" ? "Guna kayu bedal atau seret untuk terbang. Ketik Tolakan Kinetik bila sedia." : "Fly with the joystick or drag. Tap Kinetic Push when ready.")
+              : (lang === "ms" ? "Anak panah / WASD: terbang. Tembakan auto & torpedo plasma. B: Tolakan Kinetik (tolak musuh & peluru)." : "Arrows / WASD: fly. Auto-fire & plasma torpedo. B: Kinetic Push (repel enemies & fire).")
+            : touch ? labels.touchHint : labels.hint}
+        </p>
         <details className="col-start-2 text-[12px] leading-relaxed text-neutral-600">
           <summary className="w-fit cursor-pointer rounded-md py-0.5 font-bold text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy">{labels.help}</summary>
           <p className="pt-2">{labels.guide}</p>
@@ -1393,14 +1462,15 @@ function draw(ctx: CanvasRenderingContext2D, s: State, labels: SpaceLabels, mode
   drawBackdrop(ctx, s, reduceMotion);
   if (launching) drawHangar(ctx, s);
   drawHQ(ctx, s, reduceMotion);
-  /* Against the last boss, nothing is drawn until it is real (see hidesTells). */
+  /* Space 1/2 encounters show live attacks, without predictive overlays. */
   const blind = hidesTells(s);
   for (const h of s.hazards) {
     if (blind && hazardWarning(h)) continue;
-    if (!drawSecondHazard(ctx, h, reduceMotion) && !drawBossHazard(ctx, h, reduceMotion)) drawHazard(ctx, h, s, reduceMotion);
+    if (!drawAct2Hazard(ctx, h, s, reduceMotion) && !drawSecondHazard(ctx, h, reduceMotion) && !drawBossHazard(ctx, h, reduceMotion)) drawHazard(ctx, h, s, reduceMotion);
   }
   drawGust(ctx, s, reduceMotion);
-  for (const bm of s.beams) if (!blind || bm.t >= bm.warn) drawBeam(ctx, bm, f, reduceMotion);
+  drawLands(ctx, s);
+  for (const bm of s.beams) if (!blind || bm.t >= bm.warn) { if (!drawAct2Beam(ctx, bm, s, reduceMotion)) drawBeam(ctx, bm, f, reduceMotion); }
   for (const c of s.charges) drawZone(ctx, c, reduceMotion, blind);
   for (const k of s.pickups) drawPickup(ctx, k.x, k.y, k.kind, k.t);
   drawWarp(ctx, s, warpPower(s), reduceMotion);
@@ -1409,7 +1479,10 @@ function draw(ctx: CanvasRenderingContext2D, s: State, labels: SpaceLabels, mode
     drawBossShield(ctx, e, reduceMotion);
   }
   drawTimedBombs(ctx, s, reduceMotion);
-  for (const b of s.bullets) if (!drawSecondBullet(ctx, b) && !drawBossBullet(ctx, b) && !drawWeaponBullet(ctx, b, reduceMotion)) drawBullet(ctx, b);
+  drawLumenWing(ctx, s, reduceMotion);
+  drawOuterField(ctx, s, reduceMotion);
+  drawResonanceEffects(ctx, s, reduceMotion);
+  for (const b of s.bullets) if (!drawThirdBullet(ctx, b, s, reduceMotion) && !drawSecondBullet(ctx, b) && !drawBossBullet(ctx, b) && !drawSeedBullet(ctx, b, reduceMotion) && !drawWeaponBullet(ctx, b, reduceMotion)) drawBullet(ctx, b);
   drawSmoke(ctx, s);
   if (hud.debris && hud.debris.length > 0) {
     ctx.save();
@@ -1549,7 +1622,7 @@ function draw(ctx: CanvasRenderingContext2D, s: State, labels: SpaceLabels, mode
   ctx.save();
   ctx.textAlign = "center";
   /* Words in the scene stay out from under the overlays' own. */
-  if (s.callout && (mode === "play" || mode === "talk")) {
+  if (s.callout && (mode === "play" || mode === "talk") && !(blind && ["c4", "ultimate"].includes(s.callout.kind))) {
     const c = s.callout;
     const a = Math.min(1, c.t / 25, (150 - c.t) / 10);
     if (c.kind === "warning") {
@@ -1608,18 +1681,21 @@ function draw(ctx: CanvasRenderingContext2D, s: State, labels: SpaceLabels, mode
       }
       ctx.globalAlpha = 1;
     } else {
-      const loud = c.kind === "overload" || c.kind === "c4";
+      const resonanceAbility = !!s.res && (c.kind === "shield" || c.kind === "overload");
+      const text = resonanceAbility ? c.kind === "shield" ? "Kinetic Barrier" : "Overdrive" : labels.callouts[c.kind];
+      const callY = resonanceAbility ? 37 : 72;
+      const loud = !resonanceAbility && (c.kind === "overload" || c.kind === "c4");
       ctx.globalAlpha = Math.max(0, a);
-      ctx.font = loud ? `800 24px ${font}` : `800 18px ${font}`;
+      ctx.font = resonanceAbility ? `800 9px ${font}` : loud ? `800 24px ${font}` : `800 18px ${font}`;
       ctx.fillStyle = "rgb(0 0 0 / 0.55)";
-      ctx.fillText(labels.callouts[c.kind], W / 2 + 1.5, 72 + 1.5);
-      ctx.fillStyle = loud ? (f % 10 < 5 ? "#ff4d4d" : "#ffd24d") : ["levelup", "hypersonic", "mechshield", "launcher", "repair", "hq", "power"].includes(c.kind) ? "#fde047" : c.kind === "phase" ? "#fdba74" : "#7dd3fc";
-      ctx.fillText(labels.callouts[c.kind], W / 2, 72);
+      ctx.fillText(text, W / 2 + 1.5, callY + 1.5);
+      ctx.fillStyle = resonanceAbility ? c.kind === "shield" ? "#5eead4" : "#fbcf33" : loud ? (f % 10 < 5 ? "#ff4d4d" : "#ffd24d") : ["levelup", "hypersonic", "mechshield", "launcher", "repair", "hq", "power"].includes(c.kind) ? "#fde047" : c.kind === "phase" ? "#fdba74" : "#7dd3fc";
+      ctx.fillText(text, W / 2, callY);
       ctx.globalAlpha = 1;
     }
   }
 
-  /* A chapter boss's own attack names itself as it winds up, and so does a mini boss's. */
+  /* Only campaigns that retain prediction labels name an upcoming attack. */
   const boss = s.enemies.find((e) => isBoss(e.type)) ?? s.enemies.find((e) => isMini(e.type) && e.x < W);
   const move = boss?.attack;
   if (boss && move && move.t < move.warn && mode === "play" && !hidesTells(s)) {
@@ -1638,6 +1714,11 @@ function draw(ctx: CanvasRenderingContext2D, s: State, labels: SpaceLabels, mode
       ctx.globalAlpha = 1;
     }
   }
+
+  drawResonanceHUD(ctx, s, font, reduceMotion);
+  drawKineticWave(ctx, s, reduceMotion);
+  drawModeTag(ctx, s, font);
+  drawHints(ctx, s, font);
 
   /* The chapter's card as the ship arrives: a band across the screen with the
      chapter's number over its name. */

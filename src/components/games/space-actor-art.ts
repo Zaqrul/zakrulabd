@@ -11,8 +11,7 @@ import {
   enemyMuzzle,
   fixedAim,
   isBoss,
-  isMini,
-  isSecondBoss,
+  hidesAttackPrediction,
   missileMuzzle,
   missileStage,
   shipSize,
@@ -43,6 +42,14 @@ import { drawChapterBoss } from "./space-chapter-boss-art";
 import { drawBoulder, drawSignatureCue } from "./space-boss-fx-art";
 import { drawSecondCue } from "./space2-boss-fx-art";
 import { drawMini } from "./space2-miniboss-art";
+import { drawCorvet, drawCorvetCue } from "./space3-boss-art";
+import { drawOuterActor } from "./space3-act2-art";
+import { drawVanguard } from "./space3-enemy-art";
+import { drawExcavator, drawExcavatorCue } from "./space3-excavator-art";
+import { drawWyrm, drawWyrmCue } from "./space3-wyrm-art";
+import { drawReclaimer } from "./space3-reclaimer-art";
+import { drawReclaimerCue } from "./space3-reclaimer-cues";
+import { drawArmsCue } from "./space3-arms-art";
 import { drawSub } from "./space2-actor-art";
 import { drawSecondEnemy } from "./space2-enemy-art";
 import { drawFrozen } from "./space-weapons-art";
@@ -121,7 +128,7 @@ function wake(ctx: Ctx, x: number, y: number, t: number) {
    a marked row, a flare's column. It is gameplay, not decoration, so it stays
    bold and does not change with the art around it. */
 export function drawAttackCue(ctx: Ctx, e: Enemy, s: State, reduceMotion = false) {
-  if (isMini(e.type) || isSecondBoss(e.type)) return;
+  if (hidesAttackPrediction(e)) return;
   const a = e.attack;
   if (!a || a.t >= a.warn || a.kind === "beam") return;
   const locked = a.t >= a.warn - 18;
@@ -228,6 +235,7 @@ function mark(ctx: Ctx, x: number, y: number, r: number, faint = false) {
    shows a faint ring that follows the ship while its nose swings round, then the
    red one on the spot it locked, closing until it runs. */
 function drawLock(ctx: Ctx, e: Enemy, s: State) {
+  if (hidesAttackPrediction(e)) return;
   if (e.type === "seeker") {
     const stage = missileStage(e.t);
     if (stage === "track") {
@@ -244,10 +252,14 @@ function drawLock(ctx: Ctx, e: Enemy, s: State) {
 }
 
 export function drawSpaceEnemy(ctx: Ctx, e: Enemy, s: State, reduceMotion = false) {
-  drawLock(ctx, e, s);
+  if (s.chapter < 21) drawLock(ctx, e, s);
   ctx.save();
   setHit(e.flash > 0);
-  if (isBoss(e.type)) drawChapterBoss(ctx, e, s, reduceMotion);
+  if (drawOuterActor(ctx, e, s, reduceMotion)) {
+    /* Space 3's chapters 5 to 12 (stand-in art, space3-act2-art.ts). */
+  } else if (drawCorvet(ctx, e, reduceMotion) || drawExcavator(ctx, e, reduceMotion) || drawWyrm(ctx, e, reduceMotion) || drawReclaimer(ctx, e, reduceMotion)) {
+    /* Space 3's bosses draw themselves. */
+  } else if (isBoss(e.type)) drawChapterBoss(ctx, e, s, reduceMotion);
   else if (e.type === "boulder") drawBoulder(ctx, e, reduceMotion);
   else if (drawSub(ctx, e, reduceMotion)) {
     /* Space 2's submarine, mostly under the water. */
@@ -257,13 +269,23 @@ export function drawSpaceEnemy(ctx: Ctx, e: Enemy, s: State, reduceMotion = fals
   else drawRegular(ctx, e, s, reduceMotion);
   setHit(false);
   drawFrozen(ctx, e, reduceMotion);
-  drawAttackCue(ctx, e, s, reduceMotion);
-  drawSignatureCue(ctx, e, s, reduceMotion);
-  drawSecondCue(ctx, e, s, reduceMotion);
+  /* Act 2 attack warnings are built into the machine art; legacy field overlays
+     would reintroduce aim lines, rings, or marked lanes above the playfield. */
+  if (s.chapter < 21) {
+    drawAttackCue(ctx, e, s, reduceMotion);
+    drawSignatureCue(ctx, e, s, reduceMotion);
+    drawSecondCue(ctx, e, s, reduceMotion);
+    drawCorvetCue(ctx, e, s);
+    drawExcavatorCue(ctx, e, s);
+    drawWyrmCue(ctx, e, s);
+    drawReclaimerCue(ctx, e, s);
+    drawArmsCue(ctx, e, s);
+  }
   ctx.restore();
 }
 
 function drawRegular(ctx: Ctx, e: Enemy, s: State, reduceMotion: boolean) {
+  if (drawVanguard(ctx, e, s, reduceMotion)) return;
   if (drawSecondEnemy(ctx, e, s, reduceMotion)) return;
   const { x, y, w, h } = e;
   const cx = x + w / 2;

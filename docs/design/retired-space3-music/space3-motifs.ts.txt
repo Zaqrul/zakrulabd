@@ -1,0 +1,57 @@
+/* The themes of Space 1 and Space 2 that Space 3 quotes. Metal Slug brings its main theme back later in the series in a
+   bigger arrangement ("Final Attack"), and Space 3 does the same with its own two predecessors: the chiptune of Space 1 is
+   played on the square-wave "chip" voice, the orchestra of Space 2 on brass and strings, so a listener hears the two earlier
+   games inside the third. Every line is copied from the score it comes from; tests/space3-motifs.test.mjs compares each one
+   with the original, so a change in Space 1 or 2 shows up here. (These are the owner's own themes, so quoting them is
+   deliberate; the rest of Space 3 copies nothing.)
+
+   They are written out here, not imported, because the music engine imports Space 3's tunes. */
+
+export type Quoted = { line: string; chord: string };
+const q = (line: string, chord: string): Quoted => ({ line, chord });
+
+/* Space 1: Starfall Overture (the title, C major). */
+export const S1_TITLE: Quoted[] = [
+  q("E5 - - - G5 - C6 - - - B5 - C6 - D6 -", "C"),
+  q("B5 - - - G5 - - - D5 - - - G5 - - -", "G"),
+  q("C6 - - - A5 - E5 - - - A5 - B5 - C6 -", "Am"),
+  q("A5 - - - - - - - F5 - G5 - A5 - - -", "F"),
+];
+
+/* Space 1: Battle: First Sortie (the first stage, E minor). */
+export const S1_STAGE: Quoted[] = [
+  q("B4 - E5 - G5 - - - F#5 - E5 - D5 - E5 -", "Em"),
+  q("G5 - - - - - E5 - C5 - - - E5 - G5 -", "C"),
+  q("A5 - - - F#5 - D5 - - - E5 - F#5 - A5 -", "D"),
+  q("B5 - - - - - - - A5 - F#5 - D#5 - - -", "B7"),
+];
+
+/* Space 1: Hangar: Engines Warm (F major). */
+export const S1_HANGAR: Quoted[] = [
+  q("A5 - - - - - C6 - - - A5 - G5 - F5 -", "F"),
+  q("G5 - - - - - - - E5 - - - C5 - - -", "C"),
+];
+
+/* Space 1: Victory Roll (C major). */
+export const S1_VICTORY = q("C5 E5 G5 C6 - - G5 - C6 - D6 - E6 - - -", "C");
+
+/* Space 2: Orbit Overture (the title, D minor). */
+export const S2_TITLE: Quoted[] = [
+  q("D4 - - - A4 - - - D5 - - - C5 - A4 -", "Dm"),
+  q("G4 - - - - - - - E4 - - - G4 - C5 -", "C"),
+  q("D5 - - - F5 - - - E5 - D5 - C5 - Bb4 -", "Bb"),
+  q("A4 - - - - - - - . . . . E4 - A4 -", "A"),
+  q("D5 - - - E5 - F5 - G5 - - - A5 - - -", "Dm"),
+  q("B5 - - - A5 - - - G5 - - - F5 - E5 -", "G"),
+  q("F5 - - - D5 - - - Bb4 - - - C5 - D5 -", "Bb"),
+  q("C#5 - - - - - - - A4 - - - E5 - - -", "A7"),
+];
+
+/* Space 2: Victory (B flat major). */
+export const S2_VICTORY = q("F4 Bb4 D5 F5 - - Eb5 - D5 - Eb5 - F5 - - -", "Bb");
+
+/* Space 2: Hangar: Lights On (E flat major): a rising arpeggio and its fall. */
+export const S2_HANGAR: Quoted[] = [
+  q("G5 - - - Bb5 - - - D6 - - - Bb5 - - -", "Eb"),
+  q("A5 - - - - - - - G5 - - - F5 - - -", "F"),
+];

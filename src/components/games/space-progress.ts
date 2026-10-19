@@ -9,6 +9,8 @@
 export const LIMITS = { chapters: 8, level: 10 };
 /* Space 2 is the engine's chapters 9 to 16, saved apart from Space 1 (a run is saved from its second chapter). */
 export const LIMITS2 = { first: 9, last: 16 };
+/* Space 3 is chapters 17 to 28, saved apart from both. */
+export const LIMITS3 = { first: 17, last: 28, ready: 28 };
 
 /* A run has CHANCES: each time the ship is lost one is spent to fly the chapter (or the boss) again.
    Lost with none left, the run is over and starts again from Chapter 1. */
@@ -19,8 +21,8 @@ export type Progress = { chapter: number; score: number; weapon: number; level: 
 /* The key before accounts, and the marker a guest leaves on clearing Chapter 1. */
 const LEGACY_KEY = "space-progress-v1";
 const GUEST_KEY = "space-guest-clear-v1";
-const guestKey = (campaign: number) => campaign === 2 ? "space2-guest-clear-v1" : GUEST_KEY;
-export const progressKey = (slot: string, campaign = 1) => (campaign === 2 ? `space2-progress-v1:${slot}` : `space-progress-v2:${slot}`);
+const guestKey = (campaign: number) => campaign === 3 ? "space3-guest-clear-v1" : campaign === 2 ? "space2-guest-clear-v1" : GUEST_KEY;
+export const progressKey = (slot: string, campaign = 1) => (campaign === 3 ? `space3-progress-v1:${slot}` : campaign === 2 ? `space2-progress-v1:${slot}` : `space-progress-v2:${slot}`);
 
 /* A run read back from storage or from the account, or null if it is not one. */
 export function parseProgress(raw: unknown, campaign = 1): Progress | null {
@@ -29,7 +31,9 @@ export function parseProgress(raw: unknown, campaign = 1): Progress | null {
   const nums = [chapter, score, weapon, level, extra];
   if (!nums.every((v) => typeof v === "number" && Number.isFinite(v))) return null;
   const c = Math.floor(chapter as number);
-  if (campaign === 2 ? c < LIMITS2.first + 1 || c > LIMITS2.last : c < 2 || c > LIMITS.chapters) return null;
+  /* A run is saved from the campaign's second chapter on. */
+  const range = campaign === 3 ? LIMITS3 : campaign === 2 ? LIMITS2 : { first: 1, last: LIMITS.chapters };
+  if (c < range.first + 1 || c > range.last) return null;
   return {
     chapter: c,
     score: Math.max(0, Math.floor(score as number)),

@@ -26,3 +26,8 @@
 - **Blocked Scrapers:** Aggressive training scrapers (`GPTBot`, `CCBot`, `Bytespider`, `anthropic-ai`, `ClaudeBot`, `FacebookBot`, `Scrapy`, etc.) are blocked via `robots.ts` and `src/proxy.ts` (403 Forbidden).
 - **Security Headers:** Strict HSTS, X-Frame-Options SAMEORIGIN, nosniff, Referrer-Policy, Permissions-Policy, poweredByHeader disabled in `next.config.ts`.
 - **Anti-Brute Force:** Rate limiter and scanner exploit path filtering in `src/proxy.ts`.
+
+
+## Active Space 3 handoff
+
+Before continuing Space 3 work, read `docs/space3-claude-resume.md`. It records the current shared-tree changes and what still needs verification.

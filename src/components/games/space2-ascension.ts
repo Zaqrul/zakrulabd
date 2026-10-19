@@ -8,7 +8,7 @@ import { BATTLE_BARS, BATTLE_MARKS, BATTLE_PERFORMANCE } from "./space2-ascensio
 import { BOSS_SUITES, SUITE_MARKS } from "./space2-ascension-bosses.ts";
 
 type Bar = Song["bars"][number];
-type Profile = {
+export type Profile = {
   bpm: number; lead: Song["lead"]; pad: Song["pad"]; counter: Song["counter"];
   mood: "heroic" | "battle" | "quiet" | "dread" | "ceremony" | "ruin" | "anger" | "dark" | "sad" | "evil";
   answer: string;
@@ -468,7 +468,7 @@ const pitchName = (m: number) => `${NAMES[((m % 12) + 12) % 12]}${Math.floor(m /
 const meter = (b: Bar) => b[0].trim().split(/\s+/).length;
 const degreeScale = (quality: string) => quality === "dim" ? [0, 2, 3, 5, 6, 8, 9] : quality.startsWith("m") && !quality.startsWith("maj") ? [0, 2, 3, 5, 7, 8, 10] : quality === "7" ? [0, 2, 4, 5, 7, 9, 10] : [0, 2, 4, 5, 7, 9, 11];
 
-function answerLine(bar: Bar, profile: Profile, index: number): string {
+export function answerLine(bar: Bar, profile: Profile, index: number): string {
   const [, root, quality] = /^([A-G][#b]?)(.*)$/.exec(bar[1])!;
   const scale = degreeScale(quality), n = meter(bar), source = profile.answer.split(" ");
   const lead = bar[0].split(/\s+/).filter((c) => c !== "." && c !== "-");
@@ -513,7 +513,7 @@ function quoteOriginal(source: Bar[], original: Song, at: number) {
   }
 }
 
-function riffFor(n: number, mood: Profile["mood"], late: boolean) {
+export function riffFor(n: number, mood: Profile["mood"], late: boolean) {
   if (n === 14) return ["dread", "ruin", "dark", "evil"].includes(mood) ? "throb14" : "seven14";
   if (n === 12) return ["quiet", "ruin", "dark", "sad", "evil"].includes(mood) ? "hold12" : "six12";
   // A burnt hangar: a heartbeat on the root, then the root throbbing against its flat second and tritone.

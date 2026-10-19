@@ -1,0 +1,85 @@
+/* Kite, Halo's escort, in Space 3: the Aegis wing. It does not shoot (the ship has the Seed Bolt, the Echo Wing and the
+   Lance for that). It flies beside the ship and puts itself in the way: the enemy shot that would reach the ship soonest
+   is the one it moves to meet. Each shot it catches costs it some integrity and gives the ship a little Resonance; at
+   nothing it is down for a few seconds and comes back half mended. Halo keeps the lane open, so protection is a thing the
+   player uses, not an automatic shield: a shot Kite cannot reach still hits.
+
+   Pure logic with no link to the engine; space-logic calls `stepAegis` once a frame and removes what it caught. The
+   design is in docs/space3-design.md. Numbers are first guesses. */
+import type { Bullet } from "./space-logic";
+
+export const AEGIS = {
+  /* Where it waits, relative to the ship's centre. */
+  dx: -16, dy: -17,
+  /* Its catching circle, and how far from the ship it will go to meet a shot. */
+  radius: 8, guard: 20, reach: 150,
+  speed: 3.4,
+  hp: 60,
+  /* Integrity a shot costs, by its size: a bolt, and a heavy shot. */
+  cost: 3, heavy: 8, heavyAt: 4,
+  /* Mended a frame once it has not been hit for `calm` frames. */
+  regen: 0.1, calm: 90,
+  /* Down for this long, then back at this share of its integrity. */
+  down: 300, back: 0.5,
+  /* Resonance the ship gains for each shot it catches. */
+  gain: 1,
+};
+
+export type Aegis = { x: number; y: number; hp: number; down: number; calm: number; flash: number; caught: number };
+type Shot = Pick<Bullet, "x" | "y" | "vx" | "vy" | "r" | "own">;
+
+export const createAegis = (ship: { x: number; y: number }): Aegis => ({ x: ship.x + AEGIS.dx, y: ship.y + AEGIS.dy, hp: AEGIS.hp, down: 0, calm: 0, flash: 0, caught: 0 });
+
+/* The shot that will reach the ship soonest: heading at it, near enough, and the one with the least distance to run. */
+function threat(ship: { x: number; y: number }, shots: readonly Shot[]) {
+  let best: Shot | null = null, bestTime = Infinity;
+  for (const s of shots) {
+    if (s.own !== "e") continue;
+    const dx = ship.x - s.x, dy = ship.y - s.y, d = Math.hypot(dx, dy);
+    if (d > AEGIS.reach) continue;
+    const speed = Math.hypot(s.vx, s.vy);
+    if (speed < 0.05) continue;
+    /* Closing on the ship: its velocity points at least partly at it. */
+    const closing = (s.vx * dx + s.vy * dy) / (speed * Math.max(d, 1e-6));
+    if (closing < 0.3) continue;
+    const time = d / (speed * closing);
+    if (time < bestTime) { bestTime = time; best = s; }
+  }
+  return best;
+}
+
+/* One frame. Moves the wing, and returns the shots it caught (the engine removes them). */
+export function stepAegis(a: Aegis, ship: { x: number; y: number }, shots: readonly Shot[]): Shot[] {
+  if (a.flash > 0) a.flash -= 1;
+  if (a.down > 0) {
+    a.down -= 1;
+    if (a.down === 0) a.hp = AEGIS.hp * AEGIS.back;
+    /* A wing that is down drifts back to its place and waits. */
+    a.x += (ship.x + AEGIS.dx - a.x) * 0.1;
+    a.y += (ship.y + AEGIS.dy - a.y) * 0.1;
+    return [];
+  }
+  const t = threat(ship, shots);
+  let tx = ship.x + AEGIS.dx, ty = ship.y + AEGIS.dy;
+  if (t) {
+    /* Stand between the shot and the ship, `guard` from the ship, on the line the shot is coming down. */
+    const dx = t.x - ship.x, dy = t.y - ship.y, d = Math.hypot(dx, dy) || 1;
+    tx = ship.x + (dx / d) * Math.min(AEGIS.guard, d);
+    ty = ship.y + (dy / d) * Math.min(AEGIS.guard, d);
+  }
+  const mx = tx - a.x, my = ty - a.y, m = Math.hypot(mx, my);
+  if (m > AEGIS.speed) { a.x += (mx / m) * AEGIS.speed; a.y += (my / m) * AEGIS.speed; } else { a.x = tx; a.y = ty; }
+
+  const caught: Shot[] = [];
+  for (const s of shots) {
+    if (s.own !== "e" || Math.hypot(s.x - a.x, s.y - a.y) > AEGIS.radius + s.r) continue;
+    caught.push(s);
+    a.hp -= s.r >= AEGIS.heavyAt ? AEGIS.heavy : AEGIS.cost;
+    a.calm = 0;
+    a.flash = 6;
+    a.caught += 1;
+    if (a.hp <= 0) { a.hp = 0; a.down = AEGIS.down; break; }
+  }
+  if (!caught.length && ++a.calm > AEGIS.calm) a.hp = Math.min(AEGIS.hp, a.hp + AEGIS.regen);
+  return caught;
+}

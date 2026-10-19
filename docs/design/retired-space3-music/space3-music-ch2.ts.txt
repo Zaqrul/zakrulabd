@@ -1,0 +1,152 @@
+/* Space 3, chapter 2 (Ceres Industrial Belts). Two tunes that share nothing with chapter 1's or with each other
+   (docs/space3-music-research.md):
+
+     Battle: Ceres Foundry   jazz-fusion in six: a walking slap bass, a swung kit, a trumpet head (the Gate theme swung and
+                             bent), a piano bridge in four, a guitar solo in six, a slap-bass break with the band out,
+                             and the head again a fourth up with the violin. C sharp minor to F sharp minor. 144 BPM.
+     Showdown: Excavator-X   heavy metal in six: a drumless prelude (a tom heartbeat under a low organ), a stomping riff, a
+                             grinding 7/8 break, the whole of Space 2's Orbit Overture as a brass chorale, a blast-beat
+                             section a minor third higher, and the riff again. D minor to F minor. 102 BPM.
+
+   Written for this game; none copies a note from anything else except the quotation. */
+import type { Song } from "./space2-music";
+import { join, section, transposeChord, transposeLine } from "./space3-groove.ts";
+import { S2_TITLE } from "./space3-motifs.ts";
+
+/* ---------- Battle: Ceres Foundry ---------- */
+
+const FOUNDRY_INTRO = section({
+  leads: ["C#3 . . . . . . . G#3 . . .", "C#3 . . . E3 . . . G#3 . A3 .", "A2 . . . . . C#3 . . E3 . .", "G#2 . . B2 . D#3 . F#3 . G#3 . ."],
+  chords: ["C#m", "C#m", "A", "G#7"], bass: ["walk12", "walk12b", "walk12", "sway"], kit: ["swing", "swing", "swing", "fill"], counters: "rest", after: "C#m", gate: 0.85, feel: "swing",
+});
+
+/* The Gate theme swung: a rising pickup into a held fifth and a falling answer, in six. */
+const HEAD = [
+  "C#5 . . E5 . F#5 G#5 . . E5 . C#5", "B4 . . C#5 . E5 G#5 - - - . .", "A4 . . C#5 . E5 A5 . . G#5 . E5", "D#5 . . F#5 . B5 A5 - G#5 . F#5 .",
+  "C#5 . . E5 . F#5 G#5 . B5 . G#5 .", "A5 - - F#5 . A5 C#6 - - B5 . A5", "G#5 . F#5 . D#5 . C5 - - B4 . .", "C#5 - - - - - E5 - - C#5 . .",
+];
+const HEAD_CHORDS = ["C#m", "C#m", "A", "B", "C#m", "F#m", "G#7", "C#m"];
+const FOUNDRY_HEAD = section({
+  leads: HEAD, chords: HEAD_CHORDS, bass: ["walk12", "walk12b", "sway", "roll"], kit: ["shuffle", "shuffle", "swing", "shuffle", "shuffle", "swing", "shuffle", "fill"], counters: "none", after: "E", feel: "swing",
+});
+
+const FOUNDRY_BRIDGE = section({
+  leads: [
+    "G#4 - - - B4 - - - E5 - - - D#5 - B4 -", "F#4 - - - B4 - - - D#5 - - - F#5 - D#5 -",
+    "E5 - - - G#5 - - - C#6 - - - B5 - G#5 -", "F#5 - D#5 - C5 - B4 - G#4 - . . D#4 - . .",
+  ],
+  chords: ["E", "B", "C#m", "G#7"], bass: ["walk", "walkUp", "slide", "pedal"], kit: "rim", counters: "rest", after: "C#m", gate: 0.98, feel: "lyric",
+});
+
+const FOUNDRY_SOLO = section({
+  leads: [
+    "C#5 . E5 . G#5 . B5 . A5 . G#5 .", "A5 . C#6 . B5 . A5 . F#5 . E5 .", "D#5 . F#5 . G#5 . C6 . B5 . G#5 .", "G#5 . E5 . C#5 . E5 . G#5 - - -",
+    "E5 . A5 . C#6 . E6 . C#6 . A5 .", "F#5 . B5 . D#6 . F#6 . D#6 . B5 .", "F#6 . D#6 . C6 . B5 . G#5 . F#5 .", "E5 - - - C#5 - - - G#4 - - -",
+  ],
+  chords: ["C#m", "F#m", "G#7", "C#m", "A", "B", "G#7", "C#m"], bass: ["walk12", "walk12b", "walk12", "sway"], kit: "brush", counters: "none", after: "C#m", gate: 0.8, feel: "swing",
+});
+
+/* The band drops out and the bass takes four bars to itself, as the old arcade tunes did. */
+const FOUNDRY_BREAK = section({
+  leads: [
+    "C#4 . . C#4 . . C#4 . . . G#3 . A3 . B3 .", "F#4 . . F#4 . . F#4 . . . C#4 . D4 . E4 .", "G#3 . . G#3 . . B3 . D#4 . F#4 . G#4 . . .", "C#4 . . . . . . . . . . . . . . .",
+  ],
+  chords: ["C#m", "F#m", "G#7", "C#m"], bass: ["double", "syncop", "gallop", "stab"], kit: ["funk", "funk", "funk", "break"], counters: "rest", after: "F#m", gate: 0.55, feel: "stop",
+});
+
+/* The head again a fourth up, in F sharp minor; the last bar is new. */
+const HEAD_UP = HEAD.map((l, i) => (i === 7 ? "F#5 - - - A5 - - - C#6 - - -" : transposeLine(l, 5)));
+const FOUNDRY_RETURN = section({
+  leads: HEAD_UP, chords: HEAD_CHORDS.map((c, i) => (i === 7 ? "F#m" : transposeChord(c, 5))),
+  bass: ["walk12b", "walk12", "roll", "sway"], kit: ["swing", "shuffle", "shuffle", "swing", "shuffle", "swing", "shuffle", "fill"], counters: "none", after: "F#m", feel: "swing",
+});
+
+const FOUNDRY_CODA = section({
+  leads: ["F#5 . . C#5 . . F#5 . A5 - - - C#6 - . .", "F#4 - - - - - - - . . . . . . . ."],
+  chords: ["F#m", "F#m"], bass: ["double", "pedal"], kit: ["funk", "break"], counters: "rest", after: "F#m", feel: "stop",
+});
+
+const FOUNDRY = join(FOUNDRY_INTRO, FOUNDRY_HEAD, FOUNDRY_BRIDGE, FOUNDRY_SOLO, FOUNDRY_BREAK, FOUNDRY_RETURN, FOUNDRY_CODA);
+
+export const FOUNDRY_RUN: Song = {
+  bpm: 144, lead: "trumpet", pad: "organ", counter: "piano", arps: true, arpStep: 2, bassVoice: "slap", drums: "battle", riff: "pump16",
+  performance: FOUNDRY.performance, crashes: FOUNDRY.starts, fills: [],
+  sections: [
+    { from: 0, lead: "organ", pad: undefined, layer: undefined, counter: undefined, bassVoice: "slap" },
+    { from: FOUNDRY.starts[1], lead: "trumpet", pad: "organ", layer: undefined, counter: "piano", bassVoice: "slap" },
+    { from: FOUNDRY.starts[2], lead: "piano", pad: "strings", layer: undefined, counter: undefined, bassVoice: "picked" },
+    { from: FOUNDRY.starts[3], lead: "guitar", pad: "organ", layer: undefined, counter: "piano", bassVoice: "slap" },
+    { from: FOUNDRY.starts[4], lead: "organ", pad: undefined, layer: undefined, counter: undefined, bassVoice: "slap" },
+    { from: FOUNDRY.starts[5], lead: "violin", pad: "strings", layer: "trumpet", counter: "guitar", bassVoice: "slap" },
+    { from: FOUNDRY.starts[6], lead: "trumpet", pad: "organ", layer: "violin", counter: undefined, bassVoice: "picked" },
+  ],
+  bars: FOUNDRY.bars,
+};
+
+/* ---------- Showdown: Excavator-X ---------- */
+
+/* Prelude: no drums, a low organ and a tom heartbeat, the way a JRPG boss theme begins; the drums enter with the riff. */
+const EXC_PRELUDE = section({
+  leads: ["D3 - - - - - A3 - - - - -", "D3 - - - - - A3 - - C4 - -", "Bb2 - - - - - F3 - - - - -", "A2 - - - - - E3 - - G3 - -"],
+  chords: ["Dm", "Dm", "Bb", "A7"], bass: ["walk12", "walk12b", "walk12", "sway"], kit: "none", counters: "rest", after: "Dm", gate: 1, feel: "lyric",
+});
+
+const EXC_INTRO = section({
+  leads: ["D3 . . . . . . . A3 . . .", "D3 . . . Eb3 . . . E3 . G3 ."],
+  chords: ["Dm", "A7"], bass: ["stomp", "sway"], kit: ["pound", "stomp"], counters: "rest", after: "Dm", gate: 0.9, feel: "stomp",
+});
+
+const RIFF_LINES = [
+  "D3 . . D3 . F3 D3 . . A3 . G3", "D3 . . D3 . F3 A3 . . D4 . C4", "Bb2 . . Bb2 . D3 Bb2 . . F3 . E3", "C3 . . C3 . E3 G3 . . C4 . B3",
+  "D3 . . D3 . F3 D3 . G3 . A3 .", "D3 . . A3 . D4 C4 . A3 . F3 .", "G3 . . G3 . Bb3 G3 . D4 . C4 .", "A3 . . A3 . C#4 E4 . . G4 . F4",
+];
+const RIFF_CHORDS = ["Dm", "Dm", "Bb", "C", "Dm", "Dm", "Gm", "A7"];
+const EXC_RIFF = section({
+  leads: RIFF_LINES, chords: RIFF_CHORDS, bass: ["stomp", "stomp", "roll", "stomp"], kit: ["stomp", "stomp", "pound", "stomp", "stomp", "stomp", "pound", "fill"], counters: "rest", after: "Dm", feel: "stomp",
+});
+
+const EXC_GRIND = section({
+  leads: ["D3 D3 Eb3 D3 . D3 Eb3 D3 . F3 . E3 . Eb3", "A2 A2 Bb2 A2 . A2 Bb2 A2 . C#3 . E3 . Eb3"],
+  chords: ["Dm", "A7"], bass: "sevenHeavy", kit: ["grind", "hard"], counters: "rest", after: "Dm", feel: "seven",
+});
+
+/* The brass chorale is Space 2's Orbit Overture, note for note, in the same key (D minor): the heavy machine of the third
+   game stands on the title theme of the second. */
+const EXC_CHORALE = section({
+  leads: S2_TITLE.map((m) => m.line), chords: S2_TITLE.map((m) => m.chord),
+  bass: ["pedal", "walk", "slide", "walkUp"], kit: "chorale", counters: "rest", after: "Fm", gate: 1, feel: "lyric",
+});
+
+const BLAST_CHORDS = ["Fm", "Db", "Eb", "C7", "Fm", "Db", "Bbm", "C7"];
+const EXC_BLAST = section({
+  leads: [
+    "F5 Ab5 C6 Ab5 F5 Ab5 C6 F6 Eb6 C6 Ab5 C6 Eb6 C6 Ab5 F5", "Db5 F5 Ab5 F5 Db5 F5 Ab5 Db6 C6 Ab5 F5 Ab5 C6 Ab5 F5 Db5",
+    "Eb5 G5 Bb5 G5 Eb5 G5 Bb5 Eb6 D6 Bb5 G5 Bb5 D6 Bb5 G5 Eb5", "E5 G5 Bb5 G5 E5 G5 C6 E6 Eb6 C6 Bb5 G5 E5 G5 Bb5 C6",
+    "F6 - Eb6 - C6 - Ab5 - F5 - Ab5 - C6 - F6 -", "Db6 - C6 - Ab5 - F5 - Db5 - F5 - Ab5 - Db6 -",
+    "Bb5 - Db6 - F6 - Ab6 - F6 - Db6 - Bb5 - F5 -", "E5 G5 Bb5 C6 E6 G6 - - Eb6 - C6 - Bb5 - G5 -",
+  ],
+  chords: BLAST_CHORDS, bass: ["double", "gallop", "double", "gallop", "octave", "octave", "slide", "stab"], kit: ["blast", "blast", "blast", "fill", "doubleTime", "doubleTime", "blast", "fill"], counters: "none", after: "Fm", feel: "drive",
+});
+
+/* The stomping riff once more, a minor third up in F minor, its first four bars only. */
+const OUTRO_LINES = RIFF_LINES.slice(0, 4).map((l) => transposeLine(l, 3, true));
+const EXC_OUT = section({
+  leads: OUTRO_LINES, chords: RIFF_CHORDS.slice(0, 4).map((c) => transposeChord(c, 3, true)), bass: ["stomp", "stomp", "roll", "sway"], kit: ["stomp", "stomp", "pound", "fill"], counters: "rest", after: "Fm", feel: "stomp",
+});
+
+const EXC = join(EXC_PRELUDE, EXC_INTRO, EXC_RIFF, EXC_GRIND, EXC_CHORALE, EXC_BLAST, EXC_OUT);
+
+export const EXCAVATOR_THEME: Song = {
+  bpm: 102, lead: "guitar", layer: "brass", pad: "organ", bassVoice: "picked", drums: "battle", riff: "waltz12",
+  performance: EXC.performance, crashes: EXC.starts.slice(1), fills: [], riser: [EXC.starts[4] - 2, EXC.starts[4] - 1],
+  sections: [
+    { from: 0, lead: "organ", layer: "brass", pad: "strings", counter: undefined },
+    { from: EXC.starts[1], lead: "organ", layer: undefined, pad: undefined, counter: undefined },
+    { from: EXC.starts[2], lead: "guitar", layer: "brass", pad: "organ", counter: undefined, bassVoice: "picked" },
+    { from: EXC.starts[3], lead: "organ", layer: "guitar", pad: undefined, counter: undefined, bassVoice: "slap" },
+    { from: EXC.starts[4], lead: "trumpet", layer: "violin", pad: "strings", counter: undefined, bassVoice: "picked" },
+    { from: EXC.starts[5], lead: "violin", layer: "guitar", pad: "organ", counter: "piano", bassVoice: "picked" },
+    { from: EXC.starts[6], lead: "guitar", layer: "brass", pad: "organ", counter: undefined, bassVoice: "picked" },
+  ],
+  bars: EXC.bars,
+};

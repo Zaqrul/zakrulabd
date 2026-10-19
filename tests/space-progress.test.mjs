@@ -123,3 +123,16 @@ test("a run keeps the chances it has left, and a spent chance is never handed ba
   assert.equal(furthest(spent, fresh), spent);
   assert.equal(furthest({ ...run(5, 100), chances: 2 }, spent).chapter, 5, "a later chapter still wins");
 });
+
+test("Space 3 saves apart from Space 1 and 2, from its second chapter (18) to its last (28)", async () => {
+  const { LIMITS3, parseProgress, progressKey } = await import("../src/components/games/space-progress.ts");
+  const run = (chapter) => ({ chapter, score: 10, weapon: 1, level: 1, extra: 0 });
+  assert.deepEqual(LIMITS3, { first: 17, last: 28, ready: 28 });
+  assert.equal(parseProgress(run(17), 3), null, "its first chapter is not a saved run");
+  assert.equal(parseProgress(run(18), 3).chapter, 18);
+  assert.equal(parseProgress(run(28), 3).chapter, 28);
+  assert.equal(parseProgress(run(29), 3), null);
+  assert.equal(parseProgress(run(18), 2), null, "a Space 3 chapter is no Space 2 run");
+  assert.equal(parseProgress(run(10), 3), null);
+  assert.equal(new Set([1, 2, 3].map((c) => progressKey("a", c))).size, 3);
+});

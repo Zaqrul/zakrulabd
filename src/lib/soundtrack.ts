@@ -5,14 +5,16 @@
    every Space 2 tune) list the games' own tunes only; the other bonus tunes stay in the engines, unlisted. */
 import type { NesTrack } from "@/components/games/space-music";
 import type { AlternateSagaTrack, BaseSagaTrack } from "@/components/games/space2-music";
+import type { Space3Track } from "@/components/games/space3-music";
 
-export type Album = "space" | "space2" | "space2alt";
+export type Album = "space" | "space2" | "space2alt" | "space3";
 type Name = readonly [en: string, ms: string];
 
 export type Track =
   | { album: "space"; engine: NesTrack; title: Name; variation?: number; boss?: Name; bonus?: true }
   | { album: "space2"; engine: BaseSagaTrack; title: Name; variation?: number; boss?: Name; bonus?: true }
-  | { album: "space2alt"; engine: AlternateSagaTrack; title: Name; variation?: number; boss?: Name; bonus?: true };
+  | { album: "space2alt"; engine: AlternateSagaTrack; title: Name; variation?: number; boss?: Name; bonus?: true }
+  | { album: "space3"; engine: Space3Track; title: Name; variation?: number; boss?: Name; bonus?: true };
 
 const BOSSES_1: Name[] = [
   ["Siege Tank", "Kereta Kebal Pengepungan"], ["Iron Flagship", "Kapal Perang Besi"], ["Artillery Hermit", "Ketam Artileri"], ["Hive Carrier", "Kapal Induk Sarang"],
@@ -111,7 +113,51 @@ export const SPACE2_ALTERNATE_TRACKS: Track[] = SPACE2_ALL.filter((track) => !tr
   ...track, album: "space2alt", engine: `alt:${track.engine}` as AlternateSagaTrack,
 }));
 
-export const ALBUMS: Record<Album, Track[]> = { space: SPACE_TRACKS, space2: SPACE2_TRACKS, space2alt: SPACE2_ALTERNATE_TRACKS };
+/* Space 3: run-and-gun fusion with an orchestral-rock heart. So far the tunes for chapter 1. */
+export const SPACE3_TRACKS: Track[] = [
+  { album: "space3", engine: "s3title", title: S("Gate in the Dark", "Gate in the Dark") },
+  { album: "space3", engine: "s3hangar", title: S("Hangar: Before the Gate", "Hangar: Before the Gate") },
+  { album: "space3", engine: "s3hangar2", title: S("Hangar: Night Watch", "Hangar: Night Watch") },
+  { album: "space3", engine: "s3hangar3", title: S("Hangar: Before the Long Dark", "Hangar: Before the Long Dark") },
+  { album: "space3", engine: "s3fanfare", title: S("Take-off", "Take-off") },
+  { album: "space3", engine: "s3stage1", title: S("Battle: Phobos Run", "Battle: Phobos Run") },
+  { album: "space3", engine: "s3stage2", title: S("Battle: Ceres Foundry", "Battle: Ceres Foundry") },
+  { album: "space3", engine: "s3stage3", title: S("Battle: Cryo-Crags", "Battle: Cryo-Crags") },
+  { album: "space3", engine: "s3stage4", title: S("Battle: Kharn Wreckage", "Battle: Kharn Wreckage") },
+  { album: "space3", engine: "s3stage5", title: S("Battle: Uranian Shear", "Battle: Uranian Shear") },
+  { album: "space3", engine: "s3stage6", title: S("Battle: Triton Geysers", "Battle: Triton Geysers") },
+  { album: "space3", engine: "s3stage7", title: S("Battle: Kuiper Graveyard", "Battle: Kuiper Graveyard") },
+  { album: "space3", engine: "s3stage8", title: S("Battle: Heliopause", "Battle: Heliopause") },
+  { album: "space3", engine: "s3stage9", title: S("Battle: Oort Abyss", "Battle: Oort Abyss") },
+  { album: "space3", engine: "s3stage10", title: S("Battle: The Megastructure", "Battle: The Megastructure") },
+  { album: "space3", engine: "s3stage11", title: S("Battle: Flagship Breach", "Battle: Flagship Breach") },
+  { album: "space3", engine: "s3stage12", title: S("Battle: Hypergate Horizon", "Battle: Hypergate Horizon") },
+  { album: "space3", engine: "s3alert", title: S("Warning: Ghost Signal", "Warning: Ghost Signal") },
+  { album: "space3", engine: "s3alert2", title: S("Warning: Deep Signal", "Warning: Deep Signal") },
+  { album: "space3", engine: "s3alert3", title: S("Warning: Event Horizon", "Warning: Event Horizon") },
+  { album: "space3", engine: "s3boss1", title: S("Showdown", "Showdown"), boss: S("Ghost Corvet", "Ghost Corvet") },
+  { album: "space3", engine: "s3boss2", title: S("Showdown", "Showdown"), boss: S("Excavator-X", "Excavator-X") },
+  { album: "space3", engine: "s3boss3", title: S("Showdown", "Showdown"), boss: S("Abyssal Wyrm", "Abyssal Wyrm") },
+  { album: "space3", engine: "s3boss4", title: S("Showdown", "Showdown"), boss: S("Armada Reclaimer", "Armada Reclaimer") },
+  { album: "space3", engine: "s3boss5", title: S("Showdown", "Showdown"), boss: S("Tempest Raider", "Tempest Raider") },
+  { album: "space3", engine: "s3boss6", title: S("Showdown", "Showdown"), boss: S("Cryo-Colossus", "Cryo-Colossus") },
+  { album: "space3", engine: "s3boss7", title: S("Showdown", "Showdown"), boss: S("Iron Goliath", "Iron Goliath") },
+  { album: "space3", engine: "s3boss8", title: S("Showdown", "Showdown"), boss: S("Aegis-Null", "Aegis-Null") },
+  { album: "space3", engine: "s3boss9", title: S("Showdown", "Showdown"), boss: S("Void Stalker", "Void Stalker") },
+  { album: "space3", engine: "s3boss10", title: S("Showdown", "Showdown"), boss: S("Ring Keeper", "Ring Keeper") },
+  { album: "space3", engine: "s3boss11", title: S("Showdown", "Showdown"), boss: S("The Warmaster", "The Warmaster") },
+  { album: "space3", engine: "s3boss12", title: S("Showdown", "Showdown"), boss: S("The Herald", "The Herald") },
+  { album: "space3", engine: "s3boss12b", title: S("Showdown", "Showdown"), boss: S("The Herald, Singularity", "The Herald, Singularity") },
+  { album: "space3", engine: "s3boss12c", title: S("Showdown", "Showdown"), boss: S("The Herald, True Form", "The Herald, True Form") },
+  { album: "space3", engine: "s3victory", title: S("Sortie Complete", "Sortie Complete") },
+  { album: "space3", engine: "s3pause", title: S("Drifting", "Drifting") },
+  { album: "space3", engine: "s3gameover", title: S("Signal Lost Beyond the Sun", "Signal Lost Beyond the Sun") },
+  { album: "space3", engine: "s3ending", title: S("Through the Gate", "Through the Gate") },
+  { album: "space3", engine: "s3bonus1", title: S("Outer Extremity", "Outer Extremity"), bonus: true },
+  { album: "space3", engine: "s3bonus2", title: S("Hypergate Requiem", "Hypergate Requiem"), bonus: true },
+];
+
+export const ALBUMS: Record<Album, Track[]> = { space: SPACE_TRACKS, space2: SPACE2_TRACKS, space2alt: SPACE2_ALTERNATE_TRACKS, space3: SPACE3_TRACKS };
 
 /* "Showdown: Siege Tank"; a track may still carry a variation number, shown after its title. */
 export function trackTitle(track: Track, lang: "en" | "ms") {

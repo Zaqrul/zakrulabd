@@ -1,0 +1,63 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { SagaMusic } from "../src/components/games/space2-music.ts";
+import { SPACE3_SONGS } from "../src/components/games/space3-music.ts";
+import { ALBUMS, trackTitle } from "../src/lib/soundtrack.ts";
+import { midiOf } from "../src/components/games/space-music.ts";
+import { transposeLine } from "../src/components/games/space3-groove.ts";
+
+function playback(id) {
+  const song = SPACE3_SONGS[id], engine = new SagaMusic(), ctx = { currentTime: 0 }, events = [];
+  const total = song.bars.reduce((n, b) => n + b[0].split(/\s+/).length, 0);
+  engine.prepare = (audio) => { engine.ctx = audio; engine.bus = {}; };
+  for (const method of ["voice", "bass", "drum", "riser"]) engine[method] = (...args) => events.push({ step: engine.step, method, args });
+  try {
+    engine.start(ctx, {}, id);
+    for (let i = 0; i < total; i++) { ctx.currentTime = engine.nextTime; engine.schedule(); }
+    return events;
+  } finally { engine.stop(); }
+}
+
+test("Space 3 lists its pilot as its own album and plays through the shared scheduler", () => {
+  assert.deepEqual(ALBUMS.space3.map((t) => t.engine), Object.keys(SPACE3_SONGS));
+  assert.ok(ALBUMS.space3.every((t) => t.album === "space3" && trackTitle(t, "en").length > 2 && trackTitle(t, "ms").length > 2));
+  assert.ok(playback("s3stage1").length > 0);
+});
+
+test("Phobos Run changes band by part: guitar run, brass and chip hook, an answer with violin, a jazz interlude, a violin middle, a guitar solo, a last hook", () => {
+  const song = SPACE3_SONGS.s3stage1, events = playback("s3stage1");
+  const start = (bar) => song.bars.slice(0, bar).reduce((n, b) => n + b[0].split(/\s+/).length, 0);
+  const voices = (bar) => new Set(events.filter((e) => e.method === "voice" && e.step >= start(bar) && e.step < start(bar + 1)).map((e) => e.args[0]));
+  assert.equal(song.bars.length, 52);
+  assert.ok(voices(0).has("guitar") && !voices(0).has("trumpet"), "the run");
+  assert.ok(voices(5).has("trumpet") && voices(5).has("chip"), "the hook is brass doubled by the Space 1 chip");
+  assert.ok(voices(13).has("trumpet") && voices(13).has("violin") && voices(13).has("chip"), "the answer adds the violin and the chip an octave above");
+  assert.ok(voices(21).has("trumpet") && !voices(21).has("violin") && !voices(21).has("chip"), "the jazz interlude is the trumpet alone");
+  assert.ok(voices(25).has("violin") && !voices(25).has("trumpet"), "the lyrical middle");
+  assert.ok(voices(33).has("guitar") && voices(33).has("organ"), "the solo");
+  assert.ok(voices(43).has("trumpet") && voices(43).has("violin") && voices(43).has("chip"), "the last hook has all three");
+});
+
+test("Phobos Run keeps its approved Gate hook and develops it: the answer climbs, a jazz interlude in six, the last hook lifts a whole tone", () => {
+  const song = SPACE3_SONGS.s3stage1;
+  const notes = (line) => line.trim().split(/\s+/).filter((c) => c !== "-" && c !== ".").map(midiOf);
+  const lines = (a, b) => song.bars.slice(a, b).map((x) => x[0]);
+  assert.equal(lines(4, 5)[0], "A4 . C5 E5 - - D5 . C5 - A4 - E4 - A4 -", "the hook");
+  assert.notDeepEqual(lines(4, 12), lines(12, 20), "the answer is not the hook again");
+  assert.equal(lines(12, 13)[0].split(" ")[0], "C5", "the answer starts a step up");
+  assert.deepEqual(song.bars.slice(20, 24).map((b) => b[0].trim().split(/\s+/).length), [12, 12, 12, 12], "the interlude is in six");
+  lines(42, 49).forEach((l, i) => assert.equal(l, transposeLine(lines(4, 12)[i], 2), `last hook bar ${i + 1}`));
+  const all = song.bars.flatMap((b) => notes(b[0]));
+  const top = Math.max(...all);
+  const topBars = song.bars.map((b, i) => (notes(b[0]).includes(top) ? i : -1)).filter((i) => i >= 0);
+  assert.ok(topBars.every((i) => i >= 26), "the highest note falls in the second half");
+  for (let i = 1; i < song.bars.length; i++) assert.notEqual(song.bars[i][0], song.bars[i - 1][0], `bar ${i + 1} is not a copy of the bar before`);
+});
+
+test("every Space 3 tune plays through, and the victory fanfare hands on to the hangar", () => {
+  for (const id of Object.keys(SPACE3_SONGS)) assert.ok(playback(id).some((e) => e.method === "voice"), id);
+  assert.equal(SPACE3_SONGS.s3victory.once, true);
+  assert.equal(SPACE3_SONGS.s3victory.then, "s3hangar");
+  for (const t of ALBUMS.space3) assert.equal(trackTitle(t, "en"), trackTitle(t, "ms"), "Space 3 is English in both languages");
+});
+

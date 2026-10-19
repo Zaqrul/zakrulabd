@@ -1,0 +1,91 @@
+/* ORB rescue escort: a blunt cabin behind a curved catching plate. No beak,
+   dorsal blades, low wing or gunpod. Geometry stays centred on Aegis's 8px
+   catching circle. Effects read state and inherit the caller's down fade. */
+import type { State } from "./space-logic";
+import { AEGIS } from "./space3-aegis";
+
+const INK = "#171717", WHITE = "#f3f6f1", TEAL = "#5eead4";
+const DEEP = "#0f766e", ORANGE = "#fb923c", AMBER = "#fbcf33";
+
+export function drawThirdKite(ctx: CanvasRenderingContext2D, s: State, x: number, y: number, reduceMotion = false) {
+  const a = s.aegis;
+  if (s.chapter < 17 || !a || s.phase === "dead") return;
+  const down = a.down > 0;
+  const low = !down && a.hp / AEGIS.hp < 0.3;
+  const catching = !down && a.flash > 0;
+  const t = reduceMotion ? 0 : s.frame;
+  const opacity = ctx.globalAlpha;
+  ctx.save(); ctx.translate(x, y); ctx.lineJoin = "round";
+  const panel = (points: number[][], fill: string) => {
+    ctx.beginPath(); points.forEach(([px, py], i) => i ? ctx.lineTo(px, py) : ctx.moveTo(px, py));
+    ctx.closePath(); ctx.fillStyle = fill; ctx.fill();
+    ctx.strokeStyle = INK; ctx.lineWidth = 0.7; ctx.stroke();
+  };
+  const arc = (radius: number, start: number, end: number, colour: string, width: number) => {
+    ctx.beginPath(); ctx.arc(0, 0, radius, start, end);
+    ctx.strokeStyle = colour; ctx.lineWidth = width; ctx.stroke();
+  };
+
+  // Short paired engines push the shield from behind, with no weapon opening.
+  for (const side of [-1, 1]) {
+    if (!down) {
+      const length = reduceMotion ? 2 : 1.8 + Math.sin(t / 3 + side) * 0.5;
+      panel([[-6.8, side * 3 - 1], [-9 - length, side * 3], [-6.8, side * 3 + 1]], DEEP);
+      ctx.fillStyle = TEAL; ctx.fillRect(-8.6, side * 3 - 0.4, 1.8, 0.8);
+    }
+    panel([[-7.5, side * 3 - 1.4], [-3.5, side * 3 - 1.4], [-3, side * 3 + 1.4], [-7.5, side * 3 + 1.4]], down ? "#47545a" : DEEP);
+  }
+  // Rounded rescue cabin; the orange badge reads at native game resolution.
+  ctx.beginPath(); ctx.ellipse(-2.8, 0, 4.7, 4.1, 0, 0, Math.PI * 2);
+  ctx.fillStyle = down ? "#526065" : catching ? "#ffffff" : WHITE; ctx.fill();
+  ctx.strokeStyle = INK; ctx.lineWidth = 0.8; ctx.stroke();
+  panel([[-5.5, -2], [-2, -2.6], [-0.8, -0.8], [-5.3, -0.2]], down ? "#263c40" : DEEP);
+  ctx.fillStyle = down ? "#53605f" : TEAL; ctx.fillRect(-4.7, -1.6, 2.4, 0.7);
+  ctx.fillStyle = down ? "#665c4d" : ORANGE;
+  ctx.fillRect(-3.2, 0.8, 1.1, 2.6); ctx.fillRect(-4, 1.5, 2.7, 1.1);
+
+  // The broad crescent faces incoming fire, spanning the actual catching radius.
+  ctx.beginPath(); ctx.arc(0, 0, AEGIS.radius, -1.16, 1.16);
+  ctx.lineTo(Math.cos(1.16) * 4.9, Math.sin(1.16) * 4.9);
+  ctx.arc(0, 0, 4.9, 1.16, -1.16, true); ctx.closePath();
+  ctx.fillStyle = down ? "#596668" : catching ? "#ffffff" : WHITE; ctx.fill();
+  ctx.strokeStyle = INK; ctx.lineWidth = 0.85; ctx.stroke();
+  arc(6.5, -1.12, 1.12, down ? "#314b4d" : DEEP, 1.2);
+  arc(7.35, -1.08, 1.08, down ? "#657776" : TEAL, 0.8);
+  for (const side of [-1, 1]) arc(6.6, side * 0.77 - 0.1, side * 0.77 + 0.1, down ? "#716452" : ORANGE, 2.1);
+  ctx.fillStyle = down ? "#626452" : AMBER; ctx.fillRect(0.2, -0.55, 1.1, 1.1);
+  if (!down && !reduceMotion) {
+    const start = -0.9 + (Math.sin(t / 40) + 1) * 0.7;
+    arc(5.3, start, start + 0.35, "rgb(243 246 241 / 0.6)", 0.6);
+  }
+  if (catching) {
+    const progress = 1 - Math.min(1, a.flash / 6);
+    ctx.globalAlpha = opacity * (1 - progress * 0.65);
+    arc(reduceMotion ? 8.7 : 8.2 + progress * 3, -1.25, 1.25, "#ffffff", 1.1);
+    ctx.globalAlpha = opacity;
+  }
+  if (low) {
+    // Localised sparks and broken trim; never blink the whole ship away.
+    arc(6.5, 0.1, 0.55, INK, 1.6);
+    ctx.globalAlpha = opacity * (reduceMotion ? 0.85 : 0.65 + Math.sin(t / 4) * 0.25);
+    ctx.strokeStyle = ORANGE; ctx.lineWidth = 0.7;
+    const offset = reduceMotion ? 0 : (t % 8) * 0.13;
+    ctx.beginPath(); ctx.moveTo(7, 2); ctx.lineTo(9 + offset, 1); ctx.moveTo(6, 3); ctx.lineTo(8 + offset, 5); ctx.stroke();
+    ctx.globalAlpha = opacity;
+  }
+  if (down) {
+    for (let i = 0; i < 3; i++) {
+      const age = reduceMotion ? 10 + i * 8 : (t + i * 12) % 36;
+      ctx.globalAlpha = opacity * (0.85 - age / 55);
+      ctx.beginPath(); ctx.arc(-5 + i * 1.3, -4 - age * 0.13, 1 + age * 0.035, 0, Math.PI * 2);
+      ctx.fillStyle = "#b4bdc4"; ctx.fill();
+    }
+    if (a.down < 60) {
+      const pulse = reduceMotion ? 0.8 : 0.55 + (Math.sin(t / 5) + 1) * 0.22;
+      ctx.globalAlpha = Math.min(1, opacity * 2.5) * pulse;
+      arc(9.2, -1.2, 1.2, AMBER, 1.1);
+      ctx.fillStyle = AMBER; ctx.fillRect(-1, -1, 2, 2);
+    }
+  }
+  ctx.restore();
+}

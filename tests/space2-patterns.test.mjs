@@ -82,14 +82,59 @@ for (const { ch, kind, mini } of everyPattern.filter(p => aimed.includes(p.kind)
   assert.deepEqual({ spots: a.spots, lanes: a.lanes, cols: a.cols, gapAngle: a.gapAngle }, lock);
 });
 
-test('starting a new pattern removes its owner tail and preserves unrelated actors and scenery', () => {
-  for (const mini of [false, true]) {
-    const { s, e, a } = scenario(9, mini ? 'sweepgun' : 'railshot', mini);
+test('all Space 2 bosses and mini bosses keep launched ordnance across ordinary pattern changes', () => {
+  for (let ch = 9; ch <= 16; ch++) for (const mini of [false, true]) {
+    const { s, e, a } = scenario(ch, (mini ? miniKinds : bossKinds)[ch - 9][0], mini);
     a.t = a.warn + a.live + a.recover - 1;
-    const own = { x: 310, y: 36, vx: 0, vy: 0, r: 2, own: 'e', dmg: 1, kind: 'orb', patternOwner: e.id, life: 999 };
+    const own = { x: 210, y: 36, vx: -1, vy: 0, r: 2, own: 'e', dmg: 1, kind: 'orb', patternOwner: e.id, life: 8 };
     const other = { ...own, patternOwner: 99999 }; s.bullets = [own, other];
+    const held = { ...own, x: 220, y: 40, vx: 0, hold: 4, hvx: -2, hvy: 0, life: 10 };
+    s.bullets.push(held);
+    const beam = { x0: 310, y: 20, h: 4, t: 0, warn: 0, live: 5, patternOwner: e.id };
+    s.beams = [beam];
+    const charge = { x: 230, y: 150, sx: 230, sy: 150, tx: 230, ty: 150, t: 5, kind: 'deckbomb', patternOwner: e.id };
+    s.charges = [charge];
     const scenery = { id: 9000, kind: 'strike', x: 350, w: 8, g: [9999, 10, 2], half: 20, base: 24, t: 0 }; s.hazards = [scenery];
-    advance(s, 2); assert(!s.bullets.includes(own)); assert(s.bullets.includes(other)); assert(s.hazards.includes(scenery));
+    const context = `${mini ? 'mini' : 'boss'} ${ch - 8}`;
+    advance(s, 2);
+    assert(e.attack && e.attack !== a, `${context}: a new pattern began`);
+    assert(s.bullets.includes(own), `${context}: launched round survived`);
+    assert.equal(own.x, 208); assert.equal(own.life, 6);
+    assert(s.bullets.includes(other)); assert(s.bullets.includes(held));
+    assert.equal(held.hold, 2); assert.equal(held.vx, 0);
+    assert(s.beams.includes(beam)); assert.equal(beam.t, 2);
+    assert(s.charges.includes(charge)); assert.equal(charge.t, 7);
+    assert(s.hazards.includes(scenery));
+    advance(s, 3);
+    assert(!s.beams.includes(beam), `${context}: beam still expires naturally`);
+    assert.equal(held.vx, -2, `${context}: held round still releases`);
+    advance(s, 3);
+    assert(!s.bullets.includes(own), `${context}: round still expires naturally`);
+  }
+});
+
+test('an airburst from the previous pattern still splits after the next pattern starts', () => {
+  for (const mini of [false, true]) {
+    const { s, e, a } = scenario(9, mini ? 'sweepgun' : 'volley', mini);
+    a.t = a.warn + a.live + a.recover - 1;
+    const shell = { x: 210, y: 36, vx: -1, vy: 0, r: 3, own: 'e', dmg: 1, kind: 'orb', patternOwner: e.id, life: 40, fuse: 3, split: 6, splitKind: 'needle' };
+    s.bullets = [shell];
+    advance(s, 2); assert(s.bullets.includes(shell)); assert.equal(shell.fuse, 1);
+    advance(s);
+    assert(!s.bullets.includes(shell));
+    const fragments = s.bullets.filter(b => b.own === 'e');
+    assert.equal(fragments.length, 6); assert(fragments.every(b => b.patternOwner === e.id && b.kind === 'needle'));
+  }
+});
+
+test('mini-boss retreat still clears its own ordnance and preserves another actor\'s shots', () => {
+  for (let ch = 9; ch <= 16; ch++) {
+    const { s, e } = scenario(ch, miniKinds[ch - 9][0], true);
+    e.t = MINI.stay + 1;
+    const own = { x: 210, y: 36, vx: -1, vy: 0, r: 2, own: 'e', dmg: 1, kind: 'orb', patternOwner: e.id, life: 40 };
+    const other = { ...own, patternOwner: 99999 }; s.bullets = [own, other];
+    advance(s);
+    assert(!s.bullets.includes(own)); assert(s.bullets.includes(other)); assert.equal(e.attack, undefined);
   }
 });
 

@@ -8,12 +8,12 @@
    things to shoot as well as the big ones. */
 import type { EType, HKind } from "./space-logic";
 
-type Plan = { t: number; type: EType | HKind; y: number; a?: number; x?: number; g?: number[] };
+export type Plan = { t: number; type: EType | HKind; y: number; a?: number; x?: number; g?: number[] };
 
 const H = 216;
 const clamp = (v: number, lo: number, hi: number) => Math.min(hi, Math.max(lo, v));
 
-class Script {
+export class Script {
   out: Plan[] = [];
   add(t: number, type: EType, y = 0, a = 0) {
     this.out.push({ t, type, y: clamp(y, 18, H - 18), a });

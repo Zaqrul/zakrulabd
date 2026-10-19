@@ -112,18 +112,31 @@ test("a shot that hangs waits, then flies; a shot with a fuse bursts into a ring
   assert.equal(s.bullets.filter((b) => b.own === "e").length, 6);
 });
 
-test("the last boss of each game draws no warnings, and every other boss still does", async () => {
-  const { hidesTells, hazardWarning, FLARE_WARN } = await import("../src/components/games/space-logic.ts");
-  for (const [ch, final] of [[8, true], [16, true], [1, false], [9, false], [15, false]]) {
+test("Space 1 and 2 boss encounters hide prediction overlays, while Space 3 keeps them", async () => {
+  const { hidesTells, hidesAttackPrediction, hazardWarning, FLARE_WARN } = await import("../src/components/games/space-logic.ts");
+  for (let ch = 1; ch <= 19; ch++) {
     const s = bossCheckpoint(createState(ch));
     s.p.inv = 1e9;
-    for (let i = 0; i < 400 && !s.enemies.some((e) => e.id === s.bossId); i++) { s.talk = null; step(s, { mx: 0, my: 0, bomb: false }); }
-    assert.equal(hidesTells(s), final, `chapter ${ch}`);
+    for (let i = 0; i < 400 && !s.enemies.some((e) => e.id === s.bossId && e.x < 384); i++) { s.talk = null; step(s, { mx: 0, my: 0, bomb: false }); }
+    assert.equal(hidesTells(s), ch <= 16, `chapter ${ch}`);
+    assert.equal(hidesAttackPrediction({ type: `boss${ch}` }), ch <= 16);
+  }
+  for (let ch = 9; ch <= 16; ch++) {
+    const s = createState(ch);
+    const mini = { id: 999, type: `mini${ch}`, hp: 50, x: 260, w: 60 };
+    s.enemies = [mini]; s.bossId = 0;
+    assert.equal(hidesTells(s), true, `mini ${ch} needs no chapter-boss ID`);
+    assert.equal(hidesAttackPrediction(mini), true);
+    mini.hp = 0; assert.equal(hidesTells(s), false, "a defeated mini does not hide later wave cues");
+    mini.hp = 50; mini.x = 500; assert.equal(hidesTells(s), false, "off-screen mini does not hide wave cues");
   }
   assert.equal(hidesTells(createState(16)), false, "not before the boss arrives");
+  assert.equal(hidesAttackPrediction({ type: "seeker" }), false, "regular enemy targeting stays separate");
   const strike = { kind: "strike", t: 5, g: [10, 20, 0] };
   assert.equal(hazardWarning(strike), true);
   assert.equal(hazardWarning({ ...strike, t: 12 }), false, "a strike that has gone live is drawn");
   assert.equal(hazardWarning({ kind: "flare", t: FLARE_WARN - 1, g: [] }), true);
   assert.equal(hazardWarning({ kind: "flare", t: FLARE_WARN, g: [] }), false);
+  assert.equal(hazardWarning({ kind: "twister", t: 9, g: [10, 30] }), true);
+  assert.equal(hazardWarning({ kind: "twister", t: 10, g: [10, 30] }), false, "a live twister stays visible");
 });

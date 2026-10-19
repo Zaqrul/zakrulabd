@@ -1,0 +1,87 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { SONGS as SPACE } from "../src/components/games/space-music.ts";
+import { SONGS as SPACE2 } from "../src/components/games/space2-music.ts";
+import { SPACE3_SONGS } from "../src/components/games/space3-music.ts";
+import { S1_HANGAR, S1_STAGE, S1_TITLE, S1_VICTORY, S2_TITLE, S2_VICTORY } from "../src/components/games/space3-motifs.ts";
+import { transposeLine } from "../src/components/games/space3-groove.ts";
+
+const lines = (song) => song.bars.map((b) => b[0]);
+const has = (song, line) => lines(song).includes(line);
+const counters = (song) => song.bars.map((b) => b[3]).filter(Boolean);
+
+test("the quoted motifs are exactly what Space 1 and Space 2 play", () => {
+  const same = (motifs, bars) => motifs.forEach((m, i) => { assert.equal(m.line, bars[i][0]); assert.equal(m.chord, bars[i][1]); });
+  same(S1_TITLE, SPACE.title.bars);
+  same(S1_STAGE, SPACE.stage.bars);
+  same(S1_HANGAR, SPACE.hangar.bars);
+  same([S1_VICTORY], SPACE.victory.bars);
+  same(S2_TITLE, SPACE2.s2title.bars);
+  same([S2_VICTORY], SPACE2.s2victory.bars);
+});
+
+test("the title opens on Space 1's Starfall phrase, then Space 2's Orbit Overture a fifth up", () => {
+  const t = SPACE3_SONGS.s3title;
+  assert.ok(has(t, S1_TITLE[0].line), "Starfall, as the fanfare");
+  assert.ok(has(t, transposeLine(S2_TITLE[0].line, 7)) && has(t, transposeLine(S2_TITLE[1].line, 7)), "Orbit Overture, in A minor");
+  assert.equal(t.sections[0].lead, "brass", "the title uses real instruments only");
+  assert.equal(t.sections[1].lead, "trumpet");
+  const voices = new Set(t.sections.flatMap((s) => [s.lead, s.layer, s.counter]).filter(Boolean));
+  assert.ok(!voices.has("chip"), "no 8-bit voice anywhere in the title");
+  assert.ok(t.bars[0][0] === S1_TITLE[0].line);
+});
+
+test("the lift to C minor carries Starfall bent into the minor, on a violin", () => {
+  const t = SPACE3_SONGS.s3title;
+  assert.ok(counters(t).some((c) => c.startsWith("Eb5 - - - G5 - C6")), "E and B lowered to E flat and B flat");
+});
+
+test("the lullaby has Space 1's hangar tune, a fifth down and in six, on the chip", () => {
+  const h = SPACE3_SONGS.s3hangar;
+  const c = counters(h).filter((line) => /[A-G]/.test(line));
+  assert.equal(c.length, 2, "in the first lullaby, twice");
+  assert.ok(c.every((x) => x.trim().split(/\s+/).length === 12));
+  const notes = (l) => l.split(/\s+/).filter((x) => /^[A-G]/.test(x));
+  const quoted = notes(c[0]).map((n) => n.replace(/\d/, "")).join(" ");
+  assert.equal(quoted, "F# A F# E D");
+  const original = notes(S1_HANGAR[0].line).map((n) => n.replace(/\d/, "")).join(" ");
+  assert.equal(original, "A C A G F", "the same contour: up a third, back, down by steps");
+});
+
+test("the victory is Space 1's fanfare then Space 2's, in D major, into the hangar's D major", () => {
+  const v = SPACE3_SONGS.s3victory;
+  assert.equal(v.bars[0][0], transposeLine(S1_VICTORY.line, 2));
+  assert.equal(v.bars[1][0], transposeLine(S2_VICTORY.line, 4));
+  assert.deepEqual(v.bars.map((b) => b[1]), ["D", "D", "A7", "D"]);
+  assert.equal(v.then, "s3hangar");
+});
+
+test("Ghost Corvet's lead-out brings Starfall back in seven, on the chip with the brass", () => {
+  const c = SPACE3_SONGS.s3boss1;
+  const at = c.bars.findIndex((b) => b[0].trim().split(/\s+/).length === 14);
+  const quote = c.bars.slice(at, at + 3).map((b) => b[0]);
+  const names = (l) => l.split(/\s+/).filter((x) => /^[A-G]/.test(x)).map((n) => n.replace(/\d/, ""));
+  assert.deepEqual(names(quote[0]), ["E", "G", "C", "B", "C", "D"], "the opening of Starfall");
+  assert.deepEqual(names(S1_TITLE[0].line), ["E", "G", "C", "B", "C", "D"]);
+  assert.deepEqual(names(quote[2]), ["B", "G", "D", "G"], "and its second bar");
+  const section = c.sections.find((s) => s.from === at);
+  assert.equal(section.lead, "chip");
+  assert.equal(section.layer, "trumpet");
+});
+
+test("Excavator-X's chorale is the whole of Space 2's Orbit Overture, note for note, in its own key", () => {
+  const e = SPACE3_SONGS.s3boss2;
+  const at = e.bars.findIndex((b, i) => b[0] === S2_TITLE[0].line);
+  assert.ok(at > 0);
+  S2_TITLE.forEach((m, i) => { assert.equal(e.bars[at + i][0], m.line, `bar ${i + 1}`); assert.equal(e.bars[at + i][1], m.chord); });
+});
+
+test("the Wyrm's surge runs on Space 1's first stage, whose own line plays on the chip, and again a step up", () => {
+  const w = SPACE3_SONGS.s3boss3;
+  const at = w.bars.findIndex((b) => b[3] === S1_STAGE[0].line);
+  assert.ok(at > 0);
+  S1_STAGE.forEach((m, i) => { assert.equal(w.bars[at + i][3], m.line); assert.equal(w.bars[at + i][1], m.chord, "on the same chords"); });
+  const up = w.bars.findIndex((b) => b[3] === transposeLine(S1_STAGE[0].line, 2));
+  assert.ok(up > at, "and again later, two semitones up");
+  assert.ok(w.sections.some((s) => s.counter === "chip"));
+});

@@ -10,8 +10,8 @@ const copy = {
   en: {
     heading: "Soundtrack",
     intro: "The Space soundtracks, bonus tracks and a complete alternate edition of Space 2.",
-    albums: { space: "Space", space2: "Space 2", space2alt: "Space 2: Ascension" } as Record<Album, string>,
-    albumNote: { space: "Chiptune on the four voices of an 8-bit console", space2: "A 16-bit orchestra with brass, strings and organ", space2alt: "New Codex melodies across the complete album, with written counter-melodies and changing orchestration" } as Record<Album, string>,
+    albums: { space: "Space", space2: "Space 2", space2alt: "Space 2: Ascension", space3: "Space 3: The Outer Gate" } as Record<Album, string>,
+    albumNote: { space: "Chiptune on the four voices of an 8-bit console", space2: "A 16-bit orchestra with brass, strings and organ", space2alt: "New Codex melodies across the complete album, with written counter-melodies and changing orchestration", space3: "Run-and-gun fusion meets an orchestral-rock score: brass hooks, piano and violin, a band that swells and thins" } as Record<Album, string>,
     nothing: "Pick a track to play",
     nowPlaying: "Now playing",
     play: "Play",
@@ -27,8 +27,8 @@ const copy = {
   ms: {
     heading: "Runut bunyi",
     intro: "Runut bunyi Space, lagu bonus dan edisi alternatif penuh Space 2.",
-    albums: { space: "Angkasa", space2: "Angkasa 2", space2alt: "Angkasa 2: Ascension" } as Record<Album, string>,
-    albumNote: { space: "Chiptune pada empat suara konsol 8-bit", space2: "Orkestra 16-bit dengan brass, tali dan organ", space2alt: "Melodi baharu gubahan Codex untuk seluruh album, dengan melodi iringan dan perubahan instrumen" } as Record<Album, string>,
+    albums: { space: "Angkasa", space2: "Angkasa 2", space2alt: "Angkasa 2: Ascension", space3: "Space 3: The Outer Gate" } as Record<Album, string>,
+    albumNote: { space: "Chiptune pada empat suara konsol 8-bit", space2: "Orkestra 16-bit dengan brass, tali dan organ", space2alt: "Melodi baharu gubahan Codex untuk seluruh album, dengan melodi iringan dan perubahan instrumen", space3: "Run-and-gun fusion meets an orchestral-rock score: brass hooks, piano and violin, a band that swells and thins" } as Record<Album, string>,
     nothing: "Pilih lagu untuk dimainkan",
     nowPlaying: "Sedang dimainkan",
     play: "Main",
@@ -263,7 +263,7 @@ export function SoundtrackView({ lang }: { lang: "en" | "ms" }) {
         </div>
       </div>
 
-      <div role="tablist" aria-label={t.heading} className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+      <div role="tablist" aria-label={t.heading} className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
         {(Object.keys(ALBUMS) as Album[]).map((id) => (
           <button
             key={id}

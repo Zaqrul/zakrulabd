@@ -1,0 +1,248 @@
+/* Space 3, chapter 1's tunes, each with its own genre, tempo, meter and kit (the reasoning is in
+   docs/space3-music-research.md). Every one carries the Gate theme, the hook of Phobos Run (a rising pickup to a held fifth, a
+   falling answer), treated its own way, and some of Space 1 and Space 2 (space3-motifs.ts).
+
+     Title        a march in real instruments only, no chip: military snare, a brass fanfare on Space 1's Starfall phrase,
+                  Space 2's Orbit Overture on trumpet and violin, a lift of a minor third, a lullaby bridge in six on the
+                  bell, and the theme again with a bell an octave above
+     Hangar       a lullaby in six: harp under a piano, a minor middle, Space 1's hangar tune on the chip
+     Warning      seven: a pulse in 7/8 with a tritone leaning on it, and a build that climbs to a held dominant
+     Ghost Corvet an orchestral-rock boss in the shape of a JRPG's: an eight-bar drumless prelude, a verse, a lyrical
+                  pre-chorus in a new key, a chorus in a third, a seven lead-out (Starfall returns), a half-time bridge in
+                  F minor, a last chorus a step down, an outro
+     Victory      a clave fanfare of Space 1 and Space 2 that lifts into the hangar
+
+   Written for this game; none copies a note from anything else except the quotations. Notation is Space 2's. */
+import type { Song } from "./space2-music";
+import { echoLine, join, rest, section, transposeChord, transposeLine } from "./space3-groove.ts";
+import { S1_TITLE, S1_VICTORY, S2_TITLE, S2_VICTORY } from "./space3-motifs.ts";
+
+/* ---------- Title: Gate in the Dark ---------- */
+
+const THEME = [
+  transposeLine(S2_TITLE[0].line, 7), transposeLine(S2_TITLE[1].line, 7),
+  "C5 - - F5 - - A5 - G5 - F5 - C5 - . .", "G5 - B5 - E6 - - - D6 - B5 - G5 - . .",
+  "F5 - - A5 - - C6 - D6 - C6 - A5 - . .", "D5 - - F5 - - A5 - G5 - F5 - D5 - . .",
+  "G#5 - - B5 - - D6 - C6 - B5 - G#5 - . .", "A5 - - - E5 - - - A5 - - - . . . .",
+];
+const THEME_CHORDS = ["Am", "G", "F", "Em", "F", "Dm", "E7", "Am"];
+
+const TITLE_PARTS = join(
+  // A drum-roll march and Space 1's Starfall phrase, on the brass.
+  section({ leads: [S1_TITLE[0].line, "B5 - - - G#5 - - - D5 - - - E5 - - -"], chords: ["Am", "E7"], bass: "stab", kit: "march", counters: "rest", feel: "march" }),
+  // The theme: Space 2's Orbit Overture a fifth up, then on.
+  section({ leads: THEME, chords: THEME_CHORDS, bass: ["walkUp", "walk", "slide", "walk"], kit: ["march", "march", "march", "rim"], counters: "rest", after: "Cm", feel: "march" }),
+  // It lifts a minor third into C minor, Starfall bent into the minor under it on a violin, and goes on to a second half.
+  section({
+    leads: [
+      "G5 - - C6 - - Eb6 - D6 - C6 - G5 - . .", "Eb5 - - Ab5 - - C6 - Bb5 - Ab5 - Eb5 - . .", "F5 - - Bb5 - - D6 - C6 - Bb5 - F5 - . .", "B5 - - D6 - - F6 - Eb6 - D6 - B5 - . .",
+      "F5 - - Ab5 - - C6 - Bb5 - Ab5 - F5 - . .", "Eb5 - - Ab5 - - C6 - Eb6 - C6 - Ab5 - . .", "D5 - B4 - D5 - F5 - G5 - B5 - D6 - F6 -", "G5 - - - Eb5 - - - C5 - - - . . . .",
+    ],
+    chords: ["Cm", "Ab", "Bb", "G7", "Fm", "Ab", "G7", "Cm"], bass: ["octave", "walkUp", "octave", "slide"], kit: ["halfTime", "halfTime", "halfTime", "tumble"],
+    counters: ["Eb5 - - - G5 - C6 - - - Bb5 - C6 - D6 -", rest(16), rest(16), rest(16), rest(16), rest(16), rest(16), rest(16)], after: "Ab", feel: "lyric",
+  }),
+  // A bridge in six, a lullaby that turns the key back toward A through a flat sixth.
+  section({
+    leads: ["Eb5 - - Ab5 - - C6 - - Ab5 - -", "D5 - - F5 - - A5 - - C6 - -", "G#5 - - B5 - - D6 - - B5 - -", "E5 - - G#5 - - B5 - - . . ."],
+    chords: ["Ab", "Dm7", "E7", "E7"], bass: ["sway", "stomp", "sway", "roll"], kit: ["sway", "waltz", "sway", "ballad"], counters: "rest", after: "Am", feel: "lyric", gate: 1,
+  }),
+  // The theme again, a bell an octave above and a violin under the brass.
+  section({
+    leads: THEME, chords: THEME_CHORDS, bass: ["syncop", "walk", "gallop", "slide", "syncop", "walk", "gallop", "stab"], kit: ["clave", "clave", "march", "clave", "clave", "march", "rim", "break"],
+    counters: THEME.map((l) => transposeLine(l, 12)), after: "Am", feel: "march",
+  }),
+  section({ leads: ["A5 - E5 - C5 - E5 - A5 - - - - - - -", "G#5 - B5 - E6 - D6 - B5 - G#5 - E5 - . ."], chords: ["Am", "E7"], bass: ["pedal", "octave"], kit: ["break", "fill"], counters: "rest", after: "Am", feel: "stop" }),
+);
+
+export const TITLE: Song = {
+  bpm: 112, lead: "trumpet", pad: "strings", bassVoice: "picked", drums: "march", riff: "march16", performance: TITLE_PARTS.performance, crashes: TITLE_PARTS.starts,
+  sections: [
+    { from: TITLE_PARTS.starts[0], lead: "brass", layer: undefined, pad: undefined, counter: "violin", stabs: true },
+    { from: TITLE_PARTS.starts[1], lead: "trumpet", layer: "violin", pad: "strings", counter: "violin", stabs: false },
+    { from: TITLE_PARTS.starts[2], lead: "brass", layer: undefined, pad: "strings", counter: "violin", bassVoice: "slap", stabs: true },
+    { from: TITLE_PARTS.starts[3], lead: "bell", layer: undefined, pad: "strings", counter: "violin", bassVoice: "picked", stabs: false },
+    { from: TITLE_PARTS.starts[4], lead: "trumpet", layer: "violin", pad: "strings", counter: "bell", bassVoice: "picked", stabs: true },
+    { from: TITLE_PARTS.starts[5], lead: "trumpet", layer: undefined, pad: "strings", counter: "violin", stabs: false },
+  ],
+  bars: TITLE_PARTS.bars,
+};
+
+/* ---------- Hangar: Before the Gate (six, a lullaby) ---------- */
+
+const LULLABY = [
+  "F#5 - - A5 - - D6 - - A5 - -", "E5 - - A5 - - C#6 - - A5 - -", "D5 - - F#5 - - B5 - - F#5 - -", "D5 - - G5 - - B5 - - G5 - -",
+  "A5 - F#5 - D5 - A5 - - F#5 - -", "E5 - A5 - C#6 - E6 - - C#6 - -", "B5 - G5 - D5 - G5 - B5 - D6 -", "C#6 - - E6 - - A5 - - . . .",
+];
+const LULLABY_CHORDS = ["D", "A", "Bm", "G", "D", "A", "G", "A"];
+const SPACE1_HANGAR = "F#5 - - A5 - - F#5 - E5 - D5 -";
+
+const HANGAR_PARTS = join(
+  section({
+    leads: LULLABY, chords: LULLABY_CHORDS, bass: ["sway", "stomp", "sway", "roll"], kit: ["sway", "waltz", "sway", "waltz", "sway", "waltz", "sway", "ballad"],
+    counters: [SPACE1_HANGAR, undefined, undefined, undefined, SPACE1_HANGAR, undefined, undefined, undefined], after: "Bm", feel: "lyric", gate: 1,
+  }),
+  // The minor middle: the same lullaby turned to B minor, the violin singing over strings.
+  section({
+    leads: [
+      "B4 - - D5 - - F#5 - - D5 - -", "B4 - - D5 - - G5 - - D5 - -", "A4 - - C#5 - - E5 - - A5 - -", "A4 - - C#5 - - F#5 - - E5 - -",
+      "D5 - - F#5 - - B5 - - A5 - -", "D5 - - G5 - - B5 - - A5 - G5", "C#5 - E5 - A5 - C#6 - - E6 - -", "D6 - - - - - A5 - - F#5 - -",
+    ],
+    chords: ["Bm", "G", "A", "F#m", "Bm", "G", "A", "D"], bass: ["roll", "sway", "stomp", "sway"], kit: ["sway", "ballad", "sway", "ballad", "sway", "ballad", "waltz", "fill"], counters: "rest", after: "D", feel: "lyric", gate: 1,
+  }),
+  // The lullaby again with a new ending.
+  section({
+    leads: [...LULLABY.slice(0, 7), "D6 - - - - - A5 - - D5 - -"], chords: [...LULLABY_CHORDS.slice(0, 7), "D"],
+    bass: ["sway", "stomp", "sway", "roll"], kit: ["sway", "waltz", "sway", "waltz", "sway", "waltz", "sway", "ballad"], counters: "none", after: "D", feel: "lyric", gate: 1,
+  }),
+);
+
+export const HANGAR: Song = {
+  bpm: 84, lead: "piano", pad: "harp", drums: "waltz", riff: "waltz12", bassVoice: "picked",
+  performance: HANGAR_PARTS.performance, crashes: HANGAR_PARTS.starts.slice(1),
+  sections: [
+    { from: HANGAR_PARTS.starts[0], lead: "piano", layer: undefined, pad: "harp", bassVoice: "picked" },
+    { from: HANGAR_PARTS.starts[1], lead: "violin", layer: undefined, pad: "strings", bassVoice: "picked" },
+    { from: HANGAR_PARTS.starts[2], lead: "piano", layer: "bell", pad: "harp", bassVoice: "picked" },
+  ],
+  bars: HANGAR_PARTS.bars,
+};
+
+/* ---------- Warning: Ghost Signal (seven) ---------- */
+
+/* Written on A and moved up eight semitones, to F, so no two tunes of the chapter share a key. */
+const up8 = (leads: string[]) => leads.map((l) => transposeLine(l, 8, true));
+const chords8 = (chords: string[]) => chords.map((c) => transposeChord(c, 8, true));
+
+const ALERT_PARTS = join(
+  section({
+    leads: up8(["A3 . . . A3 . Bb3 . A3 . . . E3 .", "A3 . . . A3 . Bb3 . B3 . C4 . B3 .", "Eb4 . . . Eb4 . E4 . Eb4 . . . Bb3 .", "Eb4 . . . F4 . Eb4 . D4 . . . Eb4 ."]),
+    chords: chords8(["Am", "Am", "Eb", "Eb"]), bass: ["slow7", "slow7b"], kit: ["heart", "heart", "hard", "heart"], counters: "rest", after: "Bbm", feel: "seven",
+  }),
+  section({
+    leads: up8(["D4 . . . D4 . Eb4 . D4 . A3 . C4 .", "Bb3 . . . Bb3 . B3 . C4 . B3 . Bb3 .", "E4 . . . G#4 . B4 . D5 . C5 . B4 .", "E5 - - - F5 - E5 - D#5 - E5 - . ."]),
+    chords: chords8(["Dm", "Bb", "E7", "E7"]), bass: "sevenHeavy", kit: ["hard", "heart", "hard", "fill"], counters: "rest", after: "Fm", feel: "seven",
+  }),
+  // The build: the pulse turns and climbs, and the dominant is held for the loop to leap from.
+  section({
+    leads: up8([
+      "A3 A3 . Bb3 . A3 E3 . A3 . Bb3 B3 . C4", "Eb4 Eb4 . E4 . Eb4 Bb3 . Eb4 . E4 F4 . Eb4", "D4 D4 . Eb4 . D4 A3 . D4 . Eb4 E4 . F4", "Bb3 Bb3 . B3 . Bb3 F3 . Bb3 . B3 C4 . C#4",
+      "E4 G#4 B4 . D5 . C5 B4 . G#4 . E4 . .", "E5 . D#5 . E5 . B4 . G#4 . B4 . E5 .", "E5 E5 E5 . F5 F5 F5 . E5 E5 E5 . D#5 D#5", "E5 - - - - - - - - - - - . .",
+    ]),
+    chords: chords8(["Am", "Eb", "Dm", "Bb", "E7", "E7", "E7", "E7"]),
+    bass: ["sevenHeavy", "sevenHeavy", "sevenHeavy", "sevenHeavy", "seven", "slow7", "sevenHeavy", "slow7b"], kit: ["tick", "tick", "drone", "tick", "hard", "hard", "tick", "fill"], counters: "rest", after: "Fm", feel: "seven",
+  }),
+);
+
+export const ALERT: Song = {
+  bpm: 152, lead: "organ", pad: "strings", drums: "toms", riff: "throb14", bassVoice: "picked", riser: [12, 15],
+  performance: ALERT_PARTS.performance, crashes: ALERT_PARTS.starts,
+  sections: [
+    { from: ALERT_PARTS.starts[0], lead: "organ", layer: undefined, pad: "strings", bassVoice: "picked" },
+    { from: ALERT_PARTS.starts[1], lead: "organ", layer: "violin", pad: "strings", bassVoice: "picked" },
+    { from: ALERT_PARTS.starts[2], lead: "organ", layer: "trumpet", pad: "strings", bassVoice: "slap" },
+  ],
+  bars: ALERT_PARTS.bars,
+};
+
+/* ---------- Showdown: Ghost Corvet (the boss, in the shape of a JRPG's) ---------- */
+
+/* Tremolo: each note is held as repeated sixteenths, the way strings shake under tension. */
+const trem = (...notes: [string, number][]) => notes.flatMap(([n, len]) => Array(len).fill(n)).join(" ");
+
+const CORVET_PRELUDE = section({
+  leads: [
+    trem(["G4", 16]), trem(["G4", 8], ["Bb4", 4], ["A4", 4]), trem(["Bb4", 8], ["Eb5", 8]), trem(["D5", 12], ["F#5", 4]),
+    trem(["C5", 8], ["Eb5", 8]), trem(["D5", 4], ["F#5", 4], ["A5", 8]), trem(["G5", 4], ["Bb5", 4], ["D6", 4], ["G6", 4]), `${trem(["A5", 4], ["C6", 4], ["D6", 4])} . . . .`,
+  ],
+  chords: ["Gm", "Gm", "Eb", "D7", "Cm", "D7", "Gm", "D7"], bass: "pedal", kit: "none", counters: "rest", after: "Gm", gate: 1,
+});
+
+const VERSE = [
+  "G4 . . D5 - . G5 . F5 . D5 . Bb4 . D5 .", "G4 . . D5 - . Bb5 . A5 . G5 . F5 . D5 .", "Eb4 . . Bb4 - . Eb5 . D5 . Bb4 . G4 . Bb4 .", "F#4 . A4 C5 - D5 - . C5 . A4 . F#4 . . .",
+  "D5 . G5 . A5 . Bb5 . D6 - - - Bb5 . G5 .", "C5 . Eb5 . G5 . C6 . Bb5 . G5 . Eb5 . G5 .", "Bb4 . Eb5 . G5 . Bb5 . Eb6 - D6 - Bb5 . G5 .", "A5 . F#5 . D5 . C5 . A4 . C5 . D5 . F#5 .",
+];
+const CORVET_VERSE = section({
+  leads: VERSE, chords: ["Gm", "Gm", "Eb", "D7", "Gm", "Cm", "Eb", "D7"],
+  bass: ["syncop", "syncop", "pump", "syncop", "gallop", "syncop", "pump", "stab"], kit: ["off", "off", "off", "fill", "off", "off", "off", "fill"], counters: "none", after: "Bm", feel: "drive",
+});
+
+const CORVET_PRE = section({
+  leads: [
+    "B4 - - - - - D5 - F#5 - - - E5 - D5 -", "D5 - - - - - B4 - G5 - - - F#5 - E5 -", "A4 - - - D5 - F#5 - A5 - - - F#5 - D5 -", "E5 - - - A5 - C#6 - B5 - A5 - E5 - . .",
+    "F#5 - - - B5 - D6 - F#6 - - - E6 - D6 -", "G6 - - - D6 - B5 - D6 - G6 - F#6 - E6 -", "E6 - - - B5 - G5 - B5 - E6 - G6 - F#6 -", "C#6 - - - A#5 - F#5 - E5 - C#5 - A#4 - . .",
+  ],
+  chords: ["Bm", "G", "D", "A", "Bm", "G", "Em", "F#7"],
+  bass: ["walk", "slide", "walkUp", "walk"], kit: "halfTime", counters: "rest", after: "Am", feel: "lyric", gate: 0.98,
+});
+
+const CHORUS = [
+  "A5 . . A5 C6 - E6 - D6 - C6 . A5 . . .", "G5 . . G5 B5 - D6 - C6 - B5 . G5 . . .", "F#5 . A5 D6 - - C6 - A5 - F#5 - A5 - . .", "E5 - A5 - C6 - E6 - A6 - - - . . E6 D6",
+  "G5 . . G5 B5 - E6 - D6 - B5 . G5 . . .", "B5 . . B5 D6 - G6 - F#6 - D6 . B5 . . .", "A5 - D6 - F#6 - A6 - G6 - F#6 - D6 - A5 -", "G#5 - B5 - D6 - E6 - D6 - B5 - G#5 - . .",
+];
+const CHORUS_CHORDS = ["Am", "G", "D", "Am", "Em", "G", "D", "E7"];
+const CORVET_CHORUS = section({
+  leads: CHORUS, chords: CHORUS_CHORDS,
+  bass: ["octave", "double", "octave", "slide", "double", "octave", "double", "stab"], kit: ["doubleTime", "doubleTime", "doubleTime", "fill", "doubleTime", "doubleTime", "doubleTime", "fill"],
+  counters: CHORUS.map((l) => echoLine(l)), after: "Am", feel: "drive",
+});
+
+/* The series theme returns in seven: Starfall's opening, its fourth bar and its second, on the chip with the brass. */
+const CORVET_LEADOUT = section({
+  leads: [
+    "E5 . . G5 . C6 . . B5 . C6 . D6 .", "A5 . . . . . F5 . G5 . A5 . . .", "B5 . . . G5 . . . D5 . . G5 . .", "G#5 . . B5 . E6 . D6 . B5 . G#5 B5 D6",
+  ],
+  chords: ["Am", "F", "G", "E7"], bass: "sevenHeavy", kit: ["hard", "hard", "hard", "fill"], counters: "rest", after: "Fm", feel: "seven",
+});
+
+/* A bridge in F minor, half time, a piano alone over the strings; the last chorus then lifts a whole tone from it. */
+const CORVET_BRIDGE = section({
+  leads: [
+    "C5 - - - F5 - - - Ab5 - - - G5 - F5 -", "Db5 - - - F5 - - - Ab5 - - - Bb5 - Ab5 -", "G5 - - - Bb5 - - - Eb6 - - - D6 - Bb5 -", "C6 - E6 - G6 - Bb6 - . . . . G6 - E6 -",
+  ],
+  chords: ["Fm", "Db", "Eb", "C7"], bass: ["walk", "slide", "walk", "pedal"], kit: ["halfTime", "halfTime", "rim", "fill"], counters: "rest", after: "Gm", feel: "lyric", gate: 1,
+});
+
+/* The last chorus a step down, in G, with a new ending. */
+const FINAL = CHORUS.map((l, i) => (i === 7 ? "D6 - C6 - Bb5 - A5 - G5 - - - . . . ." : transposeLine(l, -2, true)));
+const CORVET_FINAL = section({
+  leads: FINAL, chords: CHORUS_CHORDS.map((c, i) => (i === 7 ? "Gm" : transposeChord(c, -2, true))),
+  bass: ["double", "octave", "gallop", "double", "double", "octave", "gallop", "pedal"], kit: ["blast", "doubleTime", "blast", "fill", "blast", "doubleTime", "blast", "break"],
+  counters: FINAL.map((l) => echoLine(l)), after: "Gm", feel: "drive",
+});
+
+const CORVET_OUTRO = section({
+  leads: ["G5 - D5 - Bb4 - D5 - G5 - - - - - - -", "G3 - - - - - - - . . . . . . . ."],
+  chords: ["Gm", "Gm"], bass: ["pedal", "pedal"], kit: ["ending", "none"], counters: "rest", after: "Gm", gate: 1,
+});
+
+const CORVET_PARTS = join(CORVET_PRELUDE, CORVET_VERSE, CORVET_PRE, CORVET_CHORUS, CORVET_LEADOUT, CORVET_BRIDGE, CORVET_FINAL, CORVET_OUTRO);
+
+export const GHOST_CORVET: Song = {
+  bpm: 160, lead: "violin", pad: "strings", counter: "piano", arps: true, arpStep: 1, bassVoice: "picked", drums: "battle", riff: "pump16",
+  performance: CORVET_PARTS.performance, crashes: CORVET_PARTS.starts.slice(1), fills: [], riser: [5, 6],
+  sections: [
+    { from: 0, lead: "violin", pad: "strings", layer: undefined, counter: undefined, bassVoice: "picked" },
+    { from: CORVET_PARTS.starts[1], lead: "guitar", pad: "organ", layer: undefined, counter: "piano", bassVoice: "picked" },
+    { from: CORVET_PARTS.starts[2], lead: "violin", pad: "strings", layer: undefined, counter: "organ", bassVoice: "slap" },
+    { from: CORVET_PARTS.starts[3], lead: "trumpet", pad: "strings", layer: "violin", counter: "chip", bassVoice: "picked" },
+    { from: CORVET_PARTS.starts[4], lead: "chip", pad: "organ", layer: "trumpet", counter: "violin", bassVoice: "picked" },
+    { from: CORVET_PARTS.starts[5], lead: "piano", pad: "strings", layer: undefined, counter: undefined, bassVoice: "slap" },
+    { from: CORVET_PARTS.starts[6], lead: "violin", pad: "strings", layer: "trumpet", counter: "chip", bassVoice: "picked" },
+    { from: CORVET_PARTS.starts[7], lead: "piano", pad: "strings", layer: undefined, counter: undefined, bassVoice: "picked" },
+  ],
+  bars: CORVET_PARTS.bars,
+};
+
+/* ---------- Victory: Sortie Complete (a clave fanfare) ---------- */
+
+/* Space 1's fanfare on the chip, then Space 2's, both in D major, and home to the hangar's D major. */
+const VICTORY_PARTS = join(section({
+  leads: [transposeLine(S1_VICTORY.line, 2), transposeLine(S2_VICTORY.line, 4), "E5 - C#5 - A4 - C#5 - E5 - G5 - - - - -", "D5 - A4 - F#4 - A4 - D5 - - - - - - -"],
+  chords: ["D", "D", "A7", "D"], bass: ["syncop", "syncop", "stab", "pedal"], kit: ["clave", "clave", "off", "funk"], counters: "rest", after: "D", feel: "march",
+}));
+
+export const VICTORY: Song = {
+  bpm: 132, lead: "chip", pad: "strings", stabs: true, drums: "march", riff: "march16", bassVoice: "slap", once: true, then: "s3hangar",
+  performance: VICTORY_PARTS.performance, bars: VICTORY_PARTS.bars,
+  sections: [{ from: 0, lead: "chip", layer: undefined }, { from: 1, lead: "trumpet", layer: "chip" }, { from: 2, lead: "trumpet", layer: "violin" }],
+};

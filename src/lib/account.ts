@@ -231,7 +231,7 @@ export async function pushScore(game: string, score: number) {
    numbers. Free for anyone not signed in; null clears it. */
 const progressField = (game: string) => `progress_${game}`;
 
-export async function pushProgress(game: (typeof GAMES)[number], data: object | null) {
+export async function pushProgress(game: (typeof GAMES)[number] | "space3", data: object | null) {
   if (!hasAccountHint()) return;
   const pending = getSupabase();
   if (!pending) return;
@@ -245,7 +245,7 @@ export async function pushProgress(game: (typeof GAMES)[number], data: object | 
   }
 }
 
-export async function pullProgress(game: (typeof GAMES)[number]): Promise<unknown> {
+export async function pullProgress(game: (typeof GAMES)[number] | "space3"): Promise<unknown> {
   if (!hasAccountHint()) return null;
   const pending = getSupabase();
   if (!pending) return null;

@@ -1,0 +1,143 @@
+/* Space 3, chapter 4 (The Kharn Anomaly, the wreck of Kroll's fleet). Two tunes with nothing in common with the rest of the album
+   (docs/space3-music-research.md):
+
+     Battle: Kharn Wreckage   a war march, after Metal Slug's hard-edged war anthems: a snare-and-timpani march at 72 BPM that
+                              feels like 144, brass over a low pedal, the Gate theme as a dirge, Space 1's Starfall in the
+                              relative major as the one light in the graveyard, a 7/8 stretch through the wreck field, and
+                              the march again a fourth up. G sharp minor.
+     Showdown: Armada Reclaimer  orchestral war metal at 176 BPM: a prelude of timpani and low brass, a war riff, a heroic brass
+                              anthem on the Gate theme, a siege in seven, and the anthem again a whole tone up. C minor to D minor.
+
+   Written for this game; none copies a note from anything else except the quotation. Notation is Space 2's. */
+import type { Song } from "./space2-music";
+import { join, section, transposeChord, transposeLine } from "./space3-groove.ts";
+import { S1_TITLE } from "./space3-motifs.ts";
+
+/* ---------- Battle: Kharn Wreckage ---------- */
+
+const WRECK_INTRO = section({
+  leads: ["G#3 - - - - - - - D#4 - - - - - - -", "G#3 - - - - - - - D#4 - - - B3 - C#4 -", "E3 - - - - - - - B3 - - - - - - -", "D#3 - - - F#3 - - - A3 - - - C#4 - D#4 -"],
+  chords: ["G#m", "G#m", "E", "D#7"], bass: ["pedal", "pedal", "pedal", "walk"], kit: ["warmarch", "warmarch", "warmarch", "tumble"], counters: "rest", after: "G#m", feel: "march",
+});
+
+/* The Gate theme as a dirge in G sharp minor. */
+const MARCH = [
+  "G#4 . B4 D#5 - - C#5 . B4 - G#4 - D#4 - G#4 -", "E4 . G#4 B4 - - A4 . G#4 - E4 - B3 - E4 -", "F#4 . A#4 C#5 - - B4 . A#4 - F#4 - C#4 - F#4 -", "D#4 . F#4 A4 - - G#4 F#4 - A4 - C#5 - D#5 - .",
+  "B4 . D#5 G#5 - - F#5 . D#5 - B4 - G#4 - B4 -", "G#4 . B4 E5 - - D#5 . B4 - G#4 - E4 - G#4 -", "A#4 . C#5 F#5 - - E5 . C#5 - A#4 - F#4 - A#4 -", "A4 - F#4 - D#4 - F#4 - A4 - C#5 - D#5 - . .",
+];
+const MARCH_CHORDS = ["G#m", "E", "F#", "D#7", "G#m", "E", "F#", "D#7"];
+const WRECK_MARCH = section({
+  leads: MARCH, chords: MARCH_CHORDS, bass: ["pump", "octave", "pump", "syncop", "pump", "octave", "pump", "stab"],
+  kit: ["warmarch", "warmarch", "warmarch", "stomp", "warmarch", "warmarch", "warmarch", "tumble"], counters: "rest", after: "B", feel: "march",
+});
+
+/* The one light in the graveyard: Space 1's Starfall phrase, a semitone down, in B major (the relative of G sharp minor), then four new bars. */
+const WRECK_LIGHT = section({
+  leads: [
+    transposeLine(S1_TITLE[0].line, -1, false), transposeLine(S1_TITLE[1].line, -1, false), transposeLine(S1_TITLE[2].line, -1, false), transposeLine(S1_TITLE[3].line, -1, false),
+    "F#5 - B5 - D#6 - - - C#6 - B5 - F#5 - . .", "A#5 - C#6 - F#6 - - - E6 - C#6 - A#5 - . .", "G#5 - B5 - E6 - D#6 - B5 - G#5 - E5 - . .", "A5 - F#5 - D#5 - F#5 - A5 - C#6 - D#6 - . .",
+  ],
+  chords: ["B", "F#", "G#m", "E", "B", "F#", "E", "D#7"], bass: ["walk", "walkUp", "slide", "walk"], kit: ["timpani", "timpani", "dirge", "timpani"], counters: "rest", after: "G#m", feel: "lyric", gate: 1,
+});
+
+/* A stretch through the wreck field, in seven. */
+const WRECK_FIELD = section({
+  leads: [
+    "G#3 G#3 A3 G#3 . B3 G#3 . A3 . G#3 . F#3 .", "G#3 G#3 A3 G#3 . D#4 B3 . A3 . B3 . D#4 .", "E3 E3 F3 E3 . G#3 E3 . F3 . E3 . D#3 .", "D#3 D#3 E3 D#3 . F#3 A3 . C#4 . D#4 . F#4 .",
+  ],
+  chords: ["G#m", "G#m", "E", "D#7"], bass: "sevenHeavy", kit: ["siege", "wreck", "siege", "wreck"], counters: "rest", after: "C#m", feel: "seven",
+});
+
+/* The march again a fourth up, in C sharp minor, with a new last bar that sets the dominant for the loop. */
+const MARCH_UP = MARCH.map((l, i) => (i === 7 ? "D#5 - F#5 - A5 - C#6 - D#6 - - - - - - -" : transposeLine(l, 5)));
+const WRECK_RETURN = section({
+  leads: MARCH_UP, chords: MARCH_CHORDS.map((c, i) => (i === 7 ? "D#7" : transposeChord(c, 5))), bass: ["octave", "pump", "octave", "syncop", "octave", "pump", "octave", "stab"],
+  kit: ["dirge", "dirge", "warmarch", "stomp", "dirge", "dirge", "warmarch", "tumble"], counters: MARCH_UP.map((l) => transposeLine(l, 12)), after: "G#m", feel: "march",
+});
+
+const WRECK_CODA = section({
+  leads: ["G#4 - D#4 - B3 - D#4 - G#4 - - - - - - -", "G#3 - - - - - - - . . . . . . . ."],
+  chords: ["G#m", "G#m"], bass: ["pedal", "pedal"], kit: ["timpani", "none"], counters: "rest", after: "G#m", gate: 1, feel: "stop",
+});
+
+const WRECK = join(WRECK_INTRO, WRECK_MARCH, WRECK_LIGHT, WRECK_FIELD, WRECK_RETURN, WRECK_CODA);
+
+export const KHARN_WRECKAGE: Song = {
+  bpm: 72, lead: "brass", pad: "strings", bassVoice: "slap", drums: "march", riff: "march16", stabs: false,
+  performance: WRECK.performance, crashes: WRECK.starts, fills: [],
+  sections: [
+    { from: 0, lead: "brass", layer: undefined, pad: "strings", bassVoice: "picked" },
+    { from: WRECK.starts[1], lead: "brass", layer: "trumpet", pad: "strings", bassVoice: "slap" },
+    { from: WRECK.starts[2], lead: "trumpet", layer: "chip", pad: "strings", bassVoice: "picked" },
+    { from: WRECK.starts[3], lead: "guitar", layer: "brass", pad: "organ", bassVoice: "picked" },
+    { from: WRECK.starts[4], lead: "trumpet", layer: "violin", pad: "strings", counter: "chip", bassVoice: "slap" },
+    { from: WRECK.starts[5], lead: "brass", layer: undefined, pad: "strings", bassVoice: "picked" },
+  ],
+  bars: WRECK.bars,
+};
+
+/* ---------- Showdown: Armada Reclaimer ---------- */
+
+const RECL_PRELUDE = section({
+  leads: [
+    "C3 - - - - - - - G3 - - - - - - -", "C3 - - - - - G3 - - - Eb3 - - - F3 -", "Ab2 - - - - - - - Eb3 - - - - - - -", "Bb2 - - - - - - - F3 - - - - - - -",
+    "C3 - Eb3 - G3 - C4 - - - Bb3 - G3 - Eb3 -", "G3 - B3 - D4 - F4 - G4 - - - . . . .",
+  ],
+  chords: ["Cm", "Cm", "Ab", "Bb", "Cm", "G7"], bass: "pedal", kit: "timpani", counters: "rest", after: "Cm", gate: 1, feel: "lyric",
+});
+
+const WAR_RIFF = [
+  "C3 C3 . Eb3 C3 . G3 . C3 C3 . Eb3 F3 . Eb3 .", "C3 C3 . Eb3 C3 . G3 . Bb3 . G3 . F3 . Eb3 .", "Ab2 Ab2 . C3 Ab2 . Eb3 . Ab2 Ab2 . C3 Db3 . C3 .", "Bb2 Bb2 . D3 Bb2 . F3 . Bb2 Bb2 . D3 Eb3 . D3 .",
+  "C3 C3 . Eb3 G3 . C4 . Bb3 . G3 . Eb3 . C3 .", "C3 C3 . G3 . C4 . Eb4 . D4 . C4 . G3 . Eb3", "F3 F3 . Ab3 F3 . C4 . F3 F3 . Ab3 Bb3 . Ab3 .", "G3 G3 . B3 G3 . D4 . F4 . D4 . B3 . G3 .",
+];
+const RECL_RIFF = section({
+  leads: WAR_RIFF, chords: ["Cm", "Cm", "Ab", "Bb", "Cm", "Cm", "Fm", "G7"], bass: ["gallop", "double", "gallop", "syncop", "double", "gallop", "double", "stab"],
+  kit: ["assault", "assault", "assault", "tumble", "assault", "assault", "assault", "tumble"], counters: "rest", after: "Cm", feel: "drive",
+});
+
+/* The anthem: the Gate theme, heroic, in C minor and E flat. */
+const ANTHEM = [
+  "C5 . Eb5 G5 - - F5 . Eb5 - C5 - G4 - C5 -", "Eb5 . G5 Bb5 - - Ab5 . G5 - Eb5 - Bb4 - Eb5 -", "Ab4 . C5 Eb5 - - Db5 . C5 - Ab4 - Eb4 - Ab4 -", "Bb4 . D5 F5 - - Eb5 . D5 - Bb4 - F4 - Bb4 -",
+  "G5 . C6 Eb6 - - D6 . C6 - G5 - Eb5 - G5 -", "Bb5 . Eb6 G6 - - F6 . Eb6 - Bb5 - G5 - Bb5 -", "Ab5 . C6 F6 - - Eb6 . C6 - Ab5 - F5 - Ab5 -", "G5 - B5 - D6 - F6 - G6 - - - . . . .",
+];
+const ANTHEM_CHORDS = ["Cm", "Eb", "Ab", "Bb", "Cm", "Eb", "Fm", "G7"];
+const RECL_ANTHEM = section({
+  leads: ANTHEM, chords: ANTHEM_CHORDS, bass: ["octave", "pump", "octave", "syncop", "octave", "pump", "octave", "stab"],
+  kit: ["advance", "advance", "rock", "tumble", "advance", "advance", "rock", "tumble"], counters: "none", after: "Cm", feel: "drive",
+});
+
+/* The siege, in seven. */
+const RECL_SIEGE = section({
+  leads: [
+    "C3 C3 Db3 C3 . Eb3 C3 . Db3 . C3 . B2 .", "C3 C3 Db3 C3 . G3 Eb3 . Db3 . Eb3 . G3 .", "Ab2 Ab2 A2 Ab2 . C3 Ab2 . A2 . Ab2 . G2 .", "G2 G2 Ab2 G2 . B2 D3 . F3 . G3 . B3 .",
+  ],
+  chords: ["Cm", "Cm", "Ab", "G7"], bass: "sevenHeavy", kit: ["legion", "barrage", "legion", "barrage"], counters: "rest", after: "Dm", feel: "seven",
+});
+
+/* The anthem a whole tone up, in D minor, with a new last bar. */
+const ANTHEM_UP = ANTHEM.map((l, i) => (i === 7 ? "D6 - A5 - F5 - A5 - D6 - - - - - - -" : transposeLine(l, 2)));
+const RECL_FINAL = section({
+  leads: ANTHEM_UP, chords: ANTHEM_CHORDS.map((c, i) => (i === 7 ? "Dm" : transposeChord(c, 2))), bass: ["double", "gallop", "double", "syncop", "double", "gallop", "double", "pedal"],
+  kit: ["assault", "advance", "assault", "tumble", "assault", "advance", "assault", "stomp"], counters: ANTHEM_UP.map((l) => transposeLine(l, 12)), after: "Dm", feel: "drive",
+});
+
+const RECL_OUTRO = section({
+  leads: ["D5 - A4 - F4 - A4 - D5 - - - - - - -", "D3 - - - - - - - . . . . . . . ."],
+  chords: ["Dm", "Dm"], bass: ["pedal", "pedal"], kit: ["timpani", "none"], counters: "rest", after: "Dm", gate: 1,
+});
+
+const RECL = join(RECL_PRELUDE, RECL_RIFF, RECL_ANTHEM, RECL_SIEGE, RECL_FINAL, RECL_OUTRO);
+
+export const RECLAIMER_THEME: Song = {
+  bpm: 176, lead: "guitar", layer: "brass", pad: "organ", bassVoice: "picked", drums: "battle", riff: "pump16",
+  performance: RECL.performance, crashes: RECL.starts.slice(1), fills: [], riser: [4, 5],
+  sections: [
+    { from: 0, lead: "brass", layer: "strings", pad: "strings", counter: undefined },
+    { from: RECL.starts[1], lead: "guitar", layer: "brass", pad: "organ", counter: undefined, bassVoice: "picked" },
+    { from: RECL.starts[2], lead: "trumpet", layer: "violin", pad: "strings", counter: "piano", bassVoice: "picked" },
+    { from: RECL.starts[3], lead: "organ", layer: "guitar", pad: undefined, counter: undefined, bassVoice: "slap" },
+    { from: RECL.starts[4], lead: "violin", layer: "trumpet", pad: "strings", counter: "bell", bassVoice: "picked" },
+    { from: RECL.starts[5], lead: "brass", layer: undefined, pad: "strings", counter: undefined, bassVoice: "picked" },
+  ],
+  bars: RECL.bars,
+};

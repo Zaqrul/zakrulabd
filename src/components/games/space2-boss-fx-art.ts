@@ -2,7 +2,7 @@
    while it winds up, in the hostile coral Space 1 uses, with a cream line once it has locked: lanes
    across the screen, columns, spots, the gap to fly through. Then the strikes themselves, the
    lunging heads and limbs, the searchlight, the twister and the gust. Flat shapes, a dark rim. */
-import { GUST, H, W, isFinal, isSecondBoss, type Enemy, type Hazard, type State } from "./space-logic";
+import { GUST, H, W, hidesAttackPrediction, hidesTells, isSecondBoss, type Enemy, type Hazard, type State } from "./space-logic";
 
 import { drawArsenalCue } from "./space2-arsenal-art";
 import { drawPatternCue } from "./space2-pattern-cues";
@@ -45,8 +45,8 @@ function poly(ctx: Ctx, pts: number[][], fill: string, rim = INK) {
 export function drawSecondCue(ctx: Ctx, e: Enemy, s: State, reduceMotion = false) {
   if (!isSecondBoss(e.type) || !e.attack) return;
   if (drawArsenalCue(ctx, e, reduceMotion)) return;
-  /* The last boss shows only what is really happening, never where it will land (see hidesTells). */
-  if (!isFinal(e.type)) drawPatternCue(ctx, e, reduceMotion);
+  /* Keep physical lunges below, without predictive pattern geometry. */
+  if (!hidesAttackPrediction(e)) drawPatternCue(ctx, e, reduceMotion);
   const a = e.attack;
   const firing = a.t >= a.warn && a.t < a.warn + a.live;
   ctx.save();
@@ -134,6 +134,7 @@ export function drawSecondHazard(ctx: Ctx, h: Hazard, reduceMotion = false): boo
 export function drawGust(ctx: Ctx, s: State, reduceMotion = false) {
   const g = s.gust;
   if (!g) return;
+  if (g.t < GUST.warn && hidesTells(s)) return;
   const up = g.dy < 0;
   ctx.save();
   if (g.t < GUST.warn) {

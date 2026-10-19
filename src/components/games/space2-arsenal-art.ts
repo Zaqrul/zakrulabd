@@ -1,6 +1,6 @@
 /* Chapter 2's ordnance: ballistic bombs and one-turn, vertically launched rockets.
    Shared geometry makes the warning, the hatch and the projectile agree. */
-import { HYDRA, hydraMuzzle, type Charge, type Enemy, type State } from "./space-logic";
+import { HYDRA, hidesAttackPrediction, hydraMuzzle, type Charge, type Enemy, type State } from "./space-logic";
 import { machineKit, MACHINE } from "./space2-machine-art";
 
 type Ctx = CanvasRenderingContext2D;
@@ -22,6 +22,7 @@ function target(ctx: Ctx, x: number, y: number, rocket: boolean, locked: boolean
 export function drawArsenalCue(ctx: Ctx, e: Enemy, reduceMotion: boolean): boolean {
   const a = e.attack;
   if (!a || !["deckbomb", "silorocket", "arsenalsalvo"].includes(a.kind)) return false;
+  if (hidesAttackPrediction(e)) return true;
   ctx.save();
   const warning = a.t < a.warn, locked = a.t >= a.warn - 18;
   if (a.kind === "arsenalsalvo" && a.gapY !== undefined) {
@@ -57,10 +58,10 @@ export function drawArsenalCue(ctx: Ctx, e: Enemy, reduceMotion: boolean): boole
   ctx.restore(); return true;
 }
 
-export function drawDeckBomb(ctx: Ctx, charge: Charge, reduceMotion: boolean) {
+export function drawDeckBomb(ctx: Ctx, charge: Charge, reduceMotion: boolean, hideZone = false) {
   if (charge.t < 0) return;
   const active = charge.t >= HYDRA.fuse;
-  target(ctx, charge.tx, charge.ty, false, charge.t >= HYDRA.flight);
+  if (!hideZone) target(ctx, charge.tx, charge.ty, false, charge.t >= HYDRA.flight);
   const m = machineKit(ctx, charge.x, charge.y);
   if (!active) {
     // A heavy round bomb has no rocket exhaust and remains recognisable in flight.

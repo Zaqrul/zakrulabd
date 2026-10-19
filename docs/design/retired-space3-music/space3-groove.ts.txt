@@ -1,0 +1,269 @@
+/* Tools for writing Space 3's tunes so that no two feel alike: a library of drum feels for each bar length, and a bass
+   that is written chord to chord instead of looped. Plain functions over the tracker notation of space2-music.ts
+   ("A4", "-" holds, "." rests; 16 cells is 4/4, 14 is 7/8, 12 is 6/8). The reasoning is in
+   docs/space3-music-research.md. */
+
+const SHARP = ["C", "C#", "D", "D#", "E", "F", "F#", "G", "G#", "A", "A#", "B"];
+const FLAT = ["C", "Db", "D", "Eb", "E", "F", "Gb", "G", "Ab", "A", "Bb", "B"];
+const PC: Record<string, number> = { C: 0, "C#": 1, Db: 1, D: 2, "D#": 3, Eb: 3, E: 4, F: 5, "F#": 6, Gb: 6, G: 7, "G#": 8, Ab: 8, A: 9, "A#": 10, Bb: 10, B: 11 };
+
+export const pitchClass = (name: string) => PC[name];
+export const noteMidi = (note: string) => {
+  const m = /^([A-G][#b]?)(-?\d)$/.exec(note);
+  if (!m) throw new Error(`bad note ${note}`);
+  return (Number(m[2]) + 1) * 12 + PC[m[1]];
+};
+export const noteName = (midi: number, flats = false) => `${(flats ? FLAT : SHARP)[((midi % 12) + 12) % 12]}${Math.floor(midi / 12) - 1}`;
+
+/* A line of cells moved by some semitones; only notes change. */
+export function transposeLine(line: string, semitones: number, flats = false) {
+  return line.trim().split(/\s+/).map((c) => (/^[A-G]/.test(c) ? noteName(noteMidi(c) + semitones, flats) : c)).join(" ");
+}
+
+/* A chord name moved by some semitones: "Am" up two is "Bm". */
+export function transposeChord(chord: string, semitones: number, flats = false) {
+  const m = /^([A-G][#b]?)(.*)$/.exec(chord);
+  if (!m) throw new Error(`bad chord ${chord}`);
+  return `${(flats ? FLAT : SHARP)[(PC[m[1]] + semitones + 120) % 12]}${m[2]}`;
+}
+
+/* ---- the bass ---- */
+
+type Parts = { root: number; third: number; fifth: number; seventh: number };
+function parts(chord: string): Parts {
+  const m = /^([A-G][#b]?)(.*)$/.exec(chord);
+  if (!m) throw new Error(`bad chord ${chord}`);
+  const q = m[2];
+  const minor = q === "m" || q === "m7" || q === "dim";
+  return {
+    root: 36 + PC[m[1]] - (PC[m[1]] > 11 ? 12 : 0),
+    third: q === "sus" ? 5 : minor ? 3 : 4,
+    fifth: q === "dim" ? 6 : 7,
+    seventh: q === "maj7" ? 11 : 10,
+  };
+}
+
+/* A bass line for one bar. The pattern is cells of: R root, 3 third, 5 fifth, 7 seventh, O the root an octave up, 8 the
+   fifth an octave up, a a half step below the NEXT chord's root (the approach), b a half step above it, "-" hold,
+   "." rest. The root sits between C2 and B2. */
+export function bassLine(chord: string, next: string, pattern: string) {
+  const c = parts(chord), n = parts(next);
+  const note = (token: string): string => {
+    switch (token) {
+      case "R": return noteName(c.root);
+      case "3": return noteName(c.root + c.third);
+      case "5": return noteName(c.root + c.fifth);
+      case "7": return noteName(c.root + c.seventh);
+      case "O": return noteName(c.root + 12);
+      case "8": return noteName(c.root + c.fifth + 12);
+      case "a": return noteName(n.root - 1 + (n.root - 1 < c.root - 5 ? 12 : 0));
+      case "b": return noteName(n.root + 1);
+      default: return token;
+    }
+  };
+  return pattern.trim().split(/\s+/).map(note).join(" ");
+}
+
+/* Bass patterns by bar length. Each is a different way of being a bass, not a different speed of one way. */
+export const BASS: Record<string, string> = {
+  /* 16: 4/4 */
+  walk: "R - - - 3 - - - 5 - - - a - - -",
+  /* the cold ones: a sixteenth arpeggio, a held root with a bell of the fifth, a heave in threes */
+  arp: "R . 5 . O . 5 . R . 5 . O . 5 a",
+  glass: "R - - - - - - - 5 - - - O - - a",
+  heave: "R - - R - - 5 - R - - R - - a -",
+  walkUp: "R - - - 5 - - - 7 - - - a - - -",
+  pump: "R . R . R . O . R . R . R . a .",
+  syncop: "R . . R . R . . R . 5 . . 5 a .",
+  gallop: "R R O R R O R R 5 5 O 5 3 3 5 3",
+  double: "R R R R R R R R 5 5 5 5 R R a a",
+  pedal: "R - - - - - - - - - - - - - a -",
+  octave: "R . O . R . O . R . O . R . O a",
+  stab: "R . . . . . R . . . R . . . a .",
+  slide: "R - 3 - 5 - 3 - R - 3 - 5 - a -",
+  /* 14: 7/8 */
+  seven: "R . R . . R . R . . 5 . a .",
+  /* slow sevens: long notes, a heartbeat of the root and the fifth */
+  slow7: "R - - - - - - R - - - 5 - a",
+  slow7b: "R - - - 5 - - - R - - - a -",
+  sevenHeavy: "R R b R . R b R . 5 . 5 . a",
+  /* 12: 6/8 */
+  stomp: "R . . R . . 5 . . R . a",
+  walk12: "R - - - 3 - - - a - - -",
+  walk12b: "R - - - 5 - - - a - - -",
+  sway: "R . . 5 . . R . . 5 . a",
+  roll: "R R . R R . 5 5 . 3 3 a",
+};
+
+/* One bass line per bar of a progression. `patterns` gives the pattern name of each bar; one name is used for all bars. */
+export function bassFor(chords: string[], patterns: string | string[], after?: string): string[] {
+  return chords.map((chord, i) => {
+    const name = typeof patterns === "string" ? patterns : patterns[i % patterns.length];
+    const next = chords[i + 1] ?? after ?? chords[0];
+    if (!BASS[name]) throw new Error(`no bass pattern ${name}`);
+    return bassLine(chord, next, BASS[name]);
+  });
+}
+
+/* ---- the drums: k kick, s snare, h hat, t tom, o open hat, r rim, c crash; "." nothing ---- */
+
+export const KIT16: Record<string, string> = {
+  /* the run-and-gun beat of Phobos Run */
+  drive: "kh . kh . sh . kh . kh . kh . sh . oh .",
+  halfTime: "kh . h . h . h . sh . h . h k h .",
+  doubleTime: "kh h sh h kh h sh h kh h sh h kh h sh k",
+  blast: "kh kh sh kh kh kh sh kh kh kh sh kh kh kh sh kh",
+  funk: "kh . h h . kh h . sh . h kh . h sh h",
+  stomp: "kt . . t . kt . t sh . . t . kt t t",
+  chorale: "kt . . . . . . . st . . . kt . kt .",
+  march: "ks . s s ks . s s ks . s s ks s s s",
+  clave: "kr . . r . . kr . . . r . kr . . .",
+  rim: "k . r . s . r . k . r k s . r .",
+  off: "k . h . . k h . s . h . . k h s",
+  fill: "kh . h k sh . h . kh . h . s t t s",
+  break: "kh . . . . . h . sh . . . t t s s",
+  none: ". . . . . . . . . . . . . . . .",
+  /* the cold ones: four on the floor, a syncopated glide, a slow heave, a tumble of toms, a galloping double kick */
+  four: "kh . oh . kh . oh . kh . oh . kh . oh .",
+  glide: "k . . h . . s h k . . h . . s h",
+  heave: "kt . . . st . . t kt . t . st . . .",
+  tumble: "k . t t s . t t k . t t s t s s",
+  gallopKit: "kh k sh kh k kh sh k kh k sh kh k kh sh kh",
+  ending: "kh . . . oh . . . kh . . . . . . .",
+  /* a war march: snare and kick in a dotted drive, and a single timpani in a prelude */
+  warmarch: "ks . s s ks . s ks ks . s s ks s ks s",
+  timpani: "kt . . . . . kt . kt . . . . kt . .",
+  dirge: "kt . . . st . . . kt . . kt st . . .",
+  assault: "kh kh sh kh k kh sh kh kh kh sh kh k kh sh k",
+  advance: "kh . kh sh kh . kh sh kh . kh sh kh sh kh sh",
+  /* hard rock: a single kick, the snare on two and four, the hats open at the ends of phrases */
+  rock: "kh . h . sh . h kh kh . h . sh . h .",
+  anthem: "kh . oh . sh . h . kh . kh . sh . oh h",
+  backbeat: "kh . . . sh . . . kh . kh . sh . . .",
+  chug: "kh . kh . sh . kh kh . . kh . sh . kh .",
+  /* the riff beat of Phobos Run */
+  riff: "kt . h t . . kt . t . h . st . t t",
+  /* a heartbeat for a prelude: kick on one and three, nothing else */
+  heartbeat: "k . . . . . . . k . . . . . . .",
+};
+
+export const KIT14: Record<string, string> = {
+  grind: "kh . h k sh . h k kh . sh . h .",
+  heart: "k . . . . . h . . k . . h .",
+  hard: "kt . t . st . t . kt . st . t t",
+  fill: "k s s k t t k t t s s s s s",
+  skitter: "k . h h . k h . s . h k . h",
+  tick: "k . . h . k . . h . . k h .",
+  drone: "k . . . . . . . . k . . . .",
+  coil: "kt . t h sh . t kt . h sh . t h",
+  slither: "k . h . h k . h sh . k h . sh",
+  siege: "kt . t . kt . t kt . kt . t . kt",
+  legion: "kt kt . t kt . t kt . kt t . kt t",
+  barrage: "k . k . h k . k sh . k . sh h",
+  wreck: "k . k h . k . h sh . k h . sh",
+};
+
+export const KIT12: Record<string, string> = {
+  shuffle: "kh . h sh . h kh . h sh . h",
+  swing: "kh . h h . h sh . h h kh h",
+  waltz: "k . . . h . . . h . . .",
+  stomp: "kt . . st . t kt . t st . t",
+  pound: "kt . . kt . . st . . kt . t",
+  sway: "k . r . h . k . r . h .",
+  brush: "h . h h . h k . h sh . h",
+  fill: "k s s k t t k t t s s s",
+  none: ". . . . . . . . . . . .",
+  /* a ballad in six, and a walk in six (a kick on every beat) for a jazz interlude */
+  ballad: "kh . . h . . sh . . h . .",
+  walk: "k . h k . h k . h k . h",
+};
+
+/* Which feel to use where is chosen by the tune: a kit for each bar, by name and bar length. */
+export function kitFor(length: number, name: string) {
+  const table = length === 16 ? KIT16 : length === 14 ? KIT14 : KIT12;
+  if (!table[name]) throw new Error(`no ${length}-cell kit ${name}`);
+  return table[name];
+}
+
+/* ---- dynamics ---- */
+
+export type Feel = "drive" | "march" | "lyric" | "swing" | "stomp" | "seven" | "stop" | "flat";
+
+/* How hard each cell of a bar is played. The downbeat leads, the other beats follow, the cells between breathe; the feel
+   bends that: a drive leans on the pickup before the beat, a march is square, a lyrical line stays soft and even, a swing
+   leans on the off-beat, a stomp hits only the heavy cells, stops hit everything. Between 0 and 1.5. */
+export function accentMap(n: number, feel: Feel): number[] {
+  return Array.from({ length: n }, (_, i) => {
+    const beat = n === 12 ? 6 : n === 14 ? 4 : 8;
+    let v = i === 0 ? 1 : i % beat === 0 ? 0.9 : i % 4 === 0 ? 0.78 : i % 2 === 0 ? 0.64 : 0.52;
+    switch (feel) {
+      case "drive": if (i % 8 === 3 || i % 8 === 7) v += 0.18; break;
+      case "march": v = i % 4 === 0 ? (i % 8 === 0 ? 1 : 0.8) : 0.5; break;
+      case "lyric": v = 0.74 + 0.2 * v; break;
+      case "swing": if (i % 3 === 2) v += 0.22; break;
+      case "stomp": v = i % 6 === 0 ? 1.15 : i % 3 === 0 ? 0.85 : 0.5; break;
+      case "seven": v = [0, 4, 8, 11].includes(i) ? 1 : [2, 6].includes(i) ? 0.75 : 0.55; break;
+      case "stop": v = 1.1; break;
+      case "flat": v = 0.85; break;
+    }
+    return Math.min(1.5, Math.round(v * 100) / 100);
+  });
+}
+
+/* ---- building a tune from sections ---- */
+
+import type { BarPerformance } from "./space2-music";
+
+export type Bar = [lead: string, chord: string, riff?: string, counter?: string];
+export type Piece = { bars: Bar[]; performance: BarPerformance[] };
+
+export const rest = (n: number) => Array(n).fill(".").join(" ");
+const cellsOf = (line: string) => line.trim().split(/\s+/).length;
+/* A riff that fits the bar; the written bass replaces it, but the engine still wants one that fits. */
+const FIT: Record<number, string> = { 16: "pump16", 14: "throb14", 12: "waltz12" };
+
+/* The same line again `by` cells later, for a second voice that answers the first: the ghost that copies. */
+export function echoLine(line: string, by = 4) {
+  const cells = line.trim().split(/\s+/);
+  return [...Array(by).fill("."), ...cells.slice(0, cells.length - by)].join(" ");
+}
+
+/* A run of bars: a melody line and a chord for each, a bass pattern and a kit by name (one name for the lot, or one per
+   bar, cycling), and a counter-line (a line each, "rest" for silence, or "none" to let the song's arpeggio play). */
+export function section(o: {
+  leads: string[]; chords: string[]; bass: string | string[]; kit: string | string[]; gate?: number;
+  counters?: (string | undefined)[] | "rest" | "none"; after?: string; accents?: number[]; feel?: Feel | Feel[];
+}): Piece {
+  if (o.leads.length !== o.chords.length) throw new Error("a chord for every bar");
+  const bars: Bar[] = [], performance: BarPerformance[] = [];
+  o.leads.forEach((lead, i) => {
+    const n = cellsOf(lead);
+    const counter = o.counters === "rest" ? rest(n) : Array.isArray(o.counters) ? o.counters[i] : undefined;
+    const bass = typeof o.bass === "string" ? o.bass : o.bass[i % o.bass.length];
+    const kit = typeof o.kit === "string" ? o.kit : o.kit[i % o.kit.length];
+    const next = o.chords[i + 1] ?? o.after ?? o.chords[0];
+    bars.push(counter === undefined ? [lead, o.chords[i], FIT[n]] : [lead, o.chords[i], FIT[n], counter]);
+    performance.push({ bass: bassLine(o.chords[i], next, BASS_BY_LENGTH(bass, n)), kit: kitFor(n, kit), gate: o.gate ?? 0.92, ...(o.accents ? { drumAccents: o.accents } : {}), ...(o.feel ? { leadAccents: accentMap(n, Array.isArray(o.feel) ? o.feel[i % o.feel.length] : o.feel) } : {}) });
+  });
+  return { bars, performance };
+}
+
+/* Bass pattern names carry their own length; this picks the right one when a name exists for each. */
+function BASS_BY_LENGTH(name: string, n: number) {
+  const pattern = BASS[name];
+  if (!pattern) throw new Error(`no bass pattern ${name}`);
+  if (cellsOf(pattern) !== n) throw new Error(`bass ${name} has ${cellsOf(pattern)} cells, the bar ${n}`);
+  return pattern;
+}
+
+/* Sections laid end to end: all the bars, all the performances, and the bar each section starts on. */
+export function join(...pieces: Piece[]) {
+  const starts: number[] = [];
+  const bars: Bar[] = [], performance: BarPerformance[] = [];
+  for (const p of pieces) {
+    starts.push(bars.length);
+    bars.push(...p.bars);
+    performance.push(...p.performance);
+  }
+  return { bars, performance, starts };
+}

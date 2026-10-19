@@ -1,0 +1,178 @@
+/* Space 3, chapter 3 (Jovian Cryo-Crags, Europa). Two tunes that keep clear of every other tune on the album
+   (docs/space3-music-research.md):
+
+     Battle: Cryo-Crags       ice and hard rock, built like a rock song: a drumless intro under harp and piano, a guitar
+                              riff that carries the verse, a singable chorus, a half-time bridge in D flat major, a bluesy
+                              guitar solo, the riff alone with no drums, and the chorus again a whole tone up. One kick,
+                              a backbeat, a pumping bass. B flat minor. 92 BPM.
+     Showdown: Abyssal Wyrm   serpentine but heavy: a 7/8 riff that coils chromatically around E, then a 4/4 chorus with the violin
+                              over a galloping double kick, and the chorus again a step up in F sharp minor. 124 BPM.
+
+   Written for this game; none copies a note from anything else. */
+import type { Song } from "./space2-music";
+import { join, section, transposeChord, transposeLine } from "./space3-groove.ts";
+import { S1_STAGE, S2_HANGAR } from "./space3-motifs.ts";
+
+/* ---------- Battle: Cryo-Crags ---------- */
+
+const CRAGS_INTRO = section({
+  leads: ["Bb4 - - - - - - - F5 - - - - - - -", "Gb4 - - - - - - - Db5 - - - - - - -", "Db5 - - - - - - - Ab5 - - - F5 - - -", "C5 - - - A4 - - - C5 - - - E5 - - -"],
+  chords: ["Bbm", "Gb", "Db", "F"], bass: "glass", kit: "none", counters: "rest", after: "Bbm", gate: 1, feel: "lyric",
+});
+
+/* The riff: a low guitar, eighths on the root with a pull to the third and the fifth, the backbone of the whole song. */
+const RIFF = [
+  "Bb2 . . Bb2 . Db3 . . Bb2 . . F3 . Eb3 Db3 .", "Gb2 . . Gb2 . Bb2 . . Gb2 . . Db3 . C3 Bb2 .", "Db3 . . Db3 . F3 . . Db3 . . Ab3 . Gb3 F3 .", "F2 . . F2 . A2 . . F2 . . C3 . Bb2 A2 .",
+  "Bb2 Bb2 . . Db3 . Bb2 . F3 . . Eb3 . Db3 . Bb2", "Gb2 Gb2 . . Bb2 . Gb2 . Db3 . . C3 . Bb2 . Gb2", "Eb2 Eb2 . . Gb2 . Eb2 . Bb2 . . Ab2 . Gb2 . Eb2", "F2 F2 . . A2 . F2 . C3 . . A2 . C3 Eb3 .",
+];
+const RIFF_CHORDS = ["Bbm", "Gb", "Db", "F", "Bbm", "Gb", "Ebm", "F"];
+const CRAGS_RIFF = section({
+  leads: RIFF, chords: RIFF_CHORDS, bass: ["pump", "pump", "pump", "syncop", "pump", "pump", "pump", "stab"],
+  kit: ["rock", "rock", "rock", "tumble", "rock", "rock", "rock", "tumble"], counters: "rest", after: "Bbm", feel: "stomp",
+});
+
+/* The verse: a violin sings over the riff, which goes on underneath on the guitar. */
+const VERSE = [
+  "Bb4 . Db5 F5 - - Eb5 . Db5 - Bb4 - F4 - Bb4 -", "Gb4 . Bb4 Db5 - - C5 . Bb4 - Gb4 - Db4 - Gb4 -", "Ab4 . C5 Eb5 - - Db5 . C5 - Ab4 - Eb4 - Ab4 -", "A4 . C5 E5 - - F5 . E5 - C5 - A4 - . .",
+  "F5 . Bb5 Db6 - - C6 . Bb5 - F5 - Db5 - F5 -", "Db5 . Gb5 Bb5 - - Ab5 . Gb5 - Db5 - Bb4 - Db5 -", "Eb5 . Gb5 Bb5 - - Ab5 . Gb5 - Eb5 - Bb4 - Eb5 -", "C5 - A4 - F4 - A4 - C5 - E5 - F5 - . .",
+];
+const CRAGS_VERSE = section({
+  leads: VERSE, chords: RIFF_CHORDS, bass: ["pump", "octave", "pump", "syncop", "pump", "octave", "pump", "stab"],
+  kit: ["rock", "rock", "rock", "tumble", "anthem", "anthem", "anthem", "tumble"], counters: RIFF, after: "Db", feel: "drive",
+});
+
+/* The chorus: long notes, the same short rhythm in every bar, easy to sing. */
+const CHORUS = [
+  "F5 - - - Ab5 - - - Db6 - - - C6 - Ab5 -", "Eb5 - - - Ab5 - - - C6 - - - Bb5 - Ab5 -", "Db5 - - - F5 - - - Bb5 - - - Ab5 - F5 -", "Gb5 - - - Bb5 - - - Db6 - - - Bb5 - Gb5 -",
+  "Ab5 - - Db6 - - F6 - - Ab6 - - Gb6 - F6 -", "Eb6 - - C6 - - Ab5 - - C6 - - Eb6 - . .", "Db6 - Bb5 - Gb5 - Bb5 - Db6 - Gb6 - F6 - Eb6 -", "C6 - - - A5 - - - F5 - - - . . . .",
+];
+const CHORUS_CHORDS = ["Db", "Ab", "Bbm", "Gb", "Db", "Ab", "Gb", "F"];
+const CRAGS_CHORUS = section({
+  leads: CHORUS, chords: CHORUS_CHORDS, bass: ["octave", "pump", "octave", "syncop", "octave", "pump", "octave", "stab"],
+  kit: ["anthem", "anthem", "rock", "tumble", "anthem", "anthem", "rock", "tumble"], counters: "none", after: "Db", feel: "drive",
+});
+
+const CRAGS_DEV = section({
+  leads: [
+    "Ab5 - - - Db6 - - - F6 - - Ab6 - F6 - Db6", "Eb6 - - - C6 - - - Eb6 - Ab6 - - - . .", "Db6 - F6 - Bb6 - - - Ab6 - F6 - Db6 - . .", "Gb6 - - - Db6 - - - Bb5 - Db6 - Gb6 - . .",
+    "F6 - Ab6 - F6 - Db6 - Ab5 - F5 - Ab5 - . .", "C6 - Eb6 - Ab6 - Eb6 - C6 - Ab5 - Eb5 - . .", "Bb5 - Db6 - Gb6 - Db6 - Bb5 - Gb5 - Db5 - . .", "A5 - C6 - F6 - E6 - C6 - A5 - G5 A5 Bb5 C6",
+  ],
+  chords: ["Db", "Ab", "Bbm", "Gb", "Db", "Ab", "Gb", "F"], bass: ["octave", "octave", "pump", "octave"], kit: ["backbeat", "backbeat", "backbeat", "backbeat", "backbeat", "backbeat", "backbeat", "tumble"],
+  /* Space 2's hangar arpeggio, a whole tone down so that it sits on D flat and A flat, plays on a harp beneath the trumpet. */
+  counters: [transposeLine(S2_HANGAR[0].line, -2, true), transposeLine(S2_HANGAR[1].line, -2, true), undefined, undefined, undefined, undefined, undefined, undefined],
+  after: "Bbm", gate: 0.98, feel: "lyric",
+});
+
+/* A guitar solo in the pentatonic over the riff's changes, long bent notes and quick runs between them, climbing to B flat 6. */
+const CRAGS_SOLO = section({
+  leads: [
+    "Bb4 - Db5 - F5 - Ab5 Bb5 - - Ab5 F5 Db5 - F5 -", "Gb5 - - Db6 - Bb5 - Gb5 - F5 - Db5 Bb4 - Db5 -", "Ab5 - Db6 - F6 - - Ab6 F6 - Db6 - Ab5 - - -", "A5 - C6 - Eb6 - Db6 - C6 - A5 - F5 - . .",
+    "Gb5 - Bb5 - Eb6 - - Gb6 Eb6 - Bb5 - Gb5 - - -", "Bb5 - Db6 - Gb6 - Bb6 - Gb6 - Db6 - Bb5 - . .", "C6 - A5 - F5 - A5 - C6 - F6 - Ab6 - G6 -", "Bb5 - Db6 - F6 - Bb6 - - - - - . . . .",
+  ],
+  chords: RIFF_CHORDS.map((c, i) => (i === 6 ? "F" : i === 7 ? "Bbm" : c)), bass: ["pump", "octave", "pump", "syncop", "pump", "octave", "walk", "stab"],
+  kit: ["rock", "rock", "anthem", "tumble", "rock", "anthem", "rock", "tumble"], counters: "rest", after: "Bbm", gate: 0.95, feel: "lyric",
+});
+
+/* The riff alone, with no drums, the way a rock song strips itself bare before the last chorus; a fill brings the band back. */
+const CRAGS_BREAK = section({
+  leads: RIFF.slice(0, 4), chords: RIFF_CHORDS.slice(0, 4), bass: ["pump", "pump", "pump", "stab"], kit: ["none", "none", "none", "tumble"], counters: "rest", after: "Eb", gate: 0.8, feel: "stomp",
+});
+
+/* The chorus again a whole tone up, in E flat, with a new ending that holds. */
+const FINAL = CHORUS.map((l, i) => (i === 7 ? "G5 - Bb5 - Eb6 - Bb5 - G5 - - - - - - -" : transposeLine(l, 2, true)));
+const CRAGS_FINAL = section({
+  leads: FINAL, chords: CHORUS_CHORDS.map((c, i) => (i === 7 ? "Eb" : transposeChord(c, 2, true))), bass: ["octave", "pump", "octave", "syncop", "octave", "pump", "octave", "pedal"],
+  kit: ["anthem", "rock", "anthem", "tumble", "anthem", "rock", "anthem", "ending"], counters: "none", after: "Bbm", feel: "drive",
+});
+
+const CRAGS_CODA = section({
+  leads: ["Bb4 - - - - - - - F5 - - - - - - -", "Bb4 - - - - - - - . . . . . . . ."],
+  chords: ["Bbm", "Bbm"], bass: ["glass", "pedal"], kit: ["none", "none"], counters: "rest", after: "Bbm", gate: 1,
+});
+
+const CRAGS = join(CRAGS_INTRO, CRAGS_RIFF, CRAGS_VERSE, CRAGS_CHORUS, CRAGS_DEV, CRAGS_SOLO, CRAGS_BREAK, CRAGS_FINAL, CRAGS_CODA);
+
+export const CRYO_CRAGS: Song = {
+  bpm: 92, lead: "piano", pad: "harp", counter: "piano", arps: true, arpStep: 1, bassVoice: "picked", drums: "battle", riff: "pump16",
+  performance: CRAGS.performance, crashes: CRAGS.starts.slice(1), fills: [],
+  sections: [
+    { from: 0, lead: "piano", pad: "harp", layer: undefined, counter: undefined },
+    { from: CRAGS.starts[1], lead: "guitar", pad: undefined, layer: undefined, counter: undefined, bassVoice: "picked" },
+    { from: CRAGS.starts[2], lead: "violin", pad: "strings", layer: "piano", counter: "guitar", bassVoice: "picked" },
+    { from: CRAGS.starts[3], lead: "guitar", pad: "strings", layer: "trumpet", counter: "piano", bassVoice: "picked" },
+    { from: CRAGS.starts[4], lead: "trumpet", pad: "strings", layer: "guitar", counter: "harp", bassVoice: "slap" },
+    { from: CRAGS.starts[5], lead: "guitar", pad: "organ", layer: undefined, counter: undefined, bassVoice: "picked" },
+    { from: CRAGS.starts[6], lead: "guitar", pad: undefined, layer: undefined, counter: undefined, bassVoice: "picked" },
+    { from: CRAGS.starts[7], lead: "guitar", pad: "strings", layer: "violin", counter: "piano", bassVoice: "picked" },
+    { from: CRAGS.starts[8], lead: "piano", pad: "harp", layer: undefined, counter: undefined, bassVoice: "picked" },
+  ],
+  bars: CRAGS.bars,
+};
+
+/* ---------- Showdown: Abyssal Wyrm ---------- */
+
+/* Tremolo: each note is held as repeated cells, the way strings shake under tension. */
+const trem = (...notes: [string, number][]) => notes.flatMap(([n, len]) => Array(len).fill(n)).join(" ");
+
+/* A prelude with no drums, a chip shaking on the root and creeping up a semitone, then the riff enters on a crash. */
+const WYRM_PRELUDE = section({
+  leads: [trem(["E4", 14]), trem(["E4", 8], ["F4", 6]), trem(["F4", 6], ["G4", 4], ["F#4", 4]), trem(["B4", 8], ["D#5", 6])],
+  chords: ["Em", "Em", "F", "B7"], bass: ["slow7", "slow7b", "slow7", "slow7b"], kit: "drone", counters: "rest", after: "Em", gate: 1, feel: "seven",
+});
+
+const COIL = [
+  "E3 E3 F3 E3 . G3 E3 . F3 . E3 . D3 .", "E3 E3 F3 E3 . B3 G3 . F3 . G3 . B3 .", "F3 F3 Gb3 F3 . A3 F3 . Gb3 . F3 . E3 .", "E3 . E4 D4 . B3 G3 . E3 . F3 . G3 .",
+  "E3 E3 F3 E3 . G3 B3 . E4 . D4 . B3 .", "F3 F3 Gb3 F3 . A3 C4 . F4 . E4 . C4 .", "G3 G3 Ab3 G3 . B3 D4 . G4 . F#4 . D4 .", "B3 B3 C4 B3 . D#4 F#4 . B4 . A4 . F#4 .",
+];
+const WYRM_COIL = section({
+  leads: COIL, chords: ["Em", "Em", "F", "Em", "Em", "F", "G", "B7"],
+  bass: ["slow7", "slow7b", "slow7", "slow7b", "slow7b", "slow7", "slow7", "slow7b"], kit: ["grind", "skitter", "grind", "coil", "grind", "skitter", "coil", "slither"], counters: "rest", after: "Em", feel: "seven",
+});
+
+const SURGE = [
+  "E5 . . G5 B5 - E6 - D6 - B5 . G5 . . .", "C5 . . E5 G5 - C6 - B5 - G5 . E5 . . .", "D5 . . F#5 A5 - D6 - C#6 - A5 . F#5 . . .", "D#5 . F#5 B5 - A5 - F#5 - D#5 - B4 - - . .",
+  "G5 . . B5 E6 - G6 - F#6 - E6 . B5 . . .", "E5 . . G5 C6 - E6 - D6 - C6 . G5 . . .", "A5 - C6 - E6 - A6 - G6 - E6 - C6 - A5 -", "F#6 - D#6 - B5 - F#5 - D#5 - B4 - . . . .",
+];
+const SURGE_CHORDS = ["Em", "C", "D", "B7", "Em", "C", "Am", "B7"];
+/* The surge runs on the chords of Space 1's first stage (Em, C, D, B7) and, in the first four bars, Space 1's own line is played on
+   the chip beneath the violin: the first game, inside the third. */
+const WYRM_SURGE = section({
+  leads: SURGE, chords: SURGE_CHORDS, bass: ["heave", "walk", "heave", "slide", "glass", "walk", "heave", "pedal"],
+  kit: ["gallopKit", "gallopKit", "gallopKit", "tumble", "gallopKit", "gallopKit", "gallopKit", "tumble"],
+  counters: [...S1_STAGE.map((m) => m.line), undefined, undefined, undefined, undefined], after: "Em", feel: "drive",
+});
+
+/* An eerie interlude in six, a piano alone over strings in E Phrygian (the flat second again), before the last surge. */
+const WYRM_INTERLUDE = section({
+  leads: ["E5 - - - - - G5 - - F5 - -", "F5 - - - - - A5 - - G5 - -", "E5 - - B5 - - G5 - - F#5 - E5", "D#5 - - F#5 - - A5 - - B5 - -"],
+  chords: ["Em", "F", "Em", "B7"], bass: ["sway", "stomp", "sway", "roll"], kit: ["ballad", "sway", "ballad", "sway"], counters: "rest", after: "Em", gate: 1, feel: "lyric",
+});
+
+const WYRM_BRIDGE = section({
+  leads: ["B4 . . . B4 . C5 . B4 . F#4 . G4 .", "E4 . . . E4 . F4 . E4 . B3 . D#4 ."],
+  chords: ["B7", "Em"], bass: ["slow7b", "slow7"], kit: ["coil", "slither"], counters: "rest", after: "F#m", gate: 0.9, feel: "seven",
+});
+
+/* The surge a step up, in F sharp minor; the last bar is new and lands on the tonic. */
+const SURGE_UP = SURGE.map((l, i) => (i === 7 ? "F#6 - A6 - C#7 - - - . . . . . . . ." : transposeLine(l, 2)));
+const WYRM_FINAL = section({
+  leads: SURGE_UP, chords: SURGE_CHORDS.map((c, i) => (i === 7 ? "F#m" : transposeChord(c, 2))),
+  bass: ["heave", "walk", "heave", "slide", "walk", "glass", "heave", "pedal"], kit: ["gallopKit", "gallopKit", "gallopKit", "tumble", "gallopKit", "gallopKit", "gallopKit", "ending"],
+  counters: [...S1_STAGE.map((m) => transposeLine(m.line, 2)), undefined, undefined, undefined, undefined], after: "F#m", feel: "drive",
+});
+
+const WYRM_PARTS = join(WYRM_PRELUDE, WYRM_COIL, WYRM_SURGE, WYRM_INTERLUDE, WYRM_BRIDGE, WYRM_FINAL);
+
+export const WYRM_THEME: Song = {
+  bpm: 124, lead: "guitar", layer: undefined, pad: "organ", counter: "chip", arps: true, arpStep: 2, bassVoice: "picked", drums: "battle", riff: "throb14",
+  performance: WYRM_PARTS.performance, crashes: WYRM_PARTS.starts.slice(1), fills: [], riser: [2, 3],
+  sections: [
+    { from: 0, lead: "chip", pad: "strings", layer: undefined, counter: undefined },
+    { from: WYRM_PARTS.starts[1], lead: "guitar", pad: "organ", layer: "brass", counter: undefined, bassVoice: "picked" },
+    { from: WYRM_PARTS.starts[2], lead: "violin", pad: "strings", layer: "trumpet", counter: "chip", bassVoice: "picked" },
+    { from: WYRM_PARTS.starts[3], lead: "piano", pad: "strings", layer: undefined, counter: undefined, bassVoice: "slap" },
+    { from: WYRM_PARTS.starts[4], lead: "organ", pad: "organ", layer: "guitar", counter: undefined, bassVoice: "picked" },
+    { from: WYRM_PARTS.starts[5], lead: "violin", pad: "strings", layer: "guitar", counter: "chip", bassVoice: "picked" },
+  ],
+  bars: WYRM_PARTS.bars,
+};

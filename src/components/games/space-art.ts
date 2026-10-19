@@ -2,6 +2,7 @@
    space-actor-art.ts and share weapon geometry with the simulation. */
 import { NAVY } from "./shared";
 import { drawEndymionHull } from "./space-ship-art";
+import { drawThirdOrbit } from "./space3-environment";
 import { drawFormsBack, drawFormsFront } from "./space-ship-forms-art";
 import { glow, lamp, rivets, seam, slab } from "./space-material";
 import { drawEnvironment } from "./space-environment";
@@ -223,6 +224,10 @@ const SKY: Record<number, [string, string]> = {
 };
 
 export function drawBackdrop(ctx: Ctx, s: State, reduceMotion = false) {
+  if (s.chapter >= 17) {
+    drawThirdOrbit(ctx, s, reduceMotion);
+    return;
+  }
   /* Space 2 is set on Earth throughout: its chapters are the engine's 9 to 16. */
   if (s.chapter > 8) {
     drawSecondEarth(ctx, s, reduceMotion);

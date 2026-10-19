@@ -1,0 +1,93 @@
+import assert from "node:assert/strict";
+import test from "node:test";
+import { H, createState, shipSize, step } from "../src/components/games/space-logic.ts";
+import { AEGIS, createAegis, stepAegis } from "../src/components/games/space3-aegis.ts";
+import { RESONANCE } from "../src/components/games/space3-resonance.ts";
+
+const ship = { x: 60, y: 100 };
+const shot = (x, y, vx = -2, vy = 0, r = 2) => ({ x, y, vx, vy, r, own: "e" });
+const IDLE = { mx: 0, my: 0, bomb: false };
+
+test("Kite waits beside the ship when nothing threatens it", () => {
+  const a = createAegis({ x: 0, y: 0 });
+  for (let i = 0; i < 60; i++) stepAegis(a, ship, []);
+  assert.ok(Math.abs(a.x - (ship.x + AEGIS.dx)) < 0.01 && Math.abs(a.y - (ship.y + AEGIS.dy)) < 0.01);
+});
+
+test("it goes to meet the shot that would reach the ship soonest, and stands between them", () => {
+  const a = createAegis(ship);
+  const near = shot(130, 100), far = shot(200, 60);
+  for (let i = 0; i < 20; i++) stepAegis(a, ship, [near, far]);
+  assert.ok(Math.abs(a.y - 100) < 3, `y ${a.y}`);
+  assert.ok(a.x > ship.x && a.x <= ship.x + AEGIS.guard + 0.01, `x ${a.x}`);
+});
+
+test("it ignores the ship's own shots, shots flying away, and shots too far off", () => {
+  const a = createAegis(ship);
+  const mine = { ...shot(100, 100), own: "p" }, away = shot(100, 100, 2, 0), distant = shot(60 + AEGIS.reach + 40, 100);
+  for (let i = 0; i < 30; i++) stepAegis(a, ship, [mine, away, distant]);
+  assert.ok(Math.abs(a.x - (ship.x + AEGIS.dx)) < 0.5, "it stayed home");
+});
+
+test("a shot that reaches it is caught, costs integrity by its size, and only an enemy shot", () => {
+  const a = createAegis(ship);
+  a.x = 80; a.y = 100;
+  const small = shot(80, 100), heavy = shot(80, 101, -2, 0, AEGIS.heavyAt), own = { ...shot(80, 100), own: "p" };
+  const caught = stepAegis(a, ship, [small, heavy, own]);
+  assert.deepEqual(caught, [small, heavy]);
+  assert.equal(a.hp, AEGIS.hp - AEGIS.cost - AEGIS.heavy);
+});
+
+test("spent, it is down for a while, catches nothing, then comes back half mended", () => {
+  const a = createAegis(ship);
+  a.x = 80; a.y = 100; a.hp = 2;
+  stepAegis(a, ship, [shot(80, 100)]);
+  assert.equal(a.hp, 0);
+  assert.equal(a.down, AEGIS.down);
+  assert.deepEqual(stepAegis(a, ship, [shot(a.x, a.y)]), [], "a wing that is down catches nothing");
+  for (let i = 0; i < AEGIS.down; i++) stepAegis(a, ship, []);
+  assert.equal(a.down, 0);
+  assert.equal(a.hp, AEGIS.hp * AEGIS.back);
+});
+
+test("left alone it mends slowly, and a hit makes it wait again", () => {
+  const a = createAegis(ship);
+  a.hp = 30;
+  for (let i = 0; i < AEGIS.calm; i++) stepAegis(a, ship, []);
+  assert.equal(a.hp, 30, "not yet");
+  for (let i = 0; i < 100; i++) stepAegis(a, ship, []);
+  assert.ok(a.hp > 30);
+  a.x = 80; a.y = 100;
+  const before = a.hp;
+  stepAegis(a, ship, [shot(80, 100)]);
+  assert.ok(a.hp < before);
+  assert.equal(a.calm, 0);
+});
+
+test("in a run Kite exists from the first frame of chapter 17 on, and not in Space 1 or 2", () => {
+  for (const c of [1, 8, 9, 16]) assert.equal(createState(c).aegis, null, `chapter ${c}`);
+  for (const c of [17, 18, 19]) assert.ok(createState(c).aegis, `chapter ${c}`);
+});
+
+test("in a run Kite catches a shot flying at the ship, removes it, and the ship gains Resonance", () => {
+  const s = createState(17);
+  s.phase = "play"; s.p.x = 60; s.p.y = 100; s.p.inv = 1e6; s.enemies.length = 0;
+  const size = shipSize(s.p.level), cy = s.p.y + size.h / 2, cx = s.p.x + size.w / 2;
+  step(s, IDLE);
+  const bolt = { x: cx + 28, y: cy, vx: -1.2, vy: 0, r: 2, own: "e", dmg: 1, kind: "pulse" };
+  s.bullets.push(bolt);
+  let caught = false;
+  for (let i = 0; i < 60 && !caught; i++) { step(s, IDLE); caught = !s.bullets.includes(bolt); }
+  assert.ok(caught, "the shot is gone");
+  assert.equal(s.stats.hits, 0, "and it never touched the ship");
+  assert.ok(s.aegis.hp < AEGIS.hp, "Kite took it");
+  assert.ok(s.res.meter >= AEGIS.gain - 0.001 && s.res.meter <= RESONANCE.max);
+});
+
+test("Kite stays on the screen and never fires", () => {
+  const s = createState(17);
+  s.phase = "play"; s.p.x = 60; s.p.y = 100; s.p.inv = 1e6; s.enemies.length = 0;
+  for (let i = 0; i < 300; i++) step(s, { mx: i % 120 < 60 ? 2 : -2, my: i % 90 < 45 ? 2 : -2, bomb: false });
+  assert.ok(s.aegis.x > -20 && s.aegis.x < 400 && s.aegis.y > -20 && s.aegis.y < H + 20);
+  assert.ok(s.bullets.filter((b) => b.own === "p").every((b) => ["seed", "echo", "lance"].includes(b.kind)), "only the ship and the Echo Wing shoot");
+});

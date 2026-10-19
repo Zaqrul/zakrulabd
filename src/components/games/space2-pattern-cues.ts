@@ -1,6 +1,6 @@
 /* Pattern geometry is part of combat feedback: danger shapes describe actual
    lanes, openings, body sweeps and projectile routes, including reduced motion. */
-import { BOSS_MUZZLE, GROUND_Y, H, WATER_Y, bossScale, isMini, miniMuzzle, type Enemy } from "./space-logic";
+import { BOSS_MUZZLE, GROUND_Y, H, WATER_Y, bossScale, hidesAttackPrediction, isMini, miniMuzzle, type Enemy } from "./space-logic";
 import { PATTERN } from "./space2-attack-patterns";
 
 type Ctx = CanvasRenderingContext2D;
@@ -18,6 +18,7 @@ function arrow(ctx: Ctx, x: number, y: number, angle: number, size = 4) {
   ctx.lineTo(x, y); ctx.lineTo(x + Math.cos(angle + 2.5) * size, y + Math.sin(angle + 2.5) * size); outlinedStroke(ctx);
 }
 export function drawPatternCue(ctx: Ctx, e: Enemy, reduceMotion = false) {
+  if (hidesAttackPrediction(e)) return;
   const a = e.attack;
   if (!a || a.t >= a.warn + a.live) return;
   const warning = a.t < a.warn, t2 = Math.max(0, a.t - a.warn);
