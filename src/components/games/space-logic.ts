@@ -29,27 +29,29 @@ const SHIPS: string[] = ["gunboat", "destroyer"];
 /* Big enough that ramming them is not how they die. */
 const HEAVY: string[] = ["cruiser", "destroyer", "bunker", "mini9", "mini10", "mini11", "mini12", "mini13", "mini14", "mini15", "mini16"];
 
-/* Gold hearts collect into levels, up to MAX_LEVEL, and slowly: only a gold heart counts
-   (a life crate just mends health), the hearts are a matter of luck (see UPGRADE_LUCK), and
-   each level asks for one heart more than the level before it, so the ship usually gets
-   to level 2 or 3, a lucky run goes further, and the top levels are waiting for more
-   chapters.
+/* The ship levels up to MAX_LEVEL by experience (see XP): every enemy destroyed adds to it, and a
+   gold heart, when luck brings one (see UPGRADE_LUCK), adds a third of a level and mends health. A
+   life crate only mends health.
    Every level is an upgrade that arrives by itself, and the ship's own shape hardly
    changes with them (its power goes into what it does, not into parts bolted on): level 1
-   the torpedo launcher, 2 the hypersonic drive, 3 the mechanical shield, 4 a second
-   launcher, 5 self-repair, and 9 the HQ's support: a carrier's hangar fills the left edge of
-   the screen and its four launchers fire homing torpedoes. The other levels bring more
-   health and shield, and a fourth nuclear warhead at the top. The ship grows through its
+   the torpedo launcher, 2 a second launcher, 3 the hypersonic drive, 4 the mechanical
+   shield, 5 self-repair, 6 to 8 harder-hitting shots (POWER_UP), and 9 the HQ's support: a
+   carrier's hangar fills the left edge of the screen and its four launchers fire homing
+   torpedoes. Level 10 brings a fourth nuclear warhead. The second launcher comes at level two
+   because it is the biggest jump in firepower, and the bosses of chapters two and three
+   are met around levels one and two. The ship grows through its
    first three levels and stays that size after. */
 export const MAX_LEVEL = 10;
-export const LEVEL_AT = [0, 1, 3, 6, 10, 15, 21, 28, 36, 45];
 export const maxHpFor = () => MAX_HP;
 
 export type Upgrade = "torpedo" | "hypersonic" | "armor" | "repair" | "hq";
 export const UPGRADES: Upgrade[] = ["torpedo", "hypersonic", "armor", "repair", "hq"];
 /* The level at which each upgrade arrives, and the one at which the second launcher does. */
-export const UPGRADE_AT: Record<Upgrade, number> = { torpedo: 1, hypersonic: 2, armor: 3, repair: 5, hq: 9 };
-export const TWIN_AT = 4;
+export const UPGRADE_AT: Record<Upgrade, number> = { torpedo: 1, hypersonic: 3, armor: 4, repair: 5, hq: 9 };
+export const TWIN_AT = 2;
+/* Levels 6, 7 and 8 bring no new gear: each makes every shot the ship fires hit `each` harder. */
+export const POWER_UP = { at: [6, 7, 8], each: 0.12 };
+export const powerBonus = (p: { level: number }) => 1 + POWER_UP.each * POWER_UP.at.filter((l) => p.level >= l).length;
 
 /* Health. The ship has a small shield and, under it, its own health bar of MAX_HP
    points, and it never grows: no level or upgrade makes it longer. A hit takes LIFE.hit: from the shield first
@@ -108,7 +110,8 @@ export type Bomb = { x: number; y: number; vx: number; vy: number; t: number };
    `frames`: every `every` frames it hurts everything in it, a lot for what is small and a
    little for a boss, and wipes the screen of enemy fire. The ship is untouchable while
    it lasts. */
-export const NUKE = { count: 3, frames: 72, every: 6, regular: 7, boss: 1.4, blast: 80, direct: 60, bossShare: 0.05, speed: 7 };
+export const NUKE = { count: 3, frames: 72, every: 6, regular: 7, boss: 1.4, blast: 80, direct: 60, bossShare: 0.05, speed: 7, eject: 12, ignite: 12, slide: 0.8, coast: 1.2, accel: 0.16, drop: 0.2 };
+export const warheadStage = (t: number): "eject" | "ignite" | "burn" => (t <= NUKE.eject ? "eject" : t <= NUKE.eject + NUKE.ignite ? "ignite" : "burn");
 export type Warhead = { x: number; y: number; vx: number; vy: number; t: number; target: number; done?: boolean };
 
 /* After take-off in space the stars streak past, fast at first and then settling, for
@@ -140,12 +143,23 @@ export const KATANA = { reach: 54, half: 30, damage: 6, boss: 3.5, wave: 2.5 };
    needs nothing new.) `div` turns an enemy's score into its experience, and a boss is worth `boss`. */
 export const FIRST_CAMPAIGN = 8;
 /* Space 1 levels a tenth more slowly: `div1`, `boss1` and `heart1` are its share of each. */
-export const XP = { perLevel: 100, div: 28, div1: 22, boss: 30, heart: 30, boss1: 27, heart1: 27 };
+export const XP = { perLevel: 100, div: 28, div1: 22, boss: 30, heart: 40, boss1: 27, heart1: 36 };
 export const isSecond = (chapter: number) => chapter > FIRST_CAMPAIGN;
 
 /* The mini rocket: four small rockets fan out and then home, on an enemy shot first and on an
    enemy ship if there is no shot to stop. Strong against little things, weak against a boss. */
-export const ROCKET = { count: 4, fan: [-0.5, -0.17, 0.17, 0.5], speed: 3.2, top: 5.2, turn: 0.13, seekBullet: 120, seekEnemy: 170, life: 90, damage: 1.5, boss: 0.4, arm: 6 };
+export const ROCKET = { count: 4, fan: [-0.5, -0.17, 0.17, 0.5], speed: 3.2, top: 5.2, turn: 0.13, seekBullet: 120, seekEnemy: 170, life: 108, damage: 1.5, boss: 0.4, arm: 18,
+  /* A rocket leaves its rail like a torpedo leaves its tube: it drops away cold (eject), its motor
+     lights and sputters (ignite), then it burns up to `top`. It does not steer before the burn. */
+  eject: 10, ignite: 8, slide: 0.9, coast: 0.6, accel: 0.3, drop: 0.22,
+  /* It goes off where it hits (a small blast of `blast` radius and `splash` damage, which a boss feels
+     at the same share as a direct hit) and where its fuse runs out. */
+  blast: 17, splash: 0.9 };
+export const rocketStage = (age: number): "eject" | "ignite" | "burn" => (age <= ROCKET.eject ? "eject" : age <= ROCKET.eject + ROCKET.ignite ? "ignite" : "burn");
+export const rocketSpeed = (age: number) => {
+  const burn = age - ROCKET.eject - ROCKET.ignite;
+  return burn <= 0 ? (age <= ROCKET.eject ? ROCKET.slide : ROCKET.coast) : Math.min(ROCKET.top, ROCKET.coast + burn * ROCKET.accel);
+};
 
 /* Bloom: an umbrella that opens in front of the nose when enemy fire comes close and swallows what
    touches it. It drains while open (`energy` frames to a pickup, `max` at most), every shot it
@@ -323,6 +337,8 @@ export type Bullet = {
   ux?: number;
   uy?: number;
   age?: number;
+  /* A rocket's heading, which its motor follows; its drop while it is cold is added on top. */
+  heading?: number;
   /* Frames left in which it steers after the ship, and how far it can turn a frame. */
   track?: number;
   turn?: number;
@@ -371,7 +387,7 @@ export type Input = { mx: number; my: number; bomb: boolean; nuke?: boolean };
 
 export type Phase = "launch" | "play" | "clear" | "dead" | "won";
 
-export type Callout = "shield" | "armor" | "overload" | "levelup" | "phase" | "warning" | "c4" | "hypersonic" | "mechshield" | "launcher" | "repair" | "hq" | "cover"
+export type Callout = "shield" | "armor" | "overload" | "levelup" | "phase" | "warning" | "c4" | "hypersonic" | "mechshield" | "launcher" | "repair" | "hq" | "power" | "cover"
   | "ultimate" | "decks" | "magazines" | "shed" | "molt" | "decouple" | "breach" | "pressure"
   | "plating" | "buckle" | "judgement" | "core" | "laststand" | "miniboss"
   | "seaspray" | "downpour" | "blizzard" | "sandstorm" | "fogbank" | "polar" | "turbulence" | "clearsky";
@@ -695,9 +711,8 @@ const PLANS: Plan[][] = [[], landPlan(), seaPlan(), plan(1), plan(2), plan(3), p
 
 /* A gold heart may drift in at each of these moments, and it only does with a chance of
    UPGRADE_LUCK: a roll that takes the luck of the run, so some runs find three or four of
-   them in the first chapters and some find none for a while. They are the only thing that
-   counts toward a level (see LEVEL_AT). */
-export const UPGRADE_LUCK = 0.3;
+   them in the first chapters and some find none for a while. Each is worth XP.heart1. */
+export const UPGRADE_LUCK = 0.4;
 export const PICKUP_PLANS: { t: number; y: number }[][] = [
   [],
   [{ t: 1100, y: 100 }],
@@ -750,13 +765,13 @@ const SIZE: Record<EType, [number, number, number]> = {
      rising to about 38 for the seventh, and a few minutes for the last, then
      doubled or more for every boss. The
      serpent's coils block shots, so it needs less. */
-  boss1: [64, 60, 160],
-  boss2: [96, 52, 300],
-  boss3: [74, 66, 650],
-  boss4: [70, 74, 720],
-  boss5: [34, 28, 560],
-  boss6: [64, 52, 1100],
-  boss7: [60, 38, 1250],
+  boss1: [64, 60, 225],
+  boss2: [96, 52, 340],
+  boss3: [74, 66, 880],
+  boss4: [70, 74, 1340],
+  boss5: [34, 28, 1110],
+  boss6: [64, 52, 1760],
+  boss7: [60, 38, 1550],
   boss8: [96, 84, 5000],
   /* Space 2's bosses: Tidebreaker, Mangrove Hydra, Ice Wyvern, Dune Maw, Iron Meridian, Permafrost,
      Cyclone and Atlas. */
@@ -780,6 +795,22 @@ const SIZE: Record<EType, [number, number, number]> = {
   mini15: [48, 24, 330],
   mini16: [50, 60, 400],
 };
+
+/* Space 1 sorts its enemies into three tiers, and this table overrides SIZE's health for it
+   (Space 2 shares the same enemy types and keeps SIZE). Small ones die to a hit or two
+   (the blaster does 0.75 a shot), light gunners and turrets to three or four, and the big
+   ones take a few seconds of steady fire. The chapter bosses (SIZE) sit well above the big
+   ones, and rise from chapter to chapter up to the dreadnought. */
+const HP_SPACE1: Partial<Record<EType, number>> = {
+  swarm: 1, scout: 1, smallrock: 1, drone: 1, shard: 1, funnel: 1, seeker: 1,
+  wave: 2, diver: 2, mine: 2, zigzag: 2, pod: 2, comet: 2, jet: 2,
+  sniper: 3, gunner: 3, aagun: 3,
+  turret: 4, samsite: 4, gunboat: 4, tank: 4, bomber: 4, orbiter: 4, splitter: 4, fighter: 4,
+  rock: 5,
+  armor: 14, bunker: 14, boulder: 14, airbomber: 12, gunship: 10, destroyer: 30, cruiser: 40,
+};
+
+export const enemyHp = (type: EType, chapter: number) => (!isSecond(chapter) && HP_SPACE1[type]) || SIZE[type][2];
 
 /* Where the last boss's layers break, as a share of its health: the energy shield,
    the armour, the core, the overload, a last stand, and at the very end a barrage
@@ -944,7 +975,7 @@ export function retryChapter(s: State) {
 /* Seconds a good run should take over each boss: beating it sooner earns a share
    of the speed bonus. The bosses take a couple of minutes at the end, so the later
    ones are given longer. Index 0 is unused. */
-const BOSS_PAR = [0, 30, 55, 60, 50, 90, 75, 100, 240, 60, 70, 80, 80, 90, 100, 110, 260];
+const BOSS_PAR = [0, 45, 65, 85, 105, 125, 145, 180, 240, 60, 70, 80, 80, 90, 100, 110, 260];
 
 /* What the chapter's play earned: a share of the bonus for every enemy destroyed,
    all of it again for not being hit, and more for beating the boss quickly. */
@@ -1131,7 +1162,8 @@ function spawnHazard(s: State, it: Plan) {
 }
 
 function spawn(s: State, type: EType, x: number, y: number, a = 0): Enemy {
-  const [baseW, baseH, hp] = SIZE[type];
+  const [baseW, baseH] = SIZE[type];
+  const hp = enemyHp(type, s.chapter);
   const scale = bossScale({ type });
   const w = baseW * scale, h = baseH * scale;
   const e: Enemy = {
@@ -1312,7 +1344,7 @@ function drop(s: State, e: Enemy) {
   if (r < 0.12) return;
   if (r < 0.2) s.pickups.push({ x, y, kind: "H", t: 0 });
   else if (r < 0.25) s.pickups.push({ x, y, kind: "B", t: 0 });
-  else if (r < 0.27) s.pickups.push({ x, y, kind: crateFor(s), t: 0 });
+  else if (r < 0.285) s.pickups.push({ x, y, kind: crateFor(s), t: 0 });
 }
 
 function kill(s: State, e: Enemy) {
@@ -1361,7 +1393,7 @@ function gainLevel(s: State) {
   s.bombFlash = 6;
   setCallout(
     s,
-    p.level === UPGRADE_AT.hypersonic ? "hypersonic" : p.level === UPGRADE_AT.armor ? "mechshield" : p.level === TWIN_AT ? "launcher" : p.level === UPGRADE_AT.repair ? "repair" : p.level === UPGRADE_AT.hq ? "hq" : "levelup",
+    p.level === UPGRADE_AT.hypersonic ? "hypersonic" : p.level === UPGRADE_AT.armor ? "mechshield" : p.level === TWIN_AT ? "launcher" : p.level === UPGRADE_AT.repair ? "repair" : p.level === UPGRADE_AT.hq ? "hq" : POWER_UP.at.includes(p.level) ? "power" : "levelup",
   );
   burst(s, p.x + shipSize(p.level).w / 2, p.y + shipSize(p.level).h / 2, true);
 }
@@ -1485,12 +1517,16 @@ function tickWarheads(s: State) {
     const target = s.enemies.find((e) => e.id === w.target && e.hp > 0);
     const tx = target ? target.x + target.w / 2 : W * 0.7;
     const ty = target ? target.y + target.h / 2 : w.y;
-    const cur = Math.atan2(w.vy, w.vx);
+    /* Like every missile it drops away cold, lights its motor, and only then runs down its target. */
+    const stage = warheadStage(w.t);
+    const burnT = w.t - NUKE.eject - NUKE.ignite;
+    if (w.t === NUKE.eject + 1) for (let i = 0; i < 3; i++) puff(s, w.x - 8, w.y + (i - 1) * 2, -1.2 - i * 0.3, (i - 1) * 0.25, 22, 2.4, 0);
+    const cur = Math.atan2(w.vy - (stage === "eject" ? NUKE.drop : 0), w.vx);
     const want = Math.atan2(ty - w.y, tx - w.x);
-    const heading = cur + clamp(Math.atan2(Math.sin(want - cur), Math.cos(want - cur)), -0.14, 0.14);
-    const speed = Math.min(NUKE.speed, 1.6 + w.t * 0.14);
+    const heading = stage === "burn" ? cur + clamp(Math.atan2(Math.sin(want - cur), Math.cos(want - cur)), -0.14, 0.14) : cur;
+    const speed = stage === "eject" ? NUKE.slide : stage === "ignite" ? NUKE.coast : Math.min(NUKE.speed, NUKE.coast + burnT * NUKE.accel);
     w.vx = Math.cos(heading) * speed;
-    w.vy = Math.sin(heading) * speed;
+    w.vy = Math.sin(heading) * speed + (stage === "eject" ? NUKE.drop : 0);
     w.x += w.vx;
     w.y += w.vy;
     const hit = s.enemies.some((e) => e.hp > 0 && w.x > e.x && w.x < e.x + e.w && w.y > e.y && w.y < e.y + e.h);
@@ -1553,15 +1589,53 @@ export function warpPower(s: State) {
 }
 
 /* A blast: everything near the point takes damage, the boss included. */
-function explode(s: State, x: number, y: number, radius: number, dmg: number, except = 0) {
+function explode(s: State, x: number, y: number, radius: number, dmg: number, except = 0, bossShare = 1) {
   burst(s, x, y, true);
+  blastSmoke(s, x, y, radius);
   for (const e of s.enemies) {
     if (e.id === except) continue;
     const reach = radius + Math.max(e.w, e.h) / 2;
     if (Math.hypot(e.x + e.w / 2 - x, e.y + e.h / 2 - y) < reach) {
-      damage(e, dmg);
+      damage(e, isBoss(e.type) ? dmg * bossShare : dmg);
       e.flash = 4;
     }
+  }
+}
+
+/* A burst of warm smoke that cools and drifts as a blast goes off. */
+function blastSmoke(s: State, x: number, y: number, radius: number) {
+  for (let i = 0; i < 4; i++) {
+    const a = (i / 4) * Math.PI * 2 + s.frame * 0.7;
+    puff(s, x + Math.cos(a) * radius * 0.3, y + Math.sin(a) * radius * 0.3, Math.cos(a) * 0.45, Math.sin(a) * 0.45 - 0.1, 30 + i * 4, radius * 0.16 + 1.2, 1);
+  }
+}
+
+/* A mini rocket going off: where it hit (the thing it hit takes its direct damage and not this),
+   against a wall, or where its fuse ran out. A small blast, a small share against a boss. */
+function rocketBlast(s: State, b: Bullet, except = 0, small = false) {
+  explode(s, b.x, b.y, small ? ROCKET.blast * 0.7 : ROCKET.blast, small ? ROCKET.splash * 0.6 * POWER : ROCKET.splash * POWER, except, ROCKET.boss);
+}
+
+/* Every missile leaves smoke: a puff as it drops off its rail, a warm one as the motor lights, and a
+   thin trail behind it while it burns, thicker for the ship's own than for an enemy's, since an enemy
+   fires so many of them. */
+function trailSmoke(s: State, b: Bullet) {
+  const rocket = b.kind === "minirocket" && b.own === "p";
+  const torp = b.ux !== undefined && b.uy !== undefined;
+  if ((!rocket && !torp) || b.x < 4 || b.x > W - 4) return;
+  const age = rocket ? ROCKET.life - (b.life ?? 0) : b.age ?? 0;
+  const eject = rocket ? ROCKET.eject : TORPEDO.eject;
+  const ignite = rocket ? ROCKET.ignite : TORPEDO.ignite;
+  const a = rocket ? b.heading ?? Math.atan2(b.vy, b.vx) : Math.atan2(b.uy as number, b.ux as number);
+  const ux = Math.cos(a);
+  const uy = Math.sin(a);
+  const mine = b.own === "p";
+  const sway = Math.sin(s.frame * 0.9 + b.x * 0.3) * 0.12;
+  if (age === 1) puff(s, b.x - ux * 5, b.y - uy * 5, -ux * 0.3, -uy * 0.3 + sway, 14, 1.3, 0);
+  else if (age === eject + 1) {
+    for (let i = 0; i < 3; i++) puff(s, b.x - ux * 7, b.y - uy * 7, -ux * (0.5 + i * 0.25), -uy * (0.5 + i * 0.25) + (i - 1) * 0.18, 20 + i * 3, 1.6 + i * 0.3, 1);
+  } else if (age > eject + ignite && age % (mine ? 2 : 4) === 0) {
+    puff(s, b.x - ux * 8, b.y - uy * 8, -ux * 0.2, -uy * 0.2 + sway, mine ? 32 : 20, mine ? 1.2 : 0.9, 0);
   }
 }
 
@@ -1570,7 +1644,7 @@ function setCallout(s: State, kind: Callout) {
 }
 
 function puff(s: State, x: number, y: number, vx: number, vy: number, life: number, r: number, tone: number) {
-  if (s.smoke.length > 220) s.smoke.shift();
+  if (s.smoke.length > 320) s.smoke.shift();
   s.smoke.push({ x, y, vx, vy, t: 0, life, r, tone });
 }
 
@@ -3531,7 +3605,7 @@ function slash(s: State, ox: number, oy: number) {
   for (const e of s.enemies) {
     if (e.hp <= 0) continue;
     if (hits(box, { x: e.x, y: e.y, w: e.w, h: e.h })) {
-      damage(e, (isBoss(e.type) ? KATANA.boss : KATANA.damage) * POWER);
+      damage(e, (isBoss(e.type) ? KATANA.boss : KATANA.damage) * POWER * powerBonus(s.p));
       e.flash = 4;
     }
   }
@@ -3605,11 +3679,14 @@ function steerRocket(s: State, b: Bullet) {
       }
     }
   }
-  const cur = Math.atan2(b.vy, b.vx);
-  const speed = Math.min(ROCKET.top, Math.hypot(b.vx, b.vy) + 0.14);
-  const a = best < 1e9 ? cur + clamp(angleDiff(Math.atan2(ty - b.y, tx - b.x), cur), -ROCKET.turn, ROCKET.turn) : cur;
+  const cur = b.heading ?? Math.atan2(b.vy, b.vx);
+  const stage = rocketStage(age);
+  const a = stage === "burn" && best < 1e9 ? cur + clamp(angleDiff(Math.atan2(ty - b.y, tx - b.x), cur), -ROCKET.turn, ROCKET.turn) : cur;
+  const speed = rocketSpeed(age);
+  const drop = stage === "eject" ? ROCKET.drop * (age / ROCKET.eject) : 0;
+  b.heading = a;
   b.vx = Math.cos(a) * speed;
-  b.vy = Math.sin(a) * speed;
+  b.vy = Math.sin(a) * speed + drop;
 }
 
 /* A rocket that reaches an enemy shot takes it out, and itself. */
@@ -3620,6 +3697,7 @@ function tickRockets(s: State) {
       if (o.own !== "e" || o.kind === "crescent" || o.x < 0) continue;
       if (Math.hypot(o.x - b.x, o.y - b.y) <= b.r + o.r + 2) {
         burst(s, o.x, o.y, false);
+        rocketBlast(s, b, 0, true);
         o.x = -99;
         b.x = W + 99;
         break;
@@ -3792,7 +3870,10 @@ function fire(s: State) {
       break;
     case "minirocket":
       s.counters2.rockets += 1;
-      for (const a of ROCKET.fan) s.bullets.push(shot(Math.cos(a) * ROCKET.speed, Math.sin(a) * ROCKET.speed, 0, { kind: "minirocket", dmg: ROCKET.damage, r: 2.2, life: ROCKET.life }));
+      for (const a of ROCKET.fan) {
+        s.bullets.push(shot(Math.cos(a) * ROCKET.slide, Math.sin(a) * ROCKET.slide, 0, { kind: "minirocket", dmg: ROCKET.damage, r: 2.2, life: ROCKET.life, heading: a }));
+        puff(s, ox - 2, oy, -0.7 + Math.sin(a * 9) * 0.2, Math.cos(a * 9) * 0.25, 14, 1.5, 0);
+      }
       break;
   }
   if (p.ammo <= 0) p.gun = "blaster";
@@ -4164,6 +4245,12 @@ export function step(s: State, input: Input) {
       continue;
     }
     if (b.life !== undefined) b.life -= 1;
+    trailSmoke(s, b);
+    /* A shot of the ship's with a fuse goes off where the fuse runs out, if that is on the screen. */
+    if (b.own === "p" && b.life !== undefined && b.life <= 0 && b.x > 0 && b.x < W) {
+      if (b.kind === "minirocket") rocketBlast(s, b, 0, true);
+      else if (b.kind === "torpedo") detonate(s, b, 0, true);
+    }
     /* An ice bomb that finds nothing goes off where it runs out. */
     if (b.kind === "icebomb" && b.own === "p" && b.life !== undefined && b.life <= 0) detonate(s, b);
   }
@@ -4208,8 +4295,9 @@ export function step(s: State, input: Input) {
       if (b.pierce && b.hit?.includes(e.id)) continue;
       const body: Box = { x: e.x + 2, y: e.y + 2, w: e.w - 4, h: e.h - 4 };
       if (!hits(shotBox, body)) continue;
-      damage(e, b.dmg * POWER * (isBoss(e.type) ? (b.kind === "minirocket" ? ROCKET.boss : b.kite ? KITE.boss : 1) : 1));
+      damage(e, b.dmg * POWER * powerBonus(s.p) * (isBoss(e.type) ? (b.kind === "minirocket" ? ROCKET.boss : b.kite ? KITE.boss : 1) : 1));
       e.flash = 3;
+      if (b.kind === "minirocket") rocketBlast(s, b, e.id);
       if (b.kind === "torpedo" || b.kind === "icebomb") {
         detonate(s, b, e.id);
         b.x = W + 99;
@@ -4228,6 +4316,7 @@ export function step(s: State, input: Input) {
       cover.g[0] = Math.max(0, cover.g[0] - b.dmg * (b.kind === "stinger" || b.kind === "minirocket" ? 2 : 1));
       cover.g[5] = 4;
       if (b.kind === "torpedo" || b.kind === "icebomb") detonate(s, b, 0, true);
+      if (b.kind === "minirocket") rocketBlast(s, b, 0, true);
       b.x = W + 99;
       /* It crumbles as it is worn down, to a stump, and no further. */
       const tall = cover.g[8] * (1 - (1 - COVER2.stump) * (1 - cover.g[0] / cover.g[1]));
@@ -4238,6 +4327,7 @@ export function step(s: State, input: Input) {
     }
     if (solids.some((r) => hits(shotBox, r)) || s.enemies.some((e) => e.parts.some((r) => hits(shotBox, r)))) {
       if (b.kind === "torpedo" || b.kind === "icebomb") detonate(s, b, 0, true);
+      if (b.kind === "minirocket") rocketBlast(s, b, 0, true);
       b.x = W + 99;
     }
   }
@@ -4250,6 +4340,8 @@ export function step(s: State, input: Input) {
   for (const b of s.bullets) {
     if (b.own !== "e") continue;
     if (hits({ x: b.x - b.r + 0.6, y: b.y - b.r + 0.6, w: b.r * 2 - 1.2, h: b.r * 2 - 1.2 }, me)) {
+      burst(s, b.x, b.y, true);
+      blastSmoke(s, b.x, b.y, 8);
       b.x = -99;
       if (hurtPlayer(s) && b.kind === "frost") p.chill = CHILL.frames;
     }

@@ -1613,7 +1613,7 @@ function draw(ctx: CanvasRenderingContext2D, s: State, labels: SpaceLabels, mode
       ctx.font = loud ? `800 24px ${font}` : `800 18px ${font}`;
       ctx.fillStyle = "rgb(0 0 0 / 0.55)";
       ctx.fillText(labels.callouts[c.kind], W / 2 + 1.5, 72 + 1.5);
-      ctx.fillStyle = loud ? (f % 10 < 5 ? "#ff4d4d" : "#ffd24d") : ["levelup", "hypersonic", "mechshield", "launcher", "repair", "hq"].includes(c.kind) ? "#fde047" : c.kind === "phase" ? "#fdba74" : "#7dd3fc";
+      ctx.fillStyle = loud ? (f % 10 < 5 ? "#ff4d4d" : "#ffd24d") : ["levelup", "hypersonic", "mechshield", "launcher", "repair", "hq", "power"].includes(c.kind) ? "#fde047" : c.kind === "phase" ? "#fdba74" : "#7dd3fc";
       ctx.fillText(labels.callouts[c.kind], W / 2, 72);
       ctx.globalAlpha = 1;
     }

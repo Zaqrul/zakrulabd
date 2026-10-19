@@ -1,9 +1,9 @@
 ﻿import assert from 'node:assert/strict';
 import test from 'node:test';
-import { XP, HEAL, HQ, HQ_LAUNCHERS, PICKUP_PLANS, UPGRADE_LUCK, ARMOR, BLASTER, BOMBS, BOSS_SHIELD, BOSS_SHIELD_AT, CALM, CLEAR, FLAME, POWER, WARP, warpPower, FREEZE, GUNS, ICEBOMB, KATANA, MAX_LEVEL, NUKE, TWIN_AT, UPGRADE_AT, hasUpgrade, podMuzzle, shipScale, BLINK, BURST_LIFE, HYPERSONIC, LIFE, SHIELD, TUBES, maxLife, maxShield, nextChapter, retryChapter, bossScale, C4, CHILL, DIVE, EMBER, FINAL_PHASE_AT, FLAK, GROUND_Y, H, LAUNCH_RAIL_Y, LOCK_FRAMES, MISSILE, PINCER, SIGNATURE, SPIRE, SPORE, STOMP, SURGE, TORPEDO, W, WAVE, WISP, hazardBoxes, pinch, shipSize, spireHeight, beamMuzzle, bossCheckpoint, chapterProgress, chapterResult, createState, enemyMuzzle, launchShipY, maxHpFor, missileMuzzle, step, torpedoSpeed } from '../src/components/games/space-logic.ts';
+import { XP, HEAL, HQ, HQ_LAUNCHERS, PICKUP_PLANS, UPGRADE_LUCK, ARMOR, BLASTER, BOMBS, BOSS_SHIELD, BOSS_SHIELD_AT, CALM, CLEAR, FLAME, POWER, WARP, warpPower, FREEZE, GUNS, ICEBOMB, KATANA, MAX_LEVEL, NUKE, TWIN_AT, enemyHp, POWER_UP, ROCKET, rocketStage, rocketSpeed, warheadStage, powerBonus, UPGRADE_AT, hasUpgrade, podMuzzle, shipScale, BLINK, BURST_LIFE, HYPERSONIC, LIFE, SHIELD, TUBES, maxLife, maxShield, nextChapter, retryChapter, bossScale, C4, CHILL, DIVE, EMBER, FINAL_PHASE_AT, FLAK, GROUND_Y, H, LAUNCH_RAIL_Y, LOCK_FRAMES, MISSILE, PINCER, SIGNATURE, SPIRE, SPORE, STOMP, SURGE, TORPEDO, W, WAVE, WISP, hazardBoxes, pinch, shipSize, spireHeight, beamMuzzle, bossCheckpoint, chapterProgress, chapterResult, createState, enemyMuzzle, launchShipY, maxHpFor, missileMuzzle, step, torpedoSpeed } from '../src/components/games/space-logic.ts';
 const idle={mx:0,my:0,bomb:false};
 const life=(s)=>s.p.hp+s.p.shield;const HIT=LIFE.hit;
-const sizes=[[64,60,160],[96,52,300],[74,66,650],[70,74,720],[34,28,560],[64,52,1100],[60,38,1250],[96,84,5000]];
+const sizes=[[64,60,225],[96,52,340],[74,66,880],[70,74,1340],[34,28,1110],[64,52,1760],[60,38,1550],[96,84,5000]];
 // The final boss has six phases, by share of its health (FINAL_PHASE_AT).
 const finalShare=[1,0.75,0.55,0.38,0.22,0.07];
 test('bosses spawn at the larger physical size and their outer armour takes hits',()=>{
@@ -136,14 +136,14 @@ test('surface-to-air missiles appear at the angled launch tube tip',()=>{
 test('a cleared chapter scores its kills, a clean run and a quick boss, once',()=>{
  const {s,e}=encounter(3);s.stats={spawned:20,kills:15,hits:0,bossFrames:600};
  const r=chapterResult(s);
- assert.equal(r.killRate,0.75);assert.equal(r.killBonus,940);assert.equal(r.noHitBonus,1250);assert.equal(r.bossSeconds,10);assert.equal(r.speedBonus,1040);assert.equal(r.bonus,3230);
+ assert.equal(r.killRate,0.75);assert.equal(r.killBonus,940);assert.equal(r.noHitBonus,1250);assert.equal(r.bossSeconds,10);assert.equal(r.speedBonus,1100);assert.equal(r.bonus,3290);
  const before=s.score;e.hp=0;
  for(let i=0;i<600&&s.phase!=='clear';i++)step(s,idle);
  assert.equal(s.phase,'clear');assert(s.result);assert.equal(s.result.noHitBonus,1250);assert(s.score>=before+s.result.bonus);
  const after=s.score;for(let i=0;i<120;i++)step(s,idle);assert.equal(s.score,after);
 });
 test('a hit, a slow boss or no kills earn nothing for that part',()=>{
- const s=createState(5);s.stats={spawned:10,kills:0,hits:1,bossFrames:60*120};
+ const s=createState(5);s.stats={spawned:10,kills:0,hits:1,bossFrames:60*200};
  const r=chapterResult(s);assert.equal(r.killBonus,0);assert.equal(r.noHitBonus,0);assert.equal(r.speedBonus,0);assert.equal(r.bonus,0);
 });
 test('the boss checkpoint starts at the boss with the ship the chapter began with',()=>{
@@ -259,9 +259,15 @@ const toFiring=(s,e)=>{while(e.attack.t<e.attack.warn)step(s,idle);};
 const run=(s,n)=>{for(let i=0;i<n;i++)step(s,idle);};
 const ofKind=(s,k)=>s.charges.filter(c=>c.kind===k);
 
-test('boss health is two to three times what it was, and the last boss has more than three times, and a shield on top',()=>{
- const before=[80,140,280,300,200,450,480,1500];
- sizes.forEach(([,,hp],i)=>{const grew=hp/before[i]-1;assert(grew>=1&&grew<=(i===7?2.4:2.05),`boss ${i+1} grew ${(grew*100).toFixed(0)}%`);});
+test('enemy health comes in three tiers: small ones fall to a hit or two, big ones are medium, and every chapter boss towers over them',()=>{
+ const small=['swarm','scout','smallrock','drone','shard','funnel','seeker','wave','diver','mine','zigzag','pod','comet','jet'];
+ const big=['armor','bunker','boulder','airbomber','gunship','destroyer','cruiser'];
+ const hp=(type)=>enemyHp(type,3);
+ for(const type of small)assert(hp(type)<=2,`${type} is small`);
+ for(const type of big)assert(hp(type)>=10&&hp(type)<=40,`${type} is medium`);
+ const biggest=Math.max(...big.map(hp));
+ sizes.slice(0,7).forEach(([,,bossHp],i)=>assert(bossHp>=biggest*5,`boss ${i+1} is at least five times the biggest ordinary enemy`));
+ assert(sizes[7][2]>sizes[6][2]*3,'the last boss is far above the rest');
 });
 test('every signature attack warns for 44 to 64 frames and gives time to recover',()=>{
  const plan={stomp:[1,1],flak:[1,1],surge:[2,1],salvo:[2,1],pincer:[3,1],boulders:[3,1],undertow:[4,1],spores:[4,1],breach:[5,1],frost:[5,1],dive:[6,1],wisps:[6,1],blink:[7,1],crescent:[7,1]};
@@ -516,13 +522,13 @@ test('levels arrive by themselves up to ten on the experience gauge, a hundred p
   if(s.p.level>before){seen.push([s.p.level,s.callout.kind]);assert.equal(s.p.hp,maxLife(s.p),'a level refills health');assert(s.p.morph>0);}
  }
  assert.equal(s.p.level,10);
- assert.deepEqual(seen.slice(0,4),[[2,'hypersonic'],[3,'mechshield'],[4,'launcher'],[5,'repair']]);
- assert.deepEqual(seen.slice(4),[[6,'levelup'],[7,'levelup'],[8,'levelup'],[9,'hq'],[10,'levelup']]);assert.equal(seen.length,9);
+ assert.deepEqual(seen.slice(0,4),[[2,'launcher'],[3,'hypersonic'],[4,'mechshield'],[5,'repair']]);
+ assert.deepEqual(seen.slice(4),[[6,'power'],[7,'power'],[8,'power'],[9,'hq'],[10,'levelup']]);assert.equal(seen.length,9);
 });
-test('the upgrades come with the level: torpedo 1, hypersonic 2, mechanical shield 3, self-repair 5, HQ support 9',()=>{
- assert.deepEqual(UPGRADE_AT,{torpedo:1,hypersonic:2,armor:3,repair:5,hq:9});assert.equal(TWIN_AT,4);
+test('the upgrades come with the level: torpedo 1, twin launcher 2, hypersonic 3, mechanical shield 4, self-repair 5, HQ support 9',()=>{
+ assert.deepEqual(UPGRADE_AT,{torpedo:1,hypersonic:3,armor:4,repair:5,hq:9});assert.equal(TWIN_AT,2);
  const has=(l)=>['torpedo','hypersonic','armor','repair','hq'].filter(u=>hasUpgrade({level:l},u));
- assert.deepEqual(has(1),['torpedo']);assert.deepEqual(has(2),['torpedo','hypersonic']);assert.deepEqual(has(3),['torpedo','hypersonic','armor']);
+ assert.deepEqual(has(1),['torpedo']);assert.deepEqual(has(2),['torpedo']);assert.deepEqual(has(3),['torpedo','hypersonic']);
  assert.deepEqual(has(4),['torpedo','hypersonic','armor']);assert.deepEqual(has(5),['torpedo','hypersonic','armor','repair']);assert.deepEqual(has(8),has(5));assert.deepEqual(has(9),['torpedo','hypersonic','armor','repair','hq']);assert.deepEqual(has(10),has(9));
 });
 test('health stays at 100 and the shield at 50 at every level; the ship grows only through its first three',()=>{
@@ -556,26 +562,26 @@ test('a hit goes to the shield first and then to the health, at every level',()=
  }
 });
 
-test('mechanical shield (level 3): 30% less damage, and no longer bars',()=>{
- const plain=playing(2),armour=playing(3);
+test('mechanical shield (level 4): 30% less damage, and no longer bars',()=>{
+ const plain=playing(3),armour=playing(4);
  assert.equal(maxLife(armour.p),100);assert.equal(armour.p.hp,maxLife(armour.p));
  assert.equal(maxShield(armour.p),SHIELD.base);assert.equal(armour.p.shield,0,'Space 1: no level fills the shield');
  plain.p.shield=0;armour.p.shield=0;hurt(plain);hurt(armour);
  assert.equal(plain.p.hp,maxLife(plain.p)-LIFE.hit);
  assert(Math.abs(armour.p.hp-(maxLife(armour.p)-LIFE.hit*(1-ARMOR.reduction)))<1e-9,'a hit does 70% of the damage');
 });
-test('hypersonic (level 2): a faster ship and guns that fire more often, and not before',()=>{
- const plain=playing(1),fast=playing(2);
+test('hypersonic (level 3): a faster ship and guns that fire more often, and not before',()=>{
+ const plain=playing(2),fast=playing(3);
  plain.p.cd=fast.p.cd=0;
  const x0=plain.p.x;step(plain,{...idle,mx:2.7});const x1=fast.p.x;step(fast,{...idle,mx:2.7});
  assert(Math.abs(plain.p.x-x0-2.7)<1e-9);assert(Math.abs(fast.p.x-x1-2.7*HYPERSONIC.speed)<1e-9);
  assert.equal(plain.p.cd,12,'the blaster waits twelve frames');assert.equal(fast.p.cd,Math.round(12*HYPERSONIC.rate));
  const shot=fast.bullets.find(b=>b.own==='p');assert.equal(shot.vx,HYPERSONIC.shot);assert.equal(plain.bullets.find(b=>b.own==='p').vx,BLASTER.speed);
- const g=playing(2);g.p.gun='machine';g.p.ammo=50;g.p.cd=0;g.enemies=[foe(9,'rock',200,g.p.y-10,30,30,1e4)];
+ const g=playing(3);g.p.gun='machine';g.p.ammo=50;g.p.cd=0;g.enemies=[foe(9,'rock',200,g.p.y-10,30,30,1e4)];
  step(g,idle);assert.equal(g.p.cd,Math.round(4*HYPERSONIC.rate));
 });
-test('torpedo launchers: one from the start and a second on top at level 4, which fires faster and harder',()=>{
- for(const [level,expected,cd,dmg] of [[1,1,TUBES.single.cooldown,TUBES.single.damage],[3,1,TUBES.single.cooldown,TUBES.single.damage],[4,2,TUBES.twin.cooldown,TUBES.twin.damage],[10,2,TUBES.twin.cooldown,TUBES.twin.damage]]){
+test('torpedo launchers: one from the start and a second on top at level 2, which fires faster and harder',()=>{
+ for(const [level,expected,cd,dmg] of [[1,1,TUBES.single.cooldown,TUBES.single.damage],[2,2,TUBES.twin.cooldown,TUBES.twin.damage],[10,2,TUBES.twin.cooldown,TUBES.twin.damage]]){
   const s=playing(level);s.p.launchCd=0;
   const size=shipSize(level),low=s.p.y+size.h+2,high=s.p.y-2;
   s.enemies=[low,high].map((y,i)=>foe(20+i,'rock',220,y-15,30,30,1e4));
@@ -805,8 +811,8 @@ test('a life crate mends health but gives no experience; a gold heart is a bonus
  gain(s);assert.equal(s.p.extra,XP.heart1);assert.equal(XP.heart1,XP.heart*0.9,'Space 1 levels a tenth more slowly');
  const e=foe(901,'scout',200,100,16,12,1);e.hp=0;s.enemies.push(e);step(s,idle);assert.ok(s.p.extra>XP.heart1,'a kill fills the gauge too');
 });
-test('level-up crates are a matter of luck: fourteen places for a gold heart, each with a 30% chance',()=>{
- assert.equal(UPGRADE_LUCK,0.3);assert.equal(PICKUP_PLANS.flat().length,14);
+test('level-up crates are a matter of luck: fourteen places for a gold heart, each with a 40% chance',()=>{
+ assert.equal(UPGRADE_LUCK,0.4);assert.equal(PICKUP_PLANS.flat().length,14);
  let appeared=0;const trials=600;
  for(let k=0;k<trials;k++){
   const s=createState(2,0,1,1,0);s.phase='play';s.p.inv=1e9;s.p.cd=1e9;s.p.launchCd=1e9;s.seed=1000+k*7919;
@@ -814,7 +820,7 @@ test('level-up crates are a matter of luck: fourteen places for a gold heart, ea
   if(s.pickups.some(p=>p.kind==='E'))appeared++;
   assert.equal(s.pickupIdx,1,'the place is used up whether the heart came or not');
  }
- assert(appeared>trials*0.3-70&&appeared<trials*0.3+70,`${appeared} of ${trials} turned up`);
+ assert(appeared>trials*UPGRADE_LUCK-70&&appeared<trials*UPGRADE_LUCK+70,`${appeared} of ${trials} turned up`);
  assert(appeared>0&&appeared<trials,'sometimes yes, sometimes no');
 });
 test('the blaster is a single shot, whatever the old power level says, and a weapon switches it off',()=>{
@@ -863,4 +869,92 @@ test('HQ support (level 9): a hangar slides in at the left edge, the ship keeps 
  run(s,260);
  assert(1e5-rock.hp>=4*HQ.damage*POWER-1e-9,`the homing torpedoes found the enemy: it lost ${1e5-rock.hp}`);
  s.p.level=8;run(s,40);assert.equal(s.hq.slide,0,'and the HQ goes if the level is lost');
+});
+
+test('levels 6 to 8 each make shots hit 12% harder, and no other level does',()=>{
+ assert.deepEqual([1,5,6,7,8,9,10].map(l=>+powerBonus({level:l}).toFixed(2)),[1,1,1.12,1.24,1.36,1.36,1.36]);
+ const dealt=(level)=>{const s=playing(level);const e=foe(9,'rock',200,100,30,30,1e4);s.enemies=[e];s.bullets=[{x:e.x+10,y:e.y+10,vx:0,vy:0,r:2,own:'p',dmg:2,kind:'pulse'}];s.p.cd=1e6;s.p.launchCd=1e6;const hp=e.hp;step(s,idle);return hp-e.hp;};
+ assert(Math.abs(dealt(6)/dealt(5)-1+POWER_UP.each)<1e-9||Math.abs(dealt(6)/dealt(5)-(1+POWER_UP.each))<1e-9,'level 6 hits harder than 5');
+ assert(Math.abs(dealt(8)/dealt(5)-1.36)<1e-9,'level 8 hits 36% harder');
+ assert(Math.abs(dealt(10)-dealt(8))<1e-9,'no further bonus after 8');
+});
+
+test('a mini rocket drops off its rail cold, lights its motor, and only then burns up to speed and steers',()=>{
+ const s=playing(1);s.p.gun='minirocket';s.p.ammo=20;s.p.cd=0;
+ const foe=(y)=>({id:9,type:'rock',x:300,y,w:30,h:30,vx:0,vy:0,hp:1e4,maxHp:1e4,t:0,cd:999,y0:0,flash:0,stun:1e6,a:0,b:0,c:0,d:0,n:0,rot:0,guard:0,parts:[]});
+ s.p.y=100;s.enemies=[foe(88)];s.enemies[0].x=200;step(s,idle);
+ const r=s.bullets.filter(b=>b.kind==='minirocket');assert.equal(r.length,ROCKET.count);
+ assert(Math.hypot(r[0].vx,r[0].vy)<=ROCKET.slide+1e-9,'it leaves the rail slowly, not at full speed');
+ assert(s.smoke.length>0,'the launch leaves smoke');
+ const w=r[1],h0=Math.atan2(w.vy,w.vx),speeds=[];
+ for(let age=1;age<=ROCKET.eject+ROCKET.ignite+25;age++){step(s,idle);if(!s.bullets.includes(w))break;speeds.push(Math.hypot(w.vx,w.vy));
+  if(age<=ROCKET.eject+ROCKET.ignite)assert(Math.abs(w.heading-(w.heading))<1e-9);}
+ assert.equal(rocketStage(ROCKET.eject),'eject');assert.equal(rocketStage(ROCKET.eject+1),'ignite');assert.equal(rocketStage(ROCKET.eject+ROCKET.ignite+1),'burn');
+ assert(rocketSpeed(5)<rocketSpeed(ROCKET.eject+ROCKET.ignite+1)||rocketSpeed(5)>0);
+ assert(rocketSpeed(ROCKET.eject+ROCKET.ignite+1)<ROCKET.top,'the burn starts slow');assert.equal(rocketSpeed(200),ROCKET.top,'and tops out');
+ assert(rocketSpeed(ROCKET.eject)<=ROCKET.slide&&rocketSpeed(ROCKET.eject+ROCKET.ignite)<=ROCKET.coast,'cold and coasting stages stay slow');
+});
+test('a rocket does not steer before its motor burns',()=>{
+ const s=playing(1);s.p.gun='minirocket';s.p.ammo=20;s.p.cd=0;
+ const e={id:9,type:'rock',x:200,y:88,w:30,h:30,vx:0,vy:0,hp:1e4,maxHp:1e4,t:0,cd:999,y0:0,flash:0,stun:1e6,a:0,b:0,c:0,d:0,n:0,rot:0,guard:0,parts:[]};s.enemies=[e];
+ s.p.y=100;step(s,idle);e.y=10;e.x=240;const r=s.bullets.find(b=>b.kind==='minirocket'&&b.heading>0);s.p.cd=1e6;const h0=r.heading;
+ for(let i=0;i<ROCKET.eject+ROCKET.ignite-2;i++)step(s,idle);
+ assert.equal(r.heading,h0,'its heading holds until the burn');
+ for(let i=0;i<20;i++)step(s,idle);
+ assert.notEqual(r.heading,h0,'once burning it turns toward the target');
+});
+test('a nuclear warhead drops cold, lights its motor, then accelerates and homes, and still reaches a distant boss in time',()=>{
+ assert.equal(warheadStage(1),'eject');assert.equal(warheadStage(NUKE.eject+1),'ignite');assert.equal(warheadStage(NUKE.eject+NUKE.ignite+1),'burn');
+ const s=playing(1);s.enemies=[{id:50,type:'rock',x:330,y:100,w:40,h:40,vx:0,vy:0,hp:1e4,maxHp:1e4,t:0,cd:999,y0:0,flash:0,stun:1e6,a:0,b:0,c:0,d:0,n:0,rot:0,guard:0,parts:[]}];
+ step(s,{...idle,nuke:true});const w=s.warheads[0];const speeds=[];let detonated=0;
+ for(let i=0;i<200&&s.warheads.length;i++){step(s,idle);if(s.warheads[0])speeds.push(Math.hypot(w.vx,w.vy));}
+ assert(speeds[0]<1.2,'it leaves slowly');assert(speeds[NUKE.eject+3]<=NUKE.coast+1e-9,'it coasts as the motor lights');
+ assert(Math.max(...speeds)>NUKE.speed-0.01,'then it reaches full speed');
+ assert(s.nuke||s.warheads.length===0,'and it goes off before it times out');
+});
+
+const rock=(id,x,y,hp=1e4)=>({id,type:'rock',x,y,w:30,h:30,vx:0,vy:0,hp,maxHp:hp,t:0,cd:999,y0:0,flash:0,stun:1e6,a:0,b:0,c:0,d:0,n:0,rot:0,guard:0,parts:[]});
+test('a mini rocket goes off where it hits: the target takes the hit and its neighbour takes the blast',()=>{
+ const s=playing(1);s.p.cd=1e6;s.p.launchCd=1e6;
+ const a=rock(1,200,90),b=rock(2,200,118);s.enemies=[a,b];
+ s.bullets=[{x:201,y:105,vx:3,vy:0,r:2.2,own:'p',dmg:ROCKET.damage,kind:'minirocket',life:ROCKET.life-30,heading:0}];
+ const bursts=s.bursts.length;step(s,idle);
+ assert(a.hp<1e4,'the hit enemy is damaged');assert(b.hp<1e4,'its neighbour feels the blast');assert(b.hp>1e4-ROCKET.damage,'less than a direct hit');
+ assert(s.bursts.length>bursts,'there is an explosion');assert(s.smoke.length>0,'with smoke');
+ assert(s.bullets.filter(x=>x.kind==='minirocket').every(x=>x.x>W),'the rocket is spent');
+});
+test('a boss feels a rocket blast at the same small share as a rocket hit',()=>{
+ const s=playing(1);s.p.cd=1e6;s.p.launchCd=1e6;const boss=rock(1,200,90);boss.type='boss1';s.enemies=[boss];s.bossId=1;
+ const neighbour=rock(2,200,112,1e4);s.enemies.push(neighbour);
+ s.bullets=[{x:201,y:100,vx:3,vy:0,r:2.2,own:'p',dmg:ROCKET.damage,kind:'minirocket',life:ROCKET.life-30,heading:0}];
+ step(s,idle);
+ assert(neighbour.hp<1e4,'the ordinary neighbour takes the full blast');
+ assert(1e4-boss.hp<=ROCKET.damage*0.75*ROCKET.boss+1e-6,'the boss takes only the reduced direct hit, no blast on top');
+});
+test('a mini rocket and a torpedo that run out of fuse in the open go off instead of vanishing',()=>{
+ const s=playing(1);s.p.cd=1e6;s.p.launchCd=1e6;s.enemies=[rock(1,330,100)];
+ s.bullets=[{x:120,y:60,vx:3,vy:0,r:2.2,own:'p',dmg:1,kind:'minirocket',life:1,heading:0},{x:150,y:150,vx:3,vy:0,ux:1,uy:0,age:60,r:3,own:'p',dmg:5,kind:'torpedo',life:1}];
+ const before=s.bursts.length;step(s,idle);
+ assert(s.bursts.length>=before+2,'both explode');assert.equal(s.bullets.filter(b=>b.own==='p').length,0);
+});
+test('missiles leave smoke: a puff at the rail, a warm one when the motor lights, and a trail while it burns',()=>{
+ const s=playing(1);s.p.cd=1e6;s.p.launchCd=1e6;s.enemies=[rock(1,330,100)];
+ s.bullets=[{x:60,y:60,vx:0.9,vy:0,ux:1,uy:0,age:0,r:3,own:'p',dmg:5,kind:'torpedo',life:300}];
+ let max=0,warm=false;
+ for(let i=0;i<60;i++){step(s,idle);max=Math.max(max,s.smoke.length);if(s.smoke.some(k=>k.tone===1))warm=true;}
+ assert(s.smoke.length>0||max>0,'there is smoke');assert(warm,'the ignition puff is warm');
+ const trail=s.smoke.filter(k=>k.tone===0&&k.life>=30);assert(trail.length>=3,'a burning torpedo leaves a trail of puffs');
+});
+test('an enemy shot that reaches the ship goes off at the point of impact, even while the ship is flashing',()=>{
+ const s=playing(1);s.p.cd=1e6;s.p.launchCd=1e6;s.enemies=[];s.p.inv=50;const x=s.p.x+8,y=s.p.y+5;
+ s.bullets=[{x,y,vx:0,vy:0,ux:1,uy:0,age:99,r:2.6,own:'e',dmg:1,kind:'orb'}];
+ const hp=s.p.hp,bursts=s.bursts.length;step(s,idle);
+ assert.equal(s.p.hp,hp,'no damage while flashing');assert(s.bursts.length>bursts,'but it still explodes');assert(s.bullets.every(x=>x.x<0),'the shot is spent');
+});
+test('smoke never grows without bound however many missiles are in the air',()=>{
+ const s=playing(1);s.p.cd=1e6;s.p.launchCd=1e6;s.enemies=[rock(1,330,100)];
+ for(let i=0;i<300;i++){
+  if(i%2===0)s.bullets.push({x:200,y:20+(i%160),vx:-1,vy:0,ux:-1,uy:0,age:30,r:2.6,own:'e',dmg:1,kind:'orb'});
+  step(s,idle);assert(s.smoke.length<=330,'smoke '+s.smoke.length);
+ }
 });

@@ -15,13 +15,19 @@
    scheduler books each step on the audio clock a little ahead, so the tempo holds steady even
    when the page is busy. */
 import { BOSS_SONGS, DREADNOUGHT_LAST, DREADNOUGHT_RUSH } from "./space-boss-music.ts";
+import { BATTLE_BB, BATTLE_D, BATTLE_G, CROSSING, LANTERN, LAST_LIGHT, RIVAL, WANDERER } from "./space-bonus-music.ts";
+import { CODEX_SPACE_1 } from "./space-codex-music.ts";
 
 export type NesTrack =
   | "stage" | "stage2" | "stage3" | "hangar" | "hangar2" | "hangar3" | "title" | "alert" | "alert2" | "alert3"
   | "victory" | "gameover" | "ending" | "pause" | "fanfare"
   | "boss1" | "boss2" | "boss3" | "boss4" | "boss5" | "boss6" | "boss7" | "boss8"
   /* Dreadnought's music follows its phases: the fast section from the fourth, the climax in the sixth. */
-  | "boss8b" | "boss8c";
+  | "boss8b" | "boss8c"
+  /* A bonus tune for the soundtrack player in zakrulOS only; the game never plays it. */
+  | "bonus1" | "bonus2" | "bonus3" | "bonus4" | "bonus5"
+  /* Three more variations of the field battle tune, also for the soundtrack player only. */
+  | "bonus6" | "bonus7" | "bonus8" | "bonus9";
 
 /* Pulse 2's job in a bar: a twin lead, an echo, arpeggios in 16ths or eighths, a harp-like sweep up
    two octaves of the chord and back, stabs, or nothing. */
@@ -53,6 +59,8 @@ export const RIFFS: Record<string, string> = {
   march: "0 . . 0 0 . 7 . 0 . . 0 0 . 10 .",
   chrom: "0 . 12 . 0 11 12 . 0 . 12 . 7 6 5 3",
   hits: "0 . . 0 . . 0 . . . 0 . 0 . 0 .",
+  /* A bass that bounces between the root and its octave, with the fifth and fourth to walk back on. */
+  bounce: "0 . 12 . 0 . 7 . 0 . 12 . 0 7 5 7",
   /* A root that throbs against its flat second and its tritone, for a dungeon's dread. */
   throb: "0 . 12 . 1 . 12 . 0 . 12 . 6 . 12 .",
   hold: "0 - - - - - - - 7 - - - - - - -",
@@ -331,6 +339,9 @@ export const SONGS: Record<NesTrack, Song> = {
   boss1: BOSS_SONGS[0], boss2: BOSS_SONGS[1], boss3: BOSS_SONGS[2], boss4: BOSS_SONGS[3],
   boss5: BOSS_SONGS[4], boss6: BOSS_SONGS[5], boss7: BOSS_SONGS[6], boss8: BOSS_SONGS[7],
   boss8b: DREADNOUGHT_RUSH, boss8c: DREADNOUGHT_LAST,
+  bonus1: WANDERER, bonus2: LANTERN, bonus3: RIVAL, bonus4: CROSSING, bonus5: LAST_LIGHT,
+  bonus6: BATTLE_D, bonus7: BATTLE_G, bonus8: BATTLE_BB,
+  bonus9: CODEX_SPACE_1,
 };
 
 const NOTE: Record<string, number> = { C: 0, "C#": 1, Db: 1, D: 2, "D#": 3, Eb: 3, E: 4, F: 5, "F#": 6, Gb: 6, G: 7, "G#": 8, Ab: 8, A: 9, "A#": 10, Bb: 10, B: 11 };

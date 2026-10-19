@@ -1,9 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { TbArrowLeft, TbDeviceGamepad2, TbLayoutGrid, TbLogout, TbPower, TbTrophy, TbUser } from "react-icons/tb";
+import { TbArrowLeft, TbDeviceGamepad2, TbLayoutGrid, TbLogout, TbMusic, TbPower, TbTrophy, TbUser } from "react-icons/tb";
 import { loadBest } from "@/components/games/shared";
 import { AchievementsView } from "@/components/arcade-achievements";
+import { SoundtrackView } from "@/components/soundtrack";
 import { GAME_ORDER, GamePlayer, bestText, gameCopy, gameIcons, type GameId } from "@/components/mini-games";
 import { ACH_CHANGED, currentStore, overall, progressOf, scanBests, type Store } from "@/lib/achievements";
 import { SCORES_EVENT, signOut } from "@/lib/account";
@@ -18,6 +19,7 @@ const copy = {
     tagline: "library for player one",
     library: "Library",
     achievements: "Achievements",
+    soundtrack: "Soundtrack",
     earned: (a: number, b: number) => `${a}/${b} achievements`,
     profile: "Profile",
     exit: "Exit arcade",
@@ -37,6 +39,7 @@ const copy = {
     tagline: "pustaka untuk pemain satu",
     library: "Perpustakaan",
     achievements: "Pencapaian",
+    soundtrack: "Runut bunyi",
     earned: (a: number, b: number) => `${a}/${b} pencapaian`,
     profile: "Profil",
     exit: "Keluar arked",
@@ -58,7 +61,7 @@ const copy = {
 const GROW_MS = 650;
 const BALL_RADIUS = 22;
 
-type View = "library" | "profile" | "achievements" | { play: GameId };
+type View = "library" | "profile" | "achievements" | "soundtrack" | { play: GameId };
 
 function readBests() {
   return Object.fromEntries(GAME_ORDER.map((id) => [id, loadBest(id)])) as Record<GameId, number>;
@@ -273,6 +276,10 @@ export function Arcade({
                   <TbTrophy aria-hidden="true" className="h-4.5 w-4.5" />
                   {t.achievements}
                 </button>
+                <button type="button" aria-current={view === "soundtrack" ? "page" : undefined} className={navItem(view === "soundtrack")} onClick={() => open("soundtrack")}>
+                  <TbMusic aria-hidden="true" className="h-4.5 w-4.5" />
+                  {t.soundtrack}
+                </button>
                 <button type="button" aria-current={view === "profile" ? "page" : undefined} className={navItem(view === "profile")} onClick={() => open("profile")}>
                   <TbUser aria-hidden="true" className="h-4.5 w-4.5" />
                   {t.profile}
@@ -324,6 +331,8 @@ export function Arcade({
                 )}
 
                 {view === "achievements" && <AchievementsView lang={lang} />}
+
+                {view === "soundtrack" && <SoundtrackView lang={lang} />}
 
                 {playing && (
                   <section aria-label={names[playing]} className="mx-auto flex w-full flex-col gap-3">

@@ -1,7 +1,7 @@
 /* The new weapons and what they do: the ice bomb, the flame, the katana's swing and
    wave, and the ice over a frozen enemy. Flat
    shapes with a dark rim, like the rest of the game. */
-import { BLOOM, BOMBS, FLAME, H, HYPER, KATANA, W, domeCenter, podMuzzle, type Enemy, type State } from "./space-logic";
+import { BLOOM, BOMBS, FLAME, H, HYPER, KATANA, NUKE, ROCKET, W, domeCenter, podMuzzle, rocketSpeed, rocketStage, warheadStage, type Enemy, type State } from "./space-logic";
 
 type Ctx = CanvasRenderingContext2D;
 type Bullet = State["bullets"][number];
@@ -84,15 +84,41 @@ function drawSlashWave(ctx: Ctx, b: Bullet) {
 
 /* Mini rockets: short, fat, lime-tipped, with a thin trail of smoke behind. */
 function drawRocket(ctx: Ctx, b: Bullet, reduceMotion: boolean) {
+  /* Cold as it drops off its rail, a sputter as the motor lights, then a flame that grows with its speed. */
+  const age = ROCKET.life - (b.life ?? 0);
+  const stage = rocketStage(age);
   const a = Math.atan2(b.vy, b.vx);
   ctx.save();
   ctx.translate(b.x, b.y);
   ctx.rotate(a);
-  for (let i = 1; i <= 3; i++) {
-    ctx.fillStyle = `rgb(203 213 225 / ${0.42 - i * 0.1})`;
+  if (stage === "burn") {
+    for (let i = 1; i <= 3; i++) {
+      ctx.fillStyle = `rgb(203 213 225 / ${0.42 - i * 0.1})`;
+      ctx.beginPath();
+      ctx.arc(-4 - i * 3.2, reduceMotion ? 0 : Math.sin(i + b.x * 0.2) * 0.5, 2.1 - i * 0.4, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  const flame = (len: number) => {
+    poly(ctx, [[-5.2, -1.4], [-5.2 - len, 0], [-5.2, 1.4]], "#fb923c");
+    poly(ctx, [[-5.2, -0.7], [-5.2 - len * 0.55, 0], [-5.2, 0.7]], "#fff1cc");
+  };
+  if (stage === "eject") {
+    ctx.fillStyle = "#3f4652";
     ctx.beginPath();
-    ctx.arc(-4 - i * 3.2, reduceMotion ? 0 : Math.sin(i + b.x * 0.2) * 0.5, 2.1 - i * 0.4, 0, Math.PI * 2);
+    ctx.arc(-5.2, 0, 1.1, 0, Math.PI * 2);
     ctx.fill();
+  } else if (stage === "ignite") {
+    const lit = age - ROCKET.eject;
+    if (lit <= 4) {
+      ctx.fillStyle = `rgb(226 232 240 / ${0.75 - lit * 0.14})`;
+      ctx.beginPath();
+      ctx.arc(-6, 0, 1.6 + lit * 0.9, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (reduceMotion || age % 3 !== 0) flame(2 + (reduceMotion ? 0.7 : (age % 2) * 1.4));
+  } else {
+    flame(3 + (rocketSpeed(age) / ROCKET.top) * 6 + (reduceMotion ? 0 : (age % 2) * 0.8));
   }
   poly(ctx, [[-3.6, -1.9], [2.4, -1.9], [4.6, 0], [2.4, 1.9], [-3.6, 1.9]], "#94a3b8", INK, 0.6);
   poly(ctx, [[2.4, -1.9], [4.6, 0], [2.4, 1.9]], "#a3e635", INK, 0.5);
@@ -393,10 +419,19 @@ export function drawWarheads(ctx: Ctx, s: State, reduceMotion = false) {
     ctx.translate(w.x, w.y);
     ctx.rotate(ang);
     const flick = reduceMotion ? 0.5 : (w.t % 4) / 4;
-    for (let i = 0; i < 4; i++) {
+    /* Cold while it drops off the rail, sputtering as the motor lights, then a long hot tail. */
+    const stage = warheadStage(w.t);
+    const power = stage === "burn" ? Math.min(1, 0.5 + Math.hypot(w.vx, w.vy) / NUKE.speed / 2) : stage === "ignite" && (reduceMotion || w.t % 3 !== 0) ? 0.35 : 0;
+    for (let i = 0; power > 0 && i < 4; i++) {
       ctx.fillStyle = `rgb(${i < 2 ? "251 207 51" : "249 115 22"} / ${0.5 - i * 0.1})`;
       ctx.beginPath();
-      ctx.ellipse(-9 - i * 5, 0, 5 - i * 0.7 + flick, 2.2 - i * 0.3, 0, 0, Math.PI * 2);
+      ctx.ellipse(-9 - i * 5 * power, 0, (5 - i * 0.7 + flick) * power, (2.2 - i * 0.3) * (0.5 + power / 2), 0, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    if (stage === "eject") {
+      ctx.fillStyle = "#3f4652";
+      ctx.beginPath();
+      ctx.arc(-8.5, 0, 1.8, 0, Math.PI * 2);
       ctx.fill();
     }
     poly(ctx, [[-7, -3.6], [-11, -6.4], [-5, -3.6]], "#b91c1c", INK, 0.7);

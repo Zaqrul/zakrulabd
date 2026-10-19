@@ -100,12 +100,19 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
   const [arcade, setArcade] = useState<{ x: number; y: number } | null>(null);
   const plusRef = useRef<HTMLButtonElement>(null);
   const prevUser = useRef<string | null>(null);
+  /* A returning player who presses the games icon before their session has been recognised (it takes a
+     moment to load the auth client) is taken to the arcade as soon as it is, instead of being left on
+     the guest panel. */
+  const wantsArcade = useRef(false);
   const [bests, setBests] = useState<Record<GameId, number>>(() => Object.fromEntries(GAME_ORDER.map((id) => [id, 0])) as Record<GameId, number>);
   const deckInner = useRef<HTMLDivElement>(null);
   const [deckWidth, setDeckWidth] = useState(0);
   const swapTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
   const loadBests = () => Object.fromEntries(GAME_ORDER.map((id) => [id, loadBest(id)])) as Record<GameId, number>;
-  const closeGame = useCallback(() => setGame(null), []);
+  const closeGame = useCallback(() => {
+    wantsArcade.current = false;
+    setGame(null);
+  }, []);
   const closeAccount = useCallback(() => setAccountOpen(false), []);
   /* All games hand guests over to the existing account panel. */
   const openAccount = useCallback(() => {
@@ -226,6 +233,7 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
   /* The pill shrinks to a circle, and only then are its contents swapped and it
      grows again, so the change of icons happens while nothing is on show. */
   const closeAll = useCallback(() => {
+    wantsArcade.current = false;
     clearTimeout(swapTimer.current);
     setOpen(false);
     setGame(null);
@@ -271,10 +279,14 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
     plusRef.current?.focus();
   }, []);
 
-  /* Signing in from the account panel is what opens it; a session that merely
-     turns up on arrival (a returning player) does not. */
+  /* Signing in from the account panel is what opens it, and so is a session recognised after the
+     player pressed the games icon (wantsArcade); a session that merely turns up on arrival (a
+     returning player) does not. */
   useEffect(() => {
-    if (username && prevUser.current === null && accountOpen) enterArcade();
+    if (username && prevUser.current === null && (accountOpen || wantsArcade.current)) {
+      wantsArcade.current = false;
+      enterArcade();
+    }
     prevUser.current = username;
   }, [username, accountOpen, enterArcade]);
 
@@ -525,7 +537,13 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
             type="button"
             aria-label={t.games}
             className={`${item} ${onGreen}`}
-            onClick={() => (username ? enterArcade() : openGames("space"))}
+            onClick={() => {
+              if (username) enterArcade();
+              else {
+                wantsArcade.current = hasAccountHint();
+                openGames("space");
+              }
+            }}
           >
             <TbDeviceGamepad2 aria-hidden="true" className={`${iconGreen} text-[#8b5cf6]`} />
             <span aria-hidden="true" className={tip}>{t.games}</span>
