@@ -36,7 +36,7 @@ test("alternate arrangement leaves every original score and its nested sections 
     assert.equal(alt.once, song.once);
     // Final Extremity II is the new Codex suite commissioned in this session;
     // every other entry replaces its previous lead score entirely.
-    if (!["s2bonus12", "s2bonus13", "s2bonus14"].includes(id)) {
+    if (!["s2bonus12", "s2bonus13", "s2bonus14", "s2bonus15"].includes(id)) {
       assert.notDeepEqual(alt.bars.map((b) => b[0]), song.bars.map((b) => b[0]), `${id}: replacement melody`);
       assert.notEqual(alt.bars[0][0], song.bars[0][0], `${id}: original opening replaced`);
     }
@@ -102,7 +102,7 @@ test("each Ascension score keeps a small piece of its original's DNA: one bar of
   for (const [id, song] of Object.entries(SONGS)) {
     const alt = ALTERNATE_SONGS[`alt:${id}`], own = new Set(song.bars.map((b) => shape(b[0])));
     const quoted = alt.bars.filter((b) => own.has(shape(b[0]))).length;
-    if (["s2bonus12", "s2bonus13", "s2bonus14"].includes(id)) continue; // Final Extremity II and the later Final Extremity phases keep their own scores
+    if (["s2bonus12", "s2bonus13", "s2bonus14", "s2bonus15"].includes(id)) continue; // Final Extremity II and the later Final Extremity phases keep their own scores
     if (["s2victory", "s2gameover", "s2fanfare"].includes(id)) { assert.equal(quoted, 0, `${id}: a cue this short is left alone`); continue; }
     assert.equal(quoted, 1, `${id}: one bar of the original, not a rewrite of it (${quoted})`);
   }

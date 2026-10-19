@@ -1,7 +1,7 @@
 /* The tracks in zakrulOS's soundtrack player: every tune of Space (the chiptune) and Space 2 (the
    16-bit orchestra), each with a title in both languages. Only the game's own tunes are here, then the bonus
    tracks, which the games never play, at the end of the album. Only the original Space 2 album lists bonus
-   tracks: Ashen Crown, the extended Battle Theme and the three phases of Final Extremity. Space and Ascension (which arranges
+   tracks: Ashen Crown, the extended Battle Theme and the four phases of Final Extremity. Space and Ascension (which arranges
    every Space 2 tune) list the games' own tunes only; the other bonus tunes stay in the engines, unlisted. */
 import type { NesTrack } from "@/components/games/space-music";
 import type { AlternateSagaTrack, BaseSagaTrack } from "@/components/games/space2-music";
@@ -97,11 +97,12 @@ const SPACE2_ALL: Track[] = [
   { album: "space2", engine: "s2bonus10", title: S("Final Extremity: Phase 1", "Kemuncak Terakhir: Fasa 1"), bonus: true },
   { album: "space2", engine: "s2bonus13", title: S("Final Extremity: Phase 2", "Kemuncak Terakhir: Fasa 2"), bonus: true },
   { album: "space2", engine: "s2bonus14", title: S("Final Extremity: Phase 3", "Kemuncak Terakhir: Fasa 3"), bonus: true },
+  { album: "space2", engine: "s2bonus15", title: S("Final Extremity: Phase 4, Eternity", "Kemuncak Terakhir: Fasa 4, Keabadian"), bonus: true },
   { album: "space2", engine: "s2bonus11", title: CODEX, bonus: true },
   { album: "space2", engine: "s2bonus12", title: S("Final Extremity II", "Final Extremity II"), bonus: true },
 ];
 
-const ORIGINAL_BONUS: BaseSagaTrack[] = ["s2bonus7", "s2bonus9", "s2bonus10", "s2bonus13", "s2bonus14"];
+const ORIGINAL_BONUS: BaseSagaTrack[] = ["s2bonus7", "s2bonus9", "s2bonus10", "s2bonus13", "s2bonus14", "s2bonus15"];
 export const SPACE2_TRACKS: Track[] = SPACE2_ALL.filter((track) => !track.bonus || ORIGINAL_BONUS.includes(track.engine as BaseSagaTrack));
 
 export const SPACE_TRACKS: Track[] = SPACE_ALL.filter((track) => !track.bonus);

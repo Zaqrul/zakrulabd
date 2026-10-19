@@ -55,6 +55,7 @@ export const ASCENSION_PROFILES: Record<BaseSagaTrack, Profile> = {
   s2bonus12: { bpm: 178, lead: "organ", pad: "strings", counter: "bell", mood: "battle", answer: "2 - 1 - 0 - . 1 2 - 3 - 4 - . ." },
   s2bonus13: { bpm: 172, lead: "organ", pad: "strings", counter: "bell", mood: "battle", answer: "0 - 2 - 1 - 0 - 4 - 3 - 2 - . ." },
   s2bonus14: { bpm: 180, lead: "organ", pad: "strings", counter: "bell", mood: "battle", answer: "2 - 1 - 0 - . 1 2 - 3 - 4 - . ." },
+  s2bonus15: { bpm: 188, lead: "organ", pad: "strings", counter: "bell", mood: "battle", answer: "0 - 2 - 1 - 0 - 4 - 3 - 2 - . ." },
 };
 
 // Original four-bar A themes. The separate B themes below answer each A;
@@ -535,7 +536,7 @@ function arrange(id: BaseSagaTrack, original: Song): Song {
   // this album. All other tracks use the replacement A/B themes or cue scores.
   const a = EPISODES[id], b = CONTRASTS[id], cue = CUES[id];
   // Final Extremity II and the later phases of Final Extremity keep their own scores here.
-  const isFinale = ["s2bonus12", "s2bonus13", "s2bonus14"].includes(id);
+  const isFinale = ["s2bonus12", "s2bonus13", "s2bonus14", "s2bonus15"].includes(id);
   if (!isFinale && !cue && (!a || !b)) throw new Error(`Ascension: missing composition for ${id}`);
   const fierce = p.mood === "battle" || p.mood === "anger";
   const longForm = fierce || p.mood === "heroic" || p.mood === "dark";

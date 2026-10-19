@@ -53,7 +53,7 @@ Each tune was written from motifs, not typed bar by bar. A hook, an answer, a ha
 
 `tests/soundtrack.test.mjs` checks the rules on every bonus tune: the hook's rhythm comes back, no bar is copied beside itself, bar downbeats and most strong beats fall on the chord, arpeggio runs are rare, the top note is reached in the second half, and there is a held note. It cannot check that a tune is good. Only listening does.
 
-## Final Extremity (special bonus track, three phases)
+## Final Extremity (special bonus track, four phases)
 
 One score in the manner of a prog-rock and techno RPG final-boss theme, played as three phases: D, E and F
 sharp minor at 164, 172 and 180 bpm, so all three share every part, motif and band change. A drumless intro over a
@@ -63,3 +63,7 @@ sixteenths over an eight-bar vamp played twice (violin, guitar, synth), up front
 climb a minor third higher, and the fall back. 48 bars.
 In the climb only, the synth turns round the root in sixteenths, a light touch of a late-90s villain's theme. No
 note is taken from any existing work.
+
+Phase 4, Eternity, is the same score in G sharp minor at 188 bpm with a twenty-four-bar solo written new for it:
+violin, guitar over a pedal, synth, a bar each in turn, then all of them together with the guitar a third below.
+Its climb reaches C sharp 7, the top of the suite.

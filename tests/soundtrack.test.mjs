@@ -6,7 +6,7 @@ import { ALBUMS, trackTitle } from "../src/lib/soundtrack.ts";
 
 test("the soundtrack lists every tune of Space and of Space 2, once each", () => {
   assert.deepEqual(ALBUMS.space.map((t) => t.engine).sort(), Object.keys(SPACE).filter((id) => !id.startsWith("bonus")).sort(), "Space lists no bonus tracks");
-  assert.deepEqual(ALBUMS.space2.map((t) => t.engine).sort(), Object.keys(SPACE2).filter((id) => !id.startsWith("s2bonus") || ["s2bonus7", "s2bonus9", "s2bonus10", "s2bonus13", "s2bonus14"].includes(id)).sort(), "of the bonus tracks, only Ashen Crown, the extended Battle Theme and the three phases of Final Extremity are on the original album");
+  assert.deepEqual(ALBUMS.space2.map((t) => t.engine).sort(), Object.keys(SPACE2).filter((id) => !id.startsWith("s2bonus") || ["s2bonus7", "s2bonus9", "s2bonus10", "s2bonus13", "s2bonus14", "s2bonus15"].includes(id)).sort(), "of the bonus tracks, only Ashen Crown, the extended Battle Theme and the four phases of Final Extremity are on the original album");
   assert.deepEqual(ALBUMS.space2alt.map((t) => t.engine).sort(), Object.keys(ALTERNATE_SONGS).filter((id) => !id.startsWith("alt:s2bonus")).sort(), "Ascension lists no bonus tracks");
 });
 
@@ -50,9 +50,9 @@ test("the chiptune and the orchestral Wanderer's Battle carry the same tune", ()
   chip.forEach((bar, i) => { assert.equal(bar[0], orchestra[i][0]); assert.equal(bar[1], orchestra[i][1]); });
 });
 
-test("only the original Space 2 album lists bonus tracks, five of them, together at its end", () => {
-  assert.deepEqual(ALBUMS.space2.filter((t) => t.bonus).map((t) => trackTitle(t, "en")), ["Ashen Crown", "Battle: Vanguard Run, Extended", "Final Extremity: Phase 1", "Final Extremity: Phase 2", "Final Extremity: Phase 3"]);
-  for (const [album, count] of [["space2", 5]]) {
+test("only the original Space 2 album lists bonus tracks, six of them, together at its end", () => {
+  assert.deepEqual(ALBUMS.space2.filter((t) => t.bonus).map((t) => trackTitle(t, "en")), ["Ashen Crown", "Battle: Vanguard Run, Extended", "Final Extremity: Phase 1", "Final Extremity: Phase 2", "Final Extremity: Phase 3", "Final Extremity: Phase 4, Eternity"]);
+  for (const [album, count] of [["space2", 6]]) {
     const flags = ALBUMS[album].map((t) => Boolean(t.bonus));
     assert.equal(flags.filter(Boolean).length, count, album);
     assert.deepEqual(flags.slice(-count), Array(count).fill(true), "the bonus tracks come last, together");
@@ -135,7 +135,7 @@ const leadNotes = (line) => {
   line.trim().split(/\s+/).forEach((c, i) => { if (c === "-") { out[out.length - 1].len += 1; } else if (c !== ".") out.push({ at: i, len: 1, v: midi(c) }); });
   return out;
 };
-const everyBonus = [...[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => [`bonus${i}`, SPACE[`bonus${i}`]]), ...[1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14].map((i) => [`s2bonus${i}`, SPACE2[`s2bonus${i}`]])];
+const everyBonus = [...[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => [`bonus${i}`, SPACE[`bonus${i}`]]), ...[1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15].map((i) => [`s2bonus${i}`, SPACE2[`s2bonus${i}`]])];
 
 test("every bonus tune is built from a hook that comes back, and not from bars that are all alike", () => {
   for (const [id, song] of everyBonus) {
@@ -223,7 +223,7 @@ test("no song has a bar the lead skips whole, and only the extended tunes and th
   const allRest = (b) => b[0].trim().split(/\s+/).every((c) => c === ".");
   for (const [id, song] of Object.entries(SPACE2)) {
     assert.ok(!song.bars.some(allRest), `${id}: no silent lead bar`);
-    if (!["s2bonus7", "s2bonus9", "s2bonus10", "s2bonus11", "s2bonus12", "s2bonus13", "s2bonus14"].includes(id)) assert.ok(!song.fills && !song.crashes && !song.riser, `${id}: no fills, crashes or risers asked for`);
+    if (!["s2bonus7", "s2bonus9", "s2bonus10", "s2bonus11", "s2bonus12", "s2bonus13", "s2bonus14", "s2bonus15"].includes(id)) assert.ok(!song.fills && !song.crashes && !song.riser, `${id}: no fills, crashes or risers asked for`);
   }
 });
 
@@ -274,4 +274,31 @@ test("both Codex battle themes have independent melodies and playable loop joins
     }
   }
   assert.notEqual(SPACE.bonus9.bars[0][0], SPACE2.s2bonus11.bars[0][0], "two different hooks");
+});
+
+test("Final Extremity's fourth phase, Eternity: the same score in G sharp minor, with a long combined solo of its own", () => {
+  const p1 = SPACE2.s2bonus10, p4 = SPACE2.s2bonus15;
+  const pitches = (song) => song.bars.map((b) => b[0].trim().split(/\s+/).filter((c) => /^[A-G]/.test(c)).map(midi));
+  assert.equal(p4.bpm, 188);
+  assert.equal(p4.bars.length, 56, "twenty-two bars, a twenty-four-bar solo, ten bars");
+  // Outside the solo it is the first phase's score, six semitones higher.
+  const outside = [...Array(22).keys(), ...Array.from({ length: 10 }, (_, k) => 46 + k)];
+  for (const i of outside) {
+    const j = i < 22 ? i : i - 8;
+    pitches(p4)[i].forEach((v, k) => assert.equal(v, pitches(p1)[j][k] + 6, `bar ${i + 1}`));
+  }
+  // The solo is new: none of its bars is a bar of another phase's solo, moved or not.
+  const shape = (bar) => bar.map((v, k, a) => (k ? v - a[k - 1] : 0)).join(",");
+  const others = [SPACE2.s2bonus10, SPACE2.s2bonus13, SPACE2.s2bonus14].flatMap((song) => pitches(song).slice(22, 38).map(shape));
+  assert.ok(pitches(p4).slice(22, 46).every((bar) => !others.includes(shape(bar))), "a solo of its own");
+  // The band combines: violin, guitar, synth, a bar each, then all together with a harmony a third below.
+  const lead = (bar) => p4.sections.findLast((s) => s.from <= bar).lead;
+  assert.deepEqual([22, 26, 30, 34, 35, 36].map(lead), ["violin", "guitar", "lead", "violin", "guitar", "lead"]);
+  const all = p4.sections.find((s) => s.from === 38);
+  assert.deepEqual([all.lead, all.layer, all.counter], ["lead", "violin", "guitar"]);
+  for (const bar of p4.bars.slice(38, 46)) {
+    const top = bar[0].trim().split(/\s+/), under = bar[3].trim().split(/\s+/);
+    top.forEach((c, k) => { if (/^[A-G]/.test(c)) assert.ok([3, 4].includes(midi(c) - midi(under[k])), `a third below ${c}`); });
+  }
+  assert.equal(Math.max(...pitches(p4).flat()), midi("C#7"), "the top of the whole suite");
 });
