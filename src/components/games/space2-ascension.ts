@@ -3,8 +3,7 @@
    Counter motifs use scale degrees relative
    to each bar's chord, fitted to its meter. No random pitches or audio assets.
    The originals are never mutated; the alternative is a separate player album. */
-import type { AlternateSagaTrack, BaseSagaTrack, Song } from "./space2-music";
-import type { SecondBattle } from "./space2-battles-more.ts";
+import type { AlternateSagaTrack, AscensionBonus, BaseSagaTrack, LaterTrack, Song } from "./space2-music";
 import { BATTLE_BARS, BATTLE_MARKS, BATTLE_PERFORMANCE } from "./space2-ascension-battle.ts";
 import { BOSS_SUITES, SUITE_MARKS } from "./space2-ascension-bosses.ts";
 
@@ -17,7 +16,7 @@ export type Profile = {
 
 // Each answer has its own phrasing. 0 is the chord root, 2 its third, 4 its fifth.
 // Holds and rests use the same notation as the score; odd meters compress time.
-export const ASCENSION_PROFILES: Record<Exclude<BaseSagaTrack, SecondBattle>, Profile> = {
+export const ASCENSION_PROFILES: Record<Exclude<BaseSagaTrack, LaterTrack>, Profile> = {
   s2title: { bpm: 112, lead: "organ", pad: "strings", counter: "violin", mood: "dark", answer: "0 - - - - - - - 1 - - - 0 - - -" },
   s2hangar: { bpm: 80, lead: "violin", pad: "organ", counter: "strings", mood: "ruin", answer: "0 - - - - - . . 1 - 0 - - - . ." },
   s2hangar2: { bpm: 92, lead: "organ", pad: "strings", counter: "violin", mood: "ruin", answer: "4 - - - - - - - 3 - - - - - . ." },
@@ -529,7 +528,7 @@ export function riffFor(n: number, mood: Profile["mood"], late: boolean) {
   return late ? "gallop16" : "slap16";
 }
 
-function arrange(id: Exclude<BaseSagaTrack, SecondBattle>, original: Song): Song {
+function arrange(id: Exclude<BaseSagaTrack, LaterTrack>, original: Song): Song {
   const p = ASCENSION_PROFILES[id];
   if (id === "s2stage") return arrangeBattle(original, p);
   if (BOSS_SUITES[id]) return arrangeBoss(id, original, p);
@@ -646,8 +645,8 @@ function arrangeBoss(id: BaseSagaTrack, original: Song, p: Profile): Song {
   };
 }
 
-export function arrangeAscension(originals: Record<BaseSagaTrack, Song>): Record<AlternateSagaTrack, Song> {
-  return Object.fromEntries((Object.entries(originals) as [Exclude<BaseSagaTrack, SecondBattle>, Song][])
+export function arrangeAscension(originals: Record<BaseSagaTrack, Song>): Record<Exclude<AlternateSagaTrack, AscensionBonus>, Song> {
+  return Object.fromEntries((Object.entries(originals) as [Exclude<BaseSagaTrack, LaterTrack>, Song][])
     .filter(([id]) => id in ASCENSION_PROFILES)
-    .map(([id, song]) => [`alt:${id}`, arrange(id, song)])) as Record<AlternateSagaTrack, Song>;
+    .map(([id, song]) => [`alt:${id}`, arrange(id, song)])) as Record<Exclude<AlternateSagaTrack, AscensionBonus>, Song>;
 }

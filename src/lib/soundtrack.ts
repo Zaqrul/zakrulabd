@@ -1,7 +1,7 @@
 /* The tracks in zakrulOS's soundtrack player: every tune of Space (the chiptune) and Space 2 (the
    16-bit orchestra), each with a title in both languages. Only the game's own tunes are here, then the bonus
    tracks, which the games never play, at the end of the album. Only the original Space 2 album lists bonus
-   tracks: Ashen Crown, the extended Battle Theme and the four phases of Final Extremity. Space and Ascension (which arranges
+   tracks: the three Ashen Crowns, the extended Battle Theme and the four phases of Final Extremity. Space (and Ascension, apart from its own three bonus tracks, which arranges
    every Space 2 tune) list the games' own tunes only; the other bonus tunes stay in the engines, unlisted. */
 import type { NesTrack } from "@/components/games/space-music";
 import type { AlternateSagaTrack, BaseSagaTrack } from "@/components/games/space2-music";
@@ -105,6 +105,8 @@ const SPACE2_ALL: Track[] = [
   { album: "space2", engine: "s2bonus5", title: LAST_LIGHT, bonus: true },
   { album: "space2", engine: "s2bonus6", title: S("Iron Vanguard", "Barisan Besi"), bonus: true },
   { album: "space2", engine: "s2bonus7", title: S("Ashen Crown", "Mahkota Abu"), bonus: true },
+  { album: "space2", engine: "s2bonus16", title: S("Ashen Crown II", "Mahkota Abu II"), bonus: true },
+  { album: "space2", engine: "s2bonus17", title: S("Ashen Crown III", "Mahkota Abu III"), bonus: true },
   { album: "space2", engine: "s2bonus8", title: S("Crimson Overdrive", "Overdrive Merah"), bonus: true },
   { album: "space2", engine: "s2bonus9", title: S("Battle: Vanguard Run, Extended", "Pertempuran: Larian Barisan Hadapan, Lanjutan"), bonus: true },
   { album: "space2", engine: "s2bonus10", title: S("Final Extremity: Phase 1", "Kemuncak Terakhir: Fasa 1"), bonus: true },
@@ -115,16 +117,51 @@ const SPACE2_ALL: Track[] = [
   { album: "space2", engine: "s2bonus12", title: S("Final Extremity II", "Final Extremity II"), bonus: true },
 ];
 
-const ORIGINAL_BONUS: BaseSagaTrack[] = ["s2bonus7", "s2bonus9", "s2bonus10", "s2bonus13", "s2bonus14", "s2bonus15"];
+const ORIGINAL_BONUS: BaseSagaTrack[] = ["s2bonus7", "s2bonus16", "s2bonus17", "s2bonus9", "s2bonus10", "s2bonus13", "s2bonus14", "s2bonus15"];
 export const SPACE2_TRACKS: Track[] = SPACE2_ALL.filter((track) => !track.bonus || ORIGINAL_BONUS.includes(track.engine as BaseSagaTrack));
 
 export const SPACE_TRACKS: Track[] = SPACE_ALL.filter((track) => !track.bonus);
 
 /* The Ascension album re-composes the tunes the game began with; the battles added later are in the Space 2 album only. */
 const ADDED_BATTLES: BaseSagaTrack[] = ["s2stage3", "s2stage4", "s2stage5", "s2stage6", "s2stage7", "s2stage8"];
-export const SPACE2_ALTERNATE_TRACKS: Track[] = SPACE2_ALL.filter((track) => !track.bonus && !ADDED_BATTLES.includes(track.engine as BaseSagaTrack)).map((track) => ({
-  ...track, album: "space2alt", engine: `alt:${track.engine}` as AlternateSagaTrack,
-}));
+/* The game never plays the Ascension arrangements, so they are not named after where they play (Hangar, Battle,
+   Showdown): each has a title of its own, in the album's order. */
+/* The battle tunes (the field battles and every boss) say so, as the game's own album does. */
+const BATTLE = (en: string, ms: string): Name => [`Battle: ${en}`, `Pertempuran: ${ms}`];
+const ASCENSION_TITLES: Partial<Record<BaseSagaTrack, Name>> = {
+  s2title: S("Ascension Overture", "Overtur Kenaikan"),
+  s2hangar: S("First Light", "Cahaya Pertama"),
+  s2hangar2: S("Waltz of Embers", "Waltz Bara"),
+  s2hangar3: S("Tidewind", "Angin Pasang"),
+  s2fanfare: S("Lift-off", "Berlepas"),
+  s2stage: BATTLE("Skyward Charge", "Asakan ke Langit"),
+  s2stage2: BATTLE("Wings of Shadow", "Sayap Bayang"),
+  s2alert: S("Distant Thunder", "Guruh di Kejauhan"),
+  s2alert2: S("Cathedral of Dread", "Katedral Gerun"),
+  s2alert3: S("Rising Storm", "Ribut Memuncak"),
+  s2boss1: BATTLE("Breaker of Tides", "Pemecah Gelombang"),
+  s2boss2: BATTLE("Serpent of the Roots", "Ular Akar Bakau"),
+  s2boss3: BATTLE("Frostwing", "Sayap Fros"),
+  s2boss4: BATTLE("Jaws of the Dunes", "Rahang Bukit Pasir"),
+  s2boss5: BATTLE("Iron Horizon", "Ufuk Besi"),
+  s2boss6: BATTLE("Eternal Winter", "Musim Sejuk Abadi"),
+  s2boss7: BATTLE("Heart of the Cyclone", "Jantung Taufan"),
+  s2boss8: BATTLE("Titan's Rise", "Kebangkitan Titan"),
+  s2boss8b: BATTLE("Verdict of the Titan", "Hukuman Sang Titan"),
+  s2boss8c: BATTLE("The Final Ascent", "Pendakian Terakhir"),
+  s2victory: S("Above the Clouds", "Di Atas Awan"),
+  s2pause: S("Weightless", "Tanpa Graviti"),
+  s2gameover: S("Ashes Falling", "Abu Berguguran"),
+  s2ending: S("Ascension", "Kenaikan"),
+};
+export const SPACE2_ALTERNATE_TRACKS: Track[] = SPACE2_ALL.filter((track) => !track.bonus && !ADDED_BATTLES.includes(track.engine as BaseSagaTrack)).map((track): Track => ({
+  album: "space2alt", engine: `alt:${track.engine}` as AlternateSagaTrack, title: ASCENSION_TITLES[track.engine as BaseSagaTrack] ?? track.title,
+})).concat([
+  /* Ascension's own bonus tracks, at the end: a field battle, a boss and a final boss. */
+  { album: "space2alt", engine: "alt:asc1", title: BATTLE("Crosswind Assault", "Serangan Angin Lintang"), bonus: true },
+  { album: "space2alt", engine: "alt:asc2", title: BATTLE("Colossus of the Spire", "Kolosus Menara"), bonus: true },
+  { album: "space2alt", engine: "alt:asc3", title: BATTLE("Throne of Ascension", "Takhta Kenaikan"), bonus: true },
+]);
 
 /* Space 3: run-and-gun fusion with an orchestral-rock heart. So far the tunes for chapter 1. */
 export const SPACE3_TRACKS: Track[] = [

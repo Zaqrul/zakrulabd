@@ -5,8 +5,8 @@ import { ASCENSION_PROFILES, arrangeAscension } from "../src/components/games/sp
 import { ALBUMS, trackTitle } from "../src/lib/soundtrack.ts";
 import { cells, midiOf } from "../src/components/games/space-music.ts";
 
-/* The field battles added after Ascension was written (s2stage3 to s2stage8) are in the Space 2 album only. */
-const ADDED = ["s2stage3", "s2stage4", "s2stage5", "s2stage6", "s2stage7", "s2stage8"];
+/* The field battles and Ashen Crown II and III, added after Ascension was written, are in the Space 2 album only. */
+const ADDED = ["s2stage3", "s2stage4", "s2stage5", "s2stage6", "s2stage7", "s2stage8", "s2bonus16", "s2bonus17"];
 const ORIGINALS = Object.entries(SONGS).filter(([id]) => !ADDED.includes(id));
 
 test("Ascension covers the entire Space 2 album in order with separate engine identities", () => {
@@ -15,13 +15,13 @@ test("Ascension covers the entire Space 2 album in order with separate engine id
   /* The original album is the game's tunes; Ascension is those in the same order, then the bonus tracks. */
   const own = ALBUMS.space2.filter((t) => !t.bonus && !ADDED.includes(t.engine));
   assert.equal(ALBUMS.space2alt.filter((t) => !t.bonus).length, own.length);
-  assert.ok(ALBUMS.space2alt.every((t) => !t.bonus), "Ascension lists no bonus tracks");
+  assert.deepEqual(ALBUMS.space2alt.filter((t) => t.bonus).map((t) => t.engine), ["alt:asc1", "alt:asc2", "alt:asc3"], "Ascension lists only its own bonus tracks");
   own.forEach((original, i) => {
     const alt = ALBUMS.space2alt[i];
     assert.equal(alt.engine, `alt:${original.engine}`);
     assert.equal(alt.album, "space2alt");
     assert.equal(alt.bonus, original.bonus);
-    for (const lang of ["en", "ms"]) assert.equal(trackTitle(alt, lang), trackTitle(original, lang));
+    for (const lang of ["en", "ms"]) assert.notEqual(trackTitle(alt, lang), trackTitle(original, lang), `${alt.engine}: a title of its own`);
   });
 });
 

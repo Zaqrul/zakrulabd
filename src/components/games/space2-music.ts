@@ -15,7 +15,10 @@ import type { Song as ChipSong } from "./space-music";
 import { CODEX_SPACE_2 } from "./space-codex-music.ts";
 import { FINAL_EXTREMITY_II } from "./space-final-extremity-ii.ts";
 import { SECOND_BATTLES, type SecondBattle } from "./space2-battles-more.ts";
+import { ASHEN_CROWN_II } from "./space2-ashen-crown-ii.ts";
+import { ASHEN_CROWN_III } from "./space2-ashen-crown-iii.ts";
 import { arrangeAscension } from "./space2-ascension.ts";
+import { ASCENSION_BONUS } from "./space2-ascension-bonus.ts";
 import { SPACE3_SONGS, type Space3Track } from "./space3-music.ts";
 
 export type BaseSagaTrack =
@@ -24,9 +27,12 @@ export type BaseSagaTrack =
   /* Atlas's music follows its phases: Judgement from the fourth, the last stand in the sixth. */
   | "s2boss8b" | "s2boss8c"
   /* A bonus tune for the soundtrack player in zakrulOS only; the game never plays it. */
-  | "s2bonus1" | "s2bonus2" | "s2bonus3" | "s2bonus4" | "s2bonus5" | "s2bonus6" | "s2bonus7" | "s2bonus8" | "s2bonus9" | "s2bonus10" | "s2bonus11" | "s2bonus12" | "s2bonus13" | "s2bonus14" | "s2bonus15";
-/* The Ascension album re-composes the tunes the game began with; the battle tunes added later have no Ascension version. */
-export type AlternateSagaTrack = `alt:${Exclude<BaseSagaTrack, SecondBattle>}`;
+  | "s2bonus1" | "s2bonus2" | "s2bonus3" | "s2bonus4" | "s2bonus5" | "s2bonus6" | "s2bonus7" | "s2bonus8" | "s2bonus9" | "s2bonus10" | "s2bonus11" | "s2bonus12" | "s2bonus13" | "s2bonus14" | "s2bonus15" | "s2bonus16" | "s2bonus17";
+/* The Ascension album re-composes the tunes the game began with; the battle tunes and Ashen Crown II and III, added later, have no Ascension version. */
+export type LaterTrack = SecondBattle | "s2bonus16" | "s2bonus17";
+/* The Ascension album's own bonus tracks, written for it and arranged from nothing in the game. */
+export type AscensionBonus = "alt:asc1" | "alt:asc2" | "alt:asc3";
+export type AlternateSagaTrack = `alt:${Exclude<BaseSagaTrack, LaterTrack>}` | AscensionBonus;
 export type SagaTrack = BaseSagaTrack | AlternateSagaTrack | Space3Track;
 
 type Voice = "brass" | "strings" | "lead" | "organ" | "organChord" | "bell" | "harp" | "chip" | "trumpet" | "violin" | "guitar" | "piano";
@@ -47,6 +53,8 @@ export type Song = {
   /* Held under the bar, or for "harp" plucked up and down its chord in eighths. */
   pad?: "strings" | "organ" | "harp";
   counter?: Voice;
+  /* How loud the counter voice plays, 0.035 unless a tune brings its counter-melody forward. */
+  counterLevel?: number;
   /* A second voice that doubles the lead, quieter, so the two blend into one. */
   layer?: Voice;
   bassVoice?: "synth" | "picked" | "slap";
@@ -1159,13 +1167,13 @@ export const SONGS: Record<BaseSagaTrack, Song> = {
   s2boss1: BOSSES[0], s2boss2: BOSSES[1], s2boss3: BOSSES[2], s2boss4: BOSSES[3],
   s2boss5: BOSSES[4], s2boss6: BOSSES[5], s2boss7: BOSSES[6], s2boss8: BOSSES[7], s2boss8b: JUDGEMENT, s2boss8c: LAST_STAND,
   s2bonus1: BONUS, s2bonus2: LANTERN_BAND, s2bonus3: RIVAL_BAND, s2bonus4: CROSSING_BAND, s2bonus5: LAST_LIGHT_BAND,
-  s2bonus6: IRON_VANGUARD, s2bonus7: ASHEN_CROWN, s2bonus8: CRIMSON_OVERDRIVE, s2bonus9: STAGE_EXTENDED, s2bonus10: FINAL_EXTREMITY, s2bonus13: FINAL_EXTREMITY_2, s2bonus14: FINAL_EXTREMITY_3, s2bonus15: FINAL_EXTREMITY_4,
+  s2bonus6: IRON_VANGUARD, s2bonus7: ASHEN_CROWN, s2bonus8: CRIMSON_OVERDRIVE, s2bonus9: STAGE_EXTENDED, s2bonus10: FINAL_EXTREMITY, s2bonus13: FINAL_EXTREMITY_2, s2bonus14: FINAL_EXTREMITY_3, s2bonus15: FINAL_EXTREMITY_4, s2bonus16: ASHEN_CROWN_II, s2bonus17: ASHEN_CROWN_III,
   s2bonus11: CODEX_SPACE_2,
   s2bonus12: FINAL_EXTREMITY_II,
 };
 
 export const ALTERNATE_SONGS = arrangeAscension(SONGS);
-const PLAYBACK_SONGS: Record<SagaTrack, Song> = { ...SONGS, ...ALTERNATE_SONGS, ...SPACE3_SONGS };
+const PLAYBACK_SONGS: Record<SagaTrack, Song> = { ...SONGS, ...ALTERNATE_SONGS, ...ASCENSION_BONUS, ...SPACE3_SONGS };
 
 /* Each song laid out step by step, checked once as the module loads. */
 type Plan = { steps: number; bar: number[]; pos: number[]; len: number[]; start: number[]; bands: Song[]; kits: (string[] | undefined)[]; lead: Map<number, Cell>; counter: Map<number, Cell>; bass: Map<number, Cell>[]; chords: ReturnType<typeof chordOf>[] };
@@ -1702,7 +1710,7 @@ export class SagaMusic {
     const counter = plan.counter.get(step);
     /* A song with no counter voice plays its arpeggios on the chip; a section that sets the counter to undefined silences it. */
     const counterVoice = "counter" in song ? song.counter : "chip";
-    if (counter && counterVoice) this.voice(counterVoice, counter.value, at, counter.len * stepSec * 0.8, 0.035);
+    if (counter && counterVoice) this.voice(counterVoice, counter.value, at, counter.len * stepSec * 0.8, song.counterLevel ?? 0.035);
 
     if (song.riser && pos === 0 && b === song.riser[0]) {
       let steps = 0;

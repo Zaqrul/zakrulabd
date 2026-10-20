@@ -6,8 +6,8 @@ import { ALBUMS, trackTitle } from "../src/lib/soundtrack.ts";
 
 test("the soundtrack lists every tune of Space and of Space 2, once each", () => {
   assert.deepEqual(ALBUMS.space.map((t) => t.engine).sort(), Object.keys(SPACE).filter((id) => !id.startsWith("bonus")).sort(), "Space lists no bonus tracks");
-  assert.deepEqual(ALBUMS.space2.map((t) => t.engine).sort(), Object.keys(SPACE2).filter((id) => !id.startsWith("s2bonus") || ["s2bonus7", "s2bonus9", "s2bonus10", "s2bonus13", "s2bonus14", "s2bonus15"].includes(id)).sort(), "of the bonus tracks, only Ashen Crown, the extended Battle Theme and the four phases of Final Extremity are on the original album");
-  assert.deepEqual(ALBUMS.space2alt.map((t) => t.engine).sort(), Object.keys(ALTERNATE_SONGS).filter((id) => !id.startsWith("alt:s2bonus")).sort(), "Ascension lists no bonus tracks");
+  assert.deepEqual(ALBUMS.space2.map((t) => t.engine).sort(), Object.keys(SPACE2).filter((id) => !id.startsWith("s2bonus") || ["s2bonus7", "s2bonus16", "s2bonus17", "s2bonus9", "s2bonus10", "s2bonus13", "s2bonus14", "s2bonus15"].includes(id)).sort(), "of the bonus tracks, only the three Ashen Crowns, the extended Battle Theme and the four phases of Final Extremity are on the original album");
+  assert.deepEqual(ALBUMS.space2alt.map((t) => t.engine).sort(), [...Object.keys(ALTERNATE_SONGS).filter((id) => !id.startsWith("alt:s2bonus")), "alt:asc1", "alt:asc2", "alt:asc3"].sort(), "Ascension lists none of Space 2's bonus tracks, only its own three");
 });
 
 test("every title is in both languages, and a tune with versions says which", () => {
@@ -50,15 +50,17 @@ test("the chiptune and the orchestral Wanderer's Battle carry the same tune", ()
   chip.forEach((bar, i) => { assert.equal(bar[0], orchestra[i][0]); assert.equal(bar[1], orchestra[i][1]); });
 });
 
-test("only the original Space 2 album lists bonus tracks, six of them, together at its end", () => {
-  assert.deepEqual(ALBUMS.space2.filter((t) => t.bonus).map((t) => trackTitle(t, "en")), ["Ashen Crown", "Battle: Vanguard Run, Extended", "Final Extremity: Phase 1", "Final Extremity: Phase 2", "Final Extremity: Phase 3", "Final Extremity: Phase 4, Eternity"]);
-  for (const [album, count] of [["space2", 6]]) {
+test("only the original Space 2 album lists bonus tracks, eight of them, together at its end", () => {
+  assert.deepEqual(ALBUMS.space2.filter((t) => t.bonus).map((t) => trackTitle(t, "en")), ["Ashen Crown", "Ashen Crown II", "Ashen Crown III", "Battle: Vanguard Run, Extended", "Final Extremity: Phase 1", "Final Extremity: Phase 2", "Final Extremity: Phase 3", "Final Extremity: Phase 4, Eternity"]);
+  for (const [album, count] of [["space2", 8]]) {
     const flags = ALBUMS[album].map((t) => Boolean(t.bonus));
     assert.equal(flags.filter(Boolean).length, count, album);
     assert.deepEqual(flags.slice(-count), Array(count).fill(true), "the bonus tracks come last, together");
     assert.ok(flags.slice(0, -count).every((f) => !f));
   }
-  assert.ok(ALBUMS.space.every((t) => !t.bonus) && ALBUMS.space2alt.every((t) => !t.bonus), "Space and Ascension list none");
+  assert.ok(ALBUMS.space.every((t) => !t.bonus), "Space lists none");
+  assert.deepEqual(ALBUMS.space2alt.filter((t) => t.bonus).map((t) => t.engine), ["alt:asc1", "alt:asc2", "alt:asc3"], "Ascension lists only its own three");
+  assert.ok(ALBUMS.space2alt.slice(-3).every((t) => t.bonus), "at its end");
 });
 
 test("every bonus tune has the same notes and chords in the chiptune and in the orchestra", () => {
@@ -223,7 +225,7 @@ test("no song has a bar the lead skips whole, and only the extended tunes, the f
   const allRest = (b) => b[0].trim().split(/\s+/).every((c) => c === ".");
   for (const [id, song] of Object.entries(SPACE2)) {
     assert.ok(!song.bars.some(allRest), `${id}: no silent lead bar`);
-    if (!["s2bonus7", "s2bonus9", "s2bonus10", "s2bonus11", "s2bonus12", "s2bonus13", "s2bonus14", "s2bonus15", "s2stage3", "s2stage4", "s2stage5", "s2stage6", "s2stage7", "s2stage8"].includes(id)) assert.ok(!song.fills && !song.crashes && !song.riser, `${id}: no fills, crashes or risers asked for`);
+    if (!["s2bonus7", "s2bonus16", "s2bonus17", "s2bonus9", "s2bonus10", "s2bonus11", "s2bonus12", "s2bonus13", "s2bonus14", "s2bonus15", "s2stage3", "s2stage4", "s2stage5", "s2stage6", "s2stage7", "s2stage8"].includes(id)) assert.ok(!song.fills && !song.crashes && !song.riser, `${id}: no fills, crashes or risers asked for`);
   }
 });
 
