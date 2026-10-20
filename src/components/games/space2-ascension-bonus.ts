@@ -104,17 +104,17 @@ const COLOSSUS_OF_THE_SPIRE: Song = {
 };
 
 const THRONE_OF_ASCENSION: Song = {
-  bpm: 176, lead: "square", pad: "strings", counter: "bell", drums: "battle", stabs: true, riff: "pump16", intro: 2,
+  bpm: 176, lead: "square", layer: "lead", pad: "strings", counter: "bell", drums: "battle", stabs: true, riff: "pump16", intro: 2,
   fills: [1, 9, 13, 17, 21, 25, 30], crashes: [2, 10, 14, 18, 22, 26], riser: [24, 25],
-  /* Atlas's band, with the square lead (a lean gliding square, two quiet detuned voices beside it) singing the hook, the solo and the
-     climax over strings and bells; brass and organ for the darker parts. */
+  /* Atlas's band with the square lead doubled three ways: by the sawtooth synth lead in the hook and the climax, by
+     the organ in the heroic held notes, and by the chip in the solo; strings, bells, brass and organ around it. */
   sections: [
-    { from: 0, lead: "organ", drums: "toms", stabs: false },
+    { from: 0, lead: "organ", layer: undefined, drums: "toms", stabs: false },
     { from: 2 },
-    { from: 10, lead: "strings", pad: "organ" },
-    { from: 14, lead: "brass", pad: "organ", counter: "strings" },
-    { from: 18, lead: "brass", layer: "lead", stabs: false },
-    { from: 22, lead: "square", layer: "brass", counter: "organ" },
+    { from: 10, lead: "strings", layer: undefined, pad: "organ" },
+    { from: 14, lead: "brass", layer: undefined, pad: "organ", counter: "strings" },
+    { from: 18, lead: "square", layer: "organ", stabs: false },
+    { from: 22, lead: "square", layer: "chip", counter: "organ" },
     { from: 26 },
   ],
   bars: [
