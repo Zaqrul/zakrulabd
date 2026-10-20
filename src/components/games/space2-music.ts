@@ -35,7 +35,9 @@ export type AscensionBonus = "alt:asc1" | "alt:asc2" | "alt:asc3";
 export type AlternateSagaTrack = `alt:${Exclude<BaseSagaTrack, LaterTrack>}` | AscensionBonus;
 export type SagaTrack = BaseSagaTrack | AlternateSagaTrack | Space3Track;
 
-type Voice = "brass" | "strings" | "lead" | "organ" | "organChord" | "bell" | "harp" | "chip" | "trumpet" | "violin" | "guitar" | "piano";
+/* "square" is a second synth lead: a lean square wave that glides from one note into the next (portamento), spread a
+   little; "superSquare" is the same with seven voices in unison and an octave below, spread wide. */
+type Voice = "brass" | "strings" | "lead" | "square" | "superSquare" | "organ" | "organChord" | "bell" | "harp" | "chip" | "trumpet" | "violin" | "guitar" | "piano";
 /* A bar may carry a counter-line too, played by the song's `counter` voice. */
 type Bar = [lead: string, chord: string, riff?: string, counter?: string];
 export type BarPerformance = {
@@ -1253,6 +1255,8 @@ export class SagaMusic {
   /* A mixer of its own for each tune: when the tune changes, the old one fades out through its fader while the
      new one starts on a fresh mixer, so one tune never cuts the other off or starts faded. */
   private fader: GainNode | null = null;
+  /* The square lead's last note, which the next one glides from. */
+  private lastSquare: { f: number; at: number; until: number } | null = null;
   private impulse: AudioBuffer | null = null;
 
   /* What belongs to the audio context (noise, the reverb's impulse, the organ's wave), made once, and then a
@@ -1568,6 +1572,44 @@ export class SagaMusic {
         filter.connect(g);
         const a = this.osc("sawtooth", f, 0, at, end, filter), b = this.osc("square", f, 4, at, end, filter);
         this.vibrato(at, end, 0.15, 12, [a, b]);
+        break;
+      }
+      case "square":
+      case "superSquare": {
+        /* A square lead in the manner of an 80s synth. The square is a lean one: a pulse in the middle and two quiet
+           voices a few cents sharp and flat, panned a little left and right. The super square is wide: doubled an octave
+           down, with six voices panned out to the edges, the outer ones furthest out. A soft filter, a delayed vibrato,
+           and a quick glide from the last note when this one follows it closely and lies within an octave. */
+        const wide = kind === "superSquare";
+        const g = this.env(at, 0.006, level * 0.8, dur, 0.05);
+        const filter = ctx.createBiquadFilter();
+        filter.type = "lowpass"; filter.Q.value = 1.2;
+        filter.frequency.value = 3000;
+        filter.connect(g);
+        const centre = ctx.createGain(); centre.gain.value = wide ? 0.35 : 0.85; centre.connect(filter);
+        const oscs: [OscillatorNode, number][] = [[this.osc("square", f, 0, at, end, centre), 1]];
+        if (wide) {
+          const sub = ctx.createGain(); sub.gain.value = 0.3; sub.connect(filter);
+          oscs.push([this.osc("square", f / 2, 6, at, end, sub), 0.5]);
+        }
+        const spread = wide ? [[-7, -0.35], [7, 0.35], [-15, -0.7], [15, 0.7], [-24, -1], [24, 1]] : [[-4, -0.4], [4, 0.4]];
+        for (const [cents, pan] of spread) {
+          const side = ctx.createGain(); side.gain.value = wide ? 0.22 : 0.2;
+          if (ctx.createStereoPanner) {
+            const panner = ctx.createStereoPanner(); panner.pan.value = pan;
+            side.connect(panner).connect(filter);
+          } else side.connect(filter);
+          oscs.push([this.osc("square", f, cents, at, end, side), 1]);
+        }
+        const last = this.lastSquare;
+        if (last && last.at < at && at - last.until < 0.08 && last.f !== f && Math.abs(Math.log2(last.f / f)) <= 1) {
+          for (const [o, ratio] of oscs) {
+            o.frequency.setValueAtTime(last.f * ratio, at);
+            o.frequency.exponentialRampToValueAtTime(f * ratio, at + 0.035);
+          }
+        }
+        this.lastSquare = { f, at, until: at + dur };
+        this.vibrato(at, end, 0.2, 14, oscs.map(([o]) => o));
         break;
       }
       case "organ": {
