@@ -1,8 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { IconType } from "react-icons";
 import {
+  TbArrowsMaximize,
+  TbArrowsMinimize,
   TbChevronsRight,
   TbDeviceTv,
   TbBolt,
@@ -23,7 +26,7 @@ import { spaceAudio } from "./space-audio";
 import { AMBER, fitCanvas, isTyping, loadBest, makeReporter, saveBest, stat } from "./shared";
 import { CHANCES, LIMITS2, LIMITS3, furthest, loadSaved, parseProgress, saveSaved, stashGuest, type Progress } from "./space-progress";
 import { pullProgress, pushProgress } from "@/lib/account";
-import { Joystick, useTouchPad } from "./touch-controls";
+import { canFullscreen, enterFullscreen, leaveFullscreen, useFullscreen, useTouchPad } from "./touch-controls";
 import {
   drawBackdrop,
   drawHangar,
@@ -68,7 +71,7 @@ import { SPACE2_EVENTS, SPACE2_SPEAKERS, SPACE2_STORY } from "./space2-story";
 import { SPACE3_SPEAKERS, SPACE3_STORY } from "./space3-story";
 import { drawResonanceEffects, drawResonanceHUD } from "./space3-hud-art";
 import { drawThirdBullet } from "./space3-projectile-art";
-import { Space3FlightControls, type FlightControlsStatus } from "./space3-touch-controls";
+import { KineticPushButton, type FlightControlsStatus } from "./space3-touch-controls";
 import { drawKineticWave, drawModeTag, drawSeedBullet } from "./space3-weapons-art";
 import { drawHints } from "./space3-hints-art";
 import { drawAct2Beam, drawAct2Hazard, drawLands, drawOuterField } from "./space3-act2-art";
@@ -89,9 +92,10 @@ export type SpaceLabels = {
   bomb: string;
   nuke: string;
   hint: string;
-  /* What the hint says on a phone or a tablet, and what the joystick is called. */
+  /* What the hint says on a phone or a tablet. */
   touchHint: string;
-  joystick: string;
+  /* Leaves the game for the screen it was opened from, in the full-screen view. */
+  exit: string;
   help: string;
   guide: string;
   chapterName: (n: number) => string;
@@ -169,6 +173,26 @@ function clock(seconds: number) {
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
+/* Puts the game's host element where it belongs: inside the page (it adds no box of its own), or on
+   the body as a layer over the whole screen, sized to the dynamic viewport so a browser's toolbars
+   do not cut it. */
+function carryHost(host: HTMLElement, parent: Element | null, immersive: boolean, label: string) {
+  if (parent && host.parentNode !== parent) parent.appendChild(host);
+  host.style.cssText = immersive
+    ? "position:fixed;left:0;top:0;width:100vw;height:100dvh;z-index:110;background:#000;overflow:hidden;overscroll-behavior:none;touch-action:none"
+    : "display:contents";
+  if (immersive) {
+    host.setAttribute("role", "dialog");
+    host.setAttribute("aria-modal", "true");
+    host.setAttribute("aria-label", label);
+  } else {
+    host.removeAttribute("role");
+    host.removeAttribute("aria-modal");
+    host.removeAttribute("aria-label");
+  }
+}
+const dropHost = (host: HTMLElement) => host.remove();
+
 /* The kind of space game once played on a phone with a keypad, as a series: the
    ship is launched from a hangar, holds the left of the screen and fires on its
    own, and the job is to fly through eight chapters of enemies and obstacles,
@@ -182,6 +206,7 @@ export default function Space({
   lang,
   username = null,
   onAccount,
+  onExit,
   campaign = 1,
 }: {
   labels: SpaceLabels;
@@ -192,6 +217,9 @@ export default function Space({
      `onAccount` opens registration/login. */
   username?: string | null;
   onAccount?: () => void;
+  /* Closes the game. On a phone turned on its side the game covers the whole screen, so this is
+     how a player gets back out. */
+  onExit?: () => void;
 }) {
   const canvas = useRef<HTMLCanvasElement>(null);
   const preview = useRef<HTMLCanvasElement>(null);
@@ -200,7 +228,12 @@ export default function Space({
   const gameKey = campaign === 3 ? "space3" : campaign === 2 ? "space2" : "space";
   const [rep] = useState(() => makeReporter("space2"));
   const [mode, setMode] = useState<Mode>("ready");
-  const { touch, portrait } = useTouchPad();
+  const { touch, handheld, portrait } = useTouchPad();
+  /* A phone or a tablet on its side: the game takes the whole screen, and a finger dragged
+     across it is the stick. Anything else keeps the game inside the page it was opened in. */
+  const immersive = handheld && !portrait;
+  const fullscreen = useFullscreen();
+  const fullscreenOk = canFullscreen();
   const [chapter, setChapter] = useState(campaign === 3 ? first : 1);
   const [score, setScore] = useState(0);
   const [bombs, setBombs] = useState(2);
@@ -224,8 +257,10 @@ export default function Space({
   const keys = useRef({ up: false, down: false, left: false, right: false, bomb: false, nuke: false, phase: false, barrier: false, overdrive: false, focus: false });
   const drag = useRef<{ x: number; y: number; id: number } | null>(null);
   const pending = useRef({ x: 0, y: 0 });
-  /* Where the joystick is pushed, each way from -1 to 1. */
-  const joy = useRef({ x: 0, y: 0 });
+  const handheldRef = useRef(handheld);
+  useEffect(() => {
+    handheldRef.current = handheld;
+  }, [handheld]);
   const bombQueued = useRef(false);
   const nukeQueued = useRef(false);
   const resonanceQueued = useRef({ phase: false, barrier: false, overdrive: false });
@@ -300,8 +335,9 @@ export default function Space({
     setIsMuted(muted);
   }, []);
 
-  const [crtFilter, setCrtFilter] = useState(true);
-  const crtRef = useRef(true);
+  /* Scanlines cost a phone battery and frames, so they start off there; the button turns them on. */
+  const [crtFilter, setCrtFilter] = useState(() => !handheld);
+  const crtRef = useRef(!handheld);
   useEffect(() => {
     crtRef.current = crtFilter;
   }, [crtFilter]);
@@ -339,7 +375,6 @@ export default function Space({
     keys.current = { up: false, down: false, left: false, right: false, bomb: false, nuke: false, phase: false, barrier: false, overdrive: false, focus: false };
     drag.current = null;
     pending.current = { x: 0, y: 0 };
-    joy.current = { x: 0, y: 0 };
     bombQueued.current = false;
     nukeQueued.current = false;
     resonanceQueued.current = { phase: false, barrier: false, overdrive: false };
@@ -524,6 +559,7 @@ export default function Space({
     let comboTimer = 0;
     let maxCombo = 0;
     let hitStop = 0;
+    let lastHits = 0;
     const floatingTexts: FloatingText[] = [];
     const debris: Debris[] = [];
     const prevEnemyHps = new Map<number, number>();
@@ -557,8 +593,8 @@ export default function Space({
           pending.current.x -= px;
           pending.current.y -= py;
           if (flying) {
-            mx += px + joy.current.x * 2.7;
-            my += py + joy.current.y * 2.7;
+            mx += px;
+            my += py;
           }
           const bomb = flying && (k.bomb || bombQueued.current);
           const nuke = flying && (k.nuke || nukeQueued.current);
@@ -567,6 +603,9 @@ export default function Space({
           const ability = resonanceQueued.current;
           resonanceQueued.current = { phase: false, barrier: false, overdrive: false };
           step(s, { mx, my, bomb, nuke, phase: flying && (k.phase || ability.phase), barrier: flying && (k.barrier || ability.barrier), overdrive: flying && (k.overdrive || ability.overdrive), focus: flying && k.focus });
+          /* A hit buzzes the phone for a moment. A new run starts the count again from zero. */
+          if (s.stats.hits > lastHits && handheldRef.current && !reduceMotion) navigator.vibrate?.(40);
+          lastHits = s.stats.hits;
 
           /* The launch: the hangar tune while the engines spool up, a beep for each count and GO,
              then the roar and the fanfare as the ship leaves the rail. */
@@ -933,55 +972,140 @@ export default function Space({
   const who = line ? ALL_SPEAKERS[line.who] : null;
   const SpeakerIcon = line ? SPEAKER_ICON[line.who] : null;
   const canPause = mode === "play" || mode === "paused";
-  const splitTouch = touch && campaign === 3 && !portrait && canPause;
-  const onJoystick = (x: number, y: number) => {
-    joy.current = modeRef.current === "play" ? { x, y } : { x: 0, y: 0 };
+  /* The game is drawn into a host element of its own, which sits where the game belongs, or is
+     carried to the page's body when a phone is turned on its side. A fixed layer inside the dock's
+     glass panel would be cut to the panel (a filter makes it the containing block), and moving the
+     host keeps the canvas, and the run in it, alive through a turn of the phone. */
+  const anchor = useRef<HTMLDivElement>(null);
+  const [host] = useState(() => document.createElement("div"));
+  useLayoutEffect(() => {
+    carryHost(host, immersive ? document.body : anchor.current, immersive, campaign === 1 ? "Space" : `Space ${campaign}`);
+  }, [immersive, host, campaign]);
+  useEffect(() => () => {
+    dropHost(host);
+    void leaveFullscreen();
+  }, [host]);
+  /* A tap that starts a run also asks for full screen, turned sideways where the browser lets it. */
+  const launchedAt = useRef(0);
+  const launch = (start: () => void) => {
+    if (handheld) {
+      launchedAt.current = Date.now();
+      void enterFullscreen();
+    }
+    start();
   };
+  const sideways = useRef(immersive);
+  useEffect(() => {
+    if (sideways.current === immersive) return;
+    sideways.current = immersive;
+    if (Date.now() - launchedAt.current > 4000) pause();
+  }, [immersive, pause]);
   const onBomb = () => {
-    if (modeRef.current === "play") bombQueued.current = true;
+    if (modeRef.current !== "play") return;
+    bombQueued.current = true;
+    if (handheld) navigator.vibrate?.(15);
   };
   const onNuke = () => {
-    if (modeRef.current === "play") nukeQueued.current = true;
+    if (modeRef.current !== "play") return;
+    nukeQueued.current = true;
+    if (handheld) navigator.vibrate?.([30, 40, 30]);
   };
   const onPause = () => (mode === "paused" ? resume() : pause());
-  const queueAbility = (ability: "phase" | "barrier" | "overdrive") => {
-    if (modeRef.current === "play" && world.current.phase === "play" && world.current.res) resonanceQueued.current[ability] = true;
-  };
   /* Before a run starts, the header shows where Continue would pick up. */
   const offer = mode === "ready" ? saved : null;
 
+  const iconButton = immersive
+    ? "pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-black/45 text-white transition-colors active:bg-amber-400 active:text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+    : "flex h-6 w-6 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-navy";
+  const iconSize = immersive ? "h-5 w-5" : "h-4 w-4";
+  const fullscreenLabel = lang === "ms" ? (fullscreen ? "Keluar skrin penuh" : "Skrin penuh") : fullscreen ? "Exit full screen" : "Full screen";
+  const controlButtons = (
+    <>
+      <button
+        type="button"
+        aria-label={crtFilter ? "Disable CRT Scanlines" : "Enable CRT Scanlines"}
+        title={crtFilter ? "CRT Filter: On" : "CRT Filter: Off"}
+        className={`${iconButton} ${immersive ? (crtFilter ? "text-cyan-300" : "text-white/60") : crtFilter ? "text-cyan-600 hover:bg-neutral-200" : "text-neutral-400 hover:bg-neutral-200"}`}
+        onClick={() => setCrtFilter((c) => !c)}
+      >
+        <TbDeviceTv className={iconSize} />
+      </button>
+      <button
+        type="button"
+        aria-label="Toggle Sound"
+        title="Toggle Sound"
+        className={`${iconButton} ${immersive ? "" : "text-navy/70 hover:bg-neutral-200 hover:text-navy"}`}
+        onClick={toggleMute}
+      >
+        {isMuted ? <TbVolumeOff className={`${iconSize} text-red-500`} /> : <TbVolume className={`${iconSize} ${immersive ? "" : "text-navy"}`} />}
+      </button>
+      {handheld && fullscreenOk && (
+        <button
+          type="button"
+          aria-label={fullscreenLabel}
+          title={fullscreenLabel}
+          className={`${iconButton} ${immersive ? "" : "text-navy hover:bg-neutral-200"}`}
+          onClick={() => void (fullscreen ? leaveFullscreen() : enterFullscreen())}
+        >
+          {fullscreen ? <TbArrowsMinimize className={iconSize} /> : <TbArrowsMaximize className={iconSize} />}
+        </button>
+      )}
+    </>
+  );
+
   return (
-    <div className={splitTouch ? "grid grid-cols-[minmax(0,1fr)_200px] items-start gap-x-3 gap-y-1" : "flex flex-col gap-2"}>
-      <div className={`flex items-center justify-between gap-2 text-[12px] font-bold text-navy ${splitTouch ? "col-span-2" : ""}`}>
-        <span className="shrink-0 tabular-nums">{labels.score}: {offer ? offer.score : score}</span>
-        <span className="min-w-0 truncate text-center">{labels.chapterName(offer ? offer.chapter : chapter)}</span>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span className="tabular-nums">{labels.best}: {best}</span>
-          <button
-            type="button"
-            aria-label={crtFilter ? "Disable CRT Scanlines" : "Enable CRT Scanlines"}
-            title={crtFilter ? "CRT Filter: On" : "CRT Filter: Off"}
-            className={`flex h-6 w-6 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-navy ${crtFilter ? "text-cyan-600 hover:bg-neutral-200" : "text-neutral-400 hover:bg-neutral-200"}`}
-            onClick={() => setCrtFilter((c) => !c)}
-          >
-            <TbDeviceTv className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            aria-label="Toggle Sound"
-            title="Toggle Sound"
-            className="flex h-6 w-6 items-center justify-center rounded-full text-navy/70 hover:bg-neutral-200 hover:text-navy transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-navy"
-            onClick={toggleMute}
-          >
-            {isMuted ? <TbVolumeOff className="h-4 w-4 text-red-500" /> : <TbVolume className="h-4 w-4 text-navy" />}
-          </button>
-        </div>
+    <div ref={anchor} className="contents">
+      {createPortal(
+    <div className={immersive ? "relative flex h-full w-full items-center justify-center overflow-hidden bg-black" : "flex flex-col gap-2"}>
+      <div className={immersive ? "pointer-events-none absolute inset-0 z-20 text-white" : "flex items-center justify-between gap-2 text-[12px] font-bold text-navy"}>
+        {immersive ? (
+          <>
+            {/* The canvas draws its own gauges across the top of the game, so the page's readouts and
+                buttons stay in the rails on either side of it. */}
+            <div className="absolute left-[max(8px,env(safe-area-inset-left))] top-[max(6px,env(safe-area-inset-top))] flex w-[60px] flex-col items-center rounded-xl bg-black/45 py-1.5">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-white/70">{labels.score}</span>
+              <span className="text-[12px] font-extrabold leading-tight tabular-nums">{offer ? offer.score : score}</span>
+              <span className="mt-1 text-[9px] font-bold uppercase tracking-wider text-white/70">{labels.best}</span>
+              <span className="text-[11px] font-bold leading-tight tabular-nums text-white/85">{best}</span>
+              <span className="sr-only">{labels.chapterName(offer ? offer.chapter : chapter)}</span>
+            </div>
+            <div className="absolute bottom-[max(8px,env(safe-area-inset-bottom))] left-[max(8px,env(safe-area-inset-left))] flex flex-col gap-2">{controlButtons}</div>
+            <button
+              type="button"
+              onClick={onPause}
+              disabled={!canPause}
+              aria-label={mode === "paused" ? labels.resume : labels.pause}
+              className={`${iconButton} absolute right-[max(8px,env(safe-area-inset-right))] top-[max(6px,env(safe-area-inset-top))] disabled:opacity-40`}
+            >
+              {mode === "paused" ? <TbPlayerPlayFilled className={iconSize} /> : <TbPlayerPauseFilled className={iconSize} />}
+            </button>
+          </>
+        ) : (
+          <>
+            <span className="shrink-0 tabular-nums">{labels.score}: {offer ? offer.score : score}</span>
+            <span className="min-w-0 truncate text-center">{labels.chapterName(offer ? offer.chapter : chapter)}</span>
+            <div className="flex items-center gap-1.5 shrink-0">
+              <span className="tabular-nums">{labels.best}: {best}</span>
+              {controlButtons}
+            </div>
+          </>
+        )}
       </div>
 
       <div
         ref={moveSurface}
-        className="relative mx-auto w-full touch-none select-none overflow-hidden rounded-xl border border-slate-700/60 shadow-2xl ring-1 ring-white/10 bg-[#070c1f]"
-        style={{ maxWidth: splitTouch ? "max(160px, calc((100dvh - 235px) * 16 / 9))" : touch && !portrait ? "max(200px, calc((100dvh - 150px) * 16 / 9))" : "max(200px, calc((100dvh - 240px) * 16 / 9))" }}
+        className={`relative touch-none select-none overflow-hidden bg-[#070c1f] ${
+          immersive ? "shrink-0" : "mx-auto w-full rounded-xl border border-slate-700/60 shadow-2xl ring-1 ring-white/10"
+        }`}
+        style={{
+          maxWidth: immersive
+            ? undefined
+            : touch && !portrait ? "max(200px, calc((100dvh - 150px) * 16 / 9))" : "max(200px, calc((100dvh - 240px) * 16 / 9))",
+          /* Sideways, the biggest 16:9 that fits between two rails of 72px (and the notch). */
+          width: immersive
+            ? "min(calc(100vw - 2 * (72px + max(env(safe-area-inset-left), env(safe-area-inset-right)))), calc(100dvh * 16 / 9))"
+            : undefined,
+        }}
         onPointerDown={(e) => {
           if (modeRef.current !== "play" || world.current.phase === "launch" || e.button !== 0 || drag.current || e.target !== canvas.current) return;
           e.preventDefault();
@@ -1012,15 +1136,17 @@ export default function Space({
       >
         <canvas ref={canvas} className="block h-auto w-full" style={{ aspectRatio: `${W} / ${H}` }} />
 
-        {touch && campaign !== 3 && !portrait && mode === "play" && (
+        {touch && !immersive && !portrait && mode === "play" && (
           <TouchControls
-            variant="over"
+            variant="stage"
+            campaign={campaign}
+            lang={lang}
             labels={labels}
             bombs={bombs}
             nukes={nukes}
             mode={mode}
             canPause={canPause}
-            onJoystick={onJoystick}
+            readStatus={readResonance}
             onBomb={onBomb}
             onNuke={onNuke}
             onPause={onPause}
@@ -1073,17 +1199,22 @@ export default function Space({
                     </span>
                   )}
                   <div className="flex flex-wrap justify-center gap-2">
-                    <button type="button" autoFocus onClick={continueGame} className={primary}>
+                    <button type="button" autoFocus onClick={() => launch(continueGame)} className={primary}>
                       {saved ? labels.continueRun : labels.tap}
                     </button>
                     {saved && (
-                      <button type="button" onClick={newGame} className={secondary}>
+                      <button type="button" onClick={() => launch(newGame)} className={secondary}>
                         {labels.newGame}
                       </button>
                     )}
                     {locked && onAccount && (
                       <button type="button" onClick={onAccount} className={secondary}>
                         {labels.account}
+                      </button>
+                    )}
+                    {immersive && onExit && (
+                      <button type="button" onClick={onExit} className={secondary}>
+                        {labels.exit}
                       </button>
                     )}
                   </div>
@@ -1101,6 +1232,11 @@ export default function Space({
                     <button type="button" onClick={retry} className={secondary}>
                       {labels.retry}
                     </button>
+                    {immersive && onExit && (
+                      <button type="button" onClick={onExit} className={secondary}>
+                        {labels.exit}
+                      </button>
+                    )}
                   </div>
                 </>
               )}
@@ -1174,40 +1310,42 @@ export default function Space({
         )}
       </div>
 
-      {touch && campaign !== 3 && portrait && (
+      {immersive && mode === "play" && (
         <TouchControls
-          variant="below"
+          variant="screen"
+          campaign={campaign}
+          lang={lang}
           labels={labels}
           bombs={bombs}
           nukes={nukes}
           mode={mode}
           canPause={canPause}
-          onJoystick={onJoystick}
+          readStatus={readResonance}
           onBomb={onBomb}
           onNuke={onNuke}
           onPause={onPause}
         />
       )}
 
-      {touch && campaign === 3 && canPause && (
-        <div className={splitTouch ? "self-center" : ""}>
-        <Space3FlightControls
-          readStatus={readResonance}
-          playing={mode === "play"}
-          compact={false}
-          onJoystick={onJoystick}
-          onPhase={() => queueAbility("phase")}
-          onBarrier={() => queueAbility("barrier")}
-          onOverdrive={() => queueAbility("overdrive")}
-          onLance={onBomb}
-          onPush={onBomb}
-          onPause={onPause}
+      {touch && portrait && (
+        <TouchControls
+          variant="below"
+          campaign={campaign}
           lang={lang}
+          labels={labels}
+          bombs={bombs}
+          nukes={nukes}
+          mode={mode}
+          canPause={canPause}
+          readStatus={readResonance}
+          onBomb={onBomb}
+          onNuke={onNuke}
+          onPause={onPause}
         />
-        </div>
       )}
 
-      <div className={splitTouch ? "col-span-2 flex items-center justify-between gap-3" : touch ? "flex flex-col gap-1" : "grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1"}>
+      {!immersive && (
+      <div className={touch ? "flex flex-col gap-1" : "grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1"}>
         {!touch && (
         <div data-space-controls={campaign === 3 ? "" : undefined} className="row-span-2 flex gap-2 self-start">
           <button
@@ -1249,9 +1387,7 @@ export default function Space({
         <p className="text-[12px] font-semibold leading-snug text-neutral-500">
           {campaign === 3
             ? touch
-              ? splitTouch
-                ? (lang === "ms" ? "Kayu bedal: terbang. Ketik Tolakan Kinetik bila sedia." : "Joystick: fly. Tap Kinetic Push when ready.")
-                : (lang === "ms" ? "Guna kayu bedal atau seret untuk terbang. Ketik Tolakan Kinetik bila sedia." : "Fly with the joystick or drag. Tap Kinetic Push when ready.")
+              ? (lang === "ms" ? "Seret di mana-mana pada game untuk terbang, dan pusing telefon ke tepi untuk skrin penuh. Ketik Tolakan Kinetik bila sedia." : "Drag anywhere on the game to fly, and turn your phone sideways for full screen. Tap Kinetic Push when ready.")
               : (lang === "ms" ? "Anak panah / WASD: terbang. Tembakan auto & torpedo plasma. B: Tolakan Kinetik (tolak musuh & peluru)." : "Arrows / WASD: fly. Auto-fire & plasma torpedo. B: Kinetic Push (repel enemies & fire).")
             : touch ? labels.touchHint : labels.hint}
         </p>
@@ -1260,70 +1396,91 @@ export default function Space({
           <p className="pt-2">{labels.guide}</p>
         </details>
       </div>
+      )}
+    </div>,
+        host,
+      )}
     </div>
   );
 }
 
-/* The joystick and the buttons for a phone or a tablet. Held upright they sit in a row under
-   the game; on its side the game fills the screen and they sit over its corners. */
+/* The buttons for a phone or a tablet; the finger dragged across the game is the stick. Held
+   upright they sit in a row under the game. Sideways the game fills the screen ("screen": the
+   buttons are a column in the rail at the right of the screen, clear of the game and of the
+   notch), or, on a laptop with a touch screen, over the game's corner ("stage"). Space 3 has the one button, Kinetic Push, in place of the bomb and the nuke. */
 function TouchControls({
   variant,
+  campaign,
+  lang,
   labels,
   bombs,
   nukes,
   mode,
   canPause,
-  onJoystick,
+  readStatus,
   onBomb,
   onNuke,
   onPause,
 }: {
-  variant: "below" | "over";
+  variant: "below" | "stage" | "screen";
+  campaign: 1 | 2 | 3;
+  lang: "en" | "ms";
   labels: SpaceLabels;
   bombs: number;
   nukes: number;
   mode: Mode;
   canPause: boolean;
-  onJoystick: (x: number, y: number) => void;
+  readStatus: () => FlightControlsStatus | null;
   onBomb: () => void;
   onNuke: () => void;
   onPause: () => void;
 }) {
-  const over = variant === "over";
+  const over = variant === "stage";
+  const screen = variant === "screen";
   const playing = mode === "play";
-  const round = `flex touch-none select-none flex-col items-center justify-center rounded-full text-[10px] font-extrabold leading-tight shadow-md transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy ${over ? "h-12 w-12" : "h-16 w-16"}`;
+  const round = `flex touch-none select-none flex-col items-center justify-center rounded-full text-[10px] font-extrabold leading-tight shadow-md transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 ${over ? "h-12 w-12" : screen ? "h-14 w-14" : "h-16 w-16"}`;
   const press = (fn: () => void) => (e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
     fn();
   };
-  const buttons = (
+  const buttons = campaign === 3 ? (
+    <KineticPushButton readStatus={readStatus} playing={playing} onPush={onBomb} lang={lang} className={over ? "h-12 w-12" : screen ? "h-14 w-14" : ""} />
+  ) : (
     <>
       <button
         type="button"
+        data-space-controls
         aria-label={labels.bomb}
         disabled={!playing || bombs <= 0}
         onPointerDown={press(onBomb)}
-        className={`${round} ${over ? "bg-navy/80" : "bg-navy"} text-amber-400 active:bg-amber-400 active:text-navy`}
+        className={`${round} ${over || screen ? "bg-navy/75 ring-1 ring-white/25" : "bg-navy"} text-amber-400 active:bg-amber-400 active:text-navy`}
       >
         <span>{labels.bomb}</span>
         <span className="tabular-nums">×{bombs}</span>
       </button>
       <button
         type="button"
+        data-space-controls
         aria-label={labels.nuke}
         disabled={!playing || nukes <= 0}
         onPointerDown={press(onNuke)}
-        className={`${round} ${over ? "bg-red-600/85" : "bg-red-600"} text-white active:bg-amber-400 active:text-navy`}
+        className={`${round} ${over || screen ? "bg-red-600/80 ring-1 ring-white/25" : "bg-red-600"} text-white active:bg-amber-400 active:text-navy`}
       >
         <span>{labels.nuke}</span>
         <span className="tabular-nums">×{nukes}</span>
       </button>
     </>
   );
+
+  if (screen) {
+    return <div className="absolute bottom-[max(8px,env(safe-area-inset-bottom))] right-[max(8px,env(safe-area-inset-right))] z-20 flex flex-col-reverse items-center gap-3">{buttons}</div>;
+  }
+
   const pause = (
     <button
       type="button"
+      data-space-controls
       onClick={onPause}
       disabled={!canPause}
       aria-label={mode === "paused" ? labels.resume : labels.pause}
@@ -1338,7 +1495,6 @@ function TouchControls({
   if (over) {
     return (
       <>
-        <Joystick key={mode} disabled={!playing} label={labels.joystick} size={96} glass onChange={onJoystick} className="absolute bottom-2 left-3" />
         <div className="absolute bottom-3 right-3 flex gap-2.5">{buttons}</div>
         <div className="absolute right-3 top-8">{pause}</div>
       </>
@@ -1346,11 +1502,8 @@ function TouchControls({
   }
   return (
     <div className="flex items-center justify-between gap-3 px-1 pb-1">
-      <Joystick key={mode} disabled={!playing} label={labels.joystick} size={132} onChange={onJoystick} />
-      <div className="flex flex-col items-end gap-3">
-        {pause}
-        <div className="flex gap-3">{buttons}</div>
-      </div>
+      {pause}
+      <div className="flex gap-3">{buttons}</div>
     </div>
   );
 }

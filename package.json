@@ -8,7 +8,6 @@
     "start": "next start",
     "lint": "eslint",
     "test": "node --experimental-strip-types --test --test-isolation=none tests/*.test.mjs",
-    "test:touch": "node --experimental-strip-types --test tests/joystick.test.mjs",
     "test:space2": "node --experimental-strip-types --test tests/space2-weapons.test.mjs tests/space2-chapters.test.mjs tests/space2-bosses.test.mjs tests/space2-arsenal.test.mjs tests/space2-patterns.test.mjs tests/space2-minis.test.mjs tests/space2-missiles.test.mjs tests/space2-copy.test.mjs tests/space2-redesign.test.mjs tests/space2-cover.test.mjs tests/space2-terrain.test.mjs",
     "test:space": "node --experimental-strip-types --test tests/space-ship.test.mjs tests/space-combat.test.mjs tests/space-progress.test.mjs",
     "test:achievements": "node --experimental-strip-types --test tests/achievements.test.mjs",
