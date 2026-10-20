@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* Shared Space result treatment, used by the dock and arcade frames. */
+@keyframes space-bonus-in {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.space-bonus-in { animation: space-bonus-in 260ms ease-out both; }
+@media (prefers-reduced-motion: reduce) {
+  .space-bonus-in { animation: none; }
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;

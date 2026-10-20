@@ -7,7 +7,8 @@ const tracks = Object.entries(SONGS);
 const leadOf = (bar) => cells(bar[0], midiOf);
 
 test("every Space 1 tune is written in whole bars of sixteen cells, on known riffs", () => {
-  assert.equal(tracks.length, 34);
+  /* The 34 tunes the game began with, and the five field battles added later (stage4 to stage8). */
+  assert.equal(tracks.length, 39);
   for (const [name, song] of tracks) song.bars.forEach((bar, i) => {
     assert.equal(bar[0].trim().split(/\s+/).length, 16, `${name} bar ${i + 1}`);
     assert.ok(RIFFS[bar[2] ?? song.riff], `${name} bar ${i + 1}: riff`);

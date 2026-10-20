@@ -7,6 +7,7 @@
 import { HYDRA, beamMuzzle, enemyMuzzle, missileMuzzle, type Enemy, type State } from "./space-logic";
 import { tone } from "./space-material";
 import { machineKit, MACHINE } from "./space2-machine-art";
+import { paintAtlasFortress } from "./space2-atlas-art";
 
 type Ctx = CanvasRenderingContext2D;
 
@@ -15,7 +16,6 @@ const STEEL = "#8b97a3";
 const CREAM = "#e5d8ad";
 const AMBER = "#f59e0b";
 const BLUE_FACE = "#64748b";
-const OLIVE = "#4d5b3a";
 
 function kit(ctx: Ctx, e: Enemy, s: State, reduceMotion: boolean) {
   const { x, y } = e;
@@ -82,7 +82,8 @@ function kit(ctx: Ctx, e: Enemy, s: State, reduceMotion: boolean) {
     const my = m.y - y;
     box(mx, my - 3.5, 9, 7, "#5b6b78");
     box(mx - 1, my - 2.5, 3, 5, INK);
-    disc(mx, my, 1.5, a?.kind === "beam" && (warning || firing) ? hot : "#e68d56");
+    const livePort = a?.kind === "beam" || e.type === "boss16" && a?.kind === "scissor";
+    disc(mx, my, 1.5, livePort && (warning || firing) ? hot : "#e68d56");
   };
   const rack = (slot = 0) => {
     const m = missileMuzzle(e, slot);
@@ -118,7 +119,7 @@ function kit(ctx: Ctx, e: Enemy, s: State, reduceMotion: boolean) {
     box(px, py, 7, 2.2, AMBER);
     box(px, py + 3.4, 7, 1.2, AMBER);
   };
-  return { ctx, x, y, t, a, a0: e.a, warning, firing, hot, poly, box, disc, rod, rivets, gun, beam, rack, damage, mark };
+  return { ctx, s, x, y, t, a, a0: e.a, reduceMotion, warning, firing, hot, poly, box, disc, rod, rivets, gun, beam, rack, damage, mark };
 }
 
 type Kit = ReturnType<typeof kit>;
@@ -385,162 +386,7 @@ function cyclone(k: Kit) {
    the mech instead of adding a small mast. All geometry stays in the 92×90 model
    so the enlarged simulation body, weapons and visible edges share one scale. */
 function atlas(k: Kit, e: Enemy) {
-  const { poly, box, disc, rod, rivets, gun, beam, rack, t, warning, firing } = k;
-  const metal = machineKit(k.ctx, e.x, e.y);
-  const ink = "#171717", armour = "#4b573c", face = "#75816b", rim = "#b6bea0";
-  const hostile = warning ? "#ffb665" : firing ? "#fff1cc" : "#fb7185";
-  const pulse = 0.5 + Math.sin(t / 22) * 0.15;
-  const vents = (x: number, y: number, count: number, height = 4) => {
-    for (let i = 0; i < count; i++) box(x + i * 3.2, y, 1.3, height, ink);
-  };
-  const teeth = (x: number, y: number, count: number, down = true) => {
-    for (let i = 0; i < count; i++) poly([[x + i * 4, y], [x + i * 4 + 2, y + (down ? 4 : -4)], [x + i * 4 + 3.5, y]], rim);
-  };
-  const piston = (x: number, y: number, xx: number, yy: number) => {
-    rod(x, y, xx, yy, 3.2, armour);
-    rod(x + (xx - x) * 0.45, y + (yy - y) * 0.45, xx, yy, 1.5, rim);
-    disc(x, y, 2.5, ink); disc(xx, yy, 2, rim);
-  };
-  const collar = (x: number, y: number, r: number) => {
-    disc(x, y, r, ink); disc(x, y, r - 1.2, face);
-    for (let i = 0; i < 8; i++) {
-      const a = i * Math.PI / 4;
-      disc(x + Math.cos(a) * (r - 2), y + Math.sin(a) * (r - 2), 0.55, MACHINE.cream);
-    }
-  };
-  const feed = (x: number, y: number, count: number) => {
-    for (let i = 0; i < count; i++) metal.plate(x + i * 2.2, y, 1.8, 3.3, MACHINE.metal, 0.3);
-  };
-  if (e.a >= 3) {
-    // Judgement: the legs have folded into a siege base. Split armour forms a
-    // crown round a full-height containment spine and an exposed hostile core.
-    poly([[25, 77], [42, 68], [78, 68], [91, 79], [87, 89], [24, 89]], ink);
-    poly([[29, 78], [48, 72], [77, 73], [86, 80], [81, 84], [31, 84]], armour);
-    for (const xx of [37, 49, 61, 73, 83]) {
-      collar(xx, 84, 3.8);
-      metal.box(xx - 3.5, 88, 7, 0.8, MACHINE.metal);
-    }
-    metal.plate(37, 73, 40, 8, face, 2); metal.vents(42, 75, 10, 3, 3);
-    poly([[45, 10], [60, 0.5], [74, 10], [78, 63], [65, 79], [45, 65]], ink);
-    box(53, 10, 12, 60, armour);
-    box(57, 11, 4, 57, "#fb7185");
-    for (const yy of [9, 28, 48, 66]) {
-      metal.plate(49, yy, 22, 6, armour, 1.4);
-      metal.bolts(52, yy + 3, 4, 5);
-    }
-    for (const yy of [17, 36, 58]) {
-      poly([[35, yy - 5], [73, yy - 5], [83, yy], [73, yy + 6], [36, yy + 6], [28, yy]], face);
-      box(37, yy - 2, 31, 4, ink);
-      box(43, yy - 1, 21, 1.5, hostile);
-    }
-    // Detached-looking plates are held by visible hydraulic struts, never random debris.
-    piston(40, 30, 26, 16); piston(72, 28, 83, 12);
-    piston(40, 57, 24, 68); piston(73, 56, 86, 69);
-    poly([[26, 3], [41, 12], [36, 30], [29, 25], [19, 9]], armour);
-    poly([[81, 2], [89, 7], [91, 27], [77, 34], [73, 15]], armour);
-    metal.plate(25, 9, 14, 20, armour, 3);
-    metal.vents(28, 13, 3, 9, 3);
-    metal.plate(77, 8, 12, 24, face, 3);
-    metal.vents(79, 12, 3, 12, 2.6);
-    poly([[24, 59], [35, 66], [39, 79], [20, 75]], face);
-    poly([[76, 65], [91, 55], [90, 77], [79, 82]], face);
-    collar(55, 44, 16);
-    disc(55, 44, 12, MACHINE.rust); disc(55, 44, 10.5, ink);
-    for (let i = 0; i < 12; i++) {
-      const angle = i * Math.PI / 6;
-      rod(55 + Math.cos(angle) * 11, 44 + Math.sin(angle) * 11, 55 + Math.cos(angle) * 8, 44 + Math.sin(angle) * 8, 1.2, rim);
-    }
-    disc(55, 44, 7.5, "#9b3540"); disc(55, 44, 5.6, hostile); disc(55, 44, 2.8 + pulse, "#fff1cc");
-    // Six clamps open further as the last phase exposes the lance's unstable core.
-    for (let i = 0; i < 6; i++) {
-      const angle = i * Math.PI / 3;
-      const r = e.a >= 5 ? 17 : 14;
-      const cx = 55 + Math.cos(angle) * r, cy = 44 + Math.sin(angle) * r;
-      rod(cx, cy, cx + Math.cos(angle) * 5, cy + Math.sin(angle) * 5, 2.8, rim);
-      disc(cx, cy, 1.5, ink); disc(cx, cy, 0.65, MACHINE.cream);
-    }
-    if (e.a >= 4) {
-      poly([[66, 10], [69, 26], [65, 32], [70, 36]], ink);
-      poly([[33, 67], [30, 72], [36, 77]], ink);
-    }
-    rod(34, 28, 8, 21, 4, armour); rod(34, 60, 8, 69, 4, armour);
-    rod(39, 44, 20, 45, 7, face);
-    metal.piston(35, 29, 10, 21, 1.1); metal.piston(35, 58, 10, 69, 1.1);
-    collar(23, 45, 5.5); feed(28, 48, 5);
-    metal.hatch(75, 50, 14, 20, warning || firing);
-    gun(0, 15, 5.2, face); beam(-1); beam(1); rack(-1);
-    metal.damage(73, 34, e.a >= 5 ? 0.85 : 0.45, t);
-    metal.damage(31, 62, e.a >= 4 ? 0.85 : 0.45, t);
-    return;
-  }
-  // Atlas: piston legs, broad shoulder armour and an execution-mask command head.
-  for (const [lx, stagger] of [[34, 0], [65, 1]] as const) {
-    const shift = Math.sin(t / 28) * stagger;
-    piston(lx + 2, 58, lx - 1, 79 + shift);
-    poly([[lx - 9, 59], [lx + 9, 57], [lx + 11, 73], [lx + 6, 79], [lx - 9, 77]], armour);
-    poly([[lx - 8, 59], [lx + 6, 59], [lx + 7, 63], [lx - 7, 65]], rim);
-    disc(lx, 72, 4.8, ink); disc(lx, 72, 2.4, rim);
-    metal.plate(lx - 8, 61, 16, 9, armour, 2);
-    metal.piston(lx - 7, 67, lx - 8, 79, 1.2);
-    metal.piston(lx + 7, 67, lx + 8, 79, 1.2);
-    poly([[lx - 10, 79], [lx + 10, 78], [lx + 17, 86], [lx + 15, 89], [lx - 15, 89], [lx - 16, 85]], ink);
-    box(lx - 11, 84, 22, 2.5, face); vents(lx - 8, 84, 5, 2);
-    for (const dx of [-7, 0, 7]) {
-      disc(lx + dx, 85, 1.7, ink); disc(lx + dx, 85, 0.65, rim);
-    }
-  }
-  poly([[20, 25], [38, 18], [74, 17], [88, 33], [82, 58], [61, 67], [31, 61], [19, 44]], armour);
-  poly([[22, 26], [40, 20], [74, 19], [81, 26], [38, 29]], rim);
-  poly([[30, 31], [49, 28], [76, 31], [76, 53], [57, 60], [31, 53]], OLIVE);
-  metal.plate(31, 29, 46, 28, face, 4);
-  metal.bolts(35, 32, 8, 5);
-  metal.plate(34, 56, 37, 8, armour, 2); metal.vents(40, 58, 8, 3, 3);
-  // Rib-like reactor shutters become visibly damaged as the armour breaks.
-  box(42, 34, 24, 20, ink);
-  if (e.a < 2) {
-    for (let i = 0; i < 4; i++) {
-      box(43, 35 + i * 4.5, 21, 2.5, face);
-      box(46, 36 + i * 4.5, 13, 0.8, "#9f3246");
-      metal.bolts(44, 36 + i * 4.5, 2, 18);
-    }
-  } else {
-    collar(54, 44, 10);
-    disc(54, 44, 7.5, MACHINE.rust); disc(54, 44, 6.5, hostile); disc(54, 44, 3, "#fff1cc");
-    teeth(42, 33, 6); teeth(42, 55, 6, false);
-  }
-  // Fortress shoulders bracket a low, skull-like sensor mask.
-  poly([[8, 15], [26, 11], [39, 19], [31, 31], [13, 30], [7, 23]], armour);
-  poly([[9, 16], [25, 13], [32, 18], [12, 22]], face);
-  poly([[70, 11], [86, 17], [91, 33], [77, 31], [69, 23]], armour);
-  vents(75, 20, 3, 6);
-  // Cast command cupola, protected observation slits and an offset rangefinder.
-  // Its mass comes from practical armour, hatches and guns rather than a face.
-  poly([[36, 11], [41, 5], [53, 2], [66, 4], [73, 10], [72, 20], [65, 26], [42, 25], [34, 20]], armour);
-  poly([[38, 10], [42, 6], [54, 3], [65, 5], [70, 9], [55, 9]], rim);
-  metal.plate(39, 10, 30, 10, face, 2);
-  for (const xx of [42, 50, 58]) {
-    metal.box(xx, 13, 6, 3.4, ink); metal.box(xx + 1, 13.6, 4, 1.1, hostile);
-  }
-  collar(35, 15, 4.2); disc(35, 15, 2.4, ink); disc(34, 15, 0.9, hostile);
-  metal.hatch(53, 3, 10, 5, false);
-  metal.vents(45, 21, 6, 2.3, 3.2); metal.bolts(43, 23, 5, 5);
-  metal.plate(10, 15, 20, 12, armour, 2); metal.vents(16, 18, 3, 5, 3);
-  metal.plate(75, 15, 13, 18, face, 2);
-  for (const xx of [79, 84]) for (const yy of [20, 26]) { disc(xx, yy, 1.5, ink); disc(xx, yy, 0.7, warning ? hostile : MACHINE.rust); }
-  metal.bolts(12, 28, 4, 4.5);
-  piston(24, 29, 22, 43); disc(22, 43, 6, ink); disc(22, 43, 3.3, face);
-  rod(24, 43, 16, 45, 8, armour);
-  collar(24, 43, 6); metal.piston(26, 38, 16, 43, 1.2);
-  feed(24, 49, 6);
-  rod(29, 29, 8, 21, 4, face); rod(32, 59, 8, 69, 4, face);
-  gun(0, 18, 5.5, face); beam(-1); beam(1); rack(-1);
-  rivets(36, 58, 8, 5);
-  // Armour is lost, not merely recoloured, before the transformation.
-  if (e.a >= 1) {
-    poly([[78, 29], [83, 35], [79, 41], [86, 47], [76, 51]], ink);
-    vents(25, 31, 3, 8);
-  }
-  metal.damage(76, 38, e.a >= 2 ? 0.8 : e.a >= 1 ? 0.5 : 0, t);
+  paintAtlasFortress(k.ctx,e,k.s,k.reduceMotion);
 }
 
 const DRAW: Record<number, (k: Kit, e: Enemy) => void> = { 9: tidebreaker, 10: hydra, 11: wyvern, 12: maw, 13: meridian, 14: permafrost, 15: cyclone, 16: atlas };

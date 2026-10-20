@@ -21,7 +21,9 @@ import {
   TbSwords,
   TbVolume,
   TbVolumeOff,
+  TbTrophy,
 } from "react-icons/tb";
+import { SPACE_PRIMARY, SPACE_SECONDARY } from "./space-frame";
 import { spaceAudio } from "./space-audio";
 import { AMBER, fitCanvas, isTyping, loadBest, makeReporter, saveBest, stat } from "./shared";
 import { CHANCES, LIMITS2, LIMITS3, furthest, loadSaved, parseProgress, saveSaved, stashGuest, type Progress } from "./space-progress";
@@ -554,6 +556,14 @@ export default function Space({
     let prevLevel = world.current.p.level;
     let prevKills = world.current.stats.kills;
     let prevBlocks = 0;
+    /* A bomb goes off three seconds after it is thrown and a warhead blasts when it arrives: their blast
+       sounds play then, and the throw has a whoosh of its own. */
+    let bombsInFlight = 0;
+    let blasting = false;
+    let tracked: State | null = null;
+    /* Damage numbers: one a few frames for each enemy, adding up the hits in between, not one for every hit. */
+    const owedDamage = new Map<number, number>();
+    const lastNumber = new Map<number, number>();
     const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     let combo = 0;
     let comboTimer = 0;
@@ -623,9 +633,17 @@ export default function Space({
               const prev = prevEnemyHps.get(e.id);
               if (prev !== undefined && e.hp < prev) {
                 const rawDmg = prev - e.hp;
-                const dmg = Math.round(rawDmg * 10);
+                const hit = Math.round(rawDmg * 10);
+                const owed = (owedDamage.get(e.id) ?? 0) + hit;
+                owedDamage.set(e.id, owed);
+                const isCrit = hit >= 45 || e.hp <= 0;
+                const due = isCrit || s.frame - (lastNumber.get(e.id) ?? -99) >= 6;
+                const dmg = due ? owed : 0;
+                if (due) {
+                  owedDamage.set(e.id, 0);
+                  lastNumber.set(e.id, s.frame);
+                }
                 if (dmg > 0) {
-                  const isCrit = dmg >= 45 || e.hp <= 0;
                   floatingTexts.push({
                     x: e.x + e.w * 0.4 + (Math.random() - 0.5) * 8,
                     y: e.y + (Math.random() - 0.5) * 6,
@@ -671,11 +689,22 @@ export default function Space({
               prevEnemyHps.set(e.id, e.hp);
             }
 
-            const playerBullets = s.bullets.filter((b) => b.own === "p").length;
+            let playerBullets = 0;
+            for (const b of s.bullets) if (b.own === "p") playerBullets++;
             if (playerBullets > prevBulletCount) {
               spaceAudio.playBlaster(s.p.gun);
             }
             prevBulletCount = playerBullets;
+
+            if (tracked !== s) {
+              tracked = s;
+              bombsInFlight = s.timedBombs.length;
+              blasting = s.nuke !== null;
+            }
+            if (s.timedBombs.length < bombsInFlight) spaceAudio.playExplosion("heavy");
+            bombsInFlight = s.timedBombs.length;
+            if (s.nuke !== null && !blasting) spaceAudio.playNuke();
+            blasting = s.nuke !== null;
 
             if (s.p.level > prevLevel) {
               spaceAudio.playPowerup();
@@ -774,12 +803,12 @@ export default function Space({
           setScore(s.score);
         }
         if (s.p.bombs !== shownBombs) {
-          if (shownBombs !== -1 && s.p.bombs < shownBombs) spaceAudio.playExplosion("heavy");
+          if (shownBombs !== -1 && s.p.bombs < shownBombs) spaceAudio.playThrow();
           shownBombs = s.p.bombs;
           setBombs(s.p.bombs);
         }
         if (s.p.nukes !== shownNukes) {
-          if (shownNukes !== -1 && s.p.nukes < shownNukes) spaceAudio.playNuke();
+          if (shownNukes !== -1 && s.p.nukes < shownNukes) spaceAudio.playThrow(true);
           shownNukes = s.p.nukes;
           setNukes(s.p.nukes);
         }
@@ -965,10 +994,8 @@ export default function Space({
     };
   }, [act, pause, release, resume, campaign]);
 
-  const primary =
-    "rounded-full bg-amber-400 px-4 py-1.5 text-[12px] font-bold text-navy hover:bg-amber-300 shadow-md shadow-amber-400/20 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white";
-  const secondary =
-    "rounded-full border border-white/25 bg-white/5 backdrop-blur-sm px-4 py-1.5 text-[12px] font-bold text-white hover:bg-white/15 hover:border-white/40 active:scale-95 transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white";
+  const primary = SPACE_PRIMARY;
+  const secondary = SPACE_SECONDARY;
   const who = line ? ALL_SPEAKERS[line.who] : null;
   const SpeakerIcon = line ? SPEAKER_ICON[line.who] : null;
   const canPause = mode === "play" || mode === "paused";
@@ -1013,10 +1040,14 @@ export default function Space({
   const onPause = () => (mode === "paused" ? resume() : pause());
   /* Before a run starts, the header shows where Continue would pick up. */
   const offer = mode === "ready" ? saved : null;
+  const displayChapter = offer?.chapter ?? (mode === "ready" ? first : chapter);
+  const overlayTitle = mode === "paused" ? labels.paused : mode === "clear" ? labels.clear(chapter) : mode === "dead" ? labels.lost : mode === "out" ? labels.outOfChances : labels.won;
+  const OverlayIcon = mode === "paused" ? TbPlayerPauseFilled : mode === "clear" || mode === "won" ? TbTrophy : TbSkull;
+  const overlayColour = mode === "clear" ? "text-emerald-300 border-emerald-400/50" : mode === "out" ? "text-red-400 border-red-400/70" : mode === "dead" ? "text-rose-300 border-rose-400/50" : "text-amber-400 border-amber-400/50";
 
   const iconButton = immersive
     ? "pointer-events-auto flex h-10 w-10 items-center justify-center rounded-full bg-black/45 text-white transition-colors active:bg-amber-400 active:text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
-    : "flex h-6 w-6 items-center justify-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-navy";
+    : "flex h-7 w-7 items-center justify-center rounded border border-slate-600/60 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400";
   const iconSize = immersive ? "h-5 w-5" : "h-4 w-4";
   const fullscreenLabel = lang === "ms" ? (fullscreen ? "Keluar skrin penuh" : "Skrin penuh") : fullscreen ? "Exit full screen" : "Full screen";
   const controlButtons = (
@@ -1024,8 +1055,9 @@ export default function Space({
       <button
         type="button"
         aria-label={crtFilter ? "Disable CRT Scanlines" : "Enable CRT Scanlines"}
+        aria-pressed={crtFilter}
         title={crtFilter ? "CRT Filter: On" : "CRT Filter: Off"}
-        className={`${iconButton} ${immersive ? (crtFilter ? "text-cyan-300" : "text-white/60") : crtFilter ? "text-cyan-600 hover:bg-neutral-200" : "text-neutral-400 hover:bg-neutral-200"}`}
+        className={`${iconButton} ${crtFilter ? "text-cyan-300 hover:bg-slate-700" : "text-slate-400 hover:bg-slate-700"}`}
         onClick={() => setCrtFilter((c) => !c)}
       >
         <TbDeviceTv className={iconSize} />
@@ -1033,18 +1065,19 @@ export default function Space({
       <button
         type="button"
         aria-label="Toggle Sound"
+        aria-pressed={!isMuted}
         title="Toggle Sound"
-        className={`${iconButton} ${immersive ? "" : "text-navy/70 hover:bg-neutral-200 hover:text-navy"}`}
+        className={`${iconButton} ${immersive ? "" : "text-slate-300 hover:bg-slate-700 hover:text-white"}`}
         onClick={toggleMute}
       >
-        {isMuted ? <TbVolumeOff className={`${iconSize} text-red-500`} /> : <TbVolume className={`${iconSize} ${immersive ? "" : "text-navy"}`} />}
+        {isMuted ? <TbVolumeOff className={`${iconSize} text-red-400`} /> : <TbVolume className={iconSize} />}
       </button>
       {handheld && fullscreenOk && (
         <button
           type="button"
           aria-label={fullscreenLabel}
           title={fullscreenLabel}
-          className={`${iconButton} ${immersive ? "" : "text-navy hover:bg-neutral-200"}`}
+          className={`${iconButton} ${immersive ? "" : "text-slate-200 hover:bg-slate-700"}`}
           onClick={() => void (fullscreen ? leaveFullscreen() : enterFullscreen())}
         >
           {fullscreen ? <TbArrowsMinimize className={iconSize} /> : <TbArrowsMaximize className={iconSize} />}
@@ -1056,8 +1089,8 @@ export default function Space({
   return (
     <div ref={anchor} className="contents">
       {createPortal(
-    <div className={immersive ? "relative flex h-full w-full items-center justify-center overflow-hidden bg-black" : "flex flex-col gap-2"}>
-      <div className={immersive ? "pointer-events-none absolute inset-0 z-20 text-white" : "flex items-center justify-between gap-2 text-[12px] font-bold text-navy"}>
+    <div data-space-screen className={immersive ? "relative flex h-full w-full items-center justify-center overflow-hidden bg-black" : "flex min-w-0 flex-col gap-2 text-slate-100"}>
+      <div className={immersive ? "pointer-events-none absolute inset-0 z-20 text-white" : "grid grid-cols-[auto_minmax(0,1fr)_auto] items-center gap-2 rounded border border-slate-600/60 bg-[#111b2c] px-2 py-1.5 font-mono text-[10px] font-bold sm:text-[11px]"}>
         {immersive ? (
           <>
             {/* The canvas draws its own gauges across the top of the game, so the page's readouts and
@@ -1082,10 +1115,10 @@ export default function Space({
           </>
         ) : (
           <>
-            <span className="shrink-0 tabular-nums">{labels.score}: {offer ? offer.score : score}</span>
-            <span className="min-w-0 truncate text-center">{labels.chapterName(offer ? offer.chapter : chapter)}</span>
-            <div className="flex items-center gap-1.5 shrink-0">
-              <span className="tabular-nums">{labels.best}: {best}</span>
+            <span className="shrink-0 tabular-nums text-slate-400">{labels.score} <strong className="ml-1 text-amber-400">{offer ? offer.score : score}</strong></span>
+            <span title={labels.chapterName(displayChapter)} className="min-w-0 truncate text-center font-sans text-[10px] text-slate-200 sm:text-[11px]">{labels.chapterName(displayChapter)}</span>
+            <div className="flex shrink-0 items-center gap-1">
+              <span className="mr-1 tabular-nums text-slate-400">{labels.best} <strong className="text-slate-100">{best}</strong></span>
               {controlButtons}
             </div>
           </>
@@ -1094,13 +1127,13 @@ export default function Space({
 
       <div
         ref={moveSurface}
-        className={`relative touch-none select-none overflow-hidden bg-[#070c1f] ${
-          immersive ? "shrink-0" : "mx-auto w-full rounded-xl border border-slate-700/60 shadow-2xl ring-1 ring-white/10"
+        className={`relative touch-none select-none overflow-hidden bg-[#070c1f] [container-type:inline-size] ${
+          immersive ? "shrink-0" : "mx-auto w-full rounded-md border border-slate-600/70"
         }`}
         style={{
           maxWidth: immersive
             ? undefined
-            : touch && !portrait ? "max(200px, calc((100dvh - 150px) * 16 / 9))" : "max(200px, calc((100dvh - 240px) * 16 / 9))",
+            : touch && !portrait ? "max(200px, calc((100dvh - 150px) * 16 / 9))" : "var(--space-stage-max, max(200px, calc((100dvh - 240px) * 16 / 9)))",
           /* Sideways, the biggest 16:9 that fits between two rails of 72px (and the notch). */
           width: immersive
             ? "min(calc(100vw - 2 * (72px + max(env(safe-area-inset-left), env(safe-area-inset-right)))), calc(100dvh * 16 / 9))"
@@ -1184,20 +1217,31 @@ export default function Space({
         )}
 
         {mode !== "play" && mode !== "talk" && (
-          <div data-space-overlay className="absolute inset-0 flex overflow-y-auto bg-[#070c1f]/85 backdrop-blur-md px-4 py-3 text-center text-white">
+          <div data-space-overlay data-space-mode={mode} className="absolute inset-0 flex overflow-y-auto bg-[#050b17]/80 p-[clamp(6px,2cqw,20px)] text-center text-white backdrop-blur-sm">
             {/* m-auto centres the panel, and still lets it scroll from the top
                 when a short screen cannot fit it. */}
-            <div className="m-auto flex w-full flex-col items-center gap-2">
+            <div className="m-auto flex w-full max-w-xl flex-col items-center gap-[clamp(5px,1.2cqw,12px)] rounded-lg border border-slate-500/80 bg-[#080f1e]/95 p-[clamp(10px,2.2cqw,24px)] shadow-xl shadow-black/40">
+              {mode !== "ready" && (
+                <div className="flex flex-col items-center gap-1.5">
+                  <span aria-hidden="true" className={`flex h-[clamp(24px,5cqw,42px)] w-[clamp(24px,5cqw,42px)] items-center justify-center rounded-md border bg-[#111b2c] ${overlayColour}`}><OverlayIcon className="h-1/2 w-1/2" /></span>
+                  <h3 className="font-display text-[clamp(15px,3cqw,26px)] font-extrabold leading-tight">{overlayTitle}</h3>
+                  {(mode === "paused" || mode === "dead" || mode === "out") && <p className="font-mono text-[clamp(10px,1.4cqw,12px)] text-slate-400">{labels.chapterName(chapter)}</p>}
+                </div>
+              )}
               {mode === "ready" && (
                 <>
-                  <canvas ref={preview} width={384} height={216} aria-hidden="true" className="h-16 w-auto sm:h-24 [@media(max-height:500px)]:h-10" />
-                  <span className="text-[12px] font-bold text-slate-100">Endymion FRS Mk III</span>
-                  {locked && <span className="max-w-xs text-[11px] font-semibold leading-snug text-white/75">{labels.guestNote}</span>}
-                  {saved && (
-                    <span className="text-[11px] font-semibold text-white/70">
-                      {labels.chapterName(saved.chapter)} · {labels.score} {saved.score}
-                    </span>
-                  )}
+                  <div className="grid w-full grid-cols-[minmax(70px,.8fr)_minmax(0,1.4fr)] items-center gap-[clamp(10px,2cqw,22px)] text-left">
+                    <div className="flex min-w-0 flex-col items-center border-r border-slate-600/70 pr-2">
+                      <canvas ref={preview} width={384} height={216} aria-hidden="true" className="h-auto w-full max-w-44" />
+                      <span className="text-center font-mono text-[clamp(8px,1.3cqw,11px)] leading-tight text-slate-400">Endymion FRS Mk III</span>
+                    </div>
+                    <div className="flex min-w-0 flex-col gap-2">
+                      <h3 className="font-display text-[clamp(14px,3cqw,27px)] font-extrabold leading-tight text-white">{labels.chapterName(displayChapter)}</h3>
+                      <span aria-hidden="true" className="h-0.5 w-8 bg-amber-400" />
+                      <p className="font-mono text-[clamp(9px,1.4cqw,12px)] text-slate-300"><span className="text-slate-500">{campaign !== 3 && lang === "ms" ? "Bos" : "Boss"}</span> {labels.bossNames[displayChapter - 1]}</p>
+                      {saved && <p className="font-mono text-[clamp(9px,1.4cqw,12px)] text-slate-400">{labels.score} <strong className="text-amber-400">{saved.score}</strong></p>}
+                    </div>
+                  </div>
                   <div className="flex flex-wrap justify-center gap-2">
                     <button type="button" autoFocus onClick={() => launch(continueGame)} className={primary}>
                       {saved ? labels.continueRun : labels.tap}
@@ -1218,13 +1262,12 @@ export default function Space({
                       </button>
                     )}
                   </div>
+                  {locked && <p className="max-w-md text-[clamp(9px,1.3cqw,11px)] leading-snug text-slate-400">{labels.guestNote}</p>}
                 </>
               )}
 
               {mode === "paused" && (
                 <>
-                  <span className="text-base font-extrabold">{labels.paused}</span>
-                  <span className="text-[11px] font-semibold text-white/70">{labels.chapterName(chapter)}</span>
                   <div className="flex flex-wrap justify-center gap-2">
                     <button type="button" autoFocus onClick={resume} className={primary}>
                       {labels.resume}
@@ -1232,7 +1275,7 @@ export default function Space({
                     <button type="button" onClick={retry} className={secondary}>
                       {labels.retry}
                     </button>
-                    {immersive && onExit && (
+                    {onExit && (
                       <button type="button" onClick={onExit} className={secondary}>
                         {labels.exit}
                       </button>
@@ -1243,7 +1286,6 @@ export default function Space({
 
               {mode === "clear" && (
                 <>
-                  <span className="text-base font-extrabold">{labels.clear(chapter)}</span>
                   {result && <Results r={result} labels={labels.results} />}
                   <span className="text-[12px] font-bold tabular-nums text-amber-400">{labels.score}: {score}</span>
                   {locked ? (
@@ -1270,7 +1312,6 @@ export default function Space({
 
               {mode === "dead" && (
                 <>
-                  <span className="text-base font-extrabold">{labels.lost}</span>
                   <span className="text-[12px] font-bold tabular-nums text-amber-400">{labels.score}: {score}</span>
                   <span className="text-[12px] font-bold">{labels.chancesLeft(chances)}</span>
                   <div className="flex flex-wrap justify-center gap-2">
@@ -1288,7 +1329,6 @@ export default function Space({
 
               {mode === "out" && (
                 <>
-                  <span className="text-base font-extrabold">{labels.outOfChances}</span>
                   <span className="text-[12px] font-bold tabular-nums text-amber-400">{labels.score}: {score}</span>
                   <button type="button" autoFocus onClick={newGame} className={primary}>
                     {labels.restart}
@@ -1298,7 +1338,6 @@ export default function Space({
 
               {mode === "won" && (
                 <>
-                  <span className="text-base font-extrabold">{labels.won}</span>
                   <span className="text-[12px] font-bold tabular-nums text-amber-400">{labels.score}: {score}</span>
                   <button type="button" autoFocus onClick={newGame} className={primary}>
                     {labels.again}
@@ -1345,9 +1384,9 @@ export default function Space({
       )}
 
       {!immersive && (
-      <div className={touch ? "flex flex-col gap-1" : "grid grid-cols-[auto_1fr] items-center gap-x-3 gap-y-1"}>
+      <div className={`${touch ? "flex flex-col gap-1" : "grid grid-cols-1 items-center gap-x-3 gap-y-1 sm:grid-cols-[auto_1fr]"} rounded-md border border-slate-700/70 bg-[#111b2c] p-2`}>
         {!touch && (
-        <div data-space-controls={campaign === 3 ? "" : undefined} className="row-span-2 flex gap-2 self-start">
+        <div data-space-controls className="flex flex-wrap gap-2 self-start sm:row-span-2">
           <button
             type="button"
             onPointerDown={(e) => {
@@ -1356,8 +1395,8 @@ export default function Space({
             }}
             disabled={mode !== "play" || (campaign !== 3 && bombs <= 0)}
             aria-label={campaign === 3 ? (lang === "ms" ? "Tolakan Kinetik" : "Kinetic Push") : labels.bomb}
-            onClick={campaign === 3 ? e => { if (e.detail === 0) onBomb(); } : undefined}
-            className="flex h-11 touch-none select-none items-center justify-center rounded-full bg-navy px-5 text-[12px] font-bold text-amber-400 transition-colors active:bg-amber-400 active:text-navy disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy"
+            onClick={e => { if (e.detail === 0) onBomb(); }}
+            className="flex h-11 touch-none select-none items-center justify-center rounded-md border border-amber-400/40 bg-[#080f1e] px-4 font-mono text-[11px] font-bold text-amber-400 transition-colors active:bg-amber-400 active:text-navy disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
           >
             {campaign === 3 ? (lang === "ms" ? "Tolakan Kinetik · B" : "Kinetic Push · B") : `${labels.bomb} × ${bombs}`}
           </button>
@@ -1368,7 +1407,8 @@ export default function Space({
               if (modeRef.current === "play") nukeQueued.current = true;
             }}
             disabled={mode !== "play" || nukes <= 0}
-            className="flex h-11 touch-none select-none items-center justify-center rounded-full bg-red-600 px-4 text-[12px] font-bold text-white transition-colors active:bg-amber-400 active:text-navy disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy"
+            onClick={e => { if (e.detail === 0) onNuke(); }}
+            className="flex h-11 touch-none select-none items-center justify-center rounded-md border border-rose-400/50 bg-[#251724] px-4 font-mono text-[11px] font-bold text-rose-200 transition-colors active:bg-rose-400 active:text-navy disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
           >
             {labels.nuke} × {nukes}
           </button>}
@@ -1378,21 +1418,21 @@ export default function Space({
             disabled={!canPause}
             aria-label={mode === "paused" ? labels.resume : labels.pause}
             title={mode === "paused" ? labels.resume : labels.pause}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-neutral-300 bg-white text-navy transition-colors hover:bg-neutral-100 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy"
+            className="flex h-11 w-11 items-center justify-center rounded-md border border-slate-500 bg-[#080f1e] text-slate-200 transition-colors hover:bg-slate-700 disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
           >
             {mode === "paused" ? <TbPlayerPlayFilled className="h-4.5 w-4.5" /> : <TbPlayerPauseFilled className="h-4.5 w-4.5" />}
           </button>
         </div>
         )}
-        <p className="text-[12px] font-semibold leading-snug text-neutral-500">
+        <p className="text-[11px] leading-snug text-slate-400">
           {campaign === 3
             ? touch
               ? (lang === "ms" ? "Seret di mana-mana pada game untuk terbang, dan pusing telefon ke tepi untuk skrin penuh. Ketik Tolakan Kinetik bila sedia." : "Drag anywhere on the game to fly, and turn your phone sideways for full screen. Tap Kinetic Push when ready.")
               : (lang === "ms" ? "Anak panah / WASD: terbang. Tembakan auto & torpedo plasma. B: Tolakan Kinetik (tolak musuh & peluru)." : "Arrows / WASD: fly. Auto-fire & plasma torpedo. B: Kinetic Push (repel enemies & fire).")
             : touch ? labels.touchHint : labels.hint}
         </p>
-        <details className="col-start-2 text-[12px] leading-relaxed text-neutral-600">
-          <summary className="w-fit cursor-pointer rounded-md py-0.5 font-bold text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy">{labels.help}</summary>
+        <details className={`${touch ? "" : "sm:col-start-2"} text-[11px] leading-relaxed text-slate-400`}>
+          <summary className="w-fit cursor-pointer rounded py-0.5 font-bold text-slate-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">{labels.help}</summary>
           <p className="pt-2">{labels.guide}</p>
         </details>
       </div>
@@ -1438,7 +1478,7 @@ function TouchControls({
   const over = variant === "stage";
   const screen = variant === "screen";
   const playing = mode === "play";
-  const round = `flex touch-none select-none flex-col items-center justify-center rounded-full text-[10px] font-extrabold leading-tight shadow-md transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 ${over ? "h-12 w-12" : screen ? "h-14 w-14" : "h-16 w-16"}`;
+  const round = `flex touch-none select-none flex-col items-center justify-center rounded-lg border border-white/20 font-mono text-[10px] font-extrabold leading-tight shadow-md transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-300 ${over ? "h-12 w-12" : screen ? "h-14 w-14" : "h-16 w-16"}`;
   const press = (fn: () => void) => (e: React.PointerEvent) => {
     e.preventDefault();
     e.stopPropagation();
@@ -1454,6 +1494,7 @@ function TouchControls({
         aria-label={labels.bomb}
         disabled={!playing || bombs <= 0}
         onPointerDown={press(onBomb)}
+        onClick={e => { if(e.detail === 0) onBomb(); }}
         className={`${round} ${over || screen ? "bg-navy/75 ring-1 ring-white/25" : "bg-navy"} text-amber-400 active:bg-amber-400 active:text-navy`}
       >
         <span>{labels.bomb}</span>
@@ -1465,6 +1506,7 @@ function TouchControls({
         aria-label={labels.nuke}
         disabled={!playing || nukes <= 0}
         onPointerDown={press(onNuke)}
+        onClick={e => { if(e.detail === 0) onNuke(); }}
         className={`${round} ${over || screen ? "bg-red-600/80 ring-1 ring-white/25" : "bg-red-600"} text-white active:bg-amber-400 active:text-navy`}
       >
         <span>{labels.nuke}</span>
@@ -1484,8 +1526,8 @@ function TouchControls({
       onClick={onPause}
       disabled={!canPause}
       aria-label={mode === "paused" ? labels.resume : labels.pause}
-      className={`flex items-center justify-center rounded-full border text-navy transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy ${
-        over ? "h-9 w-9 border-white/50 bg-white/60" : "h-10 w-10 border-neutral-300 bg-white"
+      className={`flex items-center justify-center rounded-lg border text-slate-200 transition-colors disabled:opacity-40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 ${
+        over ? "h-9 w-9 border-slate-400 bg-[#080f1e]/80" : "h-11 w-11 border-slate-500 bg-[#111b2c]"
       }`}
     >
       {mode === "paused" ? <TbPlayerPlayFilled className="h-4.5 w-4.5" /> : <TbPlayerPauseFilled className="h-4.5 w-4.5" />}
@@ -1501,7 +1543,7 @@ function TouchControls({
     );
   }
   return (
-    <div className="flex items-center justify-between gap-3 px-1 pb-1">
+    <div className="flex items-center justify-between gap-3 rounded-md border border-slate-700/70 bg-[#111b2c] p-2">
       {pause}
       <div className="flex gap-3">{buttons}</div>
     </div>
@@ -1520,13 +1562,13 @@ function Results({ r, labels }: { r: ChapterResult; labels: SpaceLabels["results
     { label: labels.speedBonus, value: `+${r.speedBonus}`, bonus: true },
   ];
   return (
-    <div className="flex w-full max-w-sm flex-col items-center gap-2">
-      <dl className="grid w-full grid-cols-3 gap-x-3 gap-y-1.5">
-        {cells.map((c) => (
-          <div key={c.label} className="min-w-0">
-            <dt className="text-[10px] font-semibold leading-tight text-white/65">{c.label}</dt>
+    <div className="flex w-full max-w-md flex-col items-center gap-2">
+      <dl className="grid w-full grid-cols-3 gap-px overflow-hidden rounded-md border border-slate-600/70 bg-slate-600/70">
+        {cells.map((c, i) => (
+          <div key={c.label} className={`min-w-0 bg-[#111b2c] px-2 py-[clamp(4px,1cqw,10px)] ${c.bonus ? "space-bonus-in" : ""}`} style={c.bonus ? { animationDelay: `${(i - 3) * 90}ms` } : undefined}>
+            <dt className="text-[clamp(8px,1.3cqw,10px)] font-semibold leading-tight text-slate-400">{c.label}</dt>
             <dd
-              className={`text-[12.5px] font-extrabold tabular-nums ${c.bonus ? (c.value === "+0" ? "text-white/40" : "text-amber-300") : "text-white"}`}
+              className={`mt-0.5 font-mono text-[clamp(11px,1.8cqw,16px)] font-extrabold tabular-nums ${c.bonus ? (c.value === "+0" ? "text-slate-500" : "text-amber-400") : "text-slate-100"}`}
             >
               {c.value}
             </dd>
@@ -1589,6 +1631,32 @@ type Debris = {
 
 /* What the readouts remember between frames: the typeface, and the pale strip
    on the boss's bar that trails behind the damage just done. */
+/* The scanlines and vignette never change, so they are drawn once at the canvas's own resolution and
+   copied: 72 rectangles and a gradient a frame became one drawImage. */
+const crtLayers = new Map<number, HTMLCanvasElement>();
+function drawCrt(ctx: CanvasRenderingContext2D) {
+  const scale = ctx.getTransform().a || 1;
+  const key = Math.round(scale * 100);
+  let layer = crtLayers.get(key);
+  if (!layer) {
+    layer = document.createElement("canvas");
+    layer.width = Math.round(W * scale);
+    layer.height = Math.round(H * scale);
+    const c = layer.getContext("2d")!;
+    c.scale(scale, scale);
+    c.fillStyle = "rgb(0 0 0 / 0.06)";
+    for (let y = 0; y < H; y += 3) c.fillRect(0, y, W, 1);
+    const vignette = c.createRadialGradient(W / 2, H / 2, W * 0.44, W / 2, H / 2, W * 0.74);
+    vignette.addColorStop(0, "rgb(0 0 0 / 0)");
+    vignette.addColorStop(1, "rgb(2 6 23 / 0.28)");
+    c.fillStyle = vignette;
+    c.fillRect(0, 0, W, H);
+    crtLayers.set(key, layer);
+    if (crtLayers.size > 3) crtLayers.delete(crtLayers.keys().next().value as number);
+  }
+  ctx.drawImage(layer, 0, 0, W, H);
+}
+
 type Hud = {
   font: string;
   trail: number;
@@ -1911,17 +1979,7 @@ function draw(ctx: CanvasRenderingContext2D, s: State, labels: SpaceLabels, mode
   }
 
   /* Retro CRT scanlines and subtle dark vignette */
-  if (hud.crt) {
-    ctx.fillStyle = "rgb(0 0 0 / 0.06)";
-    for (let y = 0; y < H; y += 3) {
-      ctx.fillRect(0, y, W, 1);
-    }
-    const crtVig = ctx.createRadialGradient(W / 2, H / 2, W * 0.44, W / 2, H / 2, W * 0.74);
-    crtVig.addColorStop(0, "rgb(0 0 0 / 0)");
-    crtVig.addColorStop(1, "rgb(2 6 23 / 0.28)");
-    ctx.fillStyle = crtVig;
-    ctx.fillRect(0, 0, W, H);
-  }
+  if (hud.crt) drawCrt(ctx);
   ctx.restore();
 }
 

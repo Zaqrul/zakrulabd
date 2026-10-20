@@ -53,6 +53,7 @@ import { drawArmsCue } from "./space3-arms-art";
 import { drawSub } from "./space2-actor-art";
 import { drawSecondEnemy } from "./space2-enemy-art";
 import { drawFrozen } from "./space-weapons-art";
+import { drawFirstEnemy } from "./space-first-enemy-art";
 
 type Ctx = CanvasRenderingContext2D;
 
@@ -287,6 +288,12 @@ export function drawSpaceEnemy(ctx: Ctx, e: Enemy, s: State, reduceMotion = fals
 function drawRegular(ctx: Ctx, e: Enemy, s: State, reduceMotion: boolean) {
   if (drawVanguard(ctx, e, s, reduceMotion)) return;
   if (drawSecondEnemy(ctx, e, s, reduceMotion)) return;
+  if (drawFirstEnemy(ctx, e, s, reduceMotion)) {
+    if (e.type === "gunner") weapon(ctx, e, s, 9, 2.3);
+    else if (e.type === "sniper") weapon(ctx, e, s, 16, 1.5);
+    else if (e.type === "turret") weapon(ctx, e, s, 12, 2.5);
+    return;
+  }
   const { x, y, w, h } = e;
   const cx = x + w / 2;
   const cy = y + h / 2;

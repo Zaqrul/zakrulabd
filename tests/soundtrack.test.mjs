@@ -219,11 +219,11 @@ test("the extended Space 2 battle theme keeps the game's own bars and adds a flo
   }
 });
 
-test("no song has a bar the lead skips whole, and only the extended tunes and the finale ask for a drum fill, a crash and a riser", () => {
+test("no song has a bar the lead skips whole, and only the extended tunes, the finale and the added battles ask for a drum fill, a crash and a riser", () => {
   const allRest = (b) => b[0].trim().split(/\s+/).every((c) => c === ".");
   for (const [id, song] of Object.entries(SPACE2)) {
     assert.ok(!song.bars.some(allRest), `${id}: no silent lead bar`);
-    if (!["s2bonus7", "s2bonus9", "s2bonus10", "s2bonus11", "s2bonus12", "s2bonus13", "s2bonus14", "s2bonus15"].includes(id)) assert.ok(!song.fills && !song.crashes && !song.riser, `${id}: no fills, crashes or risers asked for`);
+    if (!["s2bonus7", "s2bonus9", "s2bonus10", "s2bonus11", "s2bonus12", "s2bonus13", "s2bonus14", "s2bonus15", "s2stage3", "s2stage4", "s2stage5", "s2stage6", "s2stage7", "s2stage8"].includes(id)) assert.ok(!song.fills && !song.crashes && !song.riser, `${id}: no fills, crashes or risers asked for`);
   }
 });
 

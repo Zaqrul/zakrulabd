@@ -30,7 +30,8 @@ export function isTyping(e: KeyboardEvent) {
    lines on phones) and returns a context that draws in the game's own units, so
    the same code works at any width. */
 export function fitCanvas(canvas: HTMLCanvasElement, width: number, height: number) {
-  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  /* A phone's canvas is drawn at up to 1.5 device pixels to a logical one, not 2: the same picture on 44% fewer pixels. */
+  const dpr = Math.min(window.devicePixelRatio || 1, window.matchMedia("(pointer: coarse)").matches ? 1.5 : 2);
   const cssWidth = canvas.clientWidth || width;
   const scale = (cssWidth * dpr) / width;
   canvas.width = Math.round(width * scale);

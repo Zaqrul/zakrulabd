@@ -5,7 +5,8 @@ import { useEffect } from "react";
 import type { IconType } from "react-icons";
 import { SPACE2_CHAPTERS, SPACE2_COPY, space2ChapterName } from "@/components/games/space2-copy";
 import { SPACE3_BOSS_NAMES, SPACE3_COPY, space3ChapterName } from "@/components/games/space3-copy";
-import { TbGhost2, TbPlanet, TbRocket, TbX } from "react-icons/tb";
+import { TbGhost2, TbPlanet, TbRocket } from "react-icons/tb";
+import { SpaceFrame } from "./games/space-frame";
 
 const Loading = () => <div className="h-48 animate-pulse rounded-xl bg-neutral-100" aria-hidden="true" />;
 
@@ -226,10 +227,11 @@ export function GamePlayer({
   /* Leaves the game. A phone turned on its side gives the game the whole screen, so it brings its own way out. */
   onExit?: () => void;
 }) {
-  const t = copy[lang];
-  const best = gameCopy[lang].best;
+  const language = game === "space3" ? "en" : lang;
+  const t = copy[language];
+  const best = gameCopy[language].best;
   /* Space 2 plays on Space's screen; these are the words that differ. */
-  const s2 = SPACE2_COPY[lang];
+  const s2 = SPACE2_COPY[language];
   const space2Labels = {
     tap: s2.start,
     help: s2.help,
@@ -240,12 +242,12 @@ export function GamePlayer({
     retryBoss: s2.retryBoss,
     newGame: s2.newGame,
     continueRun: s2.continue,
-    chapterName: (n: number) => space2ChapterName(lang, n) ?? t.chapterName(n),
-    clear: (n: number) => `${s2.clear}: ${space2ChapterName(lang, n) ?? ""}`,
+    chapterName: (n: number) => space2ChapterName(language, n) ?? t.chapterName(n),
+    clear: (n: number) => `${s2.clear}: ${space2ChapterName(language, n) ?? ""}`,
     bossNames: [...t.bossNames, ...SPACE2_CHAPTERS.map((c) => c.boss)],
   };
   /* Space 3 is English only. */
-  const s3 = SPACE3_COPY[lang];
+  const s3 = SPACE3_COPY[language];
   const space3Labels = {
     tap: s3.start,
     help: s3.help,
@@ -256,8 +258,8 @@ export function GamePlayer({
     retryBoss: s3.retryBoss,
     newGame: s3.newGame,
     continueRun: s3.continue,
-    chapterName: (n: number) => space3ChapterName(n, lang) ?? t.chapterName(n),
-    clear: (n: number) => `${s3.clear}: ${space3ChapterName(n, lang) ?? ""}`,
+    chapterName: (n: number) => space3ChapterName(n, language) ?? t.chapterName(n),
+    clear: (n: number) => `${s3.clear}: ${space3ChapterName(n, language) ?? ""}`,
     bossNames: [...space2Labels.bossNames, ...SPACE3_BOSS_NAMES],
   };
   useSession(game, !isLocked(game, username));
@@ -267,7 +269,7 @@ export function GamePlayer({
         <Space
           key={game}
           campaign={game === "space3" ? 3 : game === "space2" ? 2 : 1}
-          lang={lang}
+          lang={language}
           username={username}
           onAccount={onAccount}
           onExit={onExit}
@@ -348,25 +350,10 @@ export function MiniGames({
   }, [onClose]);
 
   return (
-    <div role="dialog" aria-label={`${t.title}: ${names[game]}`} className={`rise-in liquid-glass pointer-events-auto flex max-h-[calc(100dvh-6rem)] w-full shrink-0 flex-col gap-2 rounded-3xl p-2.5 max-w-2xl`}>
-      <div className="flex shrink-0 items-center gap-2">
-        <span aria-hidden="true" className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-amber-400 text-navy">
-          <Icon className="h-4 w-4" />
-        </span>
-        <h2 className="flex-1 font-display text-[15px] font-bold text-navy">{names[game]}</h2>
-        <button
-          type="button"
-          aria-label={t.close}
-          onClick={onClose}
-          className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full text-navy transition-colors hover:bg-navy hover:text-amber-400 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-navy"
-        >
-          <TbX aria-hidden="true" className="h-4 w-4" />
-        </button>
-      </div>
-
-      <div className={`min-h-0 overflow-y-auto overscroll-contain rounded-2xl bg-white ${game === "space" ? "p-1.5" : "p-2.5"}`}>
+    <div role="dialog" aria-label={`${t.title}: ${names[game]}`} className="rise-in pointer-events-auto flex max-h-[calc(100dvh-6rem)] w-full max-w-2xl shrink-0 flex-col">
+      <SpaceFrame title={names[game]} icon={Icon} closeLabel={t.close} onClose={onClose}>
         <GamePlayer lang={lang} game={game} username={username} onAccount={onAccount} onExit={onClose} />
-      </div>
+      </SpaceFrame>
     </div>
   );
 }

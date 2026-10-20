@@ -43,8 +43,13 @@ const SPACE_ALL: Track[] = [
   { album: "space", engine: "hangar3", title: S("Hangar: Before the Storm", "Hangar: Sebelum Ribut") },
   { album: "space", engine: "fanfare", title: S("Ignition Fanfare", "Fanfara Pencucuhan") },
   { album: "space", engine: "stage", title: S("Battle: First Sortie", "Pertempuran: Serangan Pertama") },
+  { album: "space", engine: "stage4", title: S("Battle: Sunset Squadron", "Pertempuran: Skuadron Senja") },
   { album: "space", engine: "stage3", title: S("Battle: Iron Sky", "Pertempuran: Langit Besi") },
+  { album: "space", engine: "stage5", title: S("Battle: Violet Veil", "Pertempuran: Tirai Ungu") },
+  { album: "space", engine: "stage6", title: S("Battle: Frostbite Run", "Pertempuran: Larian Gigitan Beku") },
   { album: "space", engine: "stage2", title: S("Battle: Red Horizon", "Pertempuran: Ufuk Merah") },
+  { album: "space", engine: "stage7", title: S("Battle: Ghost Station", "Pertempuran: Stesen Hantu") },
+  { album: "space", engine: "stage8", title: S("Battle: Last Bastion", "Pertempuran: Kubu Terakhir") },
   { album: "space", engine: "alert", title: S("Warning: Contact", "Amaran: Kontak") },
   { album: "space", engine: "alert2", title: S("Warning: Shadow Inbound", "Amaran: Bayang Menghampiri") },
   { album: "space", engine: "alert3", title: S("Warning: Final Approach", "Amaran: Hampiran Terakhir") },
@@ -75,7 +80,13 @@ const SPACE2_ALL: Track[] = [
   { album: "space2", engine: "s2hangar3", title: S("Hangar: Open Water", "Hangar: Laut Terbuka") },
   { album: "space2", engine: "s2fanfare", title: S("Launch Sequence", "Jujukan Pelancaran") },
   { album: "space2", engine: "s2stage", title: S("Battle: Vanguard Run", "Pertempuran: Larian Barisan Hadapan") },
+  { album: "space2", engine: "s2stage3", title: S("Battle: Mangrove Rush", "Pertempuran: Serbuan Bakau") },
+  { album: "space2", engine: "s2stage4", title: S("Battle: Glacier Charge", "Pertempuran: Asakan Glasier") },
+  { album: "space2", engine: "s2stage5", title: S("Battle: Dune Storm", "Pertempuran: Ribut Bukit Pasir") },
+  { album: "space2", engine: "s2stage6", title: S("Battle: Iron Rails", "Pertempuran: Landasan Besi") },
   { album: "space2", engine: "s2stage2", title: S("Battle: Shadow Front", "Pertempuran: Barisan Bayang") },
+  { album: "space2", engine: "s2stage7", title: S("Battle: Eye of the Storm", "Pertempuran: Mata Ribut") },
+  { album: "space2", engine: "s2stage8", title: S("Battle: Tower Skies", "Pertempuran: Langit Menara") },
   { album: "space2", engine: "s2alert", title: S("Warning: Low Hum", "Amaran: Dengung Rendah") },
   { album: "space2", engine: "s2alert2", title: S("Warning: Deep Organ", "Amaran: Organ Dalam") },
   { album: "space2", engine: "s2alert3", title: S("Warning: Rising Tide", "Amaran: Air Pasang") },
@@ -109,7 +120,9 @@ export const SPACE2_TRACKS: Track[] = SPACE2_ALL.filter((track) => !track.bonus 
 
 export const SPACE_TRACKS: Track[] = SPACE_ALL.filter((track) => !track.bonus);
 
-export const SPACE2_ALTERNATE_TRACKS: Track[] = SPACE2_ALL.filter((track) => !track.bonus).map((track) => ({
+/* The Ascension album re-composes the tunes the game began with; the battles added later are in the Space 2 album only. */
+const ADDED_BATTLES: BaseSagaTrack[] = ["s2stage3", "s2stage4", "s2stage5", "s2stage6", "s2stage7", "s2stage8"];
+export const SPACE2_ALTERNATE_TRACKS: Track[] = SPACE2_ALL.filter((track) => !track.bonus && !ADDED_BATTLES.includes(track.engine as BaseSagaTrack)).map((track) => ({
   ...track, album: "space2alt", engine: `alt:${track.engine}` as AlternateSagaTrack,
 }));
 

@@ -2,12 +2,17 @@
    Weapon mouths share coordinates with the simulation. */
 import { beamMuzzle, enemyMuzzle, missileMuzzle, type Enemy, type State } from "./space-logic";
 import { tone } from "./space-material";
+import { finalAttackPose } from "./space-final-pose";
 type Ctx = CanvasRenderingContext2D;
 const INK = "#252c28", OLIVE = "#727b4b", LIGHT = "#a4a977", DARK = "#49543b";
 
 export function drawDreadnought(ctx: Ctx, e: Enemy, s: State, reduceMotion: boolean) {
   const { x, y } = e;
   const t = reduceMotion ? 0 : e.t;
+  const pose = finalAttackPose(e, reduceMotion);
+  const tilt = pose.kind === "charge" ? .045 * pose.charge - .025 * pose.kick
+    : pose.kind === "c4" ? -.018 * pose.load : pose.kind === "beam" ? -.012 * pose.load
+    : -.025 * pose.kick;
   const a = e.attack;
   const warning = !!a && a.t < a.warn;
   const firing = !!a && a.t >= a.warn && a.t < a.warn + a.live;
@@ -26,8 +31,13 @@ export function drawDreadnought(ctx: Ctx, e: Enemy, s: State, reduceMotion: bool
     ctx.fillStyle = tone(colour); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 0.8; ctx.stroke();
   };
   ctx.save();
-  // Tail fin and steering rotor.
-  poly([[64, 31], [87, 27], [90, 13], [95, 13], [95, 48], [84, 45], [64, 47]], DARK);
+  ctx.save(); ctx.translate(x + 48, y + 42); ctx.rotate(tilt); ctx.translate(-x - 48, -y - 42);
+  // A long exposed keel separates the engine cabin from its steering tail.
+  poly([[57,28],[86,25],[91,30],[91,39],[62,43]],DARK);
+  poly([[62,29],[86,27],[87,30],[65,34]],LIGHT);
+  for(const px of [71,79,85])box(px,29,1.2,8,"#87916a");
+  poly(e.a >= 5 ? [[84,28],[90,16],[94,23],[91,29],[95,33],[95,48],[87,43],[83,37]]
+    : [[84,28],[90,11],[95,11],[95,48],[87,43],[83,37]], DARK);
   disc(90, 33, 7, INK);
   const rotor = reduceMotion ? 0.6 : t * 0.42;
   for (let i = 0; i < 3; i++) {
@@ -35,17 +45,18 @@ export function drawDreadnought(ctx: Ctx, e: Enemy, s: State, reduceMotion: bool
     ctx.fillStyle = tone(LIGHT); ctx.fillRect(1, -1, 5.5, 2); ctx.restore();
   }
   disc(90, 33, 1.7, "#b9bba1");
-  // Landing skids and the deep, bulbous Hi-Do-inspired fuselage.
+  // Broadside armour planes keep the nose low and the tail boom readable.
   for (const px of [28, 63]) box(px, 65, 3, 12, DARK);
   poly([[17, 74], [23, 78], [75, 78], [79, 74], [76, 81], [21, 81], [16, 77]], "#8a8f77");
-  ctx.beginPath();ctx.moveTo(x+5,y+44);
-  ctx.bezierCurveTo(x+5,y+30,x+19,y+17,x+34,y+17);
-  ctx.lineTo(x+60,y+17);ctx.quadraticCurveTo(x+80,y+21,x+80,y+41);
-  ctx.lineTo(x+80,y+54);ctx.quadraticCurveTo(x+76,y+69,x+61,y+71);
-  ctx.lineTo(x+27,y+71);ctx.quadraticCurveTo(x+7,y+67,x+5,y+44);ctx.closePath();
-  ctx.fillStyle=tone(OLIVE);ctx.fill();ctx.strokeStyle=INK;ctx.lineWidth=1;ctx.stroke();
-  poly([[12, 29], [26, 20], [60, 20], [69, 26], [28, 27], [10, 39]], LIGHT);
-  poly([[10, 53], [29, 62], [68, 62], [79, 54], [65, 71], [26, 71], [10, 59]], DARK);
+  poly([[5,40],[13,29],[27,21],[57,20],[67,26],[72,38],[71,54],[61,66],[24,67],[11,58]],OLIVE);
+  poly([[13,29],[28,23],[56,22],[64,27],[28,28],[8,40]],LIGHT);
+  poly([[11,53],[27,59],[63,59],[71,52],[61,67],[25,69],[11,59]],DARK);
+  // The front battery has a continuous bulkhead rather than three floating guns.
+  poly([[20,16],[27,18],[29,60],[24,69],[19,63]],DARK);
+  box(23,20,2,43,LIGHT);
+  // Engine pod supports bridge the narrowed cabin to the fixed aft housings.
+  poly([[66,43],[81,45],[86,50],[83,63],[69,61]],DARK);
+  poly([[70,44],[80,46],[82,49],[71,49]],LIGHT);
   // Overlapping belly plates, cheek armour and inset service panels.
   poly([[9,46],[19,48],[24,59],[18,62],[11,57]],"#8e9870");
   poly([[23,59],[36,61],[36,68],[28,68]],"#8b9368");
@@ -88,6 +99,23 @@ export function drawDreadnought(ctx: Ctx, e: Enemy, s: State, reduceMotion: bool
     disc(53, 44, 6, INK); disc(53, 44, 3.6, e.a >= 4 ? "#fff0b0" : "#e98743");
     poly([[42, 30], [48, 31], [44, 36]], OLIVE);
     poly([[61, 50], [66, 47], [65, 58], [58, 57]], OLIVE);
+    if (e.a >= 5) {
+      // Last stand: a torn-open engine cradle replaces the small service hatch.
+      box(40, 29, 27, 30, INK);
+      for(const yy of [32,37,52,57]){box(43,yy,20,1.6,"#6d7855");box(45,yy,2,1.6,LIGHT);}
+      disc(53,44,10,LIGHT);disc(53,44,8.8,INK);
+      for (let i = 0; i < 6; i++) {
+        const angle = i * Math.PI / 3;
+        poly([[53 + Math.cos(angle) * 5,44 + Math.sin(angle) * 5],
+          [53 + Math.cos(angle) * 11,44 + Math.sin(angle) * 11],
+          [53 + Math.cos(angle + .18) * 11,44 + Math.sin(angle + .18) * 11]], LIGHT);
+      }
+      disc(53,44,7,DARK); disc(53,44,4.8,"#f5a54f"); disc(53,44,2.6,"#fff0b0");
+      poly([[39,29],[45,26],[43,38],[39,42]],LIGHT);
+      poly([[65,43],[70,39],[69,58],[63,61]],DARK);
+      box(68,31,8,18,INK);
+      for(let i=0;i<4;i++)box(69,32+i*4,5,1.5,"#b2b69c");
+    }
   }
   for (const [px, py] of [[28, 22], [60, 23], [30, 58], [69, 54]]) disc(px, py, 0.9, LIGHT);
   for(const [px,py] of [[24,23],[39,20],[54,20],[64,27],[24,65],[60,66]])disc(px,py,0.7,"#c9c7a1");
@@ -98,6 +126,7 @@ export function drawDreadnought(ctx: Ctx, e: Enemy, s: State, reduceMotion: bool
     box(px-1,67,5,5,"#a6ae8b");box(px+1,71,1,5,"#d2d5b8");
     disc(px+1.5,67,1.5,INK);
   }
+  ctx.restore(); // Weapons stay on their authoritative, unpitched mounts.
   // Sliding missile hatches; the firing ports stay fixed.
   for (let slot = 0; slot < 2; slot++) {
     const m = missileMuzzle(e, slot), my = m.y - y;
@@ -125,9 +154,12 @@ export function drawDreadnought(ctx: Ctx, e: Enemy, s: State, reduceMotion: bool
   }
   // The C4 bay in the belly slides open for the barrage.
   if (a?.kind === "c4" && (warning || firing)) {
+    const slide = warning ? pose.charge * 4 : firing ? 4 : 0;
+    poly([[35,62],[40,59-slide],[60,59-slide],[65,62],[62,64],[38,64]],LIGHT);
     box(37, 62, 22, 8, INK);
     for (let i = 0; i < 3; i++) box(39.5 + i * 6.5, 64, 4.5, 3.4, "#c9b27c");
     disc(48, 69, 1.3, t % 8 < 4 ? "#ef4444" : "#7f1d1d");
+    if(e.a>=5){box(33,63,3,9,DARK);box(60,63,3,9,DARK);box(38,71,21,1.4,LIGHT);}
   }
   // Thrusters adapt the helicopter reference to the space setting.
   for (const dy of [49, 58]) {

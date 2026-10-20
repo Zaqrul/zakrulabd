@@ -4,22 +4,27 @@
 import { enemyMuzzle, missileMuzzle, MISSILE_RUN, type Enemy, type State } from "./space-logic";
 import { tone } from "./space-material";
 import { machineKit, MACHINE } from "./space2-machine-art";
+import { drawSecondBiome, secondPalette } from "./space2-biome-art";
 
 type Ctx = CanvasRenderingContext2D;
 export const SECOND_ENEMY_TYPES = [
   "scout", "wave", "diver", "gunner", "mine", "drone", "turret", "zigzag", "armor", "seeker",
   "swarm", "bomber", "sniper", "orbiter", "splitter", "cruiser", "fighter", "funnel",
   "tank", "aagun", "bunker", "samsite", "jet", "gunship", "airbomber", "gunboat", "destroyer",
+  "pod", "shard",
 ] as const;
 const supported = new Set<string>(SECOND_ENEMY_TYPES);
 
 export function drawSecondEnemy(ctx: Ctx, e: Enemy, s: State, reduceMotion = false): boolean {
   if (s.chapter < 9 || !supported.has(e.type)) return false;
-  const { x, y, w, h } = e, c = MACHINE;
+  const biome = s.chapter <= 16;
+  if (!biome && (e.type === "pod" || e.type === "shard")) return false;
+  const { x, y, w, h } = e, c = biome ? secondPalette(s.chapter) : MACHINE;
   const t = reduceMotion ? 0 : e.t;
   // This is a readiness lamp, not an invented muzzle flash before a shot.
   const hot = e.lock || e.type === "sniper" && e.d > 0 ? "#fff1cc" : c.hostile;
-  const m = machineKit(ctx, x, y);
+  const m = machineKit(ctx, x, y, c);
+  const finalHardware: (() => void)[] = [];
   const poly = (points: number[][], fill: string) => m.poly(points.map(([px, py]) => [px * w, py * h]), fill);
   const box = (px: number, py: number, pw: number, ph: number, fill: string) => m.box(px * w, py * h, pw * w, ph * h, fill);
   const plate = (px: number, py: number, pw: number, ph: number, fill: string = c.hull) => m.plate(px * w, py * h, pw * w, ph * h, fill, 1);
@@ -49,14 +54,20 @@ export function drawSecondEnemy(ctx: Ctx, e: Enemy, s: State, reduceMotion = fal
     }
     disc(px, py, 0.8, c.rust);
   };
-  const gun = (slot = 0, length = 8, width = 1.5) => {
+  const paintGun = (slot: number, length: number, width: number) => {
     const tip = enemyMuzzle(e, s, slot);
     const tx = tip.x - x, ty = tip.y - y;
     const bx = tx - Math.cos(tip.angle) * length, by = ty - Math.sin(tip.angle) * length;
     m.rod(bx, by, tx, ty, width, c.metal);
     m.rod(bx, by, tx - Math.cos(tip.angle) * length * 0.55, ty - Math.sin(tip.angle) * length * 0.55, width + 1, c.hull);
+    if (s.chapter === 11) m.rod(bx, by, tx - Math.cos(tip.angle) * length * .7, ty - Math.sin(tip.angle) * length * .7, width + .5, c.bevel);
     m.disc(bx, by, width + 0.7, c.steel);
     m.rod(tx, ty, tx - Math.cos(tip.angle) * 1.2, ty - Math.sin(tip.angle) * 1.2, width + 0.5, c.ink);
+  };
+  // Fittings cannot paint over the real tracking barrels or their emitters.
+  const gun = (slot = 0, length = 8, width = 1.5) => {
+    if (biome) finalHardware.push(() => paintGun(slot, length, width));
+    else paintGun(slot, length, width);
   };
   const tracks = () => {
     plate(0.02, 0.65, 0.96, 0.32, c.dark);
@@ -225,6 +236,17 @@ export function drawSecondEnemy(ctx: Ctx, e: Enemy, s: State, reduceMotion = fal
       vents(0.62, 0.4, 5, 4); bolts(0.32, 0.67, 6); badge(0.39, 0.55);
       damage(0.68, 0.3); damage(0.38, 0.65); break;
     case "mine":
+      if (biome) {
+        // Pressure mine: two guarded detonators and a riveted ballast casing.
+        for (const py of [.14, .73]) {
+          plate(.16, py, .69, .13, c.steel);
+          disc(.27, py + .06, .7, c.metal); disc(.73, py + .06, .7, c.metal);
+        }
+        poly([[.17,.3],[.36,.19],[.73,.28],[.89,.5],[.73,.72],[.36,.81],[.17,.7]],c.hull);
+        plate(.29,.31,.31,.38,c.face); disc(.37,.5,1.4,hot);
+        rod(.08,.5,.2,.5,1.2,c.metal); rod(.83,.5,.95,.5,1.2,c.metal);
+        break;
+      }
       // Naval contact mine: six short horns around a welded spherical casing.
       for (let i = 0; i < 6; i++) {
         const a = i * Math.PI / 3;
@@ -236,6 +258,15 @@ export function drawSecondEnemy(ctx: Ctx, e: Enemy, s: State, reduceMotion = fal
       poly([[0, 0.22], [0.42, 0.12], [0.77, 0.25], [1, 0.5], [0.77, 0.75], [0.42, 0.88], [0, 0.78], [0.19, 0.5]], c.steel);
       plate(0.17, 0.27, 0.55, 0.46, c.hull); disc(0.36, 0.5, 1.6, hot); exhaust(0.85, 0.5, 2); break;
     case "swarm":
+      if (biome) {
+        // Twin ram jaws and a braced turbine replace the four-point star.
+        for (const py of [.06,.69]) {
+          poly([[0,py+.07],[.55,py],[.9,py+.12],[.78,py+.25],[.25,py+.23]],c.steel);
+          rod(.4,py+.16,.66,.5,.8,c.metal);
+        }
+        plate(.35,.3,.48,.4,c.hull); eye(.37,.4,.19); exhaust(.86,.5,2);
+        break;
+      }
       // Small arrowhead with two ram prongs; no gun housing or imitation lens cluster.
       poly([[0, 0.13], [0.41, 0.31], [0.97, 0.06], [0.74, 0.5], [0.97, 0.94], [0.41, 0.69], [0, 0.87], [0.15, 0.5]], c.hull);
       box(0.29, 0.4, 0.25, 0.2, hot); exhaust(0.75, 0.5, 2); break;
@@ -257,6 +288,32 @@ export function drawSecondEnemy(ctx: Ctx, e: Enemy, s: State, reduceMotion = fal
       poly([[0.05, 0.58], [0.24, 0.95], [0.75, 0.98], [0.96, 0.7], [0.74, 0.54], [0.3, 0.54]], c.hull);
       plate(0.27, 0.1, 0.43, 0.26, c.steel); plate(0.27, 0.64, 0.43, 0.26, c.steel);
       box(0.29, 0.46, 0.46, 0.08, hot); gun(0, 6, 1.6); break;
+    case "pod":
+      // A sealed resupply container: no hostile red optic or invented gun.
+      plate(.02,.12,.96,.83,c.hull);
+      plate(.16,.23,.68,.53,c.dark);
+      for (const px of [.08,.81]) plate(px,.16,.11,.72,c.metal);
+      rod(.31,.16,.31,.06,.7,c.steel); rod(.31,.06,.63,.06,.7,c.metal);
+      box(.22,.79,.53,.08,c.cream);
+      ctx.fillStyle=tone("#7de0c5"); ctx.fillRect(x+w*.27,y+h*.41,w*.29,h*.13);
+      break;
+    case "shard":
+      // Salvaged impeller blade: faceted metal, an exposed core and broken root.
+      poly([[.02,.5],[.35,.08],[.69,.04],[.98,.5],[.68,.93],[.35,.9]],c.steel);
+      poly([[.09,.5],[.44,.17],[.58,.5],[.44,.83]],c.bevel);
+      plate(.48,.32,.29,.36,c.hull); disc(.55,.5,1.1,c.cream);
+      rod(.8,.33,.89,.26,.7,c.dark); rod(.8,.66,.89,.74,.7,c.dark);
+      break;
+  }
+  if (biome) {
+    drawSecondBiome(ctx, e, s.chapter, t);
+    // A compact torn aft plate works even on single-hit craft in damage previews.
+    // Larger machines retain their existing smoke and broken housings as well.
+    if (e.hp < e.maxHp * .65) {
+      poly([[.56,.46],[.67,.49],[.62,.56],[.74,.59],[.61,.64],[.55,.56]],c.ink);
+      rod(.59,.5,.65,.6,.55,c.metal);
+    }
+    finalHardware.forEach(paint => paint());
   }
   if (e.type === "gunboat" || e.type === "destroyer") {
     ctx.strokeStyle = tone(c.metal); ctx.lineWidth = 0.6;

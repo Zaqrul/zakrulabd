@@ -14,17 +14,19 @@ import { CROSSING, LANTERN, LAST_LIGHT, RIVAL, WANDERER } from "./space-bonus-mu
 import type { Song as ChipSong } from "./space-music";
 import { CODEX_SPACE_2 } from "./space-codex-music.ts";
 import { FINAL_EXTREMITY_II } from "./space-final-extremity-ii.ts";
+import { SECOND_BATTLES, type SecondBattle } from "./space2-battles-more.ts";
 import { arrangeAscension } from "./space2-ascension.ts";
 import { SPACE3_SONGS, type Space3Track } from "./space3-music.ts";
 
 export type BaseSagaTrack =
-  | "s2title" | "s2hangar" | "s2hangar2" | "s2hangar3" | "s2stage" | "s2stage2" | "s2alert" | "s2alert2" | "s2alert3" | "s2pause" | "s2victory" | "s2gameover" | "s2ending" | "s2fanfare"
+  | "s2title" | "s2hangar" | "s2hangar2" | "s2hangar3" | "s2stage" | "s2stage2" | SecondBattle | "s2alert" | "s2alert2" | "s2alert3" | "s2pause" | "s2victory" | "s2gameover" | "s2ending" | "s2fanfare"
   | "s2boss1" | "s2boss2" | "s2boss3" | "s2boss4" | "s2boss5" | "s2boss6" | "s2boss7" | "s2boss8"
   /* Atlas's music follows its phases: Judgement from the fourth, the last stand in the sixth. */
   | "s2boss8b" | "s2boss8c"
   /* A bonus tune for the soundtrack player in zakrulOS only; the game never plays it. */
   | "s2bonus1" | "s2bonus2" | "s2bonus3" | "s2bonus4" | "s2bonus5" | "s2bonus6" | "s2bonus7" | "s2bonus8" | "s2bonus9" | "s2bonus10" | "s2bonus11" | "s2bonus12" | "s2bonus13" | "s2bonus14" | "s2bonus15";
-export type AlternateSagaTrack = `alt:${BaseSagaTrack}`;
+/* The Ascension album re-composes the tunes the game began with; the battle tunes added later have no Ascension version. */
+export type AlternateSagaTrack = `alt:${Exclude<BaseSagaTrack, SecondBattle>}`;
 export type SagaTrack = BaseSagaTrack | AlternateSagaTrack | Space3Track;
 
 type Voice = "brass" | "strings" | "lead" | "organ" | "organChord" | "bell" | "harp" | "chip" | "trumpet" | "violin" | "guitar" | "piano";
@@ -1151,6 +1153,7 @@ const FINAL_EXTREMITY_4: Song = {
 };
 
 export const SONGS: Record<BaseSagaTrack, Song> = {
+  ...SECOND_BATTLES,
   s2title: TITLE, s2hangar: HANGAR, s2hangar2: HANGAR2, s2hangar3: HANGAR3, s2stage: STAGE, s2stage2: STAGE2,
   s2alert2: ALERT2, s2alert3: ALERT3, s2pause: PAUSE, s2alert: ALERT, s2victory: VICTORY, s2gameover: GAMEOVER, s2ending: ENDING, s2fanfare: FANFARE,
   s2boss1: BOSSES[0], s2boss2: BOSSES[1], s2boss3: BOSSES[2], s2boss4: BOSSES[3],
@@ -1214,6 +1217,8 @@ for (const [track, song] of Object.entries(PLAYBACK_SONGS) as [SagaTrack, Song][
 
 /* Notes are queued this far ahead, so a slow game frame (a burst of particles, a garbage collection) never leaves the music late. */
 const LOOKAHEAD = 0.3;
+/* A tune that is replaced fades out over this many seconds, not a hard cut. */
+const FADE_OUT = 0.25;
 const TICK_MS = 25;
 /* The guitar amp's distortion curve, worked out once instead of for every note. */
 const GUITAR_CURVE = Float32Array.from({ length: 1024 }, (_, i) => Math.tanh(3.5 * (2 * i / 1023 - 1)));
@@ -1237,28 +1242,43 @@ export class SagaMusic {
   private organ: PeriodicWave | null = null;
   /* The recording being played, when the tune is playing from one. */
   private source: AudioBufferSourceNode | null = null;
+  /* A mixer of its own for each tune: when the tune changes, the old one fades out through its fader while the
+     new one starts on a fresh mixer, so one tune never cuts the other off or starts faded. */
+  private fader: GainNode | null = null;
+  private impulse: AudioBuffer | null = null;
 
-  /* The mixer: everything goes through one bus, straight out and into a hall reverb and an echo. */
+  /* What belongs to the audio context (noise, the reverb's impulse, the organ's wave), made once, and then a
+     mixer for the tune about to play. */
   private prepare(ctx: AudioContext, out: AudioNode) {
-    if (this.ctx === ctx && this.dest === out) return;
-    this.ctx = ctx;
-    this.dest = out;
-    const len = Math.floor(ctx.sampleRate * 1.8);
-    this.noise = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 1.2), ctx.sampleRate);
-    const nd = this.noise.getChannelData(0);
-    for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
-    const impulse = ctx.createBuffer(2, len, ctx.sampleRate);
-    for (let ch = 0; ch < 2; ch++) {
-      const d = impulse.getChannelData(ch);
-      for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 3;
+    if (this.ctx === ctx && this.dest === out && this.bus) return;
+    if (this.ctx !== ctx || this.dest !== out || !this.impulse) {
+      this.ctx = ctx;
+      this.dest = out;
+      const len = Math.floor(ctx.sampleRate * 1.8);
+      this.noise = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 1.2), ctx.sampleRate);
+      const nd = this.noise.getChannelData(0);
+      for (let i = 0; i < nd.length; i++) nd[i] = Math.random() * 2 - 1;
+      const impulse = ctx.createBuffer(2, len, ctx.sampleRate);
+      for (let ch = 0; ch < 2; ch++) {
+        const d = impulse.getChannelData(ch);
+        for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * (1 - i / len) ** 3;
+      }
+      this.impulse = impulse;
+      const harmonics = [0, 1, 0.8, 0.5, 0.45, 0, 0.3, 0, 0.2];
+      this.organ = ctx.createPeriodicWave(new Float32Array(harmonics.length), Float32Array.from(harmonics));
     }
-    const harmonics = [0, 1, 0.8, 0.5, 0.45, 0, 0.3, 0, 0.2];
-    this.organ = ctx.createPeriodicWave(new Float32Array(harmonics.length), Float32Array.from(harmonics));
+    this.mixer(ctx, this.dest!);
+  }
 
+  /* The mixer: everything goes through one bus, straight out and into a hall reverb and an echo, and out
+     through a fader that lets the tune be faded away. */
+  private mixer(ctx: AudioContext, dest: AudioNode) {
+    const out = (this.fader = ctx.createGain());
+    out.connect(dest);
     this.bus = ctx.createGain();
     this.bus.connect(out);
     const hall = ctx.createConvolver();
-    hall.buffer = impulse;
+    hall.buffer = this.impulse;
     const hallWet = ctx.createGain();
     hallWet.gain.value = 0.22;
     this.bus.connect(hall).connect(hallWet).connect(out);
@@ -1314,7 +1334,7 @@ export class SagaMusic {
       src.loopStart = plan.start[song.intro ?? 0] * stepSec;
       src.loopEnd = plan.steps * stepSec;
     }
-    src.connect(this.dest!);
+    src.connect(this.fader ?? this.dest!);
     src.start(at, offset);
     this.track = track;
     this.source = src;
@@ -1331,36 +1351,56 @@ export class SagaMusic {
     }
   }
 
-  /* Asking again for what was last asked for, or for what is already playing, changes nothing. */
-  start(ctx: AudioContext, out: AudioNode, track: SagaTrack) {
+  /* Asking again for what was last asked for, or for what is already playing, changes nothing. `from` is where in a
+     looping tune to begin, in seconds (a tune picked up again after a pause). */
+  start(ctx: AudioContext, out: AudioNode, track: SagaTrack, from = 0) {
     if (this.ctx === ctx && (this.requested === track || (this.timer && this.track === track))) {
       this.requested = track;
       return;
     }
-    this.stop();
+    this.stop(this.timer || this.source ? FADE_OUT : 0);
     this.prepare(ctx, out);
     this.requested = track;
+    const song = PLAYBACK_SONGS[track], plan = PLANS[track], stepSec = 60 / song.bpm / 4;
+    const loopLength = plan.steps * stepSec;
+    const begin = !song.once && from > 0 ? from % loopLength : 0;
     const recorded = RENDERED.get(track);
-    if (recorded) { this.playRecording(track, recorded, ctx.currentTime + 0.05, 0); return; }
-    this.play(track, ctx.currentTime + 0.05);
+    if (recorded) { this.playRecording(track, recorded, ctx.currentTime + 0.05, begin); return; }
+    this.play(track, ctx.currentTime + 0.05, Math.floor(begin / stepSec));
     this.record(track);
   }
 
-  private play(track: SagaTrack, at: number) {
+  private play(track: SagaTrack, at: number, step = 0) {
     this.track = track;
-    this.step = 0;
+    this.step = step;
     this.nextTime = at;
     if (!this.timer) this.timer = setInterval(() => this.schedule(), TICK_MS);
     this.schedule();
   }
 
-  stop() {
+  /* Stops the tune: at once, or, with `fade` seconds, by fading its mixer away while whatever plays next
+     starts on a mixer of its own. */
+  stop(fade = 0) {
     if (this.timer) clearInterval(this.timer);
     this.timer = null;
     this.requested = null;
-    if (this.source) {
-      const src = this.source;
-      this.source = null;
+    const src = this.source, fader = this.fader;
+    this.source = null;
+    if (fade > 0 && fader && this.ctx) {
+      const now = this.ctx.currentTime;
+      fader.gain.cancelScheduledValues(now);
+      fader.gain.setValueAtTime(fader.gain.value, now);
+      fader.gain.linearRampToValueAtTime(0, now + fade);
+      this.bus = null;
+      this.fader = null;
+      setTimeout(() => {
+        try { src?.stop(); } catch { /* already stopped */ }
+        src?.disconnect();
+        fader.disconnect();
+      }, (fade + 0.5) * 1000);
+      return;
+    }
+    if (src) {
       try { src.stop(); } catch { /* already stopped */ }
       src.disconnect();
     }

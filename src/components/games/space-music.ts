@@ -17,9 +17,10 @@
 import { BOSS_SONGS, DREADNOUGHT_LAST, DREADNOUGHT_RUSH } from "./space-boss-music.ts";
 import { BATTLE_BB, BATTLE_D, BATTLE_G, CROSSING, LANTERN, LAST_LIGHT, RIVAL, WANDERER } from "./space-bonus-music.ts";
 import { CODEX_SPACE_1 } from "./space-codex-music.ts";
+import { MORE_BATTLES, type MoreBattle } from "./space-battles-more.ts";
 
 export type NesTrack =
-  | "stage" | "stage2" | "stage3" | "hangar" | "hangar2" | "hangar3" | "title" | "alert" | "alert2" | "alert3"
+  | "stage" | "stage2" | "stage3" | MoreBattle | "hangar" | "hangar2" | "hangar3" | "title" | "alert" | "alert2" | "alert3"
   | "victory" | "gameover" | "ending" | "pause" | "fanfare"
   | "boss1" | "boss2" | "boss3" | "boss4" | "boss5" | "boss6" | "boss7" | "boss8"
   /* Dreadnought's music follows its phases: the fast section from the fourth, the climax in the sixth. */
@@ -333,6 +334,7 @@ const FANFARE: Song = {
 };
 
 export const SONGS: Record<NesTrack, Song> = {
+  ...MORE_BATTLES,
   stage: STAGE, stage2: STAGE2, stage3: STAGE3, title: TITLE, hangar: HANGAR, hangar2: HANGAR2, hangar3: HANGAR3,
   alert: ALERT, alert2: ALERT2, alert3: ALERT3, victory: VICTORY, gameover: GAMEOVER,
   ending: ENDING, pause: PAUSE, fanfare: FANFARE,
@@ -395,7 +397,11 @@ function pulseWave(ctx: AudioContext, duty: number) {
   return ctx.createPeriodicWave(real, imag);
 }
 
-const LOOKAHEAD = 0.12;
+/* How far ahead the notes are queued. Raised from 0.12 s: a frame that took longer than that (some did, in the
+   busiest chapters) left a gap in the music. */
+const LOOKAHEAD = 0.3;
+/* A tune that is replaced fades out over this many seconds, not a hard cut. */
+const FADE_OUT = 0.25;
 const TICK_MS = 25;
 
 export class NesMusic {
@@ -408,6 +414,8 @@ export class NesMusic {
   private nextTime = 0;
   private waves: Record<number, PeriodicWave> = {};
   private noise: AudioBuffer | null = null;
+  /* Each tune plays through a fader of its own, so it can fade out while the next begins. */
+  private fader: GainNode | null = null;
 
   get playing(): NesTrack | null {
     return this.timer ? this.track : null;
@@ -422,32 +430,45 @@ export class NesMusic {
       for (let i = 0; i < len; i++) data[i] = Math.random() * 2 - 1;
     }
     this.ctx = ctx;
-    this.out = out;
+    this.fader = ctx.createGain();
+    this.fader.connect(out);
+    this.out = this.fader;
   }
 
   /* Asking again for what was last asked for, or for what is already playing, changes nothing, so
      a jingle is not restarted every frame, and one that has finished stays finished. */
-  start(ctx: AudioContext, out: AudioNode, track: NesTrack) {
+  start(ctx: AudioContext, out: AudioNode, track: NesTrack, from = 0) {
     if (this.ctx === ctx && (this.requested === track || (this.timer && this.track === track))) {
       this.requested = track;
       return;
     }
-    this.stop();
+    this.stop(this.timer ? FADE_OUT : 0);
     this.prepare(ctx, out);
     this.requested = track;
-    this.play(track, ctx.currentTime + 0.05);
+    /* `from` is where in a looping tune to begin, in seconds (a tune picked up again after a pause). */
+    const song = SONGS[track], plan = PLANS[track], stepSec = 60 / song.bpm / 4;
+    this.play(track, ctx.currentTime + 0.05, !song.once && from > 0 ? Math.floor(from / stepSec) % plan.steps : 0);
   }
 
-  private play(track: NesTrack, at: number) {
+  private play(track: NesTrack, at: number, step = 0) {
     this.track = track;
-    this.step = 0;
+    this.step = step;
     this.nextTime = at;
     if (!this.timer) this.timer = setInterval(() => this.schedule(), TICK_MS);
     this.schedule();
   }
 
-  stop() {
+  /* Stops the tune: at once, or, with `fade` seconds, by fading it away (the next tune has a fader of its own). */
+  stop(fade = 0) {
     if (this.timer) clearInterval(this.timer);
+    const fader = this.fader;
+    if (fade > 0 && this.timer && fader && this.ctx) {
+      const now = this.ctx.currentTime;
+      fader.gain.cancelScheduledValues(now);
+      fader.gain.setValueAtTime(fader.gain.value, now);
+      fader.gain.linearRampToValueAtTime(0, now + fade);
+      setTimeout(() => fader.disconnect(), (fade + 0.5) * 1000);
+    }
     this.timer = null;
     this.requested = null;
   }

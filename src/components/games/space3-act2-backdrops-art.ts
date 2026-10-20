@@ -1,5 +1,6 @@
 /* Distinct, slow-moving vistas for Space 3's outer-system chapters. */
 import { H, W, type State } from "./space-logic.ts";
+import { drawVoidBackdrop } from "./space3-void-art.ts";
 
 type Ctx = CanvasRenderingContext2D;
 const wrap = (n: number, span: number) => ((n % span) + span) % span;
@@ -149,20 +150,7 @@ function drawHeliopause(ctx: Ctx, frame: number, scroll: number) {
 }
 
 function drawOort(ctx: Ctx, frame: number, scroll: number, reduceMotion: boolean) {
-  ctx.fillStyle = "#010204"; ctx.fillRect(0, 0, W, H);
-  for (let i = 0; i < 8; i++) {
-    const x = wrap(hash(i + 160) * W - scroll * (0.006 + i * 0.001), W);
-    const y = 18 + hash(i + 170) * 180, r = 10 + hash(i + 192) * 26;
-    ctx.fillStyle = "#0b0d12"; ctx.beginPath(); ctx.arc(x, y, r, 0, Math.PI * 2); ctx.fill();
-    ctx.strokeStyle = "rgb(133 156 182 / 0.16)"; ctx.lineWidth = 0.8; ctx.beginPath(); ctx.arc(x, y, r, 0.3, 2.8); ctx.stroke();
-  }
-  for (let i = 0; i < 4; i++) {
-    const x = 45 + i * 96, y = 36 + (i % 2) * 112;
-    const lit = reduceMotion ? i % 2 === 0 : Math.floor(frame / 34 + i * 4) % 3 !== 0;
-    ctx.fillStyle = "#10131a"; ctx.fillRect(x - 5, y - 3, 10, 6);
-    ctx.fillStyle = lit ? "#fbcf33" : "#493918"; ctx.fillRect(x - 1, y - 1, 2, 2);
-    if (lit) { ctx.fillStyle = "rgb(251 207 51 / 0.07)"; ctx.beginPath(); ctx.arc(x, y, 15, 0, Math.PI * 2); ctx.fill(); }
-  }
+  drawVoidBackdrop(ctx,frame,scroll,reduceMotion);
 }
 
 function drawMegastructure(ctx: Ctx, scroll: number) {

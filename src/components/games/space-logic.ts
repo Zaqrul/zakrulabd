@@ -1378,7 +1378,14 @@ function ring(s: State, x: number, y: number, n: number, from = 0, kind: Bullet[
   for (let i = 0; i < n; i++) shoot(s, x, y, from + (i / n) * Math.PI * 2, kind, r);
 }
 
+/* No more than this many explosions are alive at once; a crowd of small ones gives way to a new one first. */
+const MAX_BURSTS = 16;
+
 function burst(s: State, x: number, y: number, big = false) {
+  if (s.bursts.length >= MAX_BURSTS) {
+    const small = s.bursts.findIndex((b) => !b.big);
+    s.bursts.splice(small < 0 ? 0 : small, 1);
+  }
   s.bursts.push({ x, y, t: 0, big });
 }
 

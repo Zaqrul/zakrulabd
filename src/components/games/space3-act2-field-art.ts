@@ -1,6 +1,8 @@
 /* Atmospheric field layers, painted after the actors and behind live shots. */
 import { H, W, type State } from "./space-logic.ts";
 import { ACT2, isAct2 } from "./space3-act2.ts";
+import { drawOuterBossLights } from "./space3-act2-boss-art.ts";
+import { drawVoidShade } from "./space3-void-art.ts";
 
 type Ctx = CanvasRenderingContext2D;
 const wrap = (n: number, span: number) => ((n % span) + span) % span;
@@ -50,19 +52,9 @@ export function drawOuterField(ctx: Ctx, s: State, reduceMotion = false) {
       ctx.beginPath(); ctx.moveTo(x, y); ctx.lineTo(x - 12 - (i % 5) * 3, y + ((i % 3) - 1) * 0.6); ctx.stroke();
     }
   } else if (field === "dark") {
-    ctx.fillStyle = "rgb(0 1 4 / 0.88)"; ctx.fillRect(0, 0, W, H);
-    const lumen = (s as State & { lumen?: { x: number; y: number; firing: boolean } }).lumen;
-    ctx.globalCompositeOperation = "destination-out";
-    const pool = (x: number, y: number, radius: number) => {
-      const g = ctx.createRadialGradient(x, y, 2, x, y, radius);
-      g.addColorStop(0, "rgb(0 0 0 / 0.92)"); g.addColorStop(0.62, "rgb(0 0 0 / 0.62)"); g.addColorStop(1, "rgb(0 0 0 / 0)");
-      ctx.fillStyle = g; ctx.fillRect(x - radius, y - radius, radius * 2, radius * 2);
-    };
-    pool(s.p.x + 11, s.p.y + 8, 64);
-    if (lumen) {
-      pool(lumen.x + 8, lumen.y + 4, 38);
-      if (lumen.firing) { ctx.fillStyle="rgb(0 0 0 / 0.58)";ctx.fillRect(lumen.x+7,lumen.y-4,150,8); }
-    }
+    drawVoidShade(ctx,s);
+    ctx.globalCompositeOperation = "source-over";
+    drawOuterBossLights(ctx, s, reduceMotion);
   } else if (field === "trench") {
     const shine = ctx.createLinearGradient(0, 0, 0, H);
     shine.addColorStop(0, "rgb(202 172 110 / 0.19)"); shine.addColorStop(0.32, "rgb(202 172 110 / 0)");

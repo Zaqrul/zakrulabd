@@ -6,6 +6,7 @@ import { loadBest } from "@/components/games/shared";
 import { AchievementsView } from "@/components/arcade-achievements";
 import { SoundtrackView } from "@/components/soundtrack";
 import { GAME_ORDER, GamePlayer, bestText, gameCopy, gameIcons, type GameId } from "@/components/mini-games";
+import { SpaceFrame } from "@/components/games/space-frame";
 import { ACH_CHANGED, currentStore, overall, progressOf, scanBests, type Store } from "@/lib/achievements";
 import { SCORES_EVENT, signOut } from "@/lib/account";
 
@@ -286,7 +287,7 @@ export function Arcade({
                 </button>
               </nav>
 
-              <main className="min-h-0 flex-1 overflow-y-auto overscroll-contain p-4 sm:p-8">
+              <main className={`min-h-0 flex-1 overflow-y-auto overscroll-contain ${playing ? "p-2 sm:p-4" : "p-4 sm:p-8"}`}>
                 {view === "library" && (
                   <section aria-label={t.library}>
                     <h3 className="rise-in mb-3 font-display text-[20px] font-extrabold tracking-tight">{t.games}</h3>
@@ -336,7 +337,7 @@ export function Arcade({
 
                 {playing && (
                   <section aria-label={names[playing]} className="mx-auto flex w-full flex-col gap-3">
-                    <div className="mx-auto flex w-full max-w-2xl items-center gap-3">
+                    <div className="flex w-full items-center gap-3">
                       <button
                         type="button"
                         onClick={() => open("library")}
@@ -345,11 +346,10 @@ export function Arcade({
                         <TbArrowLeft aria-hidden="true" className="h-4 w-4" />
                         {t.back}
                       </button>
-                      <h3 className="flex-1 truncate text-right font-display text-[17px] font-extrabold">{names[playing]}</h3>
                     </div>
-                    <div className="mx-auto w-full max-w-2xl rounded-2xl bg-white p-1.5 text-navy">
+                    <SpaceFrame title={names[playing]} icon={gameIcons[playing]} closeLabel={t.back} onClose={() => open("library")} arcade>
                       <GamePlayer key={playing} lang={lang} game={playing} username={username} onExit={() => open("library")} />
-                    </div>
+                    </SpaceFrame>
                   </section>
                 )}
 

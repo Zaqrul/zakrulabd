@@ -1,6 +1,7 @@
 /* Vanguard units share the Corvet's suspended iris and segmented violet
    armour, but retain distinct silhouettes and the engine's exact muzzles. */
 import { enemyMuzzle, type Enemy, type State } from "./space-logic";
+import { drawVanguardHull } from "./space3-vanguard-hulls-art";
 
 const TYPES=new Set(["drone","scout","seeker","diver","orbiter","gunner","sniper","swarm","armor","cruiser","mine","fighter","zigzag","wave","bomber","funnel","splitter","shard","rock","smallrock","comet","pod"]);
 
@@ -24,7 +25,9 @@ export function drawVanguard(ctx: CanvasRenderingContext2D, e: Enemy, s: State, 
     ctx.beginPath();ctx.moveTo(x1,y1);ctx.lineTo(x2,y2);ctx.strokeStyle=col;ctx.lineWidth=width;ctx.stroke();
   };
   ctx.save();ctx.lineJoin="round";
-  if(e.type==="pod"){
+  if(drawVanguardHull(ctx,e,s,reduceMotion)){
+    // Shared optics and live weapon emitters are drawn last below.
+  }else if(e.type==="pod"){
     panel([[0.15,0.1],[0.85,0.1],[0.98,0.3],[0.98,0.7],[0.85,0.9],[0.15,0.9],[0.02,0.7],[0.02,0.3]],hit?"#ffffff":"#ced8cf");
     line(x+w*0.2,y+h*0.18,x+w*0.2,y+h*0.82,"#0f766e",Math.max(1,w*0.08));
     line(x+w*0.8,y+h*0.18,x+w*0.8,y+h*0.82,"#0f766e",Math.max(1,w*0.08));

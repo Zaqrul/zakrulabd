@@ -8,8 +8,9 @@ export const MACHINE = {
   rust: "#8f654a", hostile: "#fb7185",
 } as const;
 
-export function machineKit(ctx: CanvasRenderingContext2D, x: number, y: number) {
-  const c = MACHINE;
+export type MachinePalette = { readonly [K in keyof typeof MACHINE]: string };
+
+export function machineKit(ctx: CanvasRenderingContext2D, x: number, y: number, c: MachinePalette = MACHINE) {
   const poly = (pts: number[][], fill: string) => {
     ctx.beginPath();
     pts.forEach(([px, py], i) => i ? ctx.lineTo(x + px, y + py) : ctx.moveTo(x + px, y + py));

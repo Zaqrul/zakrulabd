@@ -5,11 +5,15 @@ import { ASCENSION_PROFILES, arrangeAscension } from "../src/components/games/sp
 import { ALBUMS, trackTitle } from "../src/lib/soundtrack.ts";
 import { cells, midiOf } from "../src/components/games/space-music.ts";
 
+/* The field battles added after Ascension was written (s2stage3 to s2stage8) are in the Space 2 album only. */
+const ADDED = ["s2stage3", "s2stage4", "s2stage5", "s2stage6", "s2stage7", "s2stage8"];
+const ORIGINALS = Object.entries(SONGS).filter(([id]) => !ADDED.includes(id));
+
 test("Ascension covers the entire Space 2 album in order with separate engine identities", () => {
-  assert.equal(Object.keys(ALTERNATE_SONGS).length, Object.keys(SONGS).length);
-  assert.deepEqual(Object.keys(ASCENSION_PROFILES).sort(), Object.keys(SONGS).sort());
+  assert.equal(Object.keys(ALTERNATE_SONGS).length, ORIGINALS.length);
+  assert.deepEqual(Object.keys(ASCENSION_PROFILES).sort(), ORIGINALS.map(([id]) => id).sort());
   /* The original album is the game's tunes; Ascension is those in the same order, then the bonus tracks. */
-  const own = ALBUMS.space2.filter((t) => !t.bonus);
+  const own = ALBUMS.space2.filter((t) => !t.bonus && !ADDED.includes(t.engine));
   assert.equal(ALBUMS.space2alt.filter((t) => !t.bonus).length, own.length);
   assert.ok(ALBUMS.space2alt.every((t) => !t.bonus), "Ascension lists no bonus tracks");
   own.forEach((original, i) => {
@@ -27,7 +31,7 @@ test("alternate arrangement leaves every original score and its nested sections 
   const copies = structuredClone(SONGS);
   const result = arrangeAscension(freeze(copies));
   assert.equal(JSON.stringify(SONGS), before);
-  for (const [id, song] of Object.entries(SONGS)) {
+  for (const [id, song] of ORIGINALS) {
     const alt = result[`alt:${id}`];
     assert.notStrictEqual(alt, copies[id]);
     assert.notStrictEqual(alt.bars, copies[id].bars);
@@ -99,7 +103,7 @@ test("every alternate track schedules through completion or loop; victory stays 
 
 test("each Ascension score keeps a small piece of its original's DNA: one bar of the original melody, and only one", () => {
   const shape = (line) => cells(line, midiOf).map((n) => `${n.at}:${n.len}:${n.value % 12}`).join(",");
-  for (const [id, song] of Object.entries(SONGS)) {
+  for (const [id, song] of ORIGINALS) {
     const alt = ALTERNATE_SONGS[`alt:${id}`], own = new Set(song.bars.map((b) => shape(b[0])));
     const quoted = alt.bars.filter((b) => own.has(shape(b[0]))).length;
     if (["s2bonus12", "s2bonus13", "s2bonus14", "s2bonus15"].includes(id)) continue; // Final Extremity II and the later Final Extremity phases keep their own scores
