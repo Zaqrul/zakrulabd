@@ -333,7 +333,7 @@ test("Final Extremity's fourth phase, Eternity: the same score in G sharp minor,
 
 test("the Self-Titled album lists Wandering Blade, a SaGa-style battle in C sharp minor that loops after its intro", async () => {
   const { SELF_TITLED } = await import("../src/components/games/self-titled-music.ts");
-  assert.deepEqual(ALBUMS.selftitled.map((t) => trackTitle(t, "en")), ["Battle: Wandering Blade"]);
+  assert.deepEqual(ALBUMS.selftitled.map((t) => trackTitle(t, "en")), ["Battle: Wandering Blade", "Battle: Sanctum of Thorns"]);
   assert.equal(trackTitle(ALBUMS.selftitled[0], "ms"), "Pertempuran: Pedang Pengembara");
   const song = SELF_TITLED["self:battle1"];
   assert.equal(song.bpm, 160);
@@ -342,4 +342,16 @@ test("the Self-Titled album lists Wandering Blade, a SaGa-style battle in C shar
   assert.equal(song.bars[4][1], "C#m", "the hook starts on the tonic");
   const seconds = song.bars.reduce((t, b) => t + b[0].trim().split(/\s+/).length, 0) * 60 / song.bpm / 4;
   assert.ok(seconds > 130 && seconds < 160, `${seconds} s`);
+});
+
+test("Sanctum of Thorns opens on the piano alone, loops at the organ's theme, and runs close to three minutes", async () => {
+  const { SELF_TITLED } = await import("../src/components/games/self-titled-music.ts");
+  const song = SELF_TITLED["self:battle2"];
+  assert.equal(song.bpm, 140);
+  assert.ok(song.bars.slice(0, 4).every((b) => b[2] === "rest16"), "the ostinato alone first");
+  assert.equal(song.intro, 12);
+  assert.equal(song.bars[12][1], "Am");
+  assert.deepEqual(song.bars.slice(82, 90), song.bars.slice(12, 20), "the theme comes back whole");
+  const seconds = song.bars.reduce((t, b) => t + b[0].trim().split(/\s+/).length, 0) * 60 / song.bpm / 4;
+  assert.ok(seconds > 150 && seconds < 180, `${seconds} s`);
 });

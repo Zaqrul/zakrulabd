@@ -170,6 +170,7 @@ export const SPACE2_ALTERNATE_TRACKS: Track[] = SPACE2_ALL.filter((track) => !tr
 /* Self-Titled: tunes written for the player alone, each in the manner of a reference the owner chose. */
 export const SELF_TITLED_TRACKS: Track[] = [
   { album: "selftitled", engine: "self:battle1", title: BATTLE("Wandering Blade", "Pedang Pengembara") },
+  { album: "selftitled", engine: "self:battle2", title: BATTLE("Sanctum of Thorns", "Tempat Suci Berduri") },
 ];
 
 export const SPACE3_TRACKS: Track[] = [
