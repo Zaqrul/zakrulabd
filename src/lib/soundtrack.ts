@@ -167,14 +167,12 @@ export const SPACE2_ALTERNATE_TRACKS: Track[] = SPACE2_ALL.filter((track) => !tr
 ]);
 
 /* Space 3: run-and-gun fusion with an orchestral-rock heart. So far the tunes for chapter 1. */
-/* Self-Titled: original tunes and alternate arrangements of the owner's supplied MIDI files. */
+/* Self-Titled: tunes written for the player alone, each in the manner of a reference the owner chose. */
 export const SELF_TITLED_TRACKS: Track[] = [
   { album: "selftitled", engine: "self:battle1", title: BATTLE("Wandering Blade", "Pedang Pengembara") },
   { album: "selftitled", engine: "self:battle2", title: BATTLE("Sanctum of Thorns", "Tempat Suci Berduri") },
   { album: "selftitled", engine: "self:battle3", title: BATTLE("Banner of Embers", "Panji Bara") },
   { album: "selftitled", engine: "self:battle4", title: BATTLE("Choir of Shadows", "Koir Bayang") },
-  { album: "selftitled", engine: "self:steel-rebellion", title: S("Steel Rebellion (Romancing SaGa 2 Alternate)", "Pemberontakan Keluli (Alternatif Romancing SaGa 2)") },
-  { album: "selftitled", engine: "self:glass-cathedral", title: S("Glass Cathedral (Seymour Battle Alternate)", "Katedral Kaca (Alternatif Seymour Battle)") },
 ];
 
 export const SPACE3_TRACKS: Track[] = [

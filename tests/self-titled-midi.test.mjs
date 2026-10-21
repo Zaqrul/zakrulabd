@@ -7,7 +7,7 @@ import * as phrases from "../src/components/games/self-titled-midi-phrases.ts";
 import { ALBUMS, trackTitle } from "../src/lib/soundtrack.ts";
 
 test("Self-Titled lists both MIDI-shaped battles in the player and studio alongside its other songs", () => {
-  assert.deepEqual(ALBUMS.selftitled.map((t) => t.engine), Object.keys(SELF_TITLED));
+  assert.deepEqual(ALBUMS.selftitled.map((t) => t.engine).sort(), Object.keys(SELF_TITLED).sort());
   for (const [id, song] of Object.entries(MIDI_ALTERNATES)) {
     const track = ALBUMS.selftitled.find((t) => t.engine === id);
     assert.ok(trackTitle(track, "en").startsWith("Battle: ") && !/alternate|saga|seymour/i.test(trackTitle(track, "en")), "a title of its own");
@@ -43,9 +43,9 @@ test("arrangements preserve space for the piano introduction and use a shorter m
   const song = MIDI_ALTERNATES["self:battle4"];
   assert.ok(song.bars.slice(48, 56).every((b) => b[0].split(" ").length === 14));
   assert.ok(song.performance.slice(48, 56).every((p) => p.kit.split(" ").length === 14));
-  assert.equal(song.sections.find((s) => s.from === 56).lead, "brass");
-  assert.equal(MIDI_ALTERNATES["self:battle3"].sections.find((s) => s.from === 4).lead, "trumpet", "the hook on the trumpet");
-  assert.equal(MIDI_ALTERNATES["self:battle3"].sections.find((s) => s.from === 52).lead, "trumpet");
+  assert.equal(song.sections.find((s) => s.from === 56).lead, "superSquare", "the pulse again on the super square");
+  assert.equal(MIDI_ALTERNATES["self:battle3"].sections.find((s) => s.from === 4).lead, "square", "the hook on the square, as Throne of Ascension, Extended plays its own");
+  assert.equal(MIDI_ALTERNATES["self:battle3"].sections.find((s) => s.from === 52).lead, "square");
   assert.equal(song.sections.find((s) => s.from === 24).lead, "brass", "the G minor answer on the brass");
 });
 

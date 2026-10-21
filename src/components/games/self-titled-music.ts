@@ -1,5 +1,7 @@
-/* The Self-Titled album plays on Space 2's band (space2-music.ts). The first two tunes use new notes in the manner
-   of the owner's references (docs/composition-method.md); MIDI_ALTERNATES adds arrangements of supplied melodies.
+/* The Self-Titled album: tunes written for the soundtrack player alone, each in the manner of a reference the owner
+   chose, its notes all new (docs/composition-method.md). They play on Space 2's band (space2-music.ts) as Throne of
+   Ascension, Extended does: the square over the saw lead, the piano running sixteenths, the trumpet, the violin, the
+   bells and a picked bass. Banner of Embers and Choir of Shadows are in self-titled-midi-alternates.ts.
    - Wandering Blade, a battle in the manner of a 16-bit SaGa battle theme: C sharp minor at 160 bpm. Two trumpets'
      worth of brass holding long notes over strings that never stop running in sixteenths and a slapped bass driving
      eighths; a hook that holds the third and turns down to a pickup in threes; a half-time section where the strings
@@ -144,25 +146,25 @@ const KITS: Record<number, string> = {
 const HIT_BARS = new Set([AT.c, AT.c + 1, AT.c + 2, AT.c + 3, AT.c2, AT.c2 + 1, AT.c2 + 2, AT.c2 + 3]);
 
 const WANDERING_BLADE: Song = {
-  bpm: 160, lead: "trumpet", layer: "brass", pad: "strings", counter: "strings", drums: "battle", bassVoice: "slap", riff: "drive16", intro: 4,
+  bpm: 160, lead: "square", layer: "lead", pad: "strings", counter: "piano", drums: "battle", bassVoice: "picked", riff: "drive16", intro: 4,
   fills: [3, AT.a2 - 1, AT.b - 1, AT.c - 1, AT.guitar - 1, AT.violin - 1, AT.interlude - 1, AT.a3 - 1, AT.b2 - 1, AT.c2 - 1, BARS.length - 1],
   crashes: [AT.a, AT.a2, AT.b, AT.c, AT.runs, AT.guitar, AT.violin, AT.a3, AT.b2, AT.c2, AT.runs2, AT.a4],
   riser: [AT.interlude + 6, AT.interlude + 7],
   sections: [
-    { from: 0, lead: "trumpet", layer: undefined, pad: undefined, drums: "toms", stabs: false },
+    { from: 0, lead: "piano", layer: undefined, pad: undefined, drums: "toms", stabs: false },
     { from: AT.a },
-    { from: AT.b, lead: "strings", layer: "violin", pad: "organ", counter: "brass", drums: "march" },
-    { from: AT.c, lead: "brass", layer: "trumpet", pad: undefined, stabs: true },
-    { from: AT.runs, lead: "strings", layer: "guitar", pad: undefined, counter: undefined, stabs: false },
+    { from: AT.b, lead: "superSquare", layer: "strings", pad: "organ", counter: "piano", drums: "march" },
+    { from: AT.c, lead: "brass", layer: "square", pad: undefined, stabs: true },
+    { from: AT.runs, lead: "piano", layer: "square", pad: undefined, counter: undefined, stabs: false },
     { from: AT.brk, lead: "brass", layer: undefined, pad: undefined, counter: undefined, drums: "toms", stabs: false },
-    { from: AT.guitar, lead: "guitar", layer: undefined, pad: "organ" },
+    { from: AT.guitar, lead: "square", layer: "chip", pad: "organ" },
     { from: AT.violin, lead: "violin", layer: undefined, pad: "strings" },
-    { from: AT.interlude, lead: "bell", layer: "strings", pad: "harp", counter: "organ", drums: "soft", bassVoice: "picked" },
-    { from: AT.a3, lead: "superSquare", layer: "trumpet", stabs: true },
-    { from: AT.b2, lead: "brass", layer: "strings", pad: "organ", counter: "violin", drums: "march" },
-    { from: AT.c2, lead: "brass", layer: "superSquare", pad: undefined, stabs: true },
-    { from: AT.runs2, lead: "strings", layer: "guitar", pad: undefined, counter: undefined, stabs: false },
-    { from: AT.a4, lead: "trumpet", layer: "brass", stabs: true },
+    { from: AT.interlude, lead: "bell", layer: "strings", pad: "strings", counter: "piano", drums: "soft" },
+    { from: AT.a3, lead: "superSquare", layer: "chip", counter: "piano", stabs: true },
+    { from: AT.b2, lead: "trumpet", layer: "strings", pad: "strings", counter: "piano", drums: "march" },
+    { from: AT.c2, lead: "brass", layer: "square", pad: undefined, stabs: true },
+    { from: AT.runs2, lead: "piano", layer: "square", pad: undefined, counter: undefined, stabs: false },
+    { from: AT.a4, lead: "square", layer: "brass", counter: "piano", stabs: true },
   ],
   bars: BARS,
   performance: BARS.map((_, i): BarPerformance => (KITS[i] ? { kit: KITS[i], ...(HIT_BARS.has(i) ? { gate: 0.55 } : {}) } : {})),
@@ -322,18 +324,18 @@ const SANCTUM_OF_THORNS: Song = {
   sections: [
     { from: 0, lead: "piano", layer: undefined, pad: undefined, counter: "piano", drums: "none", stabs: false },
     { from: 4, lead: "piano", layer: undefined, pad: "organ", counter: "piano", drums: "none", stabs: false },
-    { from: ST.theme, lead: "organ", layer: "strings", pad: "strings", counter: "piano" },
-    { from: ST.pedal, lead: "piano", layer: "organ", pad: "strings", counter: undefined, drums: "march" },
-    { from: ST.minor3, lead: "brass", layer: "organ", pad: "strings", stabs: true },
-    { from: ST.minor3 + 4, lead: "piano", layer: "organ", pad: "strings", stabs: false },
-    { from: ST.trade, lead: "piano", layer: "organ", pad: "organ", counter: "brass", stabs: true },
+    { from: ST.theme, lead: "square", layer: "lead", pad: "strings", counter: "piano" },
+    { from: ST.pedal, lead: "piano", layer: "square", pad: "organ", counter: undefined, drums: "march" },
+    { from: ST.minor3, lead: "brass", layer: "square", pad: "strings", stabs: true },
+    { from: ST.minor3 + 4, lead: "piano", layer: "square", pad: "strings", stabs: false },
+    { from: ST.trade, lead: "piano", layer: "square", pad: "organ", counter: "brass", stabs: true },
     { from: ST.pulse, lead: "brass", layer: "strings", pad: undefined, counter: "piano", stabs: false },
-    { from: ST.chain, lead: "organ", layer: "piano", pad: "strings", counter: undefined, stabs: false },
+    { from: ST.chain, lead: "organ", layer: "square", pad: "strings", counter: undefined, stabs: false },
     { from: ST.held, lead: "bell", layer: "strings", pad: "organ", counter: "strings", drums: "none", stabs: false },
-    { from: ST.push, lead: "brass", layer: "organ", pad: undefined, counter: undefined, stabs: true, bassVoice: "picked" },
-    { from: ST.gsharp, lead: "strings", layer: "violin", pad: "organ", stabs: false },
-    { from: ST.theme2, lead: "organ", layer: "brass", pad: "strings", counter: "piano", stabs: true },
-    { from: ST.coda, lead: "piano", layer: "organ", pad: "organ", counter: "brass", stabs: false },
+    { from: ST.push, lead: "brass", layer: "square", pad: undefined, counter: undefined, stabs: true, bassVoice: "picked" },
+    { from: ST.gsharp, lead: "violin", layer: "strings", pad: "organ", stabs: false },
+    { from: ST.theme2, lead: "superSquare", layer: "brass", pad: "strings", counter: "piano", stabs: true },
+    { from: ST.coda, lead: "piano", layer: "square", pad: "organ", counter: "brass", stabs: false },
   ],
   bars: S_PARTS.map(([bar]) => bar),
   performance: S_PARTS.map(([, perf]) => perf ?? {}),

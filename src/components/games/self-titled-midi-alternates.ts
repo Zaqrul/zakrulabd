@@ -63,11 +63,11 @@ steel.add([...RS_INTRO,
   bass: ["B2 - - - - - - - A2 - - - - - - -", "G2 - - - - - - - F#2 - - - - - - -", pushBass(47), pedal(42)], kit: TOMS,
 });
 const RS_CHORDS = ["Bm", "Bm", "Bm", "Bm", "Gmaj7", "A", "Bm", "Bm", "Bm", "Bm", "Bm", "Bm", "Gmaj7", "A", "Bm", "F#7"];
-steel.add(RS_HOOK, RS_CHORDS, { lead: "trumpet", layer: "brass", pad: "strings", counter: "strings", drums: "battle", bassVoice: "slap" }, {
+steel.add(RS_HOOK, RS_CHORDS, { lead: "square", layer: "lead", pad: "strings", counter: "piano", drums: "battle", bassVoice: "picked" }, {
   counter: RS_ANSWERS, bass: RS_BASS, kit: DRIVE,
 });
 const STRING_CHORDS = ["G", "G", "Am7", "D", "G", "G", "A", "B7", "E", "F#7", "G", "Bm"];
-steel.add(RS_STRINGS, STRING_CHORDS, { lead: "violin", layer: "strings", pad: "organ", counter: "piano", drums: "soft", bassVoice: "picked" }, {
+steel.add(RS_STRINGS, STRING_CHORDS, { lead: "violin", layer: "strings", pad: "organ", counter: "piano", drums: "soft", bassVoice: "synth" }, {
   counter: RS_INNER, riff: "hold16", kit: HALF, gate: 0.98, accent: 0.82,
 });
 steel.add([
@@ -75,7 +75,7 @@ steel.add([
   "B4 - . . D5 - . . F#5 - . . . . . .",
   "B4 . . B4 . . D5 . F#5 . . E5 . . D5 .",
   "C#5 - - - A#4 - - - F#4 . A#4 C#5 E5 F#5 A#5 C#6",
-], ["Bm", "G", "Em", "F#7"], { lead: "brass", layer: "trumpet", pad: undefined, counter: undefined, drums: "toms", bassVoice: "slap" }, {
+], ["Bm", "G", "Em", "F#7"], { lead: "brass", layer: "square", pad: undefined, counter: undefined, drums: "toms", bassVoice: "picked" }, {
   bass: [pushBass(47), pushBass(43), pushBass(40), pushBass(42)], kit: TOMS,
 });
 steel.add([
@@ -87,7 +87,7 @@ steel.add([
   "G5 F#5 E5 D5 E5 G5 B5 A5 G5 - F#5 E5 D5 - B4 -",
   "E5 F#5 G5 A5 B5 A5 G5 F#5 E5 D5 C#5 B4 A4 - G4 -",
   "A#4 C#5 E5 F#5 A#5 G5 F#5 E5 C#5 - A#4 - F#4 - . .",
-], ["Bm", "D", "G", "A", "Bm", "G", "Em", "F#7"], { lead: "guitar", layer: undefined, pad: undefined, counter: "organ", drums: "battle", bassVoice: "picked" }, {
+], ["Bm", "D", "G", "A", "Bm", "G", "Em", "F#7"], { lead: "superSquare", layer: "chip", pad: undefined, counter: "organ", drums: "battle", bassVoice: "picked" }, {
   bass: [pushBass(47), pushBass(38), pushBass(43), pushBass(45), pushBass(47), pushBass(43), pushBass(40), pushBass(42)], kit: DRIVE,
 });
 steel.add([
@@ -99,13 +99,13 @@ steel.add([
   "E5 - - - - - F#5 - G5 - - - B5 - A5 -",
   "G5 - - - F#5 - E5 - D5 - - - C#5 - B4 -",
   "A#4 - - - - - - - C#5 - - - . . . .",
-], ["Dmaj7", "A", "Bm", "F#m", "Gmaj7", "Em7", "G", "F#7"], { lead: "bell", layer: undefined, pad: "strings", counter: "piano", drums: "none", bassVoice: "picked" }, {
+], ["Dmaj7", "A", "Bm", "F#m", "Gmaj7", "Em7", "G", "F#7"], { lead: "bell", layer: "strings", pad: "strings", counter: "piano", drums: "none", bassVoice: "picked" }, {
   counter: ["A3 - - - - - - - F#4 - - - - - - -", "E4 - - - - - - - C#4 - - - - - - -"], riff: "hold16", gate: 0.98, accent: 0.72,
 });
-steel.add(RS_HOOK.map((line, i) => i >= 8 ? octave(line, 1) : line), RS_CHORDS, { lead: "trumpet", layer: "brass", pad: "strings", counter: "strings", drums: "battle", bassVoice: "slap" }, {
+steel.add(RS_HOOK.map((line, i) => i >= 8 ? octave(line, 1) : line), RS_CHORDS, { lead: "square", layer: "brass", pad: "strings", counter: "piano", drums: "battle", bassVoice: "picked" }, {
   counter: RS_ANSWERS, bass: RS_BASS, kit: ROCK, accent: 0.94,
 });
-steel.add(RS_STRINGS, STRING_CHORDS, { lead: "brass", layer: "violin", pad: "organ", counter: "strings", drums: "battle", bassVoice: "picked" }, {
+steel.add(RS_STRINGS, STRING_CHORDS, { lead: "trumpet", layer: "strings", pad: "organ", counter: "piano", drums: "battle", bassVoice: "picked" }, {
   counter: RS_INNER, kit: DRIVE, gate: 0.96,
 });
 steel.add([
@@ -113,10 +113,10 @@ steel.add([
   "D5 - - - F#5 - - - E5 - - - D5 - - -",
   "G5 - - - F#5 - E5 - C#5 - - - A#4 - - -",
   "F#5 - - - - - - - E5 D5 C#5 B4 A#4 - . .",
-], ["Bm", "G", "F#7", "F#7"], { lead: "trumpet", layer: "brass", pad: "strings", counter: undefined, drums: "battle", bassVoice: "slap" }, { kit: ROCK });
+], ["Bm", "G", "F#7", "F#7"], { lead: "square", layer: "brass", pad: "strings", counter: undefined, drums: "battle", bassVoice: "picked" }, { kit: ROCK });
 
 const BANNER_OF_EMBERS: Song = {
-  bpm: 166, lead: "trumpet", counterLevel: 0.045, bassVoice: "slap", drums: "battle", riff: "drive16", intro: 4,
+  bpm: 166, lead: "square", counterLevel: 0.045, bassVoice: "picked", drums: "battle", riff: "drive16", intro: 4,
   bars: steel.bars, performance: steel.performance, sections: steel.sections, crashes: steel.crashes, riser: [50, 51],
 };
 
@@ -137,10 +137,10 @@ glass.add([
 ], ["Em", "Em7", "C", "B7"], { lead: "organ", layer: undefined, pad: undefined, counter: undefined, drums: "toms", bassVoice: "synth" }, {
   bass: [pedal(40), pedal(40), pedal(36), pedal(35)], kit: TOMS,
 });
-glass.add(SEY_PULSE, ["Em7"], { lead: "organ", layer: "piano", pad: "strings", counter: undefined, drums: "battle", bassVoice: "synth" }, {
+glass.add(SEY_PULSE, ["Em7"], { lead: "square", layer: "organ", pad: "strings", counter: undefined, drums: "battle", bassVoice: "picked" }, {
   bass: SEY_BASS.slice(0, 8), kit: MOTOR, gate: 0.83,
 });
-glass.add(SEY_MINOR_THIRD, ["Gm7"], { lead: "brass", layer: "organ", pad: "strings", counter: undefined, drums: "battle", bassVoice: "picked" }, {
+glass.add(SEY_MINOR_THIRD, ["Gm7"], { lead: "brass", layer: "square", pad: "strings", counter: undefined, drums: "battle", bassVoice: "picked" }, {
   bass: SEY_BASS.slice(8), kit: ROCK, gate: 0.88,
 });
 glass.add([...SEY_CASCADE, ...SEY_CHROMATIC, ...SEY_CASCADE, ...SEY_CHROMATIC], ["Em", "Em", "F7", "F7"], {
@@ -173,7 +173,7 @@ glass.add([
 ], ["Em", "Em7", "F", "B7", "Em", "Gm", "B7", "B7"], { lead: "organ", layer: undefined, pad: undefined, counter: undefined, drums: "battle", bassVoice: "synth" }, {
   kit: SEVEN, riff: "seven14", gate: 0.78,
 });
-glass.add(SEY_PULSE.map((line) => octave(line, 1)), ["Em7"], { lead: "brass", layer: "organ", pad: "strings", counter: undefined, drums: "battle", bassVoice: "synth" }, {
+glass.add(SEY_PULSE.map((line) => octave(line, 1)), ["Em7"], { lead: "superSquare", layer: "brass", pad: "strings", counter: undefined, drums: "battle", bassVoice: "picked" }, {
   bass: SEY_BASS.slice(0, 8), kit: MOTOR, gate: 0.88, accent: 0.9,
 });
 glass.add(SEY_MINOR_THIRD.map((line) => octave(line, 1)), ["Gm7"], { lead: "violin", layer: "brass", pad: "organ", counter: undefined, drums: "battle", bassVoice: "picked" }, {
