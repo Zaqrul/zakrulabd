@@ -18,7 +18,7 @@ export const BAR = PPQ * 4;
 
 export type StudioNote = { pitch: number; start: number; len: number; vel: number };
 export type Channel = { id: string; name: string; voice: StudioVoice; volume: number; pan: number; mute: boolean; solo: boolean; insert: number; stepPitch: number };
-export type Pattern = { id: string; name: string; notes: Record<string, StudioNote[]> };
+export type Pattern = { id: string; name: string; bars?: number; notes: Record<string, StudioNote[]> };
 export type Clip = { id: string; pattern: string; lane: number; start: number };
 export const EFFECTS = ["eq", "filter", "comp", "dist", "delay", "reverb"] as const;
 export type EffectKind = (typeof EFFECTS)[number];
@@ -26,6 +26,7 @@ export type Effect = { id: string; kind: EffectKind; on: boolean; params: Record
 export type Insert = { id: string; name: string; volume: number; pan: number; mute: boolean; effects: Effect[] };
 export type StudioSong = {
   version: 2;
+  name?: string;
   bpm: number;
   /* The time signature: beats to the bar, and the note that gets the beat (4 or 8). */
   beats: number;
@@ -120,13 +121,46 @@ type V1Song = { bpm: number; tracks: { name: string; voice: StudioVoice; volume:
 /* A song as saved: this version, or the first studio's tracks, which become channels in one pattern. */
 export function migrate(raw: unknown): StudioSong | null {
   const s = raw as Partial<StudioSong> & Partial<V1Song>;
-  if (s?.version === 2 && Array.isArray(s.channels) && Array.isArray(s.patterns) && Array.isArray(s.mixer)) return s as StudioSong;
+  if (s?.version === 2) return validSong(raw) ? raw : null;
   if (Array.isArray(s?.tracks) && s.bpm) {
-    const song = songFromParts(s.bpm, s.tracks.map((t) => ({ name: t.name, voice: t.voice, notes: t.notes })));
-    song.channels.forEach((c, i) => { c.volume = s.tracks![i].volume; c.mute = s.tracks![i].mute; c.solo = s.tracks![i].solo; });
-    return song;
+    if (!s.tracks.every((t) => t && typeof t.name === "string" && STUDIO_VOICES.includes(t.voice) && Array.isArray(t.notes))) return null;
+    try {
+      const song = songFromParts(s.bpm, s.tracks.map((t) => ({ name: t.name, voice: t.voice, notes: t.notes })));
+      song.channels.forEach((c, i) => { c.volume = s.tracks![i].volume; c.mute = s.tracks![i].mute; c.solo = s.tracks![i].solo; });
+      return validSong(song) ? song : null;
+    } catch { return null; }
   }
   return null;
+}
+
+/* Validate file imports and browser saves before any editor or audio code sees them. */
+export function validSong(raw: unknown): raw is StudioSong {
+  const obj = (v: unknown): v is Record<string, unknown> => !!v && typeof v === "object" && !Array.isArray(v);
+  const num = (v: unknown, lo: number, hi: number) => typeof v === "number" && Number.isFinite(v) && v >= lo && v <= hi;
+  const integer = (v: unknown, lo: number, hi: number) => num(v, lo, hi) && Number.isInteger(v);
+  const named = (v: unknown) => obj(v) && typeof v.id === "string" && v.id.length > 0 && typeof v.name === "string";
+  if (!obj(raw) || raw.version !== 2 || !num(raw.bpm, 30, 300) || !integer(raw.beats, 1, 16) || ![4, 8].includes(raw.unit as number)) return false;
+  if (raw.name !== undefined && typeof raw.name !== "string") return false;
+  if (!Array.isArray(raw.channels) || !Array.isArray(raw.patterns) || !raw.patterns.length || !Array.isArray(raw.mixer) || !raw.mixer.length || !Array.isArray(raw.playlist)) return false;
+  const unique = (list: unknown[]) => list.every(named) && new Set(list.map((v) => (v as { id: string }).id)).size === list.length;
+  if (![raw.channels, raw.patterns, raw.mixer].every(unique)) return false;
+  const channelIds = new Set(raw.channels.map((c) => c.id)), patternIds = new Set(raw.patterns.map((p) => p.id));
+  const inserts = raw.mixer.length;
+  if (!raw.channels.every((c) => STUDIO_VOICES.includes(c.voice) && num(c.volume, 0, 1.5) && num(c.pan, -1, 1) && typeof c.mute === "boolean" && typeof c.solo === "boolean" && integer(c.insert, 0, inserts - 1) && integer(c.stepPitch, 0, 127))) return false;
+  if (!raw.mixer.every((m) => num(m.volume, 0, 1.5) && num(m.pan, -1, 1) && typeof m.mute === "boolean" && Array.isArray(m.effects) && m.effects.every((f: unknown) => {
+    if (!obj(f) || typeof f.id !== "string" || !EFFECTS.includes(f.kind as EffectKind) || typeof f.on !== "boolean" || !obj(f.params)) return false;
+    const params = f.params;
+    return EFFECT_PARAMS[f.kind as EffectKind].every((p) => num(params[p.key], p.min, p.max));
+  }) && new Set(m.effects.map((f: Effect) => f.id)).size === m.effects.length)) return false;
+  if (!raw.patterns.every((p) => obj(p.notes) && (p.bars === undefined || integer(p.bars, 1, 1024)) && Object.entries(p.notes).every(([id, notes]) => channelIds.has(id) && Array.isArray(notes) && notes.every((n) => obj(n) && integer(n.pitch, 0, 127) && num(n.start, 0, Number.MAX_SAFE_INTEGER) && num(n.len, 1, Number.MAX_SAFE_INTEGER) && num(n.vel, 0, 1.5))))) return false;
+  return raw.playlist.every((c) => obj(c) && typeof c.id === "string" && patternIds.has(c.pattern) && integer(c.lane, 0, 15) && num(c.start, 0, Number.MAX_SAFE_INTEGER)) && new Set(raw.playlist.map((c) => c.id)).size === raw.playlist.length;
+}
+
+/** Move note starts toward the grid; preserve durations and expressive velocities. */
+export function quantizeNotes(notes: StudioNote[], grid: number, strength = 1): StudioNote[] {
+  if (!Number.isFinite(grid) || grid <= 0) return notes;
+  const amount = Math.max(0, Math.min(1, strength));
+  return sortNotes(notes.map((n) => ({ ...n, start: Math.max(0, Math.round(n.start + (Math.round(n.start / grid) * grid - n.start) * amount)) })));
 }
 
 export const sortNotes = (notes: StudioNote[]) => notes.slice().sort((a, b) => a.start - b.start || a.pitch - b.pitch);
@@ -137,7 +171,7 @@ export function patternLength(song: StudioSong, pattern: Pattern | undefined) {
   if (!pattern) return bar;
   let end = 0;
   for (const notes of Object.values(pattern.notes)) for (const n of notes) end = Math.max(end, n.start + n.len);
-  return Math.max(bar, Math.ceil(end / bar) * bar);
+  return Math.max(bar * (pattern.bars ?? 1), Math.ceil(end / bar) * bar);
 }
 
 /* The playlist ends with its last clip, in whole bars (at least one). */

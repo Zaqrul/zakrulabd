@@ -211,7 +211,7 @@ export function PianoRoll({
     const gridH = view.current.height - LANE_H;
     e.currentTarget.setPointerCapture(e.pointerId);
     if (e.button === 1) { drag.current = { kind: "pan", x: e.clientX, y: e.clientY, scrollX: view.current.scrollX, scrollY: view.current.scrollY }; return; }
-    if (py >= gridH) { drag.current = { kind: "velocity" }; setVelocity(px, py); return; }
+    if (py >= gridH) { onNotes(notesRef.current, true); drag.current = { kind: "velocity" }; setVelocity(px, py); return; }
     if (py < RULER_H) return;
     if (px < KEYS_W) { audition(pitch); return; }
     const list = notesRef.current, i = hit(tick, pitch);

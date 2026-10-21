@@ -45,8 +45,8 @@ export function Mixer({
   const setEffects = (effects: Insert["effects"], record = true) => onInsert(selected, { effects }, record);
 
   return (
-    <div className="flex h-full min-h-0 gap-3">
-      <div className="flex min-w-0 flex-1 gap-1.5 overflow-x-auto rounded-xl bg-white/5 p-2 ring-1 ring-white/10">
+    <div className="flex min-h-0 flex-col gap-3 overflow-y-auto md:h-full md:flex-row">
+      <div className="flex min-h-72 min-w-0 flex-1 shrink-0 gap-1.5 overflow-x-auto rounded-xl bg-white/5 p-2 ring-1 ring-white/10 md:min-h-0">
         {song.mixer.map((m, i) => (
           <div key={m.id} onClick={() => onSelect(i)} className={`flex w-20 shrink-0 cursor-pointer flex-col items-center gap-1.5 rounded-lg p-1.5 ring-1 ${i === selected ? "bg-white/10 ring-amber-400" : "ring-white/5 hover:bg-white/5"} ${i === 0 ? "mr-2" : ""}`}>
             <span className="font-mono text-[10px] text-slate-400">{i === 0 ? "MASTER" : `INS ${i}`}</span>
@@ -79,7 +79,7 @@ export function Mixer({
         </button>
       </div>
 
-      <div className="flex w-72 shrink-0 flex-col gap-2 overflow-y-auto rounded-xl bg-white/5 p-2 ring-1 ring-white/10">
+      <div className="flex max-h-64 w-full shrink-0 flex-col gap-2 overflow-y-auto rounded-xl bg-white/5 p-2 ring-1 ring-white/10 md:max-h-none md:w-72">
         <p className="text-[12px] font-extrabold text-white">{selected === 0 ? "Master" : `Insert ${selected}`}: {insert.name}</p>
         {insert.effects.map((fx, k) => (
           <div key={fx.id} className={`flex flex-col gap-1.5 rounded-lg bg-black/25 p-2 ring-1 ring-white/10 ${fx.on ? "" : "opacity-50"}`}>

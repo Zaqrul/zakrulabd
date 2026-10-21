@@ -3,7 +3,7 @@
    each insert runs its chain of effects, then its fader, pan and meter, into the master insert, and the master into
    the soundtrack player's mastering. The same graph is built on an offline context to render the song to a file. */
 import type { SagaMusic } from "@/components/games/space2-music";
-import { PPQ, flatten, patternLength, songLength, type Effect, type StudioNote, type StudioSong } from "@/lib/studio";
+import { PPQ, beatTicks, flatten, patternLength, songLength, type Effect, type StudioNote, type StudioSong } from "@/lib/studio";
 
 type Engine = typeof SagaMusic;
 type FxNodes = { input: AudioNode; output: AudioNode; set: (p: Record<string, number>) => void };
@@ -222,9 +222,14 @@ export class StudioEngine {
   private notes = new Map<string, StudioNote[]>();
   private loop: [number, number] | null = null;
   private end = 0;
+  metronome = false;
+  private output: AudioNode;
+  private live = new Map<string, () => void>();
+  private clicks = new Set<OscillatorNode>();
+  private onEnd?: () => void;
 
   private constructor(ctx: AudioContext, input: AudioNode, Engine: Engine, song: StudioSong) {
-    this.ctx = ctx; this.Engine = Engine; this.song = song;
+    this.ctx = ctx; this.Engine = Engine; this.song = song; this.output = input;
     this.graph = new StudioGraph(ctx, input, Engine);
   }
 
@@ -241,6 +246,7 @@ export class StudioEngine {
   }
 
   get playing() { return !!this.run; }
+  get countingIn() { return !!this.run && this.ctx.currentTime < this.run.t0; }
 
   /* The song as it now is, and what the transport plays of it: the whole playlist (with an optional loop), or one
      pattern over and over. A change of tempo while playing carries on from where the music is. */
@@ -252,7 +258,7 @@ export class StudioEngine {
     this.end = pattern ? patternLength(song, song.patterns.find((p) => p.id === pattern)) : songLength(song);
     this.loop = pattern ? [0, this.end] : loop;
     this.graph.sync(song);
-    if (retime) this.play(at);
+    if (retime) this.play(at, this.onEnd);
   }
 
   async resume() { if (this.ctx.state === "suspended") await this.ctx.resume(); }
@@ -261,6 +267,32 @@ export class StudioEngine {
     const c = this.song.channels.find((x) => x.id === channelId);
     if (!c) return;
     this.graph.channel(c.id, c.insert).synth.note(c.voice, pitch, this.ctx.currentTime + 0.005, dur, vel);
+  }
+
+  noteOn(channelId: string, pitch: number, velocity: number) {
+    const key = `${channelId}:${pitch}`;
+    this.live.get(key)?.();
+    const c = this.song.channels.find((x) => x.id === channelId);
+    if (!c) return;
+    this.live.set(key, this.graph.channel(c.id, c.insert).synth.holdNote(c.voice, pitch, velocity));
+  }
+
+  noteOff(channelId: string, pitch: number) {
+    const key = `${channelId}:${pitch}`;
+    this.live.get(key)?.(); this.live.delete(key);
+  }
+
+  releaseKeys() { for (const release of this.live.values()) release(); this.live.clear(); }
+
+  private click(at: number, accent: boolean) {
+    const osc = this.ctx.createOscillator(), gain = this.ctx.createGain();
+    osc.frequency.value = accent ? 1400 : 950;
+    gain.gain.setValueAtTime(0.12, at);
+    gain.gain.exponentialRampToValueAtTime(0.0001, at + 0.035);
+    osc.connect(gain).connect(this.output);
+    this.clicks.add(osc);
+    osc.onended = () => { this.clicks.delete(osc); osc.disconnect(); gain.disconnect(); };
+    osc.start(at); osc.stop(at + 0.04);
   }
 
   private wrap(v: number) {
@@ -274,12 +306,15 @@ export class StudioEngine {
     return r ? this.wrap(r.from + Math.max(0, this.ctx.currentTime - r.t0) / r.spt) : 0;
   }
 
-  play(from = 0, onEnd?: () => void) {
+  play(from = 0, onEnd?: () => void, countIn = 0) {
     this.stop();
+    this.onEnd = onEnd;
     const l = this.loop;
     let start = Math.max(0, from);
     if (l && (start < l[0] || start >= l[1])) start = l[0];
-    const state = { timer: 0 as unknown as ReturnType<typeof setInterval>, t0: this.ctx.currentTime + 0.06, from: start, cursor: start, spt: 60 / this.song.bpm / PPQ };
+    const spt = 60 / this.song.bpm / PPQ, beat = beatTicks(this.song), begin = this.ctx.currentTime + 0.06;
+    const state = { timer: 0 as unknown as ReturnType<typeof setInterval>, t0: begin + countIn * beat * spt, from: start, cursor: start, spt };
+    for (let i = 0; i < countIn; i++) this.click(begin + i * beat * spt, i === 0);
     const tick = () => {
       const target = state.from + (this.ctx.currentTime + 0.15 - state.t0) / state.spt;
       let v = state.cursor;
@@ -290,6 +325,10 @@ export class StudioEngine {
         if (span <= 0) break;
         const base = v - r;
         queue(this.graph, this.song, this.notes, r, r + span, (t) => state.t0 + (base + t - state.from) * state.spt, state.spt);
+        if (this.metronome) {
+          const beat = beatTicks(this.song);
+          for (let b = Math.ceil(r / beat) * beat; b < r + span; b += beat) this.click(state.t0 + (base + b - state.from) * state.spt, Math.round(b / beat) % this.song.beats === 0);
+        }
         v += span;
       }
       state.cursor = v;
@@ -301,6 +340,9 @@ export class StudioEngine {
   }
 
   stop() {
+    this.releaseKeys();
+    for (const osc of this.clicks) { try { osc.stop(); } catch { /* already ended */ } }
+    this.clicks.clear();
     if (!this.run) return;
     clearInterval(this.run.timer);
     this.run = null;

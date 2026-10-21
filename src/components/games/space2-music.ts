@@ -1279,6 +1279,7 @@ export class SagaMusic {
   private impulse: AudioBuffer | null = null;
   /* Which part of the score the next voice plays, for the studio's score() only. */
   private part = "";
+  private heldSources: AudioScheduledSourceNode[] | null = null;
 
   /* What belongs to the audio context (noise, the reverb's impulse, the organ's wave), made once, and then a
      mixer for the tune about to play. */
@@ -1362,6 +1363,30 @@ export class SagaMusic {
     if (voice === "drums") this.drum(GM_KIT[midi] ?? "r", at, velocity);
     else if (voice === "synthBass" || voice === "pickedBass" || voice === "slapBass") this.bass(midi, at, dur, voice === "synthBass" ? "synth" : voice === "pickedBass" ? "picked" : "slap");
     else this.voice(voice, midi, at, dur, (voice === "bell" ? 0.13 : voice === "organ" ? 0.09 : 0.11) * velocity);
+  }
+
+  /* A live key uses the same instruments, with an independent release gate. Sources are stopped on key-up,
+     including the vibrato, so a held voice never leaves long-lived oscillators running behind the mixer. */
+  holdNote(voice: StudioVoice, midi: number, velocity = 1): () => void {
+    const ctx = this.ctx!, bus = this.bus!, gate = ctx.createGain();
+    gate.gain.value = velocity;
+    gate.connect(bus);
+    const sources: AudioScheduledSourceNode[] = [];
+    this.bus = gate;
+    this.heldSources = sources;
+    try { this.note(voice, midi, ctx.currentTime + 0.005, 3600, 1); }
+    finally { this.bus = bus; this.heldSources = null; }
+    let released = false;
+    return () => {
+      if (released) return;
+      released = true;
+      const at = ctx.currentTime;
+      gate.gain.cancelScheduledValues(at);
+      gate.gain.setValueAtTime(gate.gain.value, at);
+      gate.gain.linearRampToValueAtTime(0, at + 0.04);
+      for (const source of sources) { try { source.stop(at + 0.05); } catch { /* already ended */ } }
+      setTimeout(() => { gate.disconnect(); for (const source of sources) source.disconnect(); }, 100);
+    };
   }
 
   /* Records a tune on an offline context, scheduling a chunk of the score at a time so no one moment builds thousands of nodes. */
@@ -1515,6 +1540,7 @@ export class SagaMusic {
 
   private osc(type: OscillatorType | PeriodicWave, f: number, detune: number, at: number, end: number, to: AudioNode) {
     const o = this.ctx!.createOscillator();
+    this.heldSources?.push(o);
     if (typeof type === "string") o.type = type as OscillatorType;
     else o.setPeriodicWave(type);
     o.frequency.setValueAtTime(f, at);
@@ -1529,6 +1555,7 @@ export class SagaMusic {
   private vibrato(at: number, end: number, delay: number, cents: number, targets: OscillatorNode[]) {
     if (end - at <= delay) return;
     const ctx = this.ctx!, lfo = ctx.createOscillator(), depth = ctx.createGain();
+    this.heldSources?.push(lfo);
     lfo.frequency.value = 5.6;
     depth.gain.setValueAtTime(0, at);
     depth.gain.linearRampToValueAtTime(cents, at + delay + 0.1);
@@ -1765,6 +1792,7 @@ export class SagaMusic {
 
   private noiseHit(at: number, len: number, level: number, type: BiquadFilterType, f: number) {
     const ctx = this.ctx!, src = ctx.createBufferSource(), filter = ctx.createBiquadFilter(), g = ctx.createGain();
+    this.heldSources?.push(src);
     src.buffer = this.noise;
     filter.type = type;
     filter.frequency.value = f;
@@ -1779,6 +1807,7 @@ export class SagaMusic {
     const ctx = this.ctx!;
     const thump = (from: number, to: number, len: number, level: number, type: OscillatorType) => {
       const o = ctx.createOscillator(), g = ctx.createGain();
+      this.heldSources?.push(o);
       o.type = type;
       o.frequency.setValueAtTime(from, at);
       o.frequency.exponentialRampToValueAtTime(to, at + len * 0.6);

@@ -2,13 +2,58 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import {
   BAR, SIXTEENTH, barTicks, emptySong, encodeWav, flatten, fromMidi, migrate, newPattern, parseMidi, patternLength, songFromParts, songLength,
-  toMidi, trackerLines, uid, voiceFor,
+  toMidi, trackerLines, uid, voiceFor, quantizeNotes, validSong, newEffect,
 } from "../src/lib/studio.ts";
 
 const parts = [
   { name: "Lead", voice: "square", notes: [{ pitch: 64, start: 0, len: SIXTEENTH * 3, vel: 0.8 }, { pitch: 71, start: SIXTEENTH * 3, len: SIXTEENTH * 3, vel: 1 }] },
   { name: "Kit", voice: "drums", notes: [{ pitch: 36, start: 0, len: SIXTEENTH, vel: 1 }, { pitch: 38, start: SIXTEENTH * 4, len: SIXTEENTH, vel: 1 }] },
 ];
+
+test("project files preserve names, patterns, routing and effects and reject broken references", () => {
+  const song = emptySong();
+  song.name = "Battle theme";
+  song.patterns[0].bars = 8;
+  song.mixer[1].effects.push(newEffect("delay"));
+  assert.deepEqual(migrate(JSON.parse(JSON.stringify(song))), song);
+  for (const mutate of [
+    (s) => { delete s.playlist; },
+    (s) => { s.patterns = []; },
+    (s) => { s.channels[0].insert = 99; },
+    (s) => { s.playlist[0].pattern = "missing"; },
+    (s) => { s.channels[0].pan = NaN; },
+    (s) => { s.patterns[0].notes.missing = []; },
+    (s) => { s.patterns[0].notes[s.channels[0].id] = [{pitch: 128, start: 0, len: 24, vel: 1}]; },
+    (s) => { s.mixer[1].effects[0].params.feedback = 1.5; },
+    (s) => { s.patterns[0].bars = -1; },
+    (s) => { s.channels[1].id = s.channels[0].id; },
+  ]) {
+    const broken = structuredClone(song); mutate(broken);
+    assert.equal(validSong(broken), false);
+    assert.equal(migrate(broken), null);
+  }
+  assert.equal(migrate({version:2,channels:[],patterns:[],mixer:[]}), null);
+});
+
+test("quantize strength moves starts toward a grid, preserving durations, chords and velocities", () => {
+  const notes = [{pitch:64,start:17,len:37,vel:0.43}, {pitch:60,start:5,len:23,vel:0.81}, {pitch:67,start:17,len:48,vel:1}];
+  const original = structuredClone(notes);
+  const full = quantizeNotes(notes, 24);
+  assert.deepEqual(full.map((n) => n.start), [0,24,24]);
+  assert.deepEqual(quantizeNotes(notes, 24, 0.5).map((n) => n.start), [3,21,21]);
+  assert.deepEqual(full.map((n) => [n.pitch,n.len,n.vel]), [[60,23,0.81],[64,37,0.43],[67,48,1]]);
+  assert.deepEqual(notes, original, "the undo snapshot is not mutated");
+  assert.equal(quantizeNotes(notes, 0), notes);
+});
+
+test("explicit pattern bars keep trailing silence without truncating longer notes", () => {
+  const song = songFromParts(140, parts), pattern = song.patterns[0];
+  pattern.bars = 8;
+  assert.equal(patternLength(song, pattern), BAR * 8);
+  assert.equal(songLength(song), BAR * 8);
+  pattern.notes[song.channels[0].id].push({pitch:60,start:BAR*9,len:24,vel:1});
+  assert.equal(patternLength(song, pattern), BAR * 10);
+});
 
 test("a song written as MIDI reads back with the same tempo, meter, notes and kit channel", () => {
   const song = { ...songFromParts(152, parts), beats: 7, unit: 8 };

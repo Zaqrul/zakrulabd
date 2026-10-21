@@ -40,7 +40,15 @@ const TYPING: Record<string, number> = {
 type View = "playlist" | "rack" | "piano" | "mixer";
 
 function loadSong(): StudioSong {
-  try { const raw = localStorage.getItem(STORE); const song = raw ? migrate(JSON.parse(raw)) : null; if (song) return song; } catch {}
+  try {
+    const raw = localStorage.getItem(STORE);
+    if (raw) {
+      let song: StudioSong | null = null;
+      try { song = migrate(JSON.parse(raw)); } catch { /* preserve the original below */ }
+      if (song) return song;
+      localStorage.setItem(`${STORE}-recovery`, raw);
+    }
+  } catch {}
   return emptySong();
 }
 const download = (data: Uint8Array, name: string, type: string) => {
@@ -58,11 +66,13 @@ export function StudioView() {
   const [patternId, setPatternId] = useState(() => song.patterns[0]?.id ?? "");
   const [channelId, setChannelId] = useState(() => song.channels[0]?.id ?? "");
   const [insertIndex, setInsertIndex] = useState(1);
-  const [snap, setSnap] = useState(SIXTEENTH);
+  const [snapChoice, setSnapChoice] = useState("1/16");
+  const snap = snapChoice === "Beat" ? beatTicks(song) : snapChoice === "Bar" ? barTicks(song) : SNAPS.find((s) => s.label === snapChoice)!.ticks;
   const [zoom, setZoom] = useState(1);
   const [listZoom, setListZoom] = useState(1);
   const [loop, setLoop] = useState<[number, number] | null>(null);
   const [playing, setPlaying] = useState(false);
+  const [countingIn, setCountingIn] = useState(false);
   const [recording, setRecording] = useState(false);
   const [metronome, setMetronome] = useState(false);
   const [countIn, setCountIn] = useState(true);
@@ -118,12 +128,16 @@ export function StudioView() {
   /* ---- Sound ---- */
   const engine = useRef<StudioEngine | null>(null);
   const loading = useRef<Promise<StudioEngine> | null>(null);
+  const engineVersion = useRef(0);
   const transportRequest = useRef(0);
   const finishKeys = useRef<() => void>(() => {});
   const ensure = useCallback(async () => {
+    const version = engineVersion.current;
     if (!engine.current) {
       loading.current ??= import("@/components/studio/engine").then(({ StudioEngine: Engine }) => Engine.create(songRef.current, master)).catch((err) => { loading.current = null; throw err; });
-      engine.current = await loading.current;
+      const ready = await loading.current;
+      if (version !== engineVersion.current) { ready.close(); throw new Error("Studio was closed."); }
+      engine.current = ready;
     }
     await engine.current.resume();
     return engine.current;
@@ -131,7 +145,7 @@ export function StudioView() {
   const target = mode === "pattern" ? pattern?.id : undefined;
   useEffect(() => { if (engine.current) engine.current.metronome = metronome; }, [metronome]);
   useEffect(() => { engine.current?.update(song, target, loop); }, [song, target, loop]);
-  useEffect(() => () => { engine.current?.close(); engine.current = null; }, []);
+  useEffect(() => () => { engineVersion.current++; engine.current?.close(); engine.current = null; loading.current = null; }, []);
 
   const audition = useCallback(async (id: string, pitch: number) => {
     try {
@@ -141,7 +155,7 @@ export function StudioView() {
     } catch (err) { setStatus(`Could not start audio: ${(err as Error).message}`); }
   }, [ensure, target, loop]);
 
-  const stop = useCallback(() => { transportRequest.current++; finishKeys.current(); engine.current?.stop(); setPlaying(false); setPosition(seek.current); }, []);
+  const stop = useCallback(() => { transportRequest.current++; finishKeys.current(); engine.current?.stop(); setPlaying(false); setCountingIn(false); setPosition(seek.current); }, []);
   const play = useCallback(async () => {
     const request = ++transportRequest.current;
     try {
@@ -150,13 +164,14 @@ export function StudioView() {
       finishKeys.current();
       e.update(songRef.current, target, loop);
       e.metronome = metronome;
-      e.play(mode === "pattern" ? 0 : seek.current, () => { finishKeys.current(); setPlaying(false); seek.current = 0; setPosition(0); }, recording && countIn ? songRef.current.beats : 0);
+      e.play(mode === "pattern" ? 0 : seek.current, () => { finishKeys.current(); setPlaying(false); setCountingIn(false); seek.current = 0; setPosition(0); }, recording && countIn ? songRef.current.beats : 0);
+      setCountingIn(recording && countIn);
       setPlaying(true);
     } catch (err) { setStatus(`Could not start audio: ${(err as Error).message}`); }
   }, [ensure, target, loop, mode, metronome, recording, countIn]);
   useEffect(() => {
     if (!playing) return;
-    const timer = setInterval(() => setPosition(engine.current?.position() ?? 0), 120);
+    const timer = setInterval(() => { setPosition(engine.current?.position() ?? 0); setCountingIn(engine.current?.countingIn ?? false); }, 120);
     return () => clearInterval(timer);
   }, [playing]);
 
@@ -253,6 +268,15 @@ export function StudioView() {
   }, [noteOff]);
 
   const midiMessage = useRef<(data: Uint8Array | null) => void>(() => {});
+  const midiAccess = useRef<MIDIAccess | null>(null);
+  useEffect(() => () => {
+    transportRequest.current++;
+    held.current.clear();
+    if (midiAccess.current) {
+      midiAccess.current.onstatechange = null;
+      for (const input of midiAccess.current.inputs.values()) input.onmidimessage = null;
+    }
+  }, []);
   useEffect(() => {
     midiMessage.current = (data) => {
       if (!data || data.length < 3) return;
@@ -266,12 +290,17 @@ export function StudioView() {
     if (!nav.requestMIDIAccess) { setStatus("This browser has no Web MIDI (try Chrome or Edge)."); return; }
     try {
       const access = await nav.requestMIDIAccess();
-      const inputs = [...access.inputs.values()];
-      if (!inputs.length) { setStatus("No MIDI keyboard found. Plug one in and press again."); return; }
-      for (const input of inputs) input.onmidimessage = (msg) => midiMessage.current(msg.data);
-      const names = inputs.map((i) => i.name ?? "MIDI").join(", ");
-      setMidiIn(names);
-      setStatus(`MIDI in: ${names}`);
+      midiAccess.current = access;
+      const sync = () => {
+        finishKeys.current();
+        const inputs = [...access.inputs.values()].filter((input) => input.state === "connected");
+        for (const input of inputs) input.onmidimessage = (msg) => midiMessage.current(msg.data);
+        const names = inputs.map((i) => i.name ?? "MIDI").join(", ");
+        setMidiIn(names || null);
+        setStatus(names ? `MIDI in: ${names}` : "No MIDI keyboard found. Plug one in to connect.");
+      };
+      access.onstatechange = sync;
+      sync();
     } catch { setStatus("MIDI access was refused."); }
   };
 
@@ -371,7 +400,7 @@ export function StudioView() {
   };
 
   return (
-    <section aria-label="Studio" className="rise-in flex h-[calc(100dvh-10rem)] min-h-[560px] w-full flex-col gap-2"
+    <section aria-label="Studio" className="rise-in flex min-h-[560px] w-full flex-col gap-2 md:h-[calc(100dvh-10rem)]"
       onFocusCapture={(e) => { if (e.target instanceof HTMLInputElement) gesture.current = { recorded: false }; }}
       onPointerDownCapture={(e) => { if (e.target instanceof HTMLInputElement) gesture.current = { recorded: false }; }}
       onBlurCapture={() => { gesture.current = null; }}>
@@ -386,12 +415,12 @@ export function StudioView() {
         <button type="button" aria-label={playing ? "Stop" : "Play"} title="Play / stop (Space)" onClick={() => (playing ? stop() : void play())} className={`${iconButton} ${playing ? on : ""}`}>
           {playing ? <TbPlayerStopFilled className="h-4 w-4" /> : <TbPlayerPlayFilled className="h-4 w-4" />}
         </button>
-        <button type="button" aria-label="Record" aria-pressed={recording} title="Record what you play into the open pattern while it plays" onClick={() => setRecording((r) => !r)} className={`${iconButton} ${recording ? "bg-rose-500 text-white hover:bg-rose-400" : ""}`}>
+        <button type="button" aria-label="Record" aria-pressed={recording} title="Record what you play into the open pattern while it plays" onClick={() => { finishKeys.current(); setRecording((r) => !r); }} className={`${iconButton} ${recording ? "bg-rose-500 text-white hover:bg-rose-400" : ""}`}>
           <TbPlayerRecordFilled className="h-4 w-4" />
         </button>
         <button type="button" aria-pressed={metronome} onClick={() => setMetronome((v) => !v)} className={`${button} ${metronome ? on : ""}`}>Metronome</button>
         <label className="flex items-center gap-1 text-xs text-slate-300"><input type="checkbox" checked={countIn} onChange={(e) => setCountIn(e.target.checked)} />Count-in</label>
-        <span className="min-w-18 rounded-lg bg-black/40 px-2.5 py-1.5 text-center font-mono text-[12.5px] tabular-nums text-amber-400" aria-label="Position">{where}</span>
+        <span className="min-w-18 rounded-lg bg-black/40 px-2.5 py-1.5 text-center font-mono text-[12.5px] tabular-nums text-amber-400" aria-label="Position">{countingIn ? "Count-in" : where}</span>
         <label className="flex items-center gap-1 text-[11px] font-bold text-slate-300">BPM
           <input type="number" min={30} max={300} value={song.bpm} onChange={(e) => { const v = Number(e.target.value); if (v >= 30 && v <= 300) setSong((s) => ({ ...s, bpm: v }), false); }} className={`${field} w-16`} />
         </label>
@@ -404,7 +433,7 @@ export function StudioView() {
         </label>
         <label className="flex items-center gap-1 text-[11px] font-bold text-slate-300" title="Snap">
           <TbMagnet className="h-4 w-4" />
-          <select value={snap} onChange={(e) => setSnap(Number(e.target.value))} className={field}>{SNAPS.map((s) => <option key={s.label} value={s.ticks} className="bg-navy">{s.label}</option>)}</select>
+          <select aria-label="Snap grid" value={snapChoice} onChange={(e) => setSnapChoice(e.target.value)} className={field}>{SNAPS.map((s) => <option key={s.label} value={s.label} className="bg-navy">{s.label}</option>)}</select>
         </label>
         <span className="mx-1 h-6 w-px bg-white/15" />
         <span className="h-3 w-3 rounded-sm" style={{ background: COLORS[Math.max(0, song.patterns.findIndex((p) => p.id === pattern?.id)) % COLORS.length] }} />
@@ -470,7 +499,7 @@ export function StudioView() {
       </div>}
 
       {/* The windows. */}
-      <div role="tablist" aria-label="Studio views" className="flex gap-1">
+      <div role="tablist" aria-label="Studio views" className="flex flex-wrap gap-1">
         {tabs.map((t) => (
           <button key={t.id} type="button" role="tab" aria-selected={view === t.id} onClick={() => setView(t.id)} className={`flex items-center gap-1.5 rounded-t-lg px-3 py-1.5 text-[12px] font-bold ${view === t.id ? "bg-white/10 text-white" : "text-slate-400 hover:text-white"}`}>
             {t.label}<span className="font-mono text-[10px] text-slate-500">{t.key}</span>
@@ -479,7 +508,7 @@ export function StudioView() {
         {view === "piano" && channel && pattern && <span className="ml-2 self-center text-[11.5px] text-slate-400">{channel.name} in {pattern.name}</span>}
       </div>
 
-      <div className="min-h-0 flex-1">
+      <div className="min-h-64 flex-1 md:min-h-0">
         {view === "playlist" && pattern && (
           <Playlist
             song={song}
