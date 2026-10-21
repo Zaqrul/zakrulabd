@@ -18,6 +18,7 @@ import { BOSS_SONGS, DREADNOUGHT_LAST, DREADNOUGHT_RUSH } from "./space-boss-mus
 import { BATTLE_BB, BATTLE_D, BATTLE_G, CROSSING, LANTERN, LAST_LIGHT, RIVAL, WANDERER } from "./space-bonus-music.ts";
 import { CODEX_SPACE_1 } from "./space-codex-music.ts";
 import { MORE_BATTLES, type MoreBattle } from "./space-battles-more.ts";
+import type { Score, ScorePart } from "./space2-music.ts";
 
 export type NesTrack =
   | "stage" | "stage2" | "stage3" | MoreBattle | "hangar" | "hangar2" | "hangar3" | "title" | "alert" | "alert2" | "alert3"
@@ -404,6 +405,9 @@ const LOOKAHEAD = 0.3;
 const FADE_OUT = 0.25;
 const TICK_MS = 25;
 
+/* The noise kit as General MIDI drum notes, for the studio. */
+const NOISE_GM: Record<string, number> = { k: 36, s: 38, h: 42, o: 46, c: 49 };
+
 export class NesMusic {
   private ctx: AudioContext | null = null;
   private out: AudioNode | null = null;
@@ -571,6 +575,24 @@ export class NesMusic {
     let shift = 24;
     while (shift > -12 && Math.max(...up) + shift >= plan.low[b]) shift -= 12;
     return up.map((m) => m + shift);
+  }
+
+  /* A tune as the notes it plays, for the studio to open (space2-music.ts has the same for Space 2): the score run
+     through playStep once with the sound replaced by a list. Pulse 1 (the lead) and pulse 2 play on the band's chip,
+     the triangle bass on the picked bass, and the noise kit on the drums. */
+  static score(track: NesTrack): Score {
+    const song = SONGS[track], plan = PLANS[track], stepSec = 60 / song.bpm / 4;
+    const parts = new Map<string, ScorePart>();
+    const add = (name: string, voice: ScorePart["voice"], pitch: number, at: number, dur: number, vel: number) => {
+      if (!parts.has(name)) parts.set(name, { name, voice, notes: [] });
+      parts.get(name)!.notes.push({ pitch, step: at / stepSec, steps: Math.max(0.25, dur / stepSec), vel });
+    };
+    const m = new NesMusic();
+    m.pulse = (_duty, midi, at, dur, level) => add(level === 0.075 ? "Pulse 1 (lead)" : "Pulse 2", "chip", midi, at, dur, level / 0.11);
+    m.triangle = (midi, at, dur) => add("Triangle (bass)", "pickedBass", midi, at, dur, 1);
+    m.drum = (kind, at) => add("Noise (drums)", "drums", NOISE_GM[kind] ?? 37, at, stepSec, 1);
+    for (let step = 0; step < song.bars.length * 16; step++) m.playStep(song, plan, step, step * stepSec, stepSec);
+    return { bpm: song.bpm, parts: [...parts.values()] };
   }
 
   private playStep(song: Song, plan: Plan, step: number, at: number, stepSec: number) {

@@ -8,13 +8,14 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   TbArrowBackUp, TbArrowForwardUp, TbCopy, TbDownload, TbFilePlus, TbMagnet, TbPlayerPlayFilled, TbPlayerSkipBackFilled,
-  TbPlayerStopFilled, TbPlus, TbRepeat, TbTrash, TbUpload, TbWand, TbZoomIn, TbZoomOut,
+  TbMusic, TbPlayerStopFilled, TbPlus, TbRepeat, TbTrash, TbUpload, TbWand, TbZoomIn, TbZoomOut,
 } from "react-icons/tb";
 import { master } from "@/components/soundtrack";
-import { STUDIO_VOICES, type SagaMusic, type StudioVoice } from "@/components/games/space2-music";
+import type { SagaMusic } from "@/components/games/space2-music";
+import { ALBUMS, trackTitle, type Album, type Track } from "@/lib/soundtrack";
 import {
-  BAR, PPQ, SIXTEENTH, emptySong, fromMidi, newTrack, noteName, parseMidi, songLength, toMidi, trackerLines,
-  type StudioNote, type StudioSong, type StudioTrack,
+  BAR, PPQ, SIXTEENTH, STUDIO_VOICES, emptySong, fromMidi, newTrack, noteName, parseMidi, songLength, toMidi, trackerLines,
+  type StudioNote, type StudioSong, type StudioTrack, type StudioVoice,
 } from "@/lib/studio";
 
 const STORE = "zakrul-studio-song";
@@ -29,6 +30,9 @@ const DRUM_NAMES: Record<number, string> = {
   45: "Tom mid", 46: "Hat open", 47: "Tom mid 2", 48: "Tom high", 49: "Crash", 50: "Tom high 2", 51: "Ride", 52: "China", 53: "Ride bell",
   55: "Splash", 57: "Crash 2", 59: "Ride 2",
 };
+const ALBUM_LABEL: Record<Album, string> = { space: "Space", space2: "Space 2", space2alt: "Space 2: Ascension", space3: "Space 3" };
+/* A tune's parts open in the order a score reads: the tune, its doubling and second line, the harmony, the bass, the kit. */
+const PART_ORDER = ["Lead", "Pulse 1", "Layer", "Counter", "Pulse 2", "Pad", "Stabs", "Bass", "Triangle", "Drums", "Noise"];
 const SNAPS = [{ label: "1/32", ticks: SIXTEENTH / 2 }, { label: "1/16", ticks: SIXTEENTH }, { label: "1/8", ticks: SIXTEENTH * 2 }, { label: "1/4", ticks: PPQ }, { label: "Bar", ticks: BAR }];
 
 /* The piano roll's geometry: the keyboard on the left, the ruler on top, a row per semitone. */
@@ -472,6 +476,36 @@ export function StudioView() {
     return () => window.removeEventListener("keydown", key);
   }, [play, stop, undo, redo]);
 
+  /* ---- From the soundtrack: a game's tune opened as tracks, each part of the score in its own voice. ---- */
+  const [picker, setPicker] = useState(false);
+  const [pickAlbum, setPickAlbum] = useState<Album>("space2alt");
+  const openTune = async (tune: Track) => {
+    const title = trackTitle(tune, "en");
+    setPicker(false);
+    setStatus(`Opening ${title}…`);
+    try {
+      const score = tune.album === "space"
+        ? (await import("@/components/games/space-music")).NesMusic.score(tune.engine)
+        : (await import("@/components/games/space2-music")).SagaMusic.score(tune.engine);
+      const rank = (name: string) => { const k = PART_ORDER.findIndex((part) => name.startsWith(part)); return k < 0 ? PART_ORDER.length : k; };
+      const next: StudioSong = {
+        bpm: score.bpm,
+        tracks: score.parts.slice().sort((a, b) => rank(a.name) - rank(b.name)).map((part) => ({
+          ...newTrack(part.name, part.voice),
+          notes: sortNotes(part.notes.map((n) => ({ pitch: n.pitch, start: Math.round(n.step * SIXTEENTH), len: Math.max(1, Math.round(n.steps * SIXTEENTH)), vel: Math.min(1.5, n.vel) }))),
+        })),
+      };
+      stop(true);
+      setSong(next);
+      setSelected(0);
+      playhead.current = 0;
+      setLoop(null);
+      setStatus(`Opened ${title} (${ALBUM_LABEL[tune.album]}): ${next.tracks.length} tracks, ${next.bpm} bpm, ${songLength(next) / BAR} bars. Ctrl+Z brings the last song back.`);
+    } catch (err) {
+      setStatus(`Could not open ${title}: ${(err as Error).message}`);
+    }
+  };
+
   /* ---- Files ---- */
   const fileInput = useRef<HTMLInputElement>(null);
   const importMidi = async (file: File) => {
@@ -518,7 +552,7 @@ export function StudioView() {
   return (
     <section aria-label="Studio" className="rise-in flex h-[calc(100dvh-10rem)] min-h-[520px] w-full flex-col gap-3">
       {/* Transport and files. */}
-      <div className="flex flex-wrap items-center gap-2">
+      <div className="relative flex flex-wrap items-center gap-2">
         <button type="button" aria-label={playing ? "Stop" : "Play"} title="Play / stop (Space)" onClick={() => (playing ? stop() : void play())} className={`${iconButton} ${playing ? "bg-amber-400 text-navy hover:bg-amber-300" : ""}`}>
           {playing ? <TbPlayerStopFilled className="h-4.5 w-4.5" /> : <TbPlayerPlayFilled className="h-4.5 w-4.5" />}
         </button>
@@ -547,10 +581,36 @@ export function StudioView() {
         <button type="button" aria-label="Redo" title="Redo (ctrl+Y)" onClick={redo} className={iconButton}><TbArrowForwardUp className="h-4 w-4" /></button>
         <span className="flex-1" />
         <button type="button" onClick={() => { stop(true); setSong(emptySong()); setSelected(0); setLoop(null); setStatus("New song. Ctrl+Z brings the last one back."); }} className={button}><TbFilePlus className="h-4 w-4" /> New</button>
+        <button type="button" aria-expanded={picker} onClick={() => setPicker((v) => !v)} className={`${button} ${picker ? "bg-amber-400 text-navy hover:bg-amber-300" : ""}`} title="Open a tune from the soundtrack">
+          <TbMusic className="h-4 w-4" /> Soundtrack
+        </button>
         <button type="button" onClick={() => fileInput.current?.click()} className={button}><TbUpload className="h-4 w-4" /> Import .mid</button>
         <input ref={fileInput} type="file" accept=".mid,.midi,audio/midi" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void importMidi(f); e.target.value = ""; }} />
         <button type="button" onClick={exportMidi} className={button}><TbDownload className="h-4 w-4" /> Export .mid</button>
         <button type="button" onClick={copyTracker} disabled={!track} className={button} title="Copy the selected track as the engine's tracker lines"><TbCopy className="h-4 w-4" /> Tracker</button>
+
+        {picker && (
+          <div role="dialog" aria-label="Open a tune from the soundtrack" className="absolute right-0 top-11 z-10 flex w-[min(26rem,100%)] flex-col gap-2 rounded-xl bg-navy p-3 shadow-2xl ring-1 ring-white/15">
+            <div role="tablist" className="flex flex-wrap gap-1">
+              {(Object.keys(ALBUMS) as Album[]).map((album) => (
+                <button key={album} type="button" role="tab" aria-selected={pickAlbum === album} onClick={() => setPickAlbum(album)} className={`rounded-lg px-2.5 py-1.5 text-[12px] font-bold ${pickAlbum === album ? "bg-amber-400 text-navy" : "bg-white/10 text-slate-200 hover:bg-white/20"}`}>
+                  {ALBUM_LABEL[album]}
+                </button>
+              ))}
+            </div>
+            <ol className="flex max-h-80 flex-col overflow-y-auto overscroll-contain">
+              {ALBUMS[pickAlbum].map((tune, i) => (
+                <li key={tune.engine}>
+                  <button type="button" onClick={() => void openTune(tune)} className="flex w-full items-baseline gap-2 rounded-lg px-2 py-1.5 text-left text-[13px] font-semibold text-white hover:bg-white/10">
+                    <span className="w-6 shrink-0 text-right font-mono text-[11px] text-slate-500">{i + 1}</span>
+                    <span className="min-w-0 flex-1 truncate">{trackTitle(tune, "en")}</span>
+                    {tune.bonus && <span className="text-[10.5px] font-bold uppercase text-amber-400">Bonus</span>}
+                  </button>
+                </li>
+              ))}
+            </ol>
+          </div>
+        )}
       </div>
 
       <div className="flex min-h-0 flex-1 gap-3">

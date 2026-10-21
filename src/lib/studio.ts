@@ -1,7 +1,12 @@
 /* The studio's song, and what goes in and out of it: Standard MIDI Files (read and written), and the engine's
    tracker lines (space2-music.ts), one string per bar, so a part written here can become a tune in a game. Time is
    counted in ticks of PPQ to the quarter note; a sixteenth is PPQ / 4. */
-import type { StudioVoice } from "@/components/games/space2-music";
+/* What a studio track can play: a voice of the Space 2 band, a bass, or the kit (space2-music.ts plays them). */
+export const STUDIO_VOICES = [
+  "piano", "brass", "trumpet", "strings", "violin", "lead", "square", "superSquare", "organ", "organChord", "bell", "harp", "chip", "guitar",
+  "synthBass", "pickedBass", "slapBass", "drums",
+] as const;
+export type StudioVoice = (typeof STUDIO_VOICES)[number];
 
 export const PPQ = 96;
 export const SIXTEENTH = PPQ / 4;

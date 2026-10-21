@@ -36,3 +36,26 @@ test("a track copies as the engine's tracker lines, one bar of sixteenths each",
   const chord = { ...newTrack("Pad", "strings"), notes: [{ pitch: 60, start: 0, len: BAR, vel: 1 }, { pitch: 67, start: 0, len: BAR, vel: 1 }, { pitch: 62, start: SIXTEENTH * 8, len: SIXTEENTH * 2, vel: 1 }] };
   assert.deepEqual(trackerLines(chord, BAR), ["G4 - - - - - - - D4 - . . . . . ."]);
 });
+
+test("every tune on the soundtrack opens in the studio as parts in the studio's voices", async () => {
+  const { ALBUMS } = await import("../src/lib/soundtrack.ts");
+  const { STUDIO_VOICES } = await import("../src/lib/studio.ts");
+  const { SagaMusic } = await import("../src/components/games/space2-music.ts");
+  const { NesMusic } = await import("../src/components/games/space-music.ts");
+  let tunes = 0;
+  for (const [album, list] of Object.entries(ALBUMS)) {
+    for (const tune of list) {
+      const score = album === "space" ? NesMusic.score(tune.engine) : SagaMusic.score(tune.engine);
+      assert.ok(score.bpm > 0 && score.parts.length > 0, `${tune.engine} has parts`);
+      for (const part of score.parts) {
+        assert.ok(STUDIO_VOICES.includes(part.voice), `${tune.engine}: ${part.name} plays ${part.voice}`);
+        assert.ok(part.notes.every((n) => n.step >= 0 && n.steps > 0 && n.pitch >= 0 && n.pitch <= 127), `${tune.engine}: ${part.name} notes are in range`);
+      }
+      tunes++;
+    }
+  }
+  assert.ok(tunes > 100, `${tunes} tunes`);
+  /* A Space 2 tune comes out in its band's parts. */
+  const throne = SagaMusic.score("alt:asc3").parts.map((p) => p.name);
+  for (const name of ["Lead (square)", "Layer (lead)", "Bass (synth)", "Drums"]) assert.ok(throne.includes(name), name);
+});

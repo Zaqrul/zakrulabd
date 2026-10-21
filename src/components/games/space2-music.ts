@@ -20,6 +20,9 @@ import { ASHEN_CROWN_III } from "./space2-ashen-crown-iii.ts";
 import { arrangeAscension } from "./space2-ascension.ts";
 import { ASCENSION_BONUS } from "./space2-ascension-bonus.ts";
 import { SPACE3_SONGS, type Space3Track } from "./space3-music.ts";
+import type { StudioVoice } from "../../lib/studio.ts";
+
+export type { StudioVoice };
 
 export type BaseSagaTrack =
   | "s2title" | "s2hangar" | "s2hangar2" | "s2hangar3" | "s2stage" | "s2stage2" | SecondBattle | "s2alert" | "s2alert2" | "s2alert3" | "s2pause" | "s2victory" | "s2gameover" | "s2ending" | "s2fanfare"
@@ -38,12 +41,11 @@ export type SagaTrack = BaseSagaTrack | AlternateSagaTrack | Space3Track;
 /* "square" is a second synth lead: a lean square wave that glides from one note into the next (portamento), spread a
    little; "superSquare" is the same with seven voices in unison and an octave below, spread wide. */
 type Voice = "brass" | "strings" | "lead" | "square" | "superSquare" | "organ" | "organChord" | "bell" | "harp" | "chip" | "trumpet" | "violin" | "guitar" | "piano";
-/* What a studio track can play: a voice of the band, a bass, or the kit. */
-export const STUDIO_VOICES = [
-  "piano", "brass", "trumpet", "strings", "violin", "lead", "square", "superSquare", "organ", "organChord", "bell", "harp", "chip", "guitar",
-  "synthBass", "pickedBass", "slapBass", "drums",
-] as const;
-export type StudioVoice = (typeof STUDIO_VOICES)[number];
+/* A tune as notes, for the studio: each part's notes in sixteenths from the start. */
+export type ScorePart = { name: string; voice: StudioVoice; notes: { pitch: number; step: number; steps: number; vel: number }[] };
+export type Score = { bpm: number; parts: ScorePart[] };
+/* The kit back to General MIDI notes. */
+export const KIT_GM: Record<string, number> = { k: 36, s: 38, h: 42, o: 46, r: 37, t: 45, c: 49 };
 /* General MIDI drum notes to the kit: kicks, snares, closed and open hats, toms, crashes and rides (and the rim for the rest). */
 const GM_KIT: Record<number, string> = {
   35: "k", 36: "k", 37: "r", 38: "s", 39: "s", 40: "s", 41: "t", 42: "h", 43: "t", 44: "h", 45: "t", 46: "o", 47: "t", 48: "t",
@@ -1274,6 +1276,8 @@ export class SagaMusic {
   /* The square lead's last note, which the next one glides from. */
   private lastSquare: { f: number; at: number; until: number } | null = null;
   private impulse: AudioBuffer | null = null;
+  /* Which part of the score the next voice plays, for the studio's score() only. */
+  private part = "";
 
   /* What belongs to the audio context (noise, the reverb's impulse, the organ's wave), made once, and then a
      mixer for the tune about to play. */
@@ -1325,6 +1329,26 @@ export class SagaMusic {
 
   get playing(): SagaTrack | null {
     return this.timer || this.source ? this.track : null;
+  }
+
+  /* A tune as the notes it plays, for the studio to open: the score is run through playStep once, start to end, with
+     the sound replaced by a list, so sections, arpeggios, harp pads, accents, gates, fills and crashes come out as the
+     game plays them. Each part (lead, layer, counter, pad, stabs) in each voice, the bass in each of its sounds, and the
+     kit become parts of their own; a velocity of 1 is the level the studio plays a voice at. */
+  static score(track: SagaTrack): Score {
+    const song = PLAYBACK_SONGS[track], plan = PLANS[track], stepSec = 60 / song.bpm / 4;
+    const parts = new Map<string, ScorePart>();
+    const add = (name: string, voice: StudioVoice, pitch: number, at: number, dur: number, vel: number) => {
+      if (!parts.has(name)) parts.set(name, { name, voice, notes: [] });
+      parts.get(name)!.notes.push({ pitch, step: at / stepSec, steps: Math.max(0.25, dur / stepSec), vel });
+    };
+    const m = new SagaMusic();
+    m.voice = (kind, midi, at, dur, level) => add(`${m.part} (${kind})`, kind, midi, at, dur, level / (kind === "bell" ? 0.13 : kind === "organ" ? 0.09 : 0.11));
+    m.bass = (midi, at, dur, kind = "synth") => add(`Bass (${kind})`, kind === "synth" ? "synthBass" : kind === "picked" ? "pickedBass" : "slapBass", midi, at, dur, 1);
+    m.drum = (kind, at, velocity = 1) => add("Drums", "drums", KIT_GM[kind] ?? 37, at, stepSec, velocity);
+    m.riser = () => {};
+    for (let step = 0; step < plan.steps; step++) m.playStep(song, plan, step, step * stepSec, stepSec);
+    return { bpm: song.bpm, parts: [...parts.values()] };
   }
 
   /* The studio (studio.tsx) plays one note at a time, each track on a mixer of its own: any voice of the band, one of
@@ -1780,6 +1804,7 @@ export class SagaMusic {
     const counter = plan.counter.get(step);
     /* A song with no counter voice plays its arpeggios on the chip; a section that sets the counter to undefined silences it. */
     const counterVoice = "counter" in song ? song.counter : "chip";
+    this.part = "Counter";
     if (counter && counterVoice) this.voice(counterVoice, counter.value, at, counter.len * stepSec * 0.8, song.counterLevel ?? 0.035);
 
     if (song.riser && pos === 0 && b === song.riser[0]) {
@@ -1791,11 +1816,14 @@ export class SagaMusic {
     const lead = plan.lead.get(step);
     if (lead) {
       const accent = performance?.leadAccents?.[pos] ?? 1, gate = performance?.gate ?? 0.95;
+      this.part = "Lead";
       this.voice(song.lead, lead.value, at, lead.len * stepSec * gate, (song.lead === "bell" ? 0.13 : song.lead === "organ" ? 0.09 : 0.11) * accent);
+      this.part = "Layer";
       if (song.layer) this.voice(song.layer, lead.value, at, lead.len * stepSec * gate, 0.05 * accent);
     }
 
     /* The pad holds the bar's chord from its first step to its last. */
+    this.part = "Pad";
     if (song.pad === "harp") {
       /* Up two octaves of the chord and back, an eighth at a time. */
       if (pos % 2 === 0) {
@@ -1803,6 +1831,7 @@ export class SagaMusic {
         this.voice("harp", chord.tones[k % chord.tones.length] + 12 * (1 + Math.floor(k / chord.tones.length)), at, stepSec * 2, 0.05);
       }
     } else if (pos === 0 && song.pad) for (const tone of chord.tones) this.voice(song.pad, tone + 12, at, n * stepSec, song.pad === "organ" ? 0.025 : 0.035);
+    this.part = "Stabs";
     if (song.stabs && STAB_AT[n].includes(pos)) for (const tone of chord.tones) this.voice("brass", tone + 12, at, stepSec * 1.5, 0.035);
 
     const bass = plan.bass[b].get(pos);
