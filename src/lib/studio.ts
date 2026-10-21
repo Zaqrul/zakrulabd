@@ -1,7 +1,10 @@
-/* The studio's song, and what goes in and out of it: Standard MIDI Files (read and written), and the engine's
-   tracker lines (space2-music.ts), one string per bar, so a part written here can become a tune in a game. Time is
-   counted in ticks of PPQ to the quarter note; a sixteenth is PPQ / 4. */
-/* What a studio track can play: a voice of the Space 2 band, a bass, or the kit (space2-music.ts plays them). */
+/* The studio's song, laid out as FL Studio lays one out: channels (each an instrument routed to a mixer insert),
+   patterns (each holding notes for any of the channels), and a playlist of pattern clips on lanes; a mixer of inserts,
+   each with a chain of effects, into the master. What goes in and out: Standard MIDI Files (read and written), and the
+   engine's tracker lines (space2-music.ts), one string per bar, so a part written here can become a tune in a game.
+   Time is counted in ticks of PPQ to the quarter note; a sixteenth is PPQ / 4. */
+
+/* What a channel can play: a voice of the Space 2 band, a bass, or the kit (space2-music.ts plays them). */
 export const STUDIO_VOICES = [
   "piano", "brass", "trumpet", "strings", "violin", "lead", "square", "superSquare", "organ", "organChord", "bell", "harp", "chip", "guitar",
   "synthBass", "pickedBass", "slapBass", "drums",
@@ -10,27 +13,157 @@ export type StudioVoice = (typeof STUDIO_VOICES)[number];
 
 export const PPQ = 96;
 export const SIXTEENTH = PPQ / 4;
+/* A bar of 4/4; a song's own bar follows its time signature (barTicks). */
 export const BAR = PPQ * 4;
 
 export type StudioNote = { pitch: number; start: number; len: number; vel: number };
-export type StudioTrack = { id: string; name: string; voice: StudioVoice; volume: number; mute: boolean; solo: boolean; notes: StudioNote[] };
-export type StudioSong = { bpm: number; tracks: StudioTrack[] };
+export type Channel = { id: string; name: string; voice: StudioVoice; volume: number; pan: number; mute: boolean; solo: boolean; insert: number; stepPitch: number };
+export type Pattern = { id: string; name: string; notes: Record<string, StudioNote[]> };
+export type Clip = { id: string; pattern: string; lane: number; start: number };
+export const EFFECTS = ["eq", "filter", "comp", "dist", "delay", "reverb"] as const;
+export type EffectKind = (typeof EFFECTS)[number];
+export type Effect = { id: string; kind: EffectKind; on: boolean; params: Record<string, number> };
+export type Insert = { id: string; name: string; volume: number; pan: number; mute: boolean; effects: Effect[] };
+export type StudioSong = {
+  version: 2;
+  bpm: number;
+  /* The time signature: beats to the bar, and the note that gets the beat (4 or 8). */
+  beats: number;
+  unit: 4 | 8;
+  channels: Channel[];
+  patterns: Pattern[];
+  playlist: Clip[];
+  /* Insert 0 is the master. */
+  mixer: Insert[];
+};
+
+/* Each effect's settings, with their ranges, for the mixer to draw and the engine to build. */
+export const EFFECT_PARAMS: Record<EffectKind, { key: string; label: string; min: number; max: number; step: number; value: number }[]> = {
+  eq: [
+    { key: "low", label: "Low", min: -15, max: 15, step: 0.5, value: 0 },
+    { key: "mid", label: "Mid", min: -15, max: 15, step: 0.5, value: 0 },
+    { key: "freq", label: "Mid Hz", min: 200, max: 5000, step: 10, value: 1000 },
+    { key: "high", label: "High", min: -15, max: 15, step: 0.5, value: 0 },
+  ],
+  filter: [
+    { key: "type", label: "LP/HP", min: 0, max: 1, step: 1, value: 0 },
+    { key: "cutoff", label: "Cutoff", min: 40, max: 18000, step: 10, value: 6000 },
+    { key: "q", label: "Res", min: 0.1, max: 18, step: 0.1, value: 0.7 },
+  ],
+  comp: [
+    { key: "threshold", label: "Thresh", min: -60, max: 0, step: 1, value: -18 },
+    { key: "ratio", label: "Ratio", min: 1, max: 20, step: 0.5, value: 4 },
+    { key: "attack", label: "Attack", min: 0.001, max: 0.3, step: 0.001, value: 0.01 },
+    { key: "release", label: "Release", min: 0.02, max: 1, step: 0.01, value: 0.2 },
+    { key: "makeup", label: "Gain dB", min: 0, max: 24, step: 0.5, value: 3 },
+  ],
+  dist: [
+    { key: "drive", label: "Drive", min: 0, max: 1, step: 0.01, value: 0.4 },
+    { key: "mix", label: "Mix", min: 0, max: 1, step: 0.01, value: 1 },
+  ],
+  delay: [
+    { key: "beats", label: "Beats", min: 0.125, max: 2, step: 0.125, value: 0.75 },
+    { key: "feedback", label: "Feedback", min: 0, max: 0.9, step: 0.01, value: 0.35 },
+    { key: "mix", label: "Mix", min: 0, max: 1, step: 0.01, value: 0.25 },
+  ],
+  reverb: [
+    { key: "decay", label: "Decay s", min: 0.3, max: 6, step: 0.1, value: 2 },
+    { key: "mix", label: "Mix", min: 0, max: 1, step: 0.01, value: 0.25 },
+  ],
+};
 
 let nextId = 0;
-export const trackId = () => `t${Date.now().toString(36)}${(nextId++).toString(36)}`;
+export const uid = (prefix = "x") => `${prefix}${Date.now().toString(36)}${(nextId++).toString(36)}`;
 
+export const barTicks = (song: Pick<StudioSong, "beats" | "unit">) => (song.beats * PPQ * 4) / song.unit;
+export const beatTicks = (song: Pick<StudioSong, "unit">) => (PPQ * 4) / song.unit;
+
+export function newChannel(name: string, voice: StudioVoice, insert: number, stepPitch = voice === "drums" ? 36 : 60): Channel {
+  return { id: uid("c"), name, voice, volume: 0.8, pan: 0, mute: false, solo: false, insert, stepPitch };
+}
+export function newInsert(name: string): Insert {
+  return { id: uid("i"), name, volume: 0.8, pan: 0, mute: false, effects: [] };
+}
+export function newEffect(kind: EffectKind): Effect {
+  return { id: uid("f"), kind, on: true, params: Object.fromEntries(EFFECT_PARAMS[kind].map((p) => [p.key, p.value])) };
+}
+export function newPattern(name: string): Pattern {
+  return { id: uid("p"), name, notes: {} };
+}
+
+/* A new song: a kick, snare and hat on the step sequencer, a bass and a lead, one pattern on the playlist. */
 export function emptySong(): StudioSong {
-  return { bpm: 140, tracks: [newTrack("Lead", "square"), newTrack("Bass", "pickedBass"), newTrack("Drums", "drums")] };
+  const names: [string, StudioVoice, number][] = [["Kick", "drums", 36], ["Snare", "drums", 38], ["Hat", "drums", 42], ["Bass", "pickedBass", 40], ["Lead", "square", 72]];
+  const channels = names.map(([name, voice, pitch], i) => newChannel(name, voice, i + 1, pitch));
+  const pattern = newPattern("Pattern 1");
+  return {
+    version: 2, bpm: 140, beats: 4, unit: 4, channels, patterns: [pattern],
+    playlist: [{ id: uid("k"), pattern: pattern.id, lane: 0, start: 0 }],
+    mixer: [newInsert("Master"), ...channels.map((c) => newInsert(c.name))],
+  };
 }
 
-export function newTrack(name: string, voice: StudioVoice): StudioTrack {
-  return { id: trackId(), name, voice, volume: 0.8, mute: false, solo: false, notes: [] };
+/* A song made of parts, each a channel on its own insert, all in one pattern placed once: what a MIDI file or a game
+   tune opens as. */
+export function songFromParts(bpm: number, parts: { name: string; voice: StudioVoice; notes: StudioNote[] }[]): StudioSong {
+  const channels = parts.map((p, i) => newChannel(p.name, p.voice, i + 1, p.notes[0]?.pitch ?? 60));
+  const pattern = newPattern("Song");
+  channels.forEach((c, i) => { pattern.notes[c.id] = sortNotes(parts[i].notes); });
+  return {
+    version: 2, bpm, beats: 4, unit: 4, channels, patterns: [pattern],
+    playlist: [{ id: uid("k"), pattern: pattern.id, lane: 0, start: 0 }],
+    mixer: [newInsert("Master"), ...channels.map((c) => newInsert(c.name))],
+  };
 }
 
-/* The end of the last note, rounded up to a whole bar (at least one). */
+type V1Song = { bpm: number; tracks: { name: string; voice: StudioVoice; volume: number; mute: boolean; solo: boolean; notes: StudioNote[] }[] };
+/* A song as saved: this version, or the first studio's tracks, which become channels in one pattern. */
+export function migrate(raw: unknown): StudioSong | null {
+  const s = raw as Partial<StudioSong> & Partial<V1Song>;
+  if (s?.version === 2 && Array.isArray(s.channels) && Array.isArray(s.patterns) && Array.isArray(s.mixer)) return s as StudioSong;
+  if (Array.isArray(s?.tracks) && s.bpm) {
+    const song = songFromParts(s.bpm, s.tracks.map((t) => ({ name: t.name, voice: t.voice, notes: t.notes })));
+    song.channels.forEach((c, i) => { c.volume = s.tracks![i].volume; c.mute = s.tracks![i].mute; c.solo = s.tracks![i].solo; });
+    return song;
+  }
+  return null;
+}
+
+export const sortNotes = (notes: StudioNote[]) => notes.slice().sort((a, b) => a.start - b.start || a.pitch - b.pitch);
+
+/* A pattern lasts to the end of its last note, in whole bars (at least one). */
+export function patternLength(song: StudioSong, pattern: Pattern | undefined) {
+  const bar = barTicks(song);
+  if (!pattern) return bar;
+  let end = 0;
+  for (const notes of Object.values(pattern.notes)) for (const n of notes) end = Math.max(end, n.start + n.len);
+  return Math.max(bar, Math.ceil(end / bar) * bar);
+}
+
+/* The playlist ends with its last clip, in whole bars (at least one). */
 export function songLength(song: StudioSong) {
-  const end = Math.max(0, ...song.tracks.flatMap((t) => t.notes.map((n) => n.start + n.len)));
-  return Math.max(BAR, Math.ceil(end / BAR) * BAR);
+  const bar = barTicks(song);
+  let end = 0;
+  for (const clip of song.playlist) end = Math.max(end, clip.start + patternLength(song, song.patterns.find((p) => p.id === clip.pattern)));
+  return Math.max(bar, Math.ceil(end / bar) * bar);
+}
+
+/* Every channel's notes as the playlist plays them, each clip's pattern placed at the clip, sorted. With `pattern`,
+   that pattern alone from the start (the pattern mode of FL's transport). */
+export function flatten(song: StudioSong, pattern?: string): Map<string, StudioNote[]> {
+  const out = new Map<string, StudioNote[]>(song.channels.map((c) => [c.id, []]));
+  const place = (p: Pattern, at: number) => {
+    const length = patternLength(song, p);
+    for (const [channel, notes] of Object.entries(p.notes)) {
+      const list = out.get(channel);
+      if (!list) continue;
+      for (const n of notes) if (n.start < length) list.push({ ...n, start: n.start + at });
+    }
+  };
+  if (pattern) { const p = song.patterns.find((x) => x.id === pattern); if (p) place(p, 0); }
+  else for (const clip of song.playlist) { const p = song.patterns.find((x) => x.id === clip.pattern); if (p) place(p, clip.start); }
+  for (const [id, notes] of out) out.set(id, sortNotes(notes));
+  return out;
 }
 
 /* ---- Standard MIDI Files ---- */
@@ -47,10 +180,10 @@ class Reader {
   get more() { return this.i < this.d.length; }
 }
 
-export type ParsedMidi = { bpm: number; tracks: { name: string; channel: number; program: number; notes: StudioNote[] }[] };
+export type ParsedMidi = { bpm: number; beats: number; unit: 4 | 8; tracks: { name: string; channel: number; program: number; notes: StudioNote[] }[] };
 
 /* Reads format 0 and 1 files: each track and channel with notes becomes a part, its ticks rescaled to PPQ. The first
-   tempo sets the song's; later tempo changes are not followed. */
+   tempo and time signature set the song's; later changes are not followed. */
 export function parseMidi(data: Uint8Array): ParsedMidi {
   const r = new Reader(data);
   if (r.text(4) !== "MThd") throw new Error("Not a MIDI file");
@@ -60,7 +193,7 @@ export function parseMidi(data: Uint8Array): ParsedMidi {
   r.i = 8 + headerLen;
   if (division & 0x8000) throw new Error("SMPTE time is not supported");
   const scale = PPQ / division;
-  let bpm = 120, tempoSet = false;
+  let bpm = 120, tempoSet = false, beats = 4, unit: 4 | 8 = 4, meterSet = false;
   const parts: ParsedMidi["tracks"] = [];
   for (let t = 0; t < count && r.more; t++) {
     if (r.text(4) !== "MTrk") throw new Error("Bad track chunk");
@@ -76,6 +209,7 @@ export function parseMidi(data: Uint8Array): ParsedMidi {
         const type = r.u8(), len = r.vlq(), at = r.i;
         if (type === 0x03 && !name) name = r.text(len).trim();
         if (type === 0x51 && !tempoSet) { bpm = Math.round(60_000_000 / ((data[at] << 16) | (data[at + 1] << 8) | data[at + 2])); tempoSet = true; }
+        if (type === 0x58 && !meterSet) { beats = Math.max(1, Math.min(16, data[at])); unit = 2 ** data[at + 1] === 8 ? 8 : 4; meterSet = true; }
         r.i = at + len;
         continue;
       }
@@ -98,12 +232,11 @@ export function parseMidi(data: Uint8Array): ParsedMidi {
     }
     r.i = end;
     for (const [ch, notes] of byChannel) {
-      notes.sort((x, y) => x.start - y.start || x.pitch - y.pitch);
       const label = name || `Track ${t + 1}`;
-      parts.push({ name: byChannel.size > 1 ? `${label} (ch ${ch + 1})` : label, channel: ch, program: programs[ch], notes });
+      parts.push({ name: byChannel.size > 1 ? `${label} (ch ${ch + 1})` : label, channel: ch, program: programs[ch], notes: sortNotes(notes) });
     }
   }
-  return { bpm: Math.min(300, Math.max(30, bpm)), tracks: parts };
+  return { bpm: Math.min(300, Math.max(30, bpm)), beats, unit, tracks: parts };
 }
 
 /* A General MIDI program to the nearest voice; channel 10 is the kit, and a low part is a bass whatever its program. */
@@ -126,10 +259,8 @@ export function voiceFor(program: number, channel: number, notes: StudioNote[]):
 }
 
 export function fromMidi(parsed: ParsedMidi): StudioSong {
-  return {
-    bpm: parsed.bpm,
-    tracks: parsed.tracks.map((p) => ({ ...newTrack(p.name, voiceFor(p.program, p.channel, p.notes)), notes: p.notes })),
-  };
+  const song = songFromParts(parsed.bpm, parsed.tracks.map((p) => ({ name: p.name, voice: voiceFor(p.program, p.channel, p.notes), notes: p.notes })));
+  return { ...song, beats: parsed.beats, unit: parsed.unit };
 }
 
 const PROGRAM: Partial<Record<StudioVoice, number>> = {
@@ -137,29 +268,31 @@ const PROGRAM: Partial<Record<StudioVoice, number>> = {
   strings: 48, trumpet: 56, brass: 61, lead: 81, square: 80, superSquare: 80, chip: 80,
 };
 
-/* Writes a format 1 file: a tempo track, then one track per studio track, each on its own channel (the kit on 10). */
+/* Writes a format 1 file of the playlist as it plays: a tempo track, then one track per channel, each on its own
+   channel (the kit on 10). */
 export function toMidi(song: StudioSong): Uint8Array {
   const out: number[] = [];
-  const push = (...b: number[]) => out.push(...b);
+  const push = (...b: number[]) => { for (const x of b) out.push(x); };
   const u32 = (v: number) => [(v >>> 24) & 255, (v >>> 16) & 255, (v >>> 8) & 255, v & 255];
   const vlq = (v: number) => { const b = [v & 0x7f]; while ((v >>= 7)) b.unshift((v & 0x7f) | 0x80); return b; };
-  const chunk = (body: number[]) => push(0x4d, 0x54, 0x72, 0x6b, ...u32(body.length), ...body);
+  const chunk = (body: number[]) => { push(0x4d, 0x54, 0x72, 0x6b, ...u32(body.length)); for (const x of body) out.push(x); };
   const text = (s: string) => Array.from(s.slice(0, 60)).map((c) => c.charCodeAt(0) & 0x7f);
-  push(0x4d, 0x54, 0x68, 0x64, ...u32(6), 0, 1, (song.tracks.length + 1) >> 8, (song.tracks.length + 1) & 255, PPQ >> 8, PPQ & 255);
+  const notes = flatten(song);
+  push(0x4d, 0x54, 0x68, 0x64, ...u32(6), 0, 1, (song.channels.length + 1) >> 8, (song.channels.length + 1) & 255, PPQ >> 8, PPQ & 255);
   const us = Math.round(60_000_000 / song.bpm);
-  chunk([0, 0xff, 0x51, 3, (us >> 16) & 255, (us >> 8) & 255, us & 255, 0, 0xff, 0x2f, 0]);
+  chunk([0, 0xff, 0x51, 3, (us >> 16) & 255, (us >> 8) & 255, us & 255, 0, 0xff, 0x58, 4, song.beats, song.unit === 8 ? 3 : 2, 24, 8, 0, 0xff, 0x2f, 0]);
   const melodic = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10, 11, 12, 13, 14, 15];
   let k = 0;
-  for (const track of song.tracks) {
-    const ch = track.voice === "drums" ? 9 : melodic[k++ % melodic.length];
+  for (const channel of song.channels) {
+    const ch = channel.voice === "drums" ? 9 : melodic[k++ % melodic.length];
     const events: [tick: number, bytes: number[]][] = [];
-    for (const n of track.notes) {
+    for (const n of notes.get(channel.id) ?? []) {
       const vel = Math.max(1, Math.min(127, Math.round(n.vel * 127)));
       events.push([n.start, [0x90 | ch, n.pitch, vel]], [n.start + n.len, [0x80 | ch, n.pitch, 0]]);
     }
     events.sort((a, b) => a[0] - b[0] || (a[1][0] & 0xf0) - (b[1][0] & 0xf0));
-    const name = text(track.name);
-    const body = [0, 0xff, 0x03, name.length, ...name, 0, 0xc0 | ch, PROGRAM[track.voice] ?? 0];
+    const name = text(channel.name);
+    const body = [0, 0xff, 0x03, name.length, ...name, 0, 0xc0 | ch, PROGRAM[channel.voice] ?? 0];
     let last = 0;
     for (const [tick, bytes] of events) { body.push(...vlq(tick - last), ...bytes); last = tick; }
     body.push(0, 0xff, 0x2f, 0);
@@ -175,12 +308,12 @@ export const noteName = (pitch: number) => `${NAMES[pitch % 12]}${Math.floor(pit
 
 /* One line per bar of sixteenths, as space2-music.ts writes a tune: a note name starts a note, "-" holds it and "."
    rests. The engine plays one note at a time, so where notes overlap the highest that starts on a sixteenth wins and
-   a note is cut where the next one starts. */
-export function trackerLines(track: StudioTrack, length: number): string[] {
-  const cells = Math.ceil(length / SIXTEENTH);
+   a note is cut where the next one starts. `bar` is the bar's length in ticks (16 cells in 4/4, 14 in 7/8). */
+export function trackerLines(notes: StudioNote[], length: number, bar = BAR): string[] {
+  const cells = Math.ceil(length / SIXTEENTH), perBar = Math.round(bar / SIXTEENTH);
   const line: string[] = new Array(cells).fill(".");
   const starts = new Map<number, StudioNote>();
-  for (const n of track.notes) {
+  for (const n of notes) {
     const at = Math.round(n.start / SIXTEENTH);
     if (at >= cells) continue;
     const there = starts.get(at);
@@ -193,6 +326,22 @@ export function trackerLines(track: StudioTrack, length: number): string[] {
     for (let c = at + 1; c < until; c++) line[c] = "-";
   });
   const bars: string[] = [];
-  for (let b = 0; b < cells; b += 16) bars.push(line.slice(b, b + 16).join(" "));
+  for (let b = 0; b < cells; b += perBar) bars.push(line.slice(b, b + perBar).join(" "));
   return bars;
+}
+
+/* ---- WAV ---- */
+
+/* A rendered song as a 16-bit PCM WAV file. */
+export function encodeWav(channels: Float32Array[], rate: number): Uint8Array {
+  const frames = channels[0].length, count = channels.length, bytes = frames * count * 2;
+  const buf = new ArrayBuffer(44 + bytes), v = new DataView(buf);
+  const str = (at: number, s: string) => { for (let i = 0; i < s.length; i++) v.setUint8(at + i, s.charCodeAt(i)); };
+  str(0, "RIFF"); v.setUint32(4, 36 + bytes, true); str(8, "WAVE"); str(12, "fmt ");
+  v.setUint32(16, 16, true); v.setUint16(20, 1, true); v.setUint16(22, count, true); v.setUint32(24, rate, true);
+  v.setUint32(28, rate * count * 2, true); v.setUint16(32, count * 2, true); v.setUint16(34, 16, true);
+  str(36, "data"); v.setUint32(40, bytes, true);
+  let at = 44;
+  for (let i = 0; i < frames; i++) for (let c = 0; c < count; c++) { const x = Math.max(-1, Math.min(1, channels[c][i])); v.setInt16(at, x < 0 ? x * 0x8000 : x * 0x7fff, true); at += 2; }
+  return new Uint8Array(buf);
 }
