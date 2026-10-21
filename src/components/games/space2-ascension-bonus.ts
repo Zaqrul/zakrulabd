@@ -169,13 +169,15 @@ const THRONE_OF_ASCENSION: Song = {
    - The Throne riff: a sixteenth-note pedal on the fifth under a line that leans and turns (E, C, E, F sharp, G, F sharp,
      E, D sharp), over Em, C, Am and B7. It opens the song on the piano alone, answers the hook, comes back in G minor, in
      7/8, in E flat minor and at the close, and runs under the verse's return as a counter-line.
-   - A verse in threes against the bar (3+3+2), sung on the synth over the running piano.
+   - A verse in threes against the bar (3+3+2), sung on the synth over the running piano, and a new chorus on the
+     trumpet, the song's one turn to the relative major (G, D, Em, C).
    - The hook in G minor, then bars of hits for the whole band, over Em and the Phrygian F, into the chromatic run.
    - The lament and its answer, the riff in 7/8 into the 7/8 break, the heroic notes said twice.
    - The hook's first notes climbing a semitone at a time, the bars trading 4/4 and 7/8.
    - Held chords over the running piano without drums, G sharp minor against F sharp, then a push of hits in F sharp
      minor into the hook there; the riff in E flat minor; the close, the solo and eight more bars of it.
-   - The hook, the verse again with the riff under it, and the riff to the chromatic run, which leads back to the hook. */
+   - A new descant on the violin over the old hook, its notes untouched an octave down; the verse again with the riff
+     under it; and the riff to the chromatic run, which leads back to the hook. */
 type Bar = Song["bars"][number];
 const T = THRONE_OF_ASCENSION.bars;
 const own = (bar: Bar): [Bar] => [bar];
@@ -203,13 +205,9 @@ const EXTENDED_PARTS: ([Bar] | [Bar, BarPerformance])[] = [
   [[RIFF.Em, "Em", "rest16", ". . . . . . . . . . . . . . . ."], STACCATO],
   ...riff().map(([bar], i): [Bar, BarPerformance] => [bar, { ...STACCATO, kit: i === 3 ? "k . h . k . h . k . s . s s s s" : "k . h . h . h k . . h . h . h ." }]),
   ...T.slice(0, 2).map(own),
-  // The hook, then the riff answering it, and again under held brass.
+  // The hook, then the riff answering it.
   ...T.slice(2, 10).map(own),
   ...riff(),
-  [["G5 - - - - - - - B5 - - - A5 - G5 -", "Em", "push16", under(RIFF.Em)]],
-  [["G5 - - - - - - - C6 - - - E6 - - -", "C", "push16", under(RIFF.C)]],
-  [["C6 - - - - - - - E6 - - - D6 - C6 -", "Am", "push16", under(RIFF.Am)]],
-  [["B5 - - - - - - - D#6 - - - F#6 - - -", "B7", "push16", under(RIFF.B7)]],
   // The verse, in threes against the bar, over the running piano.
   [["B5 - - E6 - - D6 - B5 - - G5 - - A5 -", "Em", "push16"]],
   [["G5 - - C6 - - B5 - G5 - - E5 - - G5 -", "C", "push16"]],
@@ -219,6 +217,15 @@ const EXTENDED_PARTS: ([Bar] | [Bar, BarPerformance])[] = [
   [["E6 - - G6 - - A6 - G6 - - E6 - - C6 -", "C", "push16"]],
   [["C6 - - E6 - - A6 - G6 - - E6 - - C6 -", "Am", "push16"]],
   [["D#6 - - - B5 - - - F#5 - - - A5 - F#5 -", "B7", "push16"]],
+  // The chorus, new: the song's one turn to the relative major, a long note and a fall by step, said twice and opened up.
+  [["D6 - - - - - E6 - D6 - - - B5 - G5 -", "G", "push16"]],
+  [["A5 - - - - - B5 - A5 - F#5 - D5 - - -", "D", "push16"]],
+  [["E5 - - G5 - - B5 - E6 - - - D6 - E6 -", "Em", "push16"]],
+  [["G6 - - - - - - - E6 - - - . . D6 C6", "C", "push16"]],
+  [["B5 - - - - - D6 - G6 - - - F#6 - E6 -", "G", "push16"]],
+  [["F#6 - - - - - E6 - D6 - - - A5 - - -", "D", "push16"]],
+  [["E6 - - - - - D6 - C6 - - - G5 - A5 -", "C", "push16"]],
+  [["B5 - - - A5 - - - F#5 - - - . . . .", "B7", "push16"]],
   // The hook a minor third up, in G minor, and the riff there.
   [["G5 - - D6 - - Eb6 - D6 - . Bb5 C6 D6 - -", "Gm", "toll16", "Bb4 - - - - - - - G4 - - - F#4 - G4 -"]],
   [["Eb6 - - Bb5 - - C6 - G5 - . Eb5 F5 G5 - -", "Eb", "push16", "G4 - - - - - - - Eb4 - - - D4 - Eb4 -"]],
@@ -292,9 +299,18 @@ const EXTENDED_PARTS: ([Bar] | [Bar, BarPerformance])[] = [
   [["F6 C6 F6 A6 C7 A6 F6 C6 F6 E6 F6 G6 A6 G6 F6 E6", "F", "gallop16", "F4 - - - - - - - A4 - - - - - - -"]],
   [["D#6 F#6 A6 C7 B6 A6 F#6 D#6 C6 B5 A5 F#5 D#5 E5 F#5 G5", "D#dim", "gallop16", "D#4 - - - - - - - F#4 - - - A4 - - -"]],
   [["A5 B5 C6 D#6 F#6 A6 B6 - D#6 - B5 - F#5 - - -", "B7", "chrom16", "B3 - - - - - - - D#4 - - - F#4 - - -"]],
-  // The hook once more over a kit in sixteenths, the verse with the riff under it, and the riff to the chromatic run.
-  ...T.slice(2, 9).map((bar): [Bar, BarPerformance] => [bar, { kit: "kh h h h ks h kh h kh h h h ks h kh h" }]),
-  own(T[9]),
+  // A new descant on the violin over the old hook, its notes an octave down, over a kit in sixteenths; the verse with
+  // the riff under it, and the riff to the chromatic run.
+  ...[
+    "B6 - - - - - - - G6 - - - A6 - B6 -",
+    "C7 - - - - - - - G6 - - - E6 - - -",
+    "A6 - - - - - - - C7 - - - B6 - A6 -",
+    "F#6 - - - - - - - D#6 - - - . . . .",
+    "E6 - - - G6 - - - B6 - - - - - A6 G6",
+    "A6 - - - - - - - G6 - F6 - E6 - F6 -",
+    "F#6 - - - - - - - A6 - - - G6 - F#6 -",
+    "D#6 - - - - - - - F#6 - - - B6 - - -",
+  ].map((descant, i): [Bar, BarPerformance] => [[descant, T[2 + i][1], T[2 + i][2], under(T[2 + i][0])], i < 7 ? { kit: "kh h h h ks h kh h kh h h h ks h kh h" } : {}]),
   [["B5 - - E6 - - D6 - B5 - - G5 - - A5 -", "Em", "push16", under(RIFF.Em)]],
   [["G5 - - C6 - - B5 - G5 - - E5 - - G5 -", "C", "push16", under(RIFF.C)]],
   [["A5 - - C6 - - E6 - - - - D6 - C6 B5 -", "Am", "push16", under(RIFF.Am)]],
@@ -309,37 +325,37 @@ const EXTENDED_PARTS: ([Bar] | [Bar, BarPerformance])[] = [
 
 const THRONE_OF_ASCENSION_EXTENDED: Song = {
   ...THRONE_OF_ASCENSION, intro: 8, arps: true, arpStep: 1,
-  fills: [7, 15, 19, 23, 31, 39, 52, 56, 60, 64, 68, 94, 98, 100, 104, 112, 120, 128, 133],
-  crashes: [8, 16, 24, 32, 36, 53, 57, 61, 69, 91, 95, 101, 105, 113, 121, 129],
-  riser: [89, 90],
+  fills: [7, 15, 19, 27, 35, 43, 56, 60, 64, 68, 72, 98, 102, 104, 108, 116, 124, 132, 137],
+  crashes: [8, 16, 20, 28, 36, 40, 57, 61, 65, 73, 95, 99, 105, 109, 117, 125, 133],
+  riser: [93, 94],
   sections: [
     { from: 0, lead: "piano", layer: undefined, pad: undefined, counter: "piano", drums: "none", stabs: false },
     { from: 2, lead: "piano", layer: undefined, counter: "piano", drums: "soft", stabs: false },
     { from: 6, lead: "organ", layer: undefined, drums: "toms", stabs: false },
     { from: 8 },
     { from: 16, lead: "piano", layer: "square", pad: "organ", counter: "piano" },
-    { from: 20, lead: "brass", layer: "strings", pad: "organ", counter: "piano" },
-    { from: 24, lead: "superSquare", layer: "strings", pad: "organ", counter: "piano", stabs: false },
-    { from: 32, lead: "brass", layer: "lead", counter: "organ" },
-    { from: 36, lead: "piano", layer: "square", pad: "organ", counter: "chip" },
-    { from: 40, lead: "brass", layer: "square", counter: "piano" },
-    { from: 45, lead: "strings", layer: undefined, pad: "organ" },
-    { from: 49, lead: "strings", layer: undefined, pad: "organ", counter: "piano" },
-    { from: 53, lead: "piano", layer: "square", pad: "organ", counter: "chip" },
-    { from: 57, lead: "brass", layer: undefined, pad: "organ", counter: "strings" },
-    { from: 61, lead: "square", layer: "organ", stabs: false },
-    { from: 65, lead: "square", layer: "organ", counter: "piano", stabs: false },
-    { from: 69, lead: "organ", layer: "square", counter: "piano", stabs: false },
-    { from: 77, lead: "bell", layer: "strings", counter: "piano", drums: "none", stabs: false },
-    { from: 85, lead: "brass", layer: "square", counter: "piano" },
-    { from: 91 },
-    { from: 95, lead: "piano", layer: "square", pad: "organ", counter: "piano" },
-    { from: 99 },
-    { from: 101, lead: "square", layer: "chip", counter: "organ" },
-    { from: 109, lead: "superSquare", layer: "chip", counter: "organ" },
-    { from: 113, lead: "square", layer: "brass", counter: "strings" },
-    { from: 121, lead: "superSquare", layer: "strings", pad: "organ", counter: "piano", stabs: false },
-    { from: 129, lead: "piano", layer: "square", pad: "organ", counter: "piano" },
+    { from: 20, lead: "superSquare", layer: "strings", pad: "organ", counter: "piano", stabs: false },
+    { from: 28, lead: "trumpet", layer: "strings", pad: "strings", counter: "piano" },
+    { from: 36, lead: "brass", layer: "lead", counter: "organ" },
+    { from: 40, lead: "piano", layer: "square", pad: "organ", counter: "chip" },
+    { from: 44, lead: "brass", layer: "square", counter: "piano" },
+    { from: 49, lead: "strings", layer: undefined, pad: "organ" },
+    { from: 53, lead: "strings", layer: undefined, pad: "organ", counter: "piano" },
+    { from: 57, lead: "piano", layer: "square", pad: "organ", counter: "chip" },
+    { from: 61, lead: "brass", layer: undefined, pad: "organ", counter: "strings" },
+    { from: 65, lead: "square", layer: "organ", stabs: false },
+    { from: 69, lead: "square", layer: "organ", counter: "piano", stabs: false },
+    { from: 73, lead: "organ", layer: "square", counter: "piano", stabs: false },
+    { from: 81, lead: "bell", layer: "strings", counter: "piano", drums: "none", stabs: false },
+    { from: 89, lead: "brass", layer: "square", counter: "piano" },
+    { from: 95 },
+    { from: 99, lead: "piano", layer: "square", pad: "organ", counter: "piano" },
+    { from: 103 },
+    { from: 105, lead: "square", layer: "chip", counter: "organ" },
+    { from: 113, lead: "superSquare", layer: "chip", counter: "organ" },
+    { from: 117, lead: "violin", layer: "strings", counter: "square" },
+    { from: 125, lead: "superSquare", layer: "strings", pad: "organ", counter: "piano", stabs: false },
+    { from: 133, lead: "piano", layer: "square", pad: "organ", counter: "piano" },
   ],
   bars: EXTENDED_PARTS.map(([bar]) => bar),
   performance: EXTENDED_PARTS.map(([, perf]) => perf ?? {}),
