@@ -203,10 +203,10 @@ test("Ashen Crown leads from its slow part into its fast one with two bars of sl
 test("Throne of Ascension, Extended keeps every bar of the short version, in its order, and runs about three minutes", () => {
   const short = ASCENSION_BONUS["alt:asc3"], whole = ASCENSION_BONUS["alt:asc4"];
   const at = (from, to, start) => assert.deepEqual(whole.bars.slice(start, start + to - from), short.bars.slice(from, to), `bars ${from + 1}-${to} at ${start + 1}`);
-  at(0, 10, 12); at(10, 14, 48); at(14, 22, 64); at(26, 30, 98); at(30, 32, 106); at(22, 26, 108); at(2, 10, 120);
+  at(0, 10, 6); at(10, 14, 45); at(14, 22, 57); at(26, 30, 91); at(30, 32, 99); at(22, 26, 101); at(2, 10, 113);
   assert.equal(whole.bpm, short.bpm, "at the same tempo");
-  assert.ok(whole.bars.slice(0, 4).every((b) => b[2] === "rest16"), "it opens on the piano alone");
-  assert.equal(whole.intro, 14, "the ostinato and the opening play once; the loop starts at the hook");
+  assert.ok(whole.bars.slice(0, 2).every((b) => b[2] === "rest16"), "it opens on the piano alone");
+  assert.equal(whole.intro, 8, "the riff and the opening play once; the loop starts at the hook");
   const seconds = whole.bars.reduce((t, b) => t + b[0].trim().split(/\s+/).length, 0) * 60 / whole.bpm / 4;
   assert.ok(seconds > 170 && seconds < 190, `${seconds.toFixed(1)} s`);
   assert.ok(whole.fills.concat(whole.crashes, whole.riser).every((b) => b >= 0 && b < whole.bars.length));

@@ -115,9 +115,9 @@ const RIFFS: Record<string, string> = {
   ito14: "0 . 12 0 . 12 0 . 10 . 12 0 7 .",
   ito12: "0 . 12 0 . 12 0 . 12 10 . 7",
   /* Throne of Ascension, Extended: a dark pedal turning in eighths on the root, the fifth below and the flat seventh;
-     a stamping root that drops to the seventh below; and silence, for a piano alone. */
+     the root pushed off the beat, up to the octave and down by the seventh and fifth; and silence, for a piano alone. */
   toll16: "0 . -5 . -2 . -5 . 0 . 0 -5 . -2 -5 .",
-  stomp16: "0 . 0 0 . 0 -2 . 0 . 0 0 . -2 0 .",
+  push16: "0 . 12 . 0 10 . 0 . 12 0 . 7 . 10 .",
   rest16: ". . . . . . . . . . . . . . . .",
 };
 
