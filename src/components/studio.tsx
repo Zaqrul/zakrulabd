@@ -16,7 +16,7 @@ import { master } from "@/components/soundtrack";
 import { ALBUMS, trackTitle, type Album, type Track } from "@/lib/soundtrack";
 import {
   BAR, PPQ, SIXTEENTH, barTicks, beatTicks, emptySong, encodeWav, fromMidi, migrate, newChannel, newInsert, newPattern, parseMidi,
-  patternLength, songFromParts, songLength, sortNotes, toMidi, trackerLines, type Channel, type Clip, type Insert, type StudioNote,
+  patternLength, quantizeNotes, songFromParts, songLength, sortNotes, toMidi, trackerLines, type Channel, type Clip, type Insert, type StudioNote,
   type StudioSong,
 } from "@/lib/studio";
 import type { StudioEngine } from "@/components/studio/engine";
@@ -24,6 +24,7 @@ import { ChannelRack } from "@/components/studio/channel-rack";
 import { Mixer } from "@/components/studio/mixer";
 import { COLORS, PianoRoll } from "@/components/studio/piano-roll";
 import { Playlist } from "@/components/studio/playlist";
+import { Projects } from "@/components/studio/projects";
 
 const STORE = "zakrul-studio-song";
 const ALBUM_LABEL: Record<Album, string> = { space: "Space", space2: "Space 2", space2alt: "Space 2: Ascension", space3: "Space 3" };
@@ -63,6 +64,11 @@ export function StudioView() {
   const [loop, setLoop] = useState<[number, number] | null>(null);
   const [playing, setPlaying] = useState(false);
   const [recording, setRecording] = useState(false);
+  const [metronome, setMetronome] = useState(false);
+  const [countIn, setCountIn] = useState(true);
+  const [strength, setStrength] = useState(100);
+  const [saved, setSaved] = useState("Autosaved locally");
+  const [rendering, setRendering] = useState(false);
   const [typing, setTyping] = useState(false);
   const [midiIn, setMidiIn] = useState<string | null>(null);
   const [position, setPosition] = useState(0);
@@ -73,22 +79,36 @@ export function StudioView() {
   const seek = useRef(0);
   const past = useRef<StudioSong[]>([]);
   const future = useRef<StudioSong[]>([]);
+  const gesture = useRef<{ recorded: boolean } | null>(null);
 
   /* Every edit goes through here; `record` keeps the song before it for undo. */
   const setSong = useCallback((next: StudioSong | ((s: StudioSong) => StudioSong), record = true) => {
     const prev = songRef.current, value = typeof next === "function" ? next(prev) : next;
     if (value === prev) return;
-    if (record) { past.current.push(prev); if (past.current.length > 150) past.current.shift(); future.current = []; }
+    if (record || (gesture.current && !gesture.current.recorded)) {
+      past.current.push(prev); if (past.current.length > 150) past.current.shift();
+      if (gesture.current) gesture.current.recorded = true;
+    }
+    future.current = [];
     songRef.current = value;
     setSongState(value);
+    setSaved("Saving…");
   }, []);
   const undo = useCallback(() => { const prev = past.current.pop(); if (!prev) return; future.current.push(songRef.current); songRef.current = prev; setSongState(prev); }, []);
   const redo = useCallback(() => { const next = future.current.pop(); if (!next) return; past.current.push(songRef.current); songRef.current = next; setSongState(next); }, []);
 
   useEffect(() => {
-    const timer = setTimeout(() => { try { localStorage.setItem(STORE, JSON.stringify(song)); } catch {} }, 700);
+    const timer = setTimeout(() => {
+      try { localStorage.setItem(STORE, JSON.stringify(song)); setSaved("Autosaved locally"); }
+      catch { setSaved("Autosave failed — download a backup"); }
+    }, 700);
     return () => clearTimeout(timer);
   }, [song]);
+  useEffect(() => {
+    const flush = () => { try { localStorage.setItem(STORE, JSON.stringify(songRef.current)); } catch { /* status shown by autosave */ } };
+    window.addEventListener("pagehide", flush);
+    return () => { flush(); window.removeEventListener("pagehide", flush); };
+  }, []);
 
   /* The selection always points at something that exists. */
   const pattern = song.patterns.find((p) => p.id === patternId) ?? song.patterns[0];
@@ -98,31 +118,42 @@ export function StudioView() {
   /* ---- Sound ---- */
   const engine = useRef<StudioEngine | null>(null);
   const loading = useRef<Promise<StudioEngine> | null>(null);
+  const transportRequest = useRef(0);
+  const finishKeys = useRef<() => void>(() => {});
   const ensure = useCallback(async () => {
     if (!engine.current) {
-      loading.current ??= import("@/components/studio/engine").then(({ StudioEngine: Engine }) => Engine.create(songRef.current, master));
+      loading.current ??= import("@/components/studio/engine").then(({ StudioEngine: Engine }) => Engine.create(songRef.current, master)).catch((err) => { loading.current = null; throw err; });
       engine.current = await loading.current;
     }
     await engine.current.resume();
     return engine.current;
   }, []);
   const target = mode === "pattern" ? pattern?.id : undefined;
+  useEffect(() => { if (engine.current) engine.current.metronome = metronome; }, [metronome]);
   useEffect(() => { engine.current?.update(song, target, loop); }, [song, target, loop]);
   useEffect(() => () => { engine.current?.close(); engine.current = null; }, []);
 
   const audition = useCallback(async (id: string, pitch: number) => {
-    const e = await ensure();
-    if (!e.playing) e.update(songRef.current, target, loop);
-    e.audition(id, pitch);
+    try {
+      const e = await ensure();
+      if (!e.playing) e.update(songRef.current, target, loop);
+      e.audition(id, pitch);
+    } catch (err) { setStatus(`Could not start audio: ${(err as Error).message}`); }
   }, [ensure, target, loop]);
 
-  const stop = useCallback(() => { engine.current?.stop(); setPlaying(false); setPosition(seek.current); }, []);
+  const stop = useCallback(() => { transportRequest.current++; finishKeys.current(); engine.current?.stop(); setPlaying(false); setPosition(seek.current); }, []);
   const play = useCallback(async () => {
-    const e = await ensure();
-    e.update(songRef.current, target, loop);
-    e.play(mode === "pattern" ? 0 : seek.current, () => { setPlaying(false); seek.current = 0; setPosition(0); });
-    setPlaying(true);
-  }, [ensure, target, loop, mode]);
+    const request = ++transportRequest.current;
+    try {
+      const e = await ensure();
+      if (request !== transportRequest.current) return;
+      finishKeys.current();
+      e.update(songRef.current, target, loop);
+      e.metronome = metronome;
+      e.play(mode === "pattern" ? 0 : seek.current, () => { finishKeys.current(); setPlaying(false); seek.current = 0; setPosition(0); }, recording && countIn ? songRef.current.beats : 0);
+      setPlaying(true);
+    } catch (err) { setStatus(`Could not start audio: ${(err as Error).message}`); }
+  }, [ensure, target, loop, mode, metronome, recording, countIn]);
   useEffect(() => {
     if (!playing) return;
     const timer = setInterval(() => setPosition(engine.current?.position() ?? 0), 120);
@@ -133,7 +164,7 @@ export function StudioView() {
   const playlistHead = useCallback(() => (mode !== "song" ? null : engine.current?.playing ? engine.current.position() : seek.current), [mode]);
   const patternHead = useCallback(() => {
     const e = engine.current;
-    if (!e?.playing || !pattern) return null;
+    if (!e?.playing || e.countingIn || !pattern) return null;
     const at = e.position();
     if (mode === "pattern") return at;
     const s = songRef.current, clip = s.playlist.find((c) => c.pattern === pattern.id && at >= c.start && at < c.start + patternLength(s, pattern));
@@ -144,6 +175,21 @@ export function StudioView() {
   const setNotes = useCallback((id: string, notes: StudioNote[], record: boolean) => {
     if (!pattern) return;
     setSong((s) => ({ ...s, patterns: s.patterns.map((p) => (p.id === pattern.id ? { ...p, notes: { ...p.notes, [id]: notes } } : p)) }), record);
+  }, [pattern, setSong]);
+  /* A step of the step sequencer on or off, worked out from the song as it is now, so quick clicks all count. */
+  const toggleStep = useCallback((id: string, step: number) => {
+    if (!pattern) return;
+    setSong((s) => ({
+      ...s,
+      patterns: s.patterns.map((p) => {
+        if (p.id !== pattern.id) return p;
+        const c = s.channels.find((x) => x.id === id), notes = p.notes[id] ?? [];
+        if (!c) return p;
+        const hit = (n: StudioNote) => n.pitch === c.stepPitch && Math.round(n.start / SIXTEENTH) === step;
+        const next = notes.some(hit) ? notes.filter((n) => !hit(n)) : sortNotes([...notes, { pitch: c.stepPitch, start: step * SIXTEENTH, len: SIXTEENTH, vel: 0.85 }]);
+        return { ...p, notes: { ...p.notes, [id]: next } };
+      }),
+    }));
   }, [pattern, setSong]);
   const setChannel = useCallback((id: string, change: Partial<Channel>, record = true) => setSong((s) => ({ ...s, channels: s.channels.map((c) => (c.id === id ? { ...c, ...change } : c)) }), record), [setSong]);
   const setInsert = useCallback((index: number, change: Partial<Insert>, record = true) => setSong((s) => ({ ...s, mixer: s.mixer.map((m, i) => (i === index ? { ...m, ...change } : m)) }), record), [setSong]);
@@ -160,7 +206,7 @@ export function StudioView() {
     patterns: s.patterns.map((p) => { const notes = { ...p.notes }; delete notes[id]; return { ...p, notes }; }),
   }));
   const addPattern = (copy: boolean) => {
-    const p = copy && pattern ? { ...newPattern(`${pattern.name} copy`), notes: structuredClone(pattern.notes) } : newPattern(`Pattern ${song.patterns.length + 1}`);
+    const p = copy && pattern ? { ...newPattern(`${pattern.name} copy`), bars: pattern.bars, notes: structuredClone(pattern.notes) } : newPattern(`Pattern ${song.patterns.length + 1}`);
     setSong((s) => ({ ...s, patterns: [...s.patterns, p] }));
     setPatternId(p.id);
     setMode("pattern");
@@ -172,23 +218,39 @@ export function StudioView() {
 
   /* ---- Playing in: a MIDI keyboard or the computer's keys play the selected channel, and while recording and
      playing, what is held is written into the open pattern at the play position. ---- */
-  const held = useRef(new Map<number, { start: number; vel: number } | null>());
+  const held = useRef(new Map<number, { channel: string; pattern: string; start: number | null; time: number; vel: number }>());
   const noteOn = useCallback((pitch: number, vel = 0.85) => {
-    if (!channel) return;
-    void audition(channel.id, pitch);
+    if (!channel || !pattern || held.current.has(pitch)) return;
     const at = recording ? patternHead() : null;
-    held.current.set(pitch, at !== null ? { start: at, vel } : null);
-  }, [channel, audition, recording, patternHead]);
+    const entry = { channel: channel.id, pattern: pattern.id, start: at, time: engine.current?.ctx.currentTime ?? 0, vel };
+    held.current.set(pitch, entry);
+    void ensure().then((e) => {
+      if (held.current.get(pitch) !== entry) return;
+      e.update(songRef.current, target, loop);
+      e.noteOn(entry.channel, pitch, vel);
+    }).catch((err) => { held.current.delete(pitch); setStatus(`Could not play key: ${(err as Error).message}`); });
+  }, [channel, pattern, recording, patternHead, ensure, target, loop]);
   const noteOff = useCallback((pitch: number) => {
     const on = held.current.get(pitch);
     held.current.delete(pitch);
-    const now = patternHead();
-    if (!on || now === null || !channel || !pattern) return;
+    if (!on) return;
+    engine.current?.noteOff(on.channel, pitch);
+    if (on.start === null) return;
     const grid = snap / 2, start = Math.round(on.start / grid) * grid;
-    const len = Math.max(SIXTEENTH / 2, now >= on.start ? now - on.start : patternLength(songRef.current, pattern) - on.start + now);
-    const notes = songRef.current.patterns.find((p) => p.id === pattern.id)?.notes[channel.id] ?? [];
-    setNotes(channel.id, sortNotes([...notes, { pitch, start, len: Math.round(len), vel: on.vel }]), true);
-  }, [channel, pattern, patternHead, setNotes, snap]);
+    const len = Math.max(SIXTEENTH / 2, ((engine.current?.ctx.currentTime ?? on.time) - on.time) * songRef.current.bpm * PPQ / 60);
+    setSong((s) => {
+      if (!s.channels.some((c) => c.id === on.channel) || !s.patterns.some((p) => p.id === on.pattern)) return s;
+      return { ...s, patterns: s.patterns.map((p) => p.id === on.pattern ? { ...p, notes: { ...p.notes, [on.channel]: sortNotes([...(p.notes[on.channel] ?? []), { pitch, start, len: Math.round(len), vel: on.vel }]) } } : p) };
+    });
+  }, [setSong, snap]);
+  useEffect(() => {
+    const release = () => { for (const pitch of [...held.current.keys()]) noteOff(pitch); engine.current?.releaseKeys(); };
+    finishKeys.current = release;
+    const hidden = () => { if (document.hidden) release(); };
+    window.addEventListener("blur", release);
+    document.addEventListener("visibilitychange", hidden);
+    return () => { window.removeEventListener("blur", release); document.removeEventListener("visibilitychange", hidden); };
+  }, [noteOff]);
 
   const midiMessage = useRef<(data: Uint8Array | null) => void>(() => {});
   useEffect(() => {
@@ -272,6 +334,8 @@ export function StudioView() {
     } catch (err) { setStatus(`Could not open ${title}: ${(err as Error).message}`); }
   };
   const exportWav = async () => {
+    if (rendering) return;
+    setRendering(true);
     setStatus("Rendering…");
     try {
       const e = await ensure();
@@ -282,6 +346,7 @@ export function StudioView() {
       setStatus(`Rendered ${Math.round(channels[0].length / 44100)} s to studio.wav.`);
     } catch (err) { setStatus(`Could not render: ${(err as Error).message}`); }
     engine.current?.update(songRef.current, target, loop);
+    setRendering(false);
   };
   const copyTracker = async () => {
     if (!channel || !pattern) return;
@@ -306,7 +371,11 @@ export function StudioView() {
   };
 
   return (
-    <section aria-label="Studio" className="rise-in flex h-[calc(100dvh-10rem)] min-h-[560px] w-full flex-col gap-2">
+    <section aria-label="Studio" className="rise-in flex h-[calc(100dvh-10rem)] min-h-[560px] w-full flex-col gap-2"
+      onFocusCapture={(e) => { if (e.target instanceof HTMLInputElement) gesture.current = { recorded: false }; }}
+      onPointerDownCapture={(e) => { if (e.target instanceof HTMLInputElement) gesture.current = { recorded: false }; }}
+      onBlurCapture={() => { gesture.current = null; }}>
+      <Projects song={song} onOpen={open} onName={(name) => setSong((s) => ({ ...s, name }), false)} onStatus={setStatus} download={download} saved={saved} />
       {/* The transport, the song's settings, the pattern, and files. */}
       <div className="relative flex flex-wrap items-center gap-1.5">
         <div className="flex overflow-hidden rounded-lg ring-1 ring-white/15" role="group" aria-label="Play mode">
@@ -320,6 +389,8 @@ export function StudioView() {
         <button type="button" aria-label="Record" aria-pressed={recording} title="Record what you play into the open pattern while it plays" onClick={() => setRecording((r) => !r)} className={`${iconButton} ${recording ? "bg-rose-500 text-white hover:bg-rose-400" : ""}`}>
           <TbPlayerRecordFilled className="h-4 w-4" />
         </button>
+        <button type="button" aria-pressed={metronome} onClick={() => setMetronome((v) => !v)} className={`${button} ${metronome ? on : ""}`}>Metronome</button>
+        <label className="flex items-center gap-1 text-xs text-slate-300"><input type="checkbox" checked={countIn} onChange={(e) => setCountIn(e.target.checked)} />Count-in</label>
         <span className="min-w-18 rounded-lg bg-black/40 px-2.5 py-1.5 text-center font-mono text-[12.5px] tabular-nums text-amber-400" aria-label="Position">{where}</span>
         <label className="flex items-center gap-1 text-[11px] font-bold text-slate-300">BPM
           <input type="number" min={30} max={300} value={song.bpm} onChange={(e) => { const v = Number(e.target.value); if (v >= 30 && v <= 300) setSong((s) => ({ ...s, bpm: v }), false); }} className={`${field} w-16`} />
@@ -341,6 +412,10 @@ export function StudioView() {
           {song.patterns.map((p) => <option key={p.id} value={p.id} className="bg-navy">{p.name}</option>)}
         </select>
         <input aria-label="Pattern name" value={pattern?.name ?? ""} onChange={(e) => pattern && setSong((s) => ({ ...s, patterns: s.patterns.map((p) => (p.id === pattern.id ? { ...p, name: e.target.value } : p)) }), false)} className={`${field} w-28`} />
+        <select aria-label="Pattern length" value={pattern?.bars ?? 0} onChange={(e) => pattern && setSong((s) => ({ ...s, patterns: s.patterns.map((p) => p.id === pattern.id ? { ...p, bars: Number(e.target.value) || undefined } : p) }))} className={field}>
+          <option value={0} className="bg-navy">Auto length</option>
+          {[...new Set([1, 2, 4, 8, 16, ...(pattern?.bars ? [pattern.bars] : [])])].sort((a, b) => a - b).map((bars) => <option key={bars} value={bars} className="bg-navy">{bars} {bars === 1 ? "bar" : "bars"} minimum</option>)}
+        </select>
         <button type="button" title="New pattern" aria-label="New pattern" onClick={() => addPattern(false)} className={iconButton}><TbPlus className="h-4 w-4" /></button>
         <button type="button" title="Clone pattern" aria-label="Clone pattern" onClick={() => addPattern(true)} className={iconButton}><TbCopy className="h-4 w-4" /></button>
         <button type="button" title="Delete pattern and its clips" aria-label="Delete pattern" disabled={song.patterns.length < 2} onClick={deletePattern} className={iconButton}><TbTrash className="h-4 w-4" /></button>
@@ -349,7 +424,7 @@ export function StudioView() {
         <button type="button" aria-label="Zoom in" onClick={() => (view === "playlist" ? setListZoom((z) => Math.min(6, z * 1.25)) : setZoom((z) => Math.min(4, z * 1.25)))} className={iconButton}><TbZoomIn className="h-4 w-4" /></button>
         <button type="button" aria-label="Undo" title="Undo (ctrl+Z)" onClick={undo} className={iconButton}><TbArrowBackUp className="h-4 w-4" /></button>
         <button type="button" aria-label="Redo" title="Redo (ctrl+Y)" onClick={redo} className={iconButton}><TbArrowForwardUp className="h-4 w-4" /></button>
-        <button type="button" aria-pressed={typing} title="Play the selected channel on the computer's keys (Z and Q rows)" onClick={() => setTyping((t) => !t)} className={`${iconButton} ${typing ? on : ""}`}><TbKeyboard className="h-4 w-4" /></button>
+        <button type="button" aria-label="Typing keyboard" aria-pressed={typing} title="Play the selected channel on the computer's keys (Z and Q rows)" onClick={() => { finishKeys.current(); setTyping((t) => !t); }} className={`${iconButton} ${typing ? on : ""}`}><TbKeyboard className="h-4 w-4" /></button>
         <button type="button" aria-pressed={!!midiIn} title={midiIn ? `MIDI in: ${midiIn}` : "Connect a MIDI keyboard"} onClick={() => void connectMidi()} className={`${iconButton} ${midiIn ? on : ""}`}><TbPlug className="h-4 w-4" /></button>
         <span className="flex-1" />
         <button type="button" onClick={() => open(emptySong(), "New song.")} className={button}><TbFilePlus className="h-4 w-4" /> New</button>
@@ -357,7 +432,7 @@ export function StudioView() {
         <button type="button" onClick={() => fileInput.current?.click()} className={button}><TbUpload className="h-4 w-4" /> MIDI</button>
         <input ref={fileInput} type="file" accept=".mid,.midi,audio/midi" className="hidden" onChange={(e) => { const f = e.target.files?.[0]; if (f) void importMidi(f); e.target.value = ""; }} />
         <button type="button" onClick={() => download(toMidi(songRef.current), "studio.mid", "audio/midi")} className={button}><TbDownload className="h-4 w-4" /> .mid</button>
-        <button type="button" onClick={() => void exportWav()} className={button}><TbFileMusic className="h-4 w-4" /> .wav</button>
+        <button type="button" disabled={rendering} onClick={() => void exportWav()} className={button}><TbFileMusic className="h-4 w-4" /> {rendering ? "Rendering…" : ".wav"}</button>
         <button type="button" onClick={() => void copyTracker()} className={button} title="Copy the selected channel in the open pattern as the engine's tracker lines"><TbCopy className="h-4 w-4" /> Tracker</button>
 
         {picker && (
@@ -381,6 +456,18 @@ export function StudioView() {
           </div>
         )}
       </div>
+
+      {(view === "piano" || view === "rack") && channel && pattern && <div className="flex flex-wrap items-center gap-2 text-xs text-slate-300">
+        <span>Quantize {channel.name}</span>
+        <select aria-label="Quantize strength" value={strength} onChange={(e) => setStrength(Number(e.target.value))} className={field}>
+          {[25, 50, 75, 100].map((n) => <option key={n} value={n} className="bg-navy">{n}% strength</option>)}
+        </select>
+        <button type="button" disabled={!pattern.notes[channel.id]?.length} className={button} onClick={() => {
+          setNotes(channel.id, quantizeNotes(pattern.notes[channel.id] ?? [], snap, strength / 100), true);
+          setStatus(`Quantized ${channel.name} to the selected snap at ${strength}% strength. Ctrl+Z to undo.`);
+        }}>Apply to channel</button>
+        <span className="text-slate-500">Uses snap grid · keeps note lengths and velocity</span>
+      </div>}
 
       {/* The windows. */}
       <div role="tablist" aria-label="Studio views" className="flex gap-1">
@@ -414,7 +501,7 @@ export function StudioView() {
             selected={channel.id}
             onSelect={setChannelId}
             onChannel={setChannel}
-            onSteps={(id, notes) => setNotes(id, notes, true)}
+            onToggle={toggleStep}
             onAdd={addChannel}
             onDelete={deleteChannel}
             onOpenPiano={(id) => { setChannelId(id); setView("piano"); }}
@@ -450,7 +537,7 @@ export function StudioView() {
         )}
       </div>
 
-      <p className="min-h-4 truncate text-[11.5px] text-slate-400" aria-live="polite">{status || hint[view]}</p>
+      <p className="min-h-4 text-[11.5px] text-slate-400" aria-live="polite">{status || hint[view]}</p>
     </section>
   );
 }

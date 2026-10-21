@@ -2,10 +2,11 @@
 
 /* The channel rack: every channel with its instrument, volume, pan, mixer insert, mute and solo, and a step sequencer
    for the selected pattern. A step is a sixteenth of the channel's step note (a kick, a snare, or any pitch); steps in
-   groups of a beat, the pattern's whole length across. A channel whose notes are not all steps opens in the piano
-   roll from its name. */
-import { TbPiano, TbPlus, TbTrash } from "react-icons/tb";
-import { SIXTEENTH, STUDIO_VOICES, beatTicks, noteName, patternLength, sortNotes, type Channel, type Pattern, type StudioSong, type StudioVoice } from "@/lib/studio";
+   groups of a beat, four bars at a time, with the arrows paging through a longer pattern. A channel whose notes are
+   not all steps lights its piano-roll button. */
+import { useState } from "react";
+import { TbChevronLeft, TbChevronRight, TbPiano, TbPlus, TbTrash } from "react-icons/tb";
+import { SIXTEENTH, STUDIO_VOICES, barTicks, beatTicks, noteName, patternLength, type Channel, type Pattern, type StudioSong, type StudioVoice } from "@/lib/studio";
 import { COLORS, DRUM_NAMES } from "./piano-roll";
 
 export const VOICE_LABEL: Record<StudioVoice, string> = {
@@ -15,32 +16,41 @@ export const VOICE_LABEL: Record<StudioVoice, string> = {
 };
 
 export function ChannelRack({
-  song, pattern, selected, onSelect, onChannel, onSteps, onAdd, onDelete, onOpenPiano, audition,
+  song, pattern, selected, onSelect, onChannel, onToggle, onAdd, onDelete, onOpenPiano, audition,
 }: {
   song: StudioSong;
   pattern: Pattern;
   selected: string;
   onSelect: (id: string) => void;
   onChannel: (id: string, change: Partial<Channel>, record?: boolean) => void;
-  onSteps: (id: string, notes: Pattern["notes"][string]) => void;
+  onToggle: (id: string, step: number) => void;
   onAdd: () => void;
   onDelete: (id: string) => void;
   onOpenPiano: (id: string) => void;
   audition: (id: string, pitch: number) => void;
 }) {
-  const length = patternLength(song, pattern), steps = Math.max(16, Math.round(length / SIXTEENTH)), perBeat = Math.round(beatTicks(song) / SIXTEENTH);
+  const [page, setPage] = useState(0);
+  const perBeat = Math.round(beatTicks(song) / SIXTEENTH), perPage = Math.round((barTicks(song) * 4) / SIXTEENTH);
+  const total = Math.max(perPage, Math.round(patternLength(song, pattern) / SIXTEENTH)), pages = Math.ceil(total / perPage);
+  const shown = Math.min(page, pages - 1), first = shown * perPage, steps = Math.min(perPage, total - first);
+  const barsPerPage = 4, firstBar = shown * barsPerPage + 1;
   const anySolo = song.channels.some((c) => c.solo);
   return (
     <div className="flex h-full min-h-0 flex-col gap-1.5 overflow-auto rounded-xl bg-white/5 p-2 ring-1 ring-white/10">
+      {pages > 1 && (
+        <div className="flex shrink-0 items-center justify-end gap-1.5 text-[11.5px] font-bold text-slate-300">
+          <button type="button" aria-label="Earlier bars" disabled={shown === 0} onClick={() => setPage(shown - 1)} className="flex h-6 w-6 items-center justify-center rounded bg-white/10 disabled:opacity-30"><TbChevronLeft className="h-3.5 w-3.5" /></button>
+          <span className="font-mono tabular-nums">Bars {firstBar}–{firstBar + barsPerPage - 1} of {Math.ceil(total / (perPage / barsPerPage))}</span>
+          <button type="button" aria-label="Later bars" disabled={shown >= pages - 1} onClick={() => setPage(shown + 1)} className="flex h-6 w-6 items-center justify-center rounded bg-white/10 disabled:opacity-30"><TbChevronRight className="h-3.5 w-3.5" /></button>
+        </div>
+      )}
       {song.channels.map((c, i) => {
         const notes = pattern.notes[c.id] ?? [];
         const on = new Set(notes.filter((n) => n.pitch === c.stepPitch).map((n) => Math.round(n.start / SIXTEENTH)));
         const other = notes.some((n) => n.pitch !== c.stepPitch || n.start % SIXTEENTH !== 0);
         const toggle = (k: number) => {
-          const start = k * SIXTEENTH;
-          const next = on.has(k) ? notes.filter((n) => !(n.pitch === c.stepPitch && Math.round(n.start / SIXTEENTH) === k)) : sortNotes([...notes, { pitch: c.stepPitch, start, len: SIXTEENTH, vel: 0.85 }]);
           if (!on.has(k)) audition(c.id, c.stepPitch);
-          onSteps(c.id, next);
+          onToggle(c.id, k);
         };
         const audible = !c.mute && (!anySolo || c.solo);
         return (
@@ -72,8 +82,8 @@ export function ChannelRack({
             </label>
             <span className="w-14 shrink-0 truncate font-mono text-[10px] text-slate-400">{c.voice === "drums" ? DRUM_NAMES[c.stepPitch] ?? noteName(c.stepPitch) : noteName(c.stepPitch)}</span>
             <div className="flex shrink-0 gap-0.5" role="group" aria-label={`${c.name} steps`}>
-              {Array.from({ length: steps }, (_, k) => {
-                const group = Math.floor(k / perBeat) % 2 === 0;
+              {Array.from({ length: steps }, (_, j) => {
+                const k = first + j, group = Math.floor(k / perBeat) % 2 === 0;
                 return (
                   <button
                     key={k}
