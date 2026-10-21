@@ -58,7 +58,7 @@ const TARGET_RMS = 10 ** (-16 / 20);
 /* The most the leveler raises the mix (about +16 dB), and where it drops to when the output device changes. */
 const LEVELER_MAX = 6;
 const LEVELER_SAFE = 2;
-function master(audio: AudioContext, output: AudioNode) {
+export function master(audio: AudioContext, output: AudioNode) {
   const filter = (type: BiquadFilterType, frequency: number, gain = 0, q = 0.707) => {
     const node = audio.createBiquadFilter();
     node.type = type;

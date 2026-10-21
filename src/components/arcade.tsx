@@ -1,10 +1,11 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
-import { TbArrowLeft, TbDeviceGamepad2, TbLayoutGrid, TbLogout, TbMusic, TbPower, TbTrophy, TbUser } from "react-icons/tb";
+import { TbArrowLeft, TbDeviceGamepad2, TbLayoutGrid, TbLogout, TbMusic, TbPiano, TbPower, TbTrophy, TbUser } from "react-icons/tb";
 import { loadBest } from "@/components/games/shared";
 import { AchievementsView } from "@/components/arcade-achievements";
 import { SoundtrackView } from "@/components/soundtrack";
+import { StudioView } from "@/components/studio";
 import { GAME_ORDER, GamePlayer, bestText, gameCopy, gameIcons, type GameId } from "@/components/mini-games";
 import { SpaceFrame } from "@/components/games/space-frame";
 import { ACH_CHANGED, currentStore, overall, progressOf, scanBests, type Store } from "@/lib/achievements";
@@ -21,6 +22,7 @@ const copy = {
     library: "Library",
     achievements: "Achievements",
     soundtrack: "Soundtrack",
+    studio: "Studio",
     earned: (a: number, b: number) => `${a}/${b} achievements`,
     profile: "Profile",
     exit: "Exit arcade",
@@ -41,6 +43,7 @@ const copy = {
     library: "Perpustakaan",
     achievements: "Pencapaian",
     soundtrack: "Runut bunyi",
+    studio: "Studio",
     earned: (a: number, b: number) => `${a}/${b} pencapaian`,
     profile: "Profil",
     exit: "Keluar arked",
@@ -62,7 +65,12 @@ const copy = {
 const GROW_MS = 650;
 const BALL_RADIUS = 22;
 
-type View = "library" | "profile" | "achievements" | "soundtrack" | { play: GameId };
+type View = "library" | "profile" | "achievements" | "soundtrack" | "studio" | { play: GameId };
+
+/* The studio is a working tool for the owner: always there in development, and in production only for the usernames
+   listed in NEXT_PUBLIC_STUDIO_OWNERS (comma-separated). */
+const STUDIO_OWNERS = (process.env.NEXT_PUBLIC_STUDIO_OWNERS ?? "").split(",").map((name) => name.trim().toLowerCase()).filter(Boolean);
+const studioFor = (username: string | null) => process.env.NODE_ENV === "development" || (!!username && STUDIO_OWNERS.includes(username.toLowerCase()));
 
 function readBests() {
   return Object.fromEntries(GAME_ORDER.map((id) => [id, loadBest(id)])) as Record<GameId, number>;
@@ -281,6 +289,12 @@ export function Arcade({
                   <TbMusic aria-hidden="true" className="h-4.5 w-4.5" />
                   {t.soundtrack}
                 </button>
+                {studioFor(username) && (
+                  <button type="button" aria-current={view === "studio" ? "page" : undefined} className={navItem(view === "studio")} onClick={() => open("studio")}>
+                    <TbPiano aria-hidden="true" className="h-4.5 w-4.5" />
+                    {t.studio}
+                  </button>
+                )}
                 <button type="button" aria-current={view === "profile" ? "page" : undefined} className={navItem(view === "profile")} onClick={() => open("profile")}>
                   <TbUser aria-hidden="true" className="h-4.5 w-4.5" />
                   {t.profile}
@@ -334,6 +348,8 @@ export function Arcade({
                 {view === "achievements" && <AchievementsView lang={lang} />}
 
                 {view === "soundtrack" && <SoundtrackView lang={lang} />}
+
+                {view === "studio" && studioFor(username) && <StudioView />}
 
                 {playing && (
                   <section aria-label={names[playing]} className="mx-auto flex w-full flex-col gap-3">

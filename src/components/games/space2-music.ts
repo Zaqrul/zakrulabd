@@ -38,6 +38,17 @@ export type SagaTrack = BaseSagaTrack | AlternateSagaTrack | Space3Track;
 /* "square" is a second synth lead: a lean square wave that glides from one note into the next (portamento), spread a
    little; "superSquare" is the same with seven voices in unison and an octave below, spread wide. */
 type Voice = "brass" | "strings" | "lead" | "square" | "superSquare" | "organ" | "organChord" | "bell" | "harp" | "chip" | "trumpet" | "violin" | "guitar" | "piano";
+/* What a studio track can play: a voice of the band, a bass, or the kit. */
+export const STUDIO_VOICES = [
+  "piano", "brass", "trumpet", "strings", "violin", "lead", "square", "superSquare", "organ", "organChord", "bell", "harp", "chip", "guitar",
+  "synthBass", "pickedBass", "slapBass", "drums",
+] as const;
+export type StudioVoice = (typeof STUDIO_VOICES)[number];
+/* General MIDI drum notes to the kit: kicks, snares, closed and open hats, toms, crashes and rides (and the rim for the rest). */
+const GM_KIT: Record<number, string> = {
+  35: "k", 36: "k", 37: "r", 38: "s", 39: "s", 40: "s", 41: "t", 42: "h", 43: "t", 44: "h", 45: "t", 46: "o", 47: "t", 48: "t",
+  49: "c", 50: "t", 51: "r", 52: "c", 53: "r", 55: "c", 57: "c", 59: "r",
+};
 /* A bar may carry a counter-line too, played by the song's `counter` voice. */
 type Bar = [lead: string, chord: string, riff?: string, counter?: string];
 export type BarPerformance = {
@@ -1314,6 +1325,18 @@ export class SagaMusic {
 
   get playing(): SagaTrack | null {
     return this.timer || this.source ? this.track : null;
+  }
+
+  /* The studio (studio.tsx) plays one note at a time, each track on a mixer of its own: any voice of the band, one of
+     the three basses, or a drum of the kit picked by its General MIDI number. */
+  attach(ctx: AudioContext, out: AudioNode) {
+    this.prepare(ctx, out);
+  }
+
+  note(voice: StudioVoice, midi: number, at: number, dur: number, velocity = 1) {
+    if (voice === "drums") this.drum(GM_KIT[midi] ?? "r", at, velocity);
+    else if (voice === "synthBass" || voice === "pickedBass" || voice === "slapBass") this.bass(midi, at, dur, voice === "synthBass" ? "synth" : voice === "pickedBass" ? "picked" : "slap");
+    else this.voice(voice, midi, at, dur, (voice === "bell" ? 0.13 : voice === "organ" ? 0.09 : 0.11) * velocity);
   }
 
   /* Records a tune on an offline context, scheduling a chunk of the score at a time so no one moment builds thousands of nodes. */
