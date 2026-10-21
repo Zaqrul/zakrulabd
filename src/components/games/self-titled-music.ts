@@ -1,5 +1,5 @@
-/* The Self-Titled album: tunes written for the soundtrack player alone, each in the manner of a reference the owner
-   chose, its notes all new (docs/composition-method.md). They play on Space 2's band (space2-music.ts).
+/* The Self-Titled album plays on Space 2's band (space2-music.ts). The first two tunes use new notes in the manner
+   of the owner's references (docs/composition-method.md); MIDI_ALTERNATES adds arrangements of supplied melodies.
    - Wandering Blade, a battle in the manner of a 16-bit SaGa battle theme: C sharp minor at 160 bpm. Two trumpets'
      worth of brass holding long notes over strings that never stop running in sixteenths and a slapped bass driving
      eighths; a hook that holds the third and turns down to a pickup in threes; a half-time section where the strings
@@ -12,8 +12,9 @@
      chromatic runs; held brass over octaves pulsing; the key climbing a semitone at a time; held chords without
      drums; a push of hits in B minor; G sharp minor; the theme again and the ostinato to close. */
 import type { BarPerformance, Song } from "./space2-music";
+import { MIDI_ALTERNATES, type MidiAlternateTrack } from "./self-titled-midi-alternates.ts";
 
-export type SelfTitledTrack = "self:battle1" | "self:battle2";
+export type SelfTitledTrack = "self:battle1" | "self:battle2" | MidiAlternateTrack;
 
 /* The strings' running sixteenths for each chord: its third, root, fifth and root, four times over. */
 const RUN: Record<string, string> = {
@@ -341,4 +342,5 @@ const SANCTUM_OF_THORNS: Song = {
 export const SELF_TITLED: Record<SelfTitledTrack, Song> = {
   "self:battle1": WANDERING_BLADE,
   "self:battle2": SANCTUM_OF_THORNS,
+  ...MIDI_ALTERNATES,
 };

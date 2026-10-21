@@ -333,7 +333,7 @@ test("Final Extremity's fourth phase, Eternity: the same score in G sharp minor,
 
 test("the Self-Titled album lists Wandering Blade, a SaGa-style battle in C sharp minor that loops after its intro", async () => {
   const { SELF_TITLED } = await import("../src/components/games/self-titled-music.ts");
-  assert.deepEqual(ALBUMS.selftitled.map((t) => trackTitle(t, "en")), ["Battle: Wandering Blade", "Battle: Sanctum of Thorns"]);
+  assert.deepEqual(ALBUMS.selftitled.slice(0, 2).map((t) => trackTitle(t, "en")), ["Battle: Wandering Blade", "Battle: Sanctum of Thorns"]);
   assert.equal(trackTitle(ALBUMS.selftitled[0], "ms"), "Pertempuran: Pedang Pengembara");
   const song = SELF_TITLED["self:battle1"];
   assert.equal(song.bpm, 160);
