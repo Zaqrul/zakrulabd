@@ -219,8 +219,8 @@ const RIFF = {
 const RIFF_BASS = {
   Em: "E2 . E3 E2 . B2 D3 . E2 . E3 E2 . G2 A2 B2",
   C: "C3 . C2 C3 . G2 B2 . C3 . C2 C3 . E2 G2 G#2",
-  Am: "A2 . A1 A2 . E2 G2 . A2 . A1 A2 . C3 B2 A#2",
-  B7: "B1 . B2 B1 . F#2 A2 . B1 . B2 B1 . C#2 D2 D#2",
+  Am: "A2 . A3 A2 . E2 G2 . A2 . A3 A2 . C3 B2 A#2",
+  B7: "B2 . B3 B2 . F#2 A2 . B2 . B3 B2 . F#2 E2 D#2",
 };
 /* The riff an octave down, as a counter-line. */
 const under = (line: string) => line.replace(/(\d)/g, (d) => String(Number(d) - 1));
@@ -232,15 +232,15 @@ const riff = (last?: string): Part[] =>
 const VERSE: [lead: string, chord: keyof typeof RIFF, bass: string][] = [
   ["B5 - - E6 - - D6 - B5 - - G5 - - A5 -", "Em", "E2 - - E3 - - D3 - B2 - - G2 - - A2 B2"],
   ["G5 - - C6 - - B5 - G5 - - E5 - - G5 -", "C", "C3 - - C2 - - G2 - C3 - - E3 - - D3 B2"],
-  ["A5 - - C6 - - E6 - - - - D6 - C6 B5 -", "Am", "A2 - - A1 - - E2 - A2 - - C3 - - B2 A#2"],
-  ["F#6 - - D#6 - - B5 - - - - - B5 C6 C#6 D6", "B7", "B1 - - B2 - - A2 - F#2 - - D#2 - - C#2 D#2"],
+  ["A5 - - C6 - - E6 - - - - D6 - C6 B5 -", "Am", "A2 - - A3 - - E3 - A2 - - C3 - - B2 A#2"],
+  ["F#6 - - D#6 - - B5 - - - - - B5 C6 C#6 D6", "B7", "B2 - - B3 - - A2 - F#2 - - D#2 - - C#2 D#2"],
   ["E6 - - G6 - - F#6 - E6 - - B5 - - C6 -", "Em", "E2 - - B2 - - E3 - D3 - - B2 - - G2 B2"],
   ["E6 - - G6 - - A6 - G6 - - E6 - - C6 -", "C", "C3 - - G2 - - C2 - E2 - - G2 - - A2 B2"],
-  ["C6 - - E6 - - A6 - G6 - - E6 - - C6 -", "Am", "A2 - - E3 - - A1 - C3 - - E3 - - D3 C#3"],
+  ["C6 - - E6 - - A6 - G6 - - E6 - - C6 -", "Am", "A2 - - E3 - - A2 - C3 - - E3 - - D3 C#3"],
 ];
 /* The verse, its last bar given, alone over the running piano or with the riff under it. */
 const verse = (last: string, withRiff: boolean, fillKit: string): Part[] =>
-  [...VERSE, [last, "B7", "B1 - - F#2 - - B2 - A2 - - F#2 - - D#2 F#2"] as (typeof VERSE)[number]].map(([lead, chord, bass], i) => {
+  [...VERSE, [last, "B7", "B2 - - F#2 - - B2 - A2 - - F#2 - - D#2 F#2"] as (typeof VERSE)[number]].map(([lead, chord, bass], i) => {
     const part: Part = [withRiff ? [lead, chord, "push16", under(RIFF[chord])] : [lead, chord, "push16"], { bass, kit: VERSE_KIT }];
     return i === 7 ? fill(part, fillKit) : part;
   });
@@ -252,12 +252,12 @@ const sevens: BarPerformance = { gate: 0.6, leadAccents: THREES_14 };
 const DESCANT: [descant: string, bass: string][] = [
   ["B6 - - - - - - - G6 - - - A6 - B6 -", "E2 . E3 . B2 . E2 D3 . E2 B2 . E3 . D3 B2"],
   ["C7 - - - - - - - G6 - - - E6 - - -", "C3 . C2 . G2 . C3 B2 . C3 G2 . E2 . G2 G#2"],
-  ["A6 - - - - - - - C7 - - - B6 - A6 -", "A2 . A1 . E2 . A2 G2 . A2 E2 . C3 . B2 A#2"],
-  ["F#6 - - - - - - - D#6 - - - . . . .", "B1 . B2 . F#2 . B1 A2 . B1 F#2 . D#2 . D2 D#2"],
+  ["A6 - - - - - - - C7 - - - B6 - A6 -", "A2 . A3 . E2 . A2 G2 . A2 E2 . C3 . B2 A#2"],
+  ["F#6 - - - - - - - D#6 - - - . . . .", "B2 . B3 . F#2 . B2 A2 . B2 F#2 . D#2 . D2 D#2"],
   ["E6 - - - G6 - - - B6 - - - - - A6 G6", "E2 . E3 . B2 . E2 D3 . E2 B2 . G2 . F#2 E2"],
   ["A6 - - - - - - - G6 - F6 - E6 - F6 -", "F2 . F3 . C3 . F2 E3 . F2 C3 . A2 . F#2 E2"],
   ["F#6 - - - - - - - A6 - - - G6 - F#6 -", "D#2 . D#3 . A2 . D#2 C3 . D#2 A2 . F#2 . A2 A#2"],
-  ["D#6 - - - - - - - F#6 - - - B6 - - -", "B1 . B2 . F#2 . B1 A2 . B1 F#2 . D#2 . D2 D#2"],
+  ["D#6 - - - - - - - F#6 - - - B6 - - -", "B2 . B3 . F#2 . B2 A2 . B2 F#2 . D#2 . D2 D#2"],
 ];
 
 const EXTENDED_PARTS: Part[] = [
@@ -281,7 +281,7 @@ const EXTENDED_PARTS: Part[] = [
   bassed("B5 - - - - - D6 - G6 - - - F#6 - E6 -", "G", "push16", "G2 . . G3 . G2 . D3 G2 . . G3 . F#3 E3 C#3", { kit: CHORUS_KIT }),
   bassed("F#6 - - - - - E6 - D6 - - - A5 - - -", "D", "push16", "D2 . . D3 . D2 . A2 D2 . . D3 . A2 C3 B2", { kit: CHORUS_KIT }),
   bassed("E6 - - - - - D6 - C6 - - - G5 - A5 -", "C", "push16", "C2 . . C3 . C2 . G2 C2 . . C3 . B2 A2 A#2", { kit: CHORUS_KIT }),
-  fill(bassed("B5 - - - A5 - - - F#5 - - - . . . .", "B7", "push16", "B1 . . B2 . B1 . F#2 B1 . . B2 . A2 G2 F#2"), FILL.kicks),
+  fill(bassed("B5 - - - A5 - - - F#5 - - - . . . .", "B7", "push16", "B2 . . B3 . B2 . F#2 B2 . . B3 . A2 G2 F#2"), FILL.kicks),
   // The hook a minor third up, in G minor, and the riff there.
   [["G5 - - D6 - - Eb6 - D6 - . Bb5 C6 D6 - -", "Gm", "toll16", "Bb4 - - - - - - - G4 - - - F#4 - G4 -"]],
   [["Eb6 - - Bb5 - - C6 - G5 - . Eb5 F5 G5 - -", "Eb", "push16", "G4 - - - - - - - Eb4 - - - D4 - Eb4 -"]],
@@ -302,12 +302,12 @@ const EXTENDED_PARTS: Part[] = [
   bassed("E6 - - - - - D6 - C6 B5 - C6", "Am", "waltz12", "A2 - - E2 - - A2 - - G2 F#2 E2"),
   bassed("D6 - - - - - C6 - B5 A5 - B5", "D", "waltz12", "D2 - - A2 - - F#2 - - E2 - D2"),
   bassed("C6 - - - - - B5 - A5 G5 - A5", "C", "waltz12", "C2 - - G2 - - E2 - - D2 - C2"),
-  fill(bassed("B5 - - - - - F#5 - - D#5 - -", "B7", "waltz12", "B1 - - F#2 - - D#2 - - F#2 A2 B2"), FILL.toms12),
+  fill(bassed("B5 - - - - - F#5 - - D#5 - -", "B7", "waltz12", "B2 - - F#2 - - D#2 - - F#2 A2 B2"), FILL.toms12),
   // The riff in 7/8, into the 7/8 break; the heroic notes, and again higher over the running piano.
   bassed("E6 B5 C6 B5 E6 B5 F#6 B5 G6 B5 F#6 B5 E6 D#6", "Em", "ito14", "E2 . E3 E2 . B2 D3 . E2 . E3 . D3 B2", sevens),
-  bassed("C6 A5 B5 A5 C6 A5 E6 A5 F6 A5 E6 A5 D6 C6", "Am", "ito14", "A2 . A1 A2 . E2 G2 . A2 . C3 . B2 A2", sevens),
-  bassed("D6 B5 C6 B5 D6 B5 G6 B5 A6 B5 G6 B5 F#6 E6", "G", "ito14", "G2 . G1 G2 . D2 F#2 . G2 . B2 . A2 A#2", sevens),
-  fill(bassed("D#6 B5 E6 B5 F#6 B5 A6 B5 G6 B5 F#6 B5 E6 D#6", "B7", "ito14", "B1 . B2 B1 . F#2 A2 . B1 . D#2 . D2 D#2", sevens), FILL.threes14),
+  bassed("C6 A5 B5 A5 C6 A5 E6 A5 F6 A5 E6 A5 D6 C6", "Am", "ito14", "A2 . A3 A2 . E2 G2 . A2 . C3 . B2 A2", sevens),
+  bassed("D6 B5 C6 B5 D6 B5 G6 B5 A6 B5 G6 B5 F#6 E6", "G", "ito14", "G2 . G3 G2 . D2 F#2 . G2 . B2 . A2 A#2", sevens),
+  fill(bassed("D#6 B5 E6 B5 F#6 B5 A6 B5 G6 B5 F#6 B5 E6 D#6", "B7", "ito14", "B2 . B3 B2 . F#2 A2 . B2 . D#2 . D2 D#2", sevens), FILL.threes14),
   ...T.slice(14, 17).map(own),
   fill(own(T[17]), FILL.toms14),
   ...T.slice(18, 21).map(own),
@@ -315,7 +315,7 @@ const EXTENDED_PARTS: Part[] = [
   bassed("E6 - - - - - - - G6 - - - - - E6 -", "C", "pulse16", "C2 - - - E2 - - - G2 - - - A2 - C#3 -"),
   bassed("F#6 - - - - - - - A6 - - - - - F#6 -", "D", "pulse16", "D3 - - - A2 - - - F#2 - - - E2 - D#2 -"),
   bassed("G6 - - - - - - - B6 - - - A6 - G6 -", "Em", "pulse16", "E2 - - - G2 - - - B2 - - - D3 - C3 -"),
-  fill(bassed("F#6 - - - - - - - - - - - D#6 - B5 -", "B7", "pulse16", "B1 - - - D#2 - - - F#2 - - - A2 - E2 -"), FILL.open),
+  fill(bassed("F#6 - - - - - - - - - - - D#6 - B5 -", "B7", "pulse16", "B2 - - - D#2 - - - F#2 - - - A2 - E2 -"), FILL.open),
   // The hook's first notes climbing a semitone at a time, each key with its flat sixth, trading 4/4 and 7/8.
   bassed("F5 - - C6 - - Db6 - F5 - - C6 - - Db6 -", "Fm", "toll16", "F2 . F3 F2 . C3 Eb3 . F2 . F3 F2 . Ab2 Bb2 C3"),
   bassed("Db6 - - Ab5 - - Bb5 - Db6 - - Ab5 Bb5 C6", "Db", "ito14", "Db2 . Db3 Db2 . Ab2 B2 . Db2 . Ab2 . E2 F2"),
@@ -345,7 +345,7 @@ const EXTENDED_PARTS: Part[] = [
   fill(own(T[29]), FILL.stop),
   // The riff a semitone down, in E flat minor, and a run down D7 to the short version's close.
   bassed("Eb6 Bb5 B5 Bb5 Eb6 Bb5 F6 Bb5 Gb6 Bb5 F6 Bb5 Eb6 Bb5 D6 Bb5", "Ebm", "push16", "Eb2 . Eb3 Eb2 . Bb2 Db3 . Eb2 . Eb3 Eb2 . Gb2 Ab2 Bb2", STACCATO),
-  bassed("Eb6 Bb5 B5 Bb5 Eb6 Bb5 Gb6 Bb5 Ab6 Bb5 Gb6 Bb5 F6 Bb5 Eb6 Bb5", "B", "push16", "B1 . B2 B1 . F#2 A2 . B1 . B2 B1 . D#2 F#2 G2", STACCATO),
+  bassed("Eb6 Bb5 B5 Bb5 Eb6 Bb5 Gb6 Bb5 Ab6 Bb5 Gb6 Bb5 F6 Bb5 Eb6 Bb5", "B", "push16", "B2 . B3 B2 . F#2 A2 . B2 . B3 B2 . D#2 F#2 G2", STACCATO),
   bassed("B5 G#5 A#5 G#5 B5 G#5 D#6 G#5 E6 G#5 D#6 G#5 C#6 G#5 B5 G#5", "G#m", "push16", "G#2 . G#3 G#2 . D#3 F#3 . G#2 . G#3 G#2 . B2 C3 C#3", STACCATO),
   fill(bassed("F#6 E6 D6 C6 A5 C6 D6 E6 F#6 E6 D6 C6 B5 A5 G5 F#5", "D7", "push16", "D3 . D2 D3 . A2 C3 . D2 . D3 C3 . A2 G2 F#2"), FILL.toms),
   own(T[30]),

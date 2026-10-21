@@ -214,6 +214,10 @@ test("Throne of Ascension, Extended keeps every bar of the short version, in its
   assert.ok(whole.fills.concat(whole.crashes, whole.riser).every((b) => b >= 0 && b < whole.bars.length));
   assert.ok(whole.fills.every((b) => whole.performance[b].kit && whole.performance[b].drumAccents), "every fill is written for its place, and swells");
   assert.ok(new Set(whole.fills.map((b) => whole.performance[b].kit)).size >= 8, "the fills are not all alike");
+  /* The written bass stays in the engine's register: nothing under C2, so the synth bass's sub-octave stays above 30 Hz. */
+  const octave = (note) => Number(/(-?\d)$/.exec(note)[1]) * 12 + "C C# D D# E F F# G G# A A# B".split(" ").indexOf(note.replace(/-?\d$/, "").replace("Db", "C#").replace("Eb", "D#").replace("Gb", "F#").replace("Ab", "G#").replace("Bb", "A#"));
+  const lowest = Math.min(...whole.performance.flatMap((p) => (p.bass ?? "").split(/\s+/).filter((c) => /\d$/.test(c)).map(octave)));
+  assert.ok(lowest >= octave("C2"), "no written bass note under C2");
 });
 
 test("the extended Space 2 battle theme keeps the game's own bars and adds a flowing line, a melodic lead-in and rising arcs between them", () => {
