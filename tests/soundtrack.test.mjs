@@ -212,6 +212,8 @@ test("Throne of Ascension, Extended keeps every bar of the short version, in its
   const seconds = whole.bars.reduce((t, b) => t + b[0].trim().split(/\s+/).length, 0) * 60 / whole.bpm / 4;
   assert.ok(seconds > 170 && seconds < 190, `${seconds.toFixed(1)} s`);
   assert.ok(whole.fills.concat(whole.crashes, whole.riser).every((b) => b >= 0 && b < whole.bars.length));
+  assert.ok(whole.fills.every((b) => whole.performance[b].kit && whole.performance[b].drumAccents), "every fill is written for its place, and swells");
+  assert.ok(new Set(whole.fills.map((b) => whole.performance[b].kit)).size >= 8, "the fills are not all alike");
 });
 
 test("the extended Space 2 battle theme keeps the game's own bars and adds a flowing line, a melodic lead-in and rising arcs between them", () => {
