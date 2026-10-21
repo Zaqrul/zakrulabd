@@ -330,3 +330,16 @@ test("Final Extremity's fourth phase, Eternity: the same score in G sharp minor,
   assert.ok(p4.bars.slice(6, 14).every((b) => b[3].split(/\s+/).filter((c) => c !== ".").length >= 12), "the drive chugs in sixteenths");
   assert.ok(p4.performance.slice(6, 13).every((p) => p.kit.split(/\s+/).filter((h) => h.includes("k")).length === 8), "eight kick hits per heavy bar");
 });
+
+test("the Self-Titled album lists Wandering Blade, a SaGa-style battle in C sharp minor that loops after its intro", async () => {
+  const { SELF_TITLED } = await import("../src/components/games/self-titled-music.ts");
+  assert.deepEqual(ALBUMS.selftitled.map((t) => trackTitle(t, "en")), ["Battle: Wandering Blade"]);
+  assert.equal(trackTitle(ALBUMS.selftitled[0], "ms"), "Pertempuran: Pedang Pengembara");
+  const song = SELF_TITLED["self:battle1"];
+  assert.equal(song.bpm, 160);
+  assert.equal(song.intro, 4);
+  assert.equal(song.performance.length, song.bars.length);
+  assert.equal(song.bars[4][1], "C#m", "the hook starts on the tonic");
+  const seconds = song.bars.reduce((t, b) => t + b[0].trim().split(/\s+/).length, 0) * 60 / song.bpm / 4;
+  assert.ok(seconds > 130 && seconds < 160, `${seconds} s`);
+});

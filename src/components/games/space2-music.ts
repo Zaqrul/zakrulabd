@@ -19,6 +19,7 @@ import { ASHEN_CROWN_II } from "./space2-ashen-crown-ii.ts";
 import { ASHEN_CROWN_III } from "./space2-ashen-crown-iii.ts";
 import { arrangeAscension } from "./space2-ascension.ts";
 import { ASCENSION_BONUS } from "./space2-ascension-bonus.ts";
+import { SELF_TITLED, type SelfTitledTrack } from "./self-titled-music.ts";
 import { SPACE3_SONGS, type Space3Track } from "./space3-music.ts";
 import type { StudioVoice } from "../../lib/studio.ts";
 
@@ -36,7 +37,7 @@ export type LaterTrack = SecondBattle | "s2bonus16" | "s2bonus17";
 /* The Ascension album's own bonus tracks, written for it and arranged from nothing in the game. */
 export type AscensionBonus = "alt:asc1" | "alt:asc2" | "alt:asc3" | "alt:asc4";
 export type AlternateSagaTrack = `alt:${Exclude<BaseSagaTrack, LaterTrack>}` | AscensionBonus;
-export type SagaTrack = BaseSagaTrack | AlternateSagaTrack | Space3Track;
+export type SagaTrack = BaseSagaTrack | AlternateSagaTrack | Space3Track | SelfTitledTrack;
 
 /* "square" is a second synth lead: a lean square wave that glides from one note into the next (portamento), spread a
    little; "superSquare" is the same with seven voices in unison and an octave below, spread wide. */
@@ -1193,7 +1194,7 @@ export const SONGS: Record<BaseSagaTrack, Song> = {
 };
 
 export const ALTERNATE_SONGS = arrangeAscension(SONGS);
-const PLAYBACK_SONGS: Record<SagaTrack, Song> = { ...SONGS, ...ALTERNATE_SONGS, ...ASCENSION_BONUS, ...SPACE3_SONGS };
+const PLAYBACK_SONGS: Record<SagaTrack, Song> = { ...SONGS, ...ALTERNATE_SONGS, ...ASCENSION_BONUS, ...SPACE3_SONGS, ...SELF_TITLED };
 
 /* Each song laid out step by step, checked once as the module loads. */
 type Plan = { steps: number; bar: number[]; pos: number[]; len: number[]; start: number[]; bands: Song[]; kits: (string[] | undefined)[]; lead: Map<number, Cell>; counter: Map<number, Cell>; bass: Map<number, Cell>[]; chords: ReturnType<typeof chordOf>[] };

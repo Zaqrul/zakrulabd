@@ -27,7 +27,7 @@ import { Playlist } from "@/components/studio/playlist";
 import { Projects } from "@/components/studio/projects";
 
 const STORE = "zakrul-studio-song";
-const ALBUM_LABEL: Record<Album, string> = { space: "Space", space2: "Space 2", space2alt: "Space 2: Ascension", space3: "Space 3" };
+const ALBUM_LABEL: Record<Album, string> = { space: "Space", space2: "Space 2", space2alt: "Space 2: Ascension", space3: "Space 3", selftitled: "Self-Titled" };
 /* A tune's parts open in the order a score reads: the tune, its doubling and second line, the harmony, the bass, the kit. */
 const PART_ORDER = ["Lead", "Pulse 1", "Layer", "Counter", "Pulse 2", "Pad", "Stabs", "Bass", "Triangle", "Drums", "Noise"];
 const SNAPS = [{ label: "1/32", ticks: SIXTEENTH / 2 }, { label: "1/16", ticks: SIXTEENTH }, { label: "1/8", ticks: SIXTEENTH * 2 }, { label: "Beat", ticks: PPQ }, { label: "Bar", ticks: BAR }];

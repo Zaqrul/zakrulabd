@@ -6,15 +6,17 @@
 import type { NesTrack } from "@/components/games/space-music";
 import type { AlternateSagaTrack, BaseSagaTrack } from "@/components/games/space2-music";
 import type { Space3Track } from "@/components/games/space3-music";
+import type { SelfTitledTrack } from "@/components/games/self-titled-music";
 
-export type Album = "space" | "space2" | "space2alt" | "space3";
+export type Album = "space" | "space2" | "space2alt" | "space3" | "selftitled";
 type Name = readonly [en: string, ms: string];
 
 export type Track =
   | { album: "space"; engine: NesTrack; title: Name; variation?: number; boss?: Name; bonus?: true }
   | { album: "space2"; engine: BaseSagaTrack; title: Name; variation?: number; boss?: Name; bonus?: true }
   | { album: "space2alt"; engine: AlternateSagaTrack; title: Name; variation?: number; boss?: Name; bonus?: true }
-  | { album: "space3"; engine: Space3Track; title: Name; variation?: number; boss?: Name; bonus?: true };
+  | { album: "space3"; engine: Space3Track; title: Name; variation?: number; boss?: Name; bonus?: true }
+  | { album: "selftitled"; engine: SelfTitledTrack; title: Name; variation?: number; boss?: Name; bonus?: true };
 
 const BOSSES_1: Name[] = [
   ["Siege Tank", "Kereta Kebal Pengepungan"], ["Iron Flagship", "Kapal Perang Besi"], ["Artillery Hermit", "Ketam Artileri"], ["Hive Carrier", "Kapal Induk Sarang"],
@@ -165,6 +167,11 @@ export const SPACE2_ALTERNATE_TRACKS: Track[] = SPACE2_ALL.filter((track) => !tr
 ]);
 
 /* Space 3: run-and-gun fusion with an orchestral-rock heart. So far the tunes for chapter 1. */
+/* Self-Titled: tunes written for the player alone, each in the manner of a reference the owner chose. */
+export const SELF_TITLED_TRACKS: Track[] = [
+  { album: "selftitled", engine: "self:battle1", title: BATTLE("Wandering Blade", "Pedang Pengembara") },
+];
+
 export const SPACE3_TRACKS: Track[] = [
   { album: "space3", engine: "s3title", title: S("Gate in the Dark", "Gate in the Dark") },
   { album: "space3", engine: "s3hangar", title: S("Hangar: Before the Gate", "Hangar: Before the Gate") },
@@ -208,7 +215,7 @@ export const SPACE3_TRACKS: Track[] = [
   { album: "space3", engine: "s3bonus2", title: S("Hypergate Requiem", "Hypergate Requiem"), bonus: true },
 ];
 
-export const ALBUMS: Record<Album, Track[]> = { space: SPACE_TRACKS, space2: SPACE2_TRACKS, space2alt: SPACE2_ALTERNATE_TRACKS, space3: SPACE3_TRACKS };
+export const ALBUMS: Record<Album, Track[]> = { space: SPACE_TRACKS, space2: SPACE2_TRACKS, space2alt: SPACE2_ALTERNATE_TRACKS, space3: SPACE3_TRACKS, selftitled: SELF_TITLED_TRACKS };
 
 /* "Showdown: Siege Tank"; a track may still carry a variation number, shown after its title. */
 export function trackTitle(track: Track, lang: "en" | "ms") {
