@@ -157,10 +157,11 @@ const ASCENSION_TITLES: Partial<Record<BaseSagaTrack, Name>> = {
 export const SPACE2_ALTERNATE_TRACKS: Track[] = SPACE2_ALL.filter((track) => !track.bonus && !ADDED_BATTLES.includes(track.engine as BaseSagaTrack)).map((track): Track => ({
   album: "space2alt", engine: `alt:${track.engine}` as AlternateSagaTrack, title: ASCENSION_TITLES[track.engine as BaseSagaTrack] ?? track.title,
 })).concat([
-  /* Ascension's own bonus tracks, at the end: a field battle, a boss and a final boss. */
+  /* Ascension's own bonus tracks, at the end: a field battle, a boss and a final boss, short and then whole. */
   { album: "space2alt", engine: "alt:asc1", title: BATTLE("Crosswind Assault", "Serangan Angin Lintang"), bonus: true },
   { album: "space2alt", engine: "alt:asc2", title: BATTLE("Colossus of the Spire", "Kolosus Menara"), bonus: true },
   { album: "space2alt", engine: "alt:asc3", title: BATTLE("Throne of Ascension", "Takhta Kenaikan"), bonus: true },
+  { album: "space2alt", engine: "alt:asc4", title: BATTLE("Throne of Ascension, Extended", "Takhta Kenaikan, Lanjutan"), bonus: true },
 ]);
 
 /* Space 3: run-and-gun fusion with an orchestral-rock heart. So far the tunes for chapter 1. */

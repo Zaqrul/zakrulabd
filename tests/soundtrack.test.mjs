@@ -2,12 +2,13 @@ import assert from "node:assert/strict";
 import test from "node:test";
 import { SONGS as SPACE } from "../src/components/games/space-music.ts";
 import { ALTERNATE_SONGS, SONGS as SPACE2 } from "../src/components/games/space2-music.ts";
+import { ASCENSION_BONUS } from "../src/components/games/space2-ascension-bonus.ts";
 import { ALBUMS, trackTitle } from "../src/lib/soundtrack.ts";
 
 test("the soundtrack lists every tune of Space and of Space 2, once each", () => {
   assert.deepEqual(ALBUMS.space.map((t) => t.engine).sort(), Object.keys(SPACE).filter((id) => !id.startsWith("bonus")).sort(), "Space lists no bonus tracks");
   assert.deepEqual(ALBUMS.space2.map((t) => t.engine).sort(), Object.keys(SPACE2).filter((id) => !id.startsWith("s2bonus") || ["s2bonus7", "s2bonus16", "s2bonus17", "s2bonus9", "s2bonus10", "s2bonus13", "s2bonus14", "s2bonus15"].includes(id)).sort(), "of the bonus tracks, only the three Ashen Crowns, the extended Battle Theme and the four phases of Final Extremity are on the original album");
-  assert.deepEqual(ALBUMS.space2alt.map((t) => t.engine).sort(), [...Object.keys(ALTERNATE_SONGS).filter((id) => !id.startsWith("alt:s2bonus")), "alt:asc1", "alt:asc2", "alt:asc3"].sort(), "Ascension lists none of Space 2's bonus tracks, only its own three");
+  assert.deepEqual(ALBUMS.space2alt.map((t) => t.engine).sort(), [...Object.keys(ALTERNATE_SONGS).filter((id) => !id.startsWith("alt:s2bonus")), "alt:asc1", "alt:asc2", "alt:asc3", "alt:asc4"].sort(), "Ascension lists none of Space 2's bonus tracks, only its own four");
 });
 
 test("every title is in both languages, and a tune with versions says which", () => {
@@ -59,8 +60,8 @@ test("only the original Space 2 album lists bonus tracks, eight of them, togethe
     assert.ok(flags.slice(0, -count).every((f) => !f));
   }
   assert.ok(ALBUMS.space.every((t) => !t.bonus), "Space lists none");
-  assert.deepEqual(ALBUMS.space2alt.filter((t) => t.bonus).map((t) => t.engine), ["alt:asc1", "alt:asc2", "alt:asc3"], "Ascension lists only its own three");
-  assert.ok(ALBUMS.space2alt.slice(-3).every((t) => t.bonus), "at its end");
+  assert.deepEqual(ALBUMS.space2alt.filter((t) => t.bonus).map((t) => t.engine), ["alt:asc1", "alt:asc2", "alt:asc3", "alt:asc4"], "Ascension lists only its own four");
+  assert.ok(ALBUMS.space2alt.slice(-4).every((t) => t.bonus), "at its end");
 });
 
 test("every bonus tune has the same notes and chords in the chiptune and in the orchestra", () => {
@@ -197,6 +198,18 @@ test("Ashen Crown leads from its slow part into its fast one with two bars of sl
   assert.deepEqual(SPACE2.s2bonus7.riser, [12, 13], "and a riser under the two bars");
   assert.equal(cells(bars[14]), 16);
   assert.ok(bars[13][0].trim().split(/\s+/).filter((c) => c !== "-" && c !== ".").at(-1) === "B4" && bars[14][0].startsWith("C5"), "it falls onto the leading tone, which the gallop resolves");
+});
+
+test("Throne of Ascension, Extended keeps every bar of the short version, in its order, and runs about three minutes", () => {
+  const short = ASCENSION_BONUS["alt:asc3"], whole = ASCENSION_BONUS["alt:asc4"];
+  const at = (from, to, start) => assert.deepEqual(whole.bars.slice(start, start + to - from), short.bars.slice(from, to), `bars ${from + 1}-${to} at ${start + 1}`);
+  at(0, 10, 12); at(10, 14, 48); at(14, 22, 64); at(26, 30, 98); at(30, 32, 106); at(22, 26, 108); at(2, 10, 120);
+  assert.equal(whole.bpm, short.bpm, "at the same tempo");
+  assert.ok(whole.bars.slice(0, 4).every((b) => b[2] === "rest16"), "it opens on the piano alone");
+  assert.equal(whole.intro, 14, "the ostinato and the opening play once; the loop starts at the hook");
+  const seconds = whole.bars.reduce((t, b) => t + b[0].trim().split(/\s+/).length, 0) * 60 / whole.bpm / 4;
+  assert.ok(seconds > 170 && seconds < 190, `${seconds.toFixed(1)} s`);
+  assert.ok(whole.fills.concat(whole.crashes, whole.riser).every((b) => b >= 0 && b < whole.bars.length));
 });
 
 test("the extended Space 2 battle theme keeps the game's own bars and adds a flowing line, a melodic lead-in and rising arcs between them", () => {

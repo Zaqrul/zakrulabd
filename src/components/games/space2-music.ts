@@ -31,7 +31,7 @@ export type BaseSagaTrack =
 /* The Ascension album re-composes the tunes the game began with; the battle tunes and Ashen Crown II and III, added later, have no Ascension version. */
 export type LaterTrack = SecondBattle | "s2bonus16" | "s2bonus17";
 /* The Ascension album's own bonus tracks, written for it and arranged from nothing in the game. */
-export type AscensionBonus = "alt:asc1" | "alt:asc2" | "alt:asc3";
+export type AscensionBonus = "alt:asc1" | "alt:asc2" | "alt:asc3" | "alt:asc4";
 export type AlternateSagaTrack = `alt:${Exclude<BaseSagaTrack, LaterTrack>}` | AscensionBonus;
 export type SagaTrack = BaseSagaTrack | AlternateSagaTrack | Space3Track;
 
@@ -114,6 +114,11 @@ const RIFFS: Record<string, string> = {
   itoRun16: "0 0 12 0 0 12 0 12 0 0 12 0 10 0 7 0",
   ito14: "0 . 12 0 . 12 0 . 10 . 12 0 7 .",
   ito12: "0 . 12 0 . 12 0 . 12 10 . 7",
+  /* Throne of Ascension, Extended: a dark pedal turning in eighths on the root, the fifth below and the flat seventh;
+     a stamping root that drops to the seventh below; and silence, for a piano alone. */
+  toll16: "0 . -5 . -2 . -5 . 0 . 0 -5 . -2 -5 .",
+  stomp16: "0 . 0 0 . 0 -2 . 0 . 0 0 . -2 0 .",
+  rest16: ". . . . . . . . . . . . . . . .",
 };
 
 /* k kick, s snare, h hat, t tom; "." nothing. A crash marks the start of a song and of each change

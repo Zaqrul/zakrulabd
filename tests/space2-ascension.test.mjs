@@ -15,7 +15,7 @@ test("Ascension covers the entire Space 2 album in order with separate engine id
   /* The original album is the game's tunes; Ascension is those in the same order, then the bonus tracks. */
   const own = ALBUMS.space2.filter((t) => !t.bonus && !ADDED.includes(t.engine));
   assert.equal(ALBUMS.space2alt.filter((t) => !t.bonus).length, own.length);
-  assert.deepEqual(ALBUMS.space2alt.filter((t) => t.bonus).map((t) => t.engine), ["alt:asc1", "alt:asc2", "alt:asc3"], "Ascension lists only its own bonus tracks");
+  assert.deepEqual(ALBUMS.space2alt.filter((t) => t.bonus).map((t) => t.engine), ["alt:asc1", "alt:asc2", "alt:asc3", "alt:asc4"], "Ascension lists only its own bonus tracks");
   own.forEach((original, i) => {
     const alt = ALBUMS.space2alt[i];
     assert.equal(alt.engine, `alt:${original.engine}`);
