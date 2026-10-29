@@ -30,6 +30,11 @@ let openWhenReady = false;
 
 export const tawkEnabled = Boolean(propertyId);
 
+/* Live chat is switched off: the Tawk.to embed is not loaded, and the launcher's
+   "Live chat" button hands the visitor to WhatsApp instead. Set to false to turn
+   the widget back on. */
+export const tawkPaused = true;
+
 /* Unread replies in the chat, for the contact deck's badge. The widget itself is
    hidden, so without this a reply would arrive with nothing on screen to show it. */
 let unreadCount = 0;
@@ -108,10 +113,10 @@ function report(event: string, label: string) {
   track(event, payload);
 }
 
-if (propertyId && typeof window !== "undefined") installTawkApi();
+if (propertyId && !tawkPaused && typeof window !== "undefined") installTawkApi();
 
 export function TawkWidget() {
-  if (!propertyId) return null;
+  if (!propertyId || tawkPaused) return null;
 
   return (
     <Script

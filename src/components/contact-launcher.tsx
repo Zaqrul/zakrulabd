@@ -9,7 +9,7 @@ import dynamic from "next/dynamic";
 import { loadBest } from "@/components/games/shared";
 import { DECK_GAMES, GAME_ORDER, MiniGames, bestText, gameIcons, type GameId } from "@/components/mini-games";
 import { SectionSummary } from "@/components/section-summary";
-import { openTawkChat, subscribeTawkUnread, tawkEnabled } from "@/components/tawk-widget";
+import { openTawkChat, subscribeTawkUnread, tawkEnabled, tawkPaused } from "@/components/tawk-widget";
 import { SCORES_EVENT, accountsEnabled, hasAccountHint, watchAccount } from "@/lib/account";
 import { wa, waMessages } from "@/lib/contact";
 import { announcement, dismissNotice, subscribeNotices, type Notice } from "@/lib/notices";
@@ -525,7 +525,8 @@ export function ContactLauncher({ lang }: { lang: "en" | "ms" }) {
               className={`${item} ${onGreen}`}
               onClick={() => {
                 setOpen(false);
-                openTawkChat();
+                if (tawkPaused) window.open(wa(waMessages.hero), "_blank", "noopener,noreferrer");
+                else openTawkChat();
               }}
             >
               <TbMessageCircle aria-hidden="true" className={`${iconGreen} text-[#03A84E]`} />
