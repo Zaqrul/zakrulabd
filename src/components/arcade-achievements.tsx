@@ -62,7 +62,7 @@ export function AchievementsView({ lang }: { lang: "en" | "ms" }) {
         <span aria-hidden="true" className={`flex h-10 w-10 shrink-0 items-center justify-center rounded-full ${done ? "bg-amber-400 text-navy" : "bg-white/10 text-slate-400"}`}>
           {hidden ? <TbLock className="h-5 w-5" /> : <TbTrophy className="h-5 w-5" />}
         </span>
-        <span className="min-w-0 flex-1">
+        <span className="min-w-0 max-w-full flex-1 break-words">
           <span className={`block font-display text-[14.5px] font-extrabold leading-tight ${done ? "text-white" : "text-slate-200"}`}>
             {hidden ? t.secret : fill(a.name[lang === "ms" ? 1 : 0], gameName)}
           </span>
@@ -76,7 +76,7 @@ export function AchievementsView({ lang }: { lang: "en" | "ms" }) {
   return (
     <section aria-label={t.title} className="rise-in mx-auto flex w-full max-w-5xl flex-col gap-5">
       <div className="flex flex-col gap-3 rounded-2xl bg-white/5 p-4 ring-1 ring-white/10">
-        <div className="flex items-end justify-between gap-3">
+        <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
           <h3 className="font-display text-[22px] font-extrabold tracking-tight">{t.title}</h3>
           <p className="text-[13px] font-bold text-slate-300">{t.earned(all.done, all.total)}</p>
         </div>
@@ -104,7 +104,7 @@ export function AchievementsView({ lang }: { lang: "en" | "ms" }) {
         })}
       </div>
 
-      <ul className="grid grid-cols-2 gap-2.5 lg:grid-cols-4">{list.map(card)}</ul>
+      <ul className="grid grid-cols-1 gap-2.5 min-[400px]:grid-cols-2 xl:grid-cols-4">{list.map(card)}</ul>
     </section>
   );
 }

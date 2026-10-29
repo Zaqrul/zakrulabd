@@ -20,6 +20,9 @@ const copy = {
     brand: "zakrulOS",
     tagline: "library for player one",
     library: "Library",
+    libraryShort: "Games",
+    achievementsShort: "Awards",
+    soundtrackShort: "Music",
     achievements: "Achievements",
     soundtrack: "Soundtrack",
     studio: "Studio",
@@ -41,6 +44,9 @@ const copy = {
     brand: "zakrulOS",
     tagline: "pustaka untuk pemain satu",
     library: "Perpustakaan",
+    libraryShort: "Game",
+    achievementsShort: "Pencapaian",
+    soundtrackShort: "Muzik",
     achievements: "Pencapaian",
     soundtrack: "Runut bunyi",
     studio: "Studio",
@@ -212,11 +218,11 @@ export function Arcade({
   const ready = phase !== "start";
 
   const navItem = (active: boolean) =>
-    `flex flex-1 items-center justify-center gap-2.5 rounded-xl px-3 py-2.5 text-[13.5px] font-bold transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 sm:flex-none sm:justify-start ${
+    `flex min-h-12 min-w-0 flex-1 flex-col items-center justify-center gap-1 rounded-xl px-1 py-2 text-[10px] font-bold leading-tight transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400 [&>svg]:shrink-0 md:min-h-11 md:flex-none md:flex-row md:justify-start md:gap-2.5 md:px-3 md:py-2.5 md:text-[13.5px] ${
       active ? "bg-amber-400 text-navy" : "text-slate-300 hover:bg-white/10 hover:text-white"
     }`;
   const chip =
-    "flex h-9 items-center gap-2 rounded-full bg-white/10 px-3.5 text-[13px] font-bold text-white transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400";
+    "flex h-11 min-w-0 shrink-0 items-center gap-2 rounded-full bg-white/10 px-3 text-[13px] font-bold text-white transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400";
 
   return (
     <div
@@ -230,7 +236,7 @@ export function Arcade({
         clipPath: `circle(${radius}px at ${origin.x}px ${origin.y}px)`,
         transition: reduce ? "none" : `clip-path ${GROW_MS}ms cubic-bezier(0.65, 0, 0.2, 1), background-color 500ms ease-out`,
       }}
-      className={`fixed inset-0 z-[80] flex flex-col text-white focus-visible:outline-none ${phase === "open" ? "bg-navy" : "bg-amber-400"}`}
+      className={`fixed inset-0 z-[80] flex h-dvh min-w-0 flex-col overflow-hidden pb-[env(safe-area-inset-bottom)] pl-[env(safe-area-inset-left)] pr-[env(safe-area-inset-right)] pt-[env(safe-area-inset-top)] text-white focus-visible:outline-none ${phase === "open" ? "bg-navy" : "bg-amber-400"}`}
     >
       <div
         style={{ transition: "opacity 250ms ease-out", transitionDelay: phase === "open" ? "350ms" : "0ms" }}
@@ -253,7 +259,7 @@ export function Arcade({
                   {t.online(online)}
                 </span>
               )}
-              <span className="hidden font-mono text-[13px] tabular-nums text-slate-300 sm:block">{clock}</span>
+              <span className="hidden font-mono text-[13px] tabular-nums text-slate-300 md:block">{clock}</span>
 
               {username && (
                 <button type="button" className={chip} onClick={() => open("profile")}>
@@ -266,28 +272,28 @@ export function Arcade({
                 aria-label={t.exit}
                 title={t.exit}
                 onClick={leave}
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-amber-400 hover:text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-white/10 text-white transition-colors hover:bg-amber-400 hover:text-navy focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
               >
                 <TbPower aria-hidden="true" className="h-4.5 w-4.5" />
               </button>
             </header>
 
-            <div className="flex min-h-0 flex-1 flex-col sm:flex-row">
+            <div className="flex min-h-0 min-w-0 flex-1 flex-col md:flex-row">
               <nav
                 aria-label={t.brand}
-                className="order-last flex shrink-0 gap-1 border-t border-white/10 p-2 sm:order-first sm:w-52 sm:flex-col sm:border-r sm:border-t-0 sm:p-3"
+                className="order-last flex min-h-0 min-w-0 shrink-0 gap-1 border-t border-white/10 p-2 md:order-first md:w-44 md:flex-col md:overflow-y-auto md:border-r md:border-t-0 md:p-3 lg:w-52"
               >
-                <button type="button" aria-current={view === "library" ? "page" : undefined} className={navItem(view === "library")} onClick={() => open("library")}>
+                <button type="button" aria-label={t.library} aria-current={view === "library" ? "page" : undefined} className={navItem(view === "library")} onClick={() => open("library")}>
                   <TbLayoutGrid aria-hidden="true" className="h-4.5 w-4.5" />
-                  {t.library}
+                  <span className="md:hidden">{t.libraryShort}</span><span className="hidden md:inline">{t.library}</span>
                 </button>
-                <button type="button" aria-current={view === "achievements" ? "page" : undefined} className={navItem(view === "achievements")} onClick={() => open("achievements")}>
+                <button type="button" aria-label={t.achievements} aria-current={view === "achievements" ? "page" : undefined} className={navItem(view === "achievements")} onClick={() => open("achievements")}>
                   <TbTrophy aria-hidden="true" className="h-4.5 w-4.5" />
-                  {t.achievements}
+                  <span className="md:hidden">{t.achievementsShort}</span><span className="hidden md:inline">{t.achievements}</span>
                 </button>
-                <button type="button" aria-current={view === "soundtrack" ? "page" : undefined} className={navItem(view === "soundtrack")} onClick={() => open("soundtrack")}>
+                <button type="button" aria-label={t.soundtrack} aria-current={view === "soundtrack" ? "page" : undefined} className={navItem(view === "soundtrack")} onClick={() => open("soundtrack")}>
                   <TbMusic aria-hidden="true" className="h-4.5 w-4.5" />
-                  {t.soundtrack}
+                  <span className="md:hidden">{t.soundtrackShort}</span><span className="hidden md:inline">{t.soundtrack}</span>
                 </button>
                 {studioFor(username) && (
                   <button type="button" aria-current={view === "studio" ? "page" : undefined} className={navItem(view === "studio")} onClick={() => open("studio")}>
@@ -301,7 +307,7 @@ export function Arcade({
                 </button>
               </nav>
 
-              <main className={`min-h-0 flex-1 overflow-y-auto overscroll-contain ${playing ? "p-2 sm:p-4" : "p-4 sm:p-8"}`}>
+              <main className={`min-h-0 min-w-0 flex-1 overflow-y-auto overscroll-contain ${playing ? "p-2 sm:p-4" : "p-4 lg:p-8"}`}>
                 {view === "library" && (
                   <section aria-label={t.library}>
                     <h3 className="rise-in mb-3 font-display text-[20px] font-extrabold tracking-tight">{t.games}</h3>
@@ -312,12 +318,12 @@ export function Arcade({
                             {t.shelves[shelf.id]}
                             <span className="font-mono text-[11px] text-slate-500">{shelf.games.length}</span>
                           </h4>
-                          <ul className="grid grid-cols-3 gap-2 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8">
+                          <ul className="grid grid-cols-2 gap-3 min-[360px]:grid-cols-3 sm:grid-cols-4 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6">
                             {shelf.games.map((id, n) => {
                               const Icon = gameIcons[id];
                               const played = bests[id] > 0;
                               return (
-                                <li key={id} className="rise-in" style={{ animationDelay: `${k * 60 + 40 + n * 25}ms` }}>
+                                <li key={id} className="rise-in min-w-0" style={{ animationDelay: `${k * 60 + 40 + n * 25}ms` }}>
                                   <button
                                     type="button"
                                     onClick={() => open({ play: id })}
@@ -357,7 +363,7 @@ export function Arcade({
                       <button
                         type="button"
                         onClick={() => open("library")}
-                        className="flex h-9 items-center gap-1.5 rounded-full bg-white/10 pl-2.5 pr-3.5 text-[13px] font-bold transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
+                        className="flex min-h-11 items-center gap-1.5 rounded-full bg-white/10 pl-2.5 pr-3.5 text-[13px] font-bold transition-colors hover:bg-white/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400"
                       >
                         <TbArrowLeft aria-hidden="true" className="h-4 w-4" />
                         {t.back}
@@ -371,11 +377,11 @@ export function Arcade({
 
                 {view === "profile" && username && (
                   <section aria-label={t.profile} className="rise-in mx-auto flex w-full max-w-md flex-col gap-5">
-                    <div className="flex items-center gap-4">
+                    <div className="flex min-w-0 items-center gap-4">
                       <span aria-hidden="true" className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-amber-400 font-display text-[28px] font-extrabold uppercase text-navy">
                         {username[0]}
                       </span>
-                      <div className="min-w-0">
+                      <div className="min-w-0 flex-1">
                         <p className="truncate font-display text-[22px] font-extrabold">@{username}</p>
                         <p className="text-[13px] text-slate-300">{t.signedIn}</p>
                       </div>
@@ -387,7 +393,7 @@ export function Arcade({
                         {GAME_ORDER.map((id) => {
                           const Icon = gameIcons[id];
                           return (
-                            <li key={id} className="flex items-center gap-3 text-[14px]">
+                            <li key={id} className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[14px]">
                               <Icon aria-hidden="true" className="h-5 w-5 shrink-0 text-[#c4b5fd]" />
                               <span className="flex-1 font-bold">{names[id]}</span>
                               <span className="text-slate-300">{bests[id] > 0 ? bestText(lang, id, bests[id]).split(" · ")[1] : t.notPlayed}</span>
@@ -397,7 +403,7 @@ export function Arcade({
                       </ul>
                     </div>
 
-                    <button type="button" onClick={() => open("achievements")} className="flex items-center gap-3 rounded-2xl bg-white/5 p-4 text-left ring-1 ring-white/10 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
+                    <button type="button" onClick={() => open("achievements")} className="flex flex-wrap items-center gap-3 rounded-2xl bg-white/5 p-4 text-left ring-1 ring-white/10 transition-colors hover:bg-white/10 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400">
                       <TbTrophy aria-hidden="true" className="h-6 w-6 shrink-0 text-amber-400" />
                       <span className="flex-1 font-bold">{t.achievements}</span>
                       <span className="text-[13px] font-bold text-slate-300">{t.earned(overall(ach).done, overall(ach).total)}</span>

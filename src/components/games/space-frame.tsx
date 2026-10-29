@@ -20,7 +20,7 @@ export function SpaceFrame({ title, icon: Icon, closeLabel, onClose, arcade = fa
       data-space-frame
       data-space-layout={arcade ? "arcade" : "dock"}
       className="mx-auto flex min-h-0 w-full min-w-0 flex-col overflow-hidden rounded-xl border border-slate-600 bg-[#080f1e] text-slate-100 shadow-2xl shadow-black/40"
-      style={arcade ? { maxWidth: "min(100%, calc((100dvh - 320px) * 16 / 9 + 20px))", "--space-stage-max": "max(200px, calc((100dvh - 320px) * 16 / 9))" } as CSSProperties : undefined}
+      style={arcade ? { maxWidth: "min(100%, max(320px, calc((100dvh - 320px) * 16 / 9 + 20px)))", "--space-stage-max": "max(200px, calc((100dvh - 320px) * 16 / 9))" } as CSSProperties : undefined}
     >
       <header className="flex h-11 shrink-0 items-center gap-2.5 border-b border-slate-600/70 bg-[#111b2c] px-3">
         <Icon aria-hidden="true" className="h-5 w-5 text-amber-400" />
